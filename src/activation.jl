@@ -190,4 +190,46 @@ julia>gaussian([1, -1])
 """
 gaussian(x::Array) = gaussian.(x)
 
+@inline function hardtanh(x::Real) 
+    if x < -1
+        -1
+    elseif -1 <= x <= 1
+        x
+    else
+        1
+    end
+end
+
+"""
+    hardtanh(x)
+
+Apply the hardtanh activation function to an array or real number.
+
+# Examples
+```julia-repl
+julia>hardtanh(-2)
+-1
+julia>gaussian([-2, 0, 2])
+[-1, 0, 1]
+```
+"""
+hardtanh(x::Array) = hardtanh.(x)
+
+elish(x::Real) = ifelse(x >= 0, swish(x), ((exp(x)-1)) * σ(x))
+
+"""
+    elish(x)
+
+Apply the ELiSH activation function to an array or real number.
+
+# Examples
+```julia-repl
+julia>elish(1)
+0.7310585786300049
+julia>gaussian([-1, 1])
+[-0.1700034015685479, 0.7310585786300049]
+```
+"""
+elish(x::Array) = elish.(x)
+
 end

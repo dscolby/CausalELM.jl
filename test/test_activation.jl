@@ -1,5 +1,5 @@
 using CausalELM.ActivationFunctions: binarystep, σ, tanh, relu, leakyrelu, swish, softmax,
-    softplus, gelu, gaussian
+    softplus, gelu, gaussian, hardtanh, elish
 using Test
 
 @testset "Binary Step Activation" begin
@@ -99,4 +99,22 @@ end
     @test gaussian(5) == 1.2471245010500615e-6
     @test gaussian([1, -1, 0]) == [0.11443511435028261, 0.00010675115367571714, 
         0.19947114020071635]
+end
+
+@testset "hardtanh Activation" begin
+    @test hardtanh(-2) == -1
+    @test hardtanh(0) == 0
+    @test hardtanh(2) == 1
+    @test hardtanh([-1, 0, 1]) == [-1, 0, 1]
+end
+
+@testset "ELiSH Activation" begin
+    @test elish(-5) == -0.006647754849484245
+    @test elish(-1) == -0.1700034015685479
+    @test elish(-0.5) == -0.14855067788365744
+    @test elish(0.5) == 0.3112296656009273
+    @test elish(1) == 0.7310585786300049
+    @test elish(5) == 4.966535745378576
+    @test elish([-5, -1, -0.5]) == [-0.006647754849484245, -0.1700034015685479, 
+        -0.14855067788365744]
 end
