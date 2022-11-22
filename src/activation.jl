@@ -1,6 +1,6 @@
 module ActivationFunctions
 
-binarystep(x::Real) = x < 0 ? 0.0 : 1.0
+binarystep(x::Real) = ifelse(x < 0, 0, 1)
 
 """
     binarystep(x)
