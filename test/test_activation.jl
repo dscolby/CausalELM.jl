@@ -1,5 +1,5 @@
 using CausalELM.ActivationFunctions: binarystep, σ, tanh, relu, leakyrelu, swish, softmax,
-    softplus, gelu, gaussian, hardtanh, elish
+    softplus, gelu, gaussian, hardtanh, elish, fourier
 using Test
 
 @testset "Binary Step Activation" begin
@@ -116,4 +116,11 @@ end
     @test elish(5) == 4.966535745378576
     @test elish([-5, -1, -0.5]) == [-0.006647754849484245, -0.1700034015685479, 
         -0.14855067788365744]
+end
+
+@testset "Fourier Activation" begin
+    @test fourier(1) == 0.8414709848078965
+    @test fourier(0) == 0
+    @test fourier(-1) == -0.8414709848078965
+    @test fourier([1, 0, -1]) == [0.8414709848078965, 0, -0.8414709848078965]
 end

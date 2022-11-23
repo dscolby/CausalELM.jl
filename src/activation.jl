@@ -230,4 +230,21 @@ julia> gaussian([-1, 1])
 """
 elish(x::Array) = elish.(x)
 
+fourier(x::Real) = @fastmath sin(x)
+
+"""
+    elish(x)
+
+Apply the Fourier activation function to an array or real number.
+
+# Examples
+```julia-repl
+julia> fourier(1)
+0.8414709848078965
+julia> fourier([-1, 1])
+[-0.8414709848078965, 0.8414709848078965]
+```
+"""
+fourier(x::Array) = fourier.(x)
+
 end
