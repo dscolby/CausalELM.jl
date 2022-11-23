@@ -9,9 +9,9 @@ Apply the binary step activation function to an array or real number.
 
 # Examples
 ```julia-repl
-julia>binarystep(1)
+julia> binarystep(1)
 1
-julia>binarystep([-1000, 100, 1, 0, -0.001, -3])
+julia> binarystep([-1000, 100, 1, 0, -0.001, -3])
 [0, 1, 1, 1, 0, 0]
 ```
 """
@@ -30,9 +30,9 @@ Apply the sigmoid activation function to an array or real number.
 
 # Examples
 ```julia-repl
-julia>σ(1)
+julia> σ(1)
 0.7310585786300049
-julia>σ([1, 0])
+julia> σ([1, 0])
 [0.7310585786300049, 0.5]
 ```
 """
@@ -47,7 +47,7 @@ This is just a vectorized version of Base.tanh
 
 # Examples
 ```julia-repl
-julia>tanh([1, 0])
+julia> tanh([1, 0])
 [0.7615941559557649, 0.0]
 ```
 """
@@ -62,9 +62,9 @@ Apply the ReLU activation function to an array or real number.
 
 # Examples
 ```julia-repl
-julia>relu(1)
+julia> relu(1)
 1
-julia>relu([1, 0, -1])
+julia> relu([1, 0, -1])
 [1, 0, 0]
 ```
 """
@@ -79,9 +79,9 @@ Apply the leaky ReLU activation function to an array or real number.
 
 # Examples
 ```julia-repl
-julia>relu(1)
+julia> relu(1)
 1
-julia>relu([-0.01, 0, 1])
+julia> relu([-0.01, 0, 1])
 [1, 0, 0]
 ```
 """
@@ -96,9 +96,9 @@ Apply the swish activation function to an array or real number.
 
 # Examples
 ```julia-repl
-julia>swish(1)
+julia> swish(1)
 0.7310585786300049
-julia>swish([1, 0, -1])
+julia> swish([1, 0, -1])
 [0.7310585786300049, 0, -0.2689414213699951]
 ```
 """
@@ -115,9 +115,9 @@ For numbers that have large absolute values this function might be numerically u
 
 # Examples
 ```julia-repl
-julia>softmax(1)
+julia> softmax(1)
 2.718281828459045
-julia>softmax([1, -1])
+julia> softmax([1, -1])
 [2.718281828459045, -0.36787944117144233]
 ```
 """
@@ -146,9 +146,9 @@ For numbers that have large absolute values this function might be numerically u
 
 # Examples
 ```julia-repl
-julia>softplus(1)
+julia> softplus(1)
 1.3132616875182228
-julia>softplus([1, -1])
+julia> softplus([1, -1])
 [1.3132616875182228, 0.31326168751822286]
 ```
 """
@@ -163,9 +163,9 @@ Apply the GeLU activation function to an array or real number.
 
 # Examples
 ```julia-repl
-julia>gelu(1)
+julia> gelu(1)
 0.8411919906082768
-julia>gelu([-1, 0, 1])
+julia> gelu([-1, 0, 1])
 [-0.15880800939172324, 0, 0.8411919906082768]
 ```
 """
@@ -182,9 +182,9 @@ Note that this function uses the sigmoid function to calculate sigma.
 
 # Examples
 ```julia-repl
-julia>gaussian(1)
+julia> gaussian(1)
 0.11443511435028261
-julia>gaussian([1, -1])
+julia> gaussian([1, -1])
 [0.11443511435028261, 0.00010675115367571714]
 ```
 """
@@ -207,9 +207,9 @@ Apply the hardtanh activation function to an array or real number.
 
 # Examples
 ```julia-repl
-julia>hardtanh(-2)
+julia> hardtanh(-2)
 -1
-julia>gaussian([-2, 0, 2])
+julia> gaussian([-2, 0, 2])
 [-1, 0, 1]
 ```
 """
@@ -224,9 +224,9 @@ Apply the ELiSH activation function to an array or real number.
 
 # Examples
 ```julia-repl
-julia>elish(1)
+julia> elish(1)
 0.7310585786300049
-julia>gaussian([-1, 1])
+julia> gaussian([-1, 1])
 [-0.1700034015685479, 0.7310585786300049]
 ```
 """
