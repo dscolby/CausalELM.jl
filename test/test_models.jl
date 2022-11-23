@@ -2,6 +2,9 @@ using CausalELM.Models: Elm, fit!, predict
 using CausalELM.ActivationFunctions: σ
 using Test
 
+# Test classification functionality using a simple XOR test borrowed from 
+# ExtremeLearning.jl
+
 x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 y = [0.0, 1.0, 0.0, 1.0]
 x_test = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
@@ -15,7 +18,7 @@ predictions = predict(m1, x_test)
     @test size(m1.weights) == (2, 10)
  end
 
- @testset "Model PRedictions" begin
+ @testset "Model Predictions" begin
     @test predictions[1] < 0.1
     @test predictions[2] > 0.9
     @test predictions[3] < 0.1
