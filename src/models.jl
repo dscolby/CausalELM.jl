@@ -37,7 +37,7 @@ mutable struct Elm
     __fit::Bool             # Whether fit! has been called
     weights::Array
     bias::Array
-    beta::Array
+    β::Array
     function Elm(X, Y, hidden_nodes, activation)
         new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false)
     end
@@ -68,11 +68,11 @@ function fit!(model::Elm)
     
     H = model.activation(weights_matrix)
 
-    model.beta = pinv(H) * model.Y
+    model.β = pinv(H) * model.Y
 
     model.__fit = true  # Enables running predict
 
-    return model.beta
+    return model.β
 end
 
 """
@@ -100,7 +100,7 @@ function predict(model::Elm, X::Array)
 
     weights_matrix = reduce(hcat, [X * model.weights, model.bias])
 
-    return model.activation(weights_matrix) * model.beta
+    return model.activation(weights_matrix) * model.β
 end
 
 Base.show(io::IO, model::Elm) = print(io, "Extreme Learning machine with ", 

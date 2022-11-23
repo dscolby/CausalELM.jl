@@ -14,7 +14,7 @@ f1 = fit!(m1)
 predictions = predict(m1, x_test)
 
  @testset "Model Fit" begin
-    @test length(m1.beta) == 11
+    @test length(m1.β) == 11
     @test size(m1.weights) == (2, 10)
  end
 
