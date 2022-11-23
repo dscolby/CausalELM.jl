@@ -92,13 +92,12 @@ end
 end
 
 @testset "Gaussian Activation" begin
-    @test gaussian(1) == 0.11443511435028261
-    @test gaussian(-1) == 0.00010675115367571714
-    @test gaussian(0) == 0.19947114020071635
-    @test gaussian(-5) == 0
-    @test gaussian(5) == 1.2471245010500615e-6
-    @test gaussian([1, -1, 0]) == [0.11443511435028261, 0.00010675115367571714, 
-        0.19947114020071635]
+    @test gaussian(1) == 0.36787944117144233
+    @test gaussian(-1) == 0.36787944117144233
+    @test gaussian(0) == 1.0
+    @test gaussian(-5) == 1.3887943864964021e-11
+    @test gaussian(5) == 1.3887943864964021e-11
+    @test gaussian([1, -1, 0]) == [0.36787944117144233, 0.36787944117144233, 1.0]
 end
 
 @testset "hardtanh Activation" begin

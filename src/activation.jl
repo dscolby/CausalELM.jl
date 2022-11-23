@@ -171,21 +171,19 @@ julia> gelu([-1, 0, 1])
 """
 gelu(x::Array) = gelu.(x)
 
-gaussian(x::Real) = (1 / (sqrt(2π)) * σ(x)) * (exp(-(x^2 / 2σ(x)^2)))
+gaussian(x::Real) = exp(-abs(x)^2)
 
 """
     gaussian(x)
 
 Apply the gaussian activation function to an array or real number.
 
-Note that this function uses the sigmoid function to calculate sigma.
-
 # Examples
 ```julia-repl
 julia> gaussian(1)
 0.11443511435028261
 julia> gaussian([1, -1])
-[0.11443511435028261, 0.00010675115367571714]
+[0.36787944117144233, 0.36787944117144233]
 ```
 """
 gaussian(x::Array) = gaussian.(x)

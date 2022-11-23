@@ -11,6 +11,7 @@ For more details see:
     Neurocomputing. 2006;70:489–501. https://doi.org/10.1016/j.neucom.2005.12.126
 
 Examples
+```julia-repl
 julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 4×2 Matrix{Float64}:
  1.0  1.0
@@ -52,6 +53,7 @@ For more details see:
     Neurocomputing. 2006;70:489–501. https://doi.org/10.1016/j.neucom.2005.12.126
 
 Examples
+```julia-repl
 julia> m1 = Elm(x, y, 10, σ)
  Extreme Learning machine with 10 hidden nodes
  julia> f1 = fit(m1, sigmoid)
@@ -83,6 +85,7 @@ For more details see:
     Neurocomputing. 2006;70:489–501. https://doi.org/10.1016/j.neucom.2005.12.126
 
 Examples
+```julia-repl
 julia> m1 = Elm(x, y, 10, σ)
  Extreme Learning machine with 10 hidden nodes
  julia> f1 = fit(m1, sigmoid)
