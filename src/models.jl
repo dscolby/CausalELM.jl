@@ -1,5 +1,4 @@
 module Models
-using LinearAlgebra: pinv
 
 """
     Elm(X, Y, hidden_nodes, activation)
@@ -68,7 +67,7 @@ function fit!(model::Elm)
     
     H = model.activation(weights_matrix)
 
-    model.β = pinv(H) * model.Y
+    model.β = H\model.Y
 
     model.__fit = true  # Enables running predict
 
