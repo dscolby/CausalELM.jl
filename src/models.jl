@@ -40,11 +40,13 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     hidden_nodes::Integer
     activation::Function
     __fit::Bool             # Whether fit! has been called
+    __estimated::Bool       # Whether a counterfactual has been predicted
     weights::Array
     bias::Array
     β::Array
+    counterfactual::Array
     function ExtremeLearner(X, Y, hidden_nodes, activation)
-        new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false)
+        new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false, false)
     end
 end
 
@@ -83,13 +85,15 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     hidden_nodes::Integer
     activation::Function
     __fit::Bool             # Whether fit! has been called
+    __estimated::Bool       # Whether a counterfactual has been estimated
     weights::Array
     bias::Array
     β::Array
     k::Float64
     H::Array
+    counterfactual::Array
     function RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
-        new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false)
+        new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false, false)
     end
 end
 
@@ -188,6 +192,66 @@ function predict(model::ExtremeLearningMachine, X::Array)
     weights_matrix = reduce(hcat, [X * model.weights, model.bias])
 
     return model.activation(weights_matrix) * model.β
+end
+
+"""
+    predictcounterfactual(model, X)
+
+Use an ExtremeLearningMachine to predict the counterfactual.
+
+This should be run with the observed covariates. To use synthtic data for what-if 
+    scenarios use predict.
+
+See also ['predict'](@ref).
+
+Examples
+```julia-repl
+julia> m1 = ExtremeLearner(x, y, 10, σ)
+ Extreme Learning Machine with 10 hidden nodes
+ julia> f1 = fit(m1, sigmoid)
+ [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
+ -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
+ -2.4741301876094655, 40.642730531608635, -11.058942121275233]
+ julia> predictcounterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+ [9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978]
+ """
+function predictcounterfactual!(model::ExtremeLearningMachine, X::Array)
+    model.counterfactual = predict(model, X)
+    model.__estimated = true
+    
+    return model.counterfactual
+end
+
+"""
+    placebotest(model)
+
+Conduct a placebo test.
+
+This method makes predictions for the post-event or post-treatment period using data 
+in the pre-event or pre-treatment period and the post-event or post-treament. If there
+is a statistically significant difference between these predictions the study design may
+be flawed. Due to the multitude of significance tests for time series data, this function
+returns the predictions but does not test for statistical significance.
+
+Examples
+```julia-repl
+julia> m1 = ExtremeLearner(x, y, 10, σ)
+ Extreme Learning Machine with 10 hidden nodes
+ julia> f1 = fit(m1, sigmoid)
+ [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
+ -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
+ -2.4741301876094655, 40.642730531608635, -11.058942121275233]
+ julia> predictcounterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+ [9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978]
+ julia> placebotest(m1)
+ ([9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978],
+ [0.5, 0.4, 0.3, 0.2])
+ """
+function placebotest(model::ExtremeLearningMachine)
+    m = "Use predictcounterfactual to estimate a counterfactual before calling placebotest"
+    @assert model.__estimated m
+
+    return predict(model, model.X), model.counterfactual
 end
 
 function ridgeconstant(model::RegularizedExtremeLearner)

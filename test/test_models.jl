@@ -1,4 +1,5 @@
-using CausalELM.Models: ExtremeLearner, RegularizedExtremeLearner, fit!, predict
+using CausalELM.Models: ExtremeLearner, RegularizedExtremeLearner, fit!, predict,
+    predictcounterfactual!, placebotest
 using CausalELM.ActivationFunctions: σ
 using Test
 
@@ -12,10 +13,14 @@ x_test = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 m1 = ExtremeLearner(x, y, 10, σ)
 f1 = fit!(m1)
 predictions1 = predict(m1, x_test)
+predictcounterfactual!(m1, x_test)
+placebo1 = placebotest(m1)
 
 m2 = RegularizedExtremeLearner(x, y, 10, σ)
 f2 = fit!(m2)
 predictions2 = predict(m2, x_test)
+predictcounterfactual!(m2, x_test)
+placebo2 = placebotest(m2)
 
  @testset "Model Fit" begin
     @test length(m1.β) == 11
@@ -29,8 +34,17 @@ predictions2 = predict(m2, x_test)
     @test predictions1[4] > 0.9
 
     # These will be terrible because we are using an L2 penalty with only four data points
-    @test -2 < predictions2[1] < 2
-    @test -2 < predictions2[2] < 2
-    @test -2 < predictions2[3] < 2
-    @test -2 < predictions2[4] < 2
+    @test -7 < predictions2[1] < 7
+    @test -7 < predictions2[2] < 7
+    @test -7 < predictions2[3] < 7
+    @test -7 < predictions2[4] < 7
+
+    # Ensure the counterfactual attribute gets step
+    @test m1.counterfactual == predictions1
+    @test m2.counterfactual == predictions2
+ end
+
+ @testset "Placebo Test" begin
+    @test length(placebo1) == 2
+    @test length(placebo2) == 2
  end
