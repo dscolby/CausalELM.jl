@@ -34,10 +34,10 @@ placebo2 = placebotest(m2)
     @test predictions1[4] > 0.9
 
     # These will be terrible because we are using an L2 penalty with only four data points
-    @test !Base.IsInfinite(predictions2[1])
-    @test !Base.IsInfinite(predictions2[2])
-    @test !Base.IsInfinite(predictions2[3])
-    @test !Base.IsInfinite(predictions2[4])
+    @test -Inf < predictions2[1] < Inf
+    @test -Inf < predictions2[2] < Inf
+    @test -Inf < predictions2[3] < Inf
+    @test -Inf < predictions2[4] < Inf
 
     # Ensure the counterfactual attribute gets step
     @test m1.counterfactual == predictions1
