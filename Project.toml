@@ -3,6 +3,9 @@ uuid = "ca388264-4b43-42ae-9069-b1606c398a6f"
 authors = ["Darren Colby <dscolby17@gmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+
 [compat]
 julia = "1.3"
 
