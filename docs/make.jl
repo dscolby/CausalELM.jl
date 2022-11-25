@@ -1,12 +1,25 @@
-push!(LOAD_PATH,"../src/")
 using CausalELM
 using Documenter
-makedocs(
+
+DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true)
+
+makedocs(;
          sitename = "CausalELM.jl",
-         modules  = [CausalELM],
+         authors = "Darren Colby",
+         modules  = [ActivationFunctions, Models],
+         format=Documenter.HTML(;
+         prettyurls=get(ENV, "CI", "false") == "true",
+         canonical="https://dscolby.github.io/CausalELM.jl",
+         assets=String[],
+            ),
          pages=[
                 "Home" => "index.md"
                ])
 deploydocs(;
-    repo="github.com/dscolby/CausalELM.jl",
+repo="github.com/dscolby/CausalELM.jl", 
+devbranch = "main",
+devurl="dev",
+target = "build",
+branch = "gh-pages",
+versions = ["stable" => "v^", "v#.#" ]
 )
