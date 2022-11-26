@@ -6,7 +6,7 @@ DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true
 makedocs(;
          sitename = "CausalELM.jl",
          authors = "Darren Colby",
-         modules  = [CausalELM.ActivationFUnctions, CausalELM.Models],
+         modules  = [CausalELM.ActivationFunctions, CausalELM.Models],
          format=Documenter.HTML(;
          prettyurls=get(ENV, "CI", "false") == "true",
          canonical="https://dscolby.github.io/CausalELM.jl/index.html",
