@@ -9,7 +9,7 @@ makedocs(;
          modules  = [ActivationFunctions, Models],
          format=Documenter.HTML(;
          prettyurls=get(ENV, "CI", "false") == "true",
-         canonical="https://dscolby.github.io/CausalELM.jl",
+         canonical="https://dscolby.github.io/CausalELM.jl/index.html",
          assets=String[],
             ),
          pages=[
