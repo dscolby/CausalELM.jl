@@ -7,5 +7,5 @@
 - 13 activation functions and user defined activation functions possible
 
 ```@autodocs
-Modules = [CausalELM]
+Modules = [CausalELM.ActivatiionFunctions, CausalELM.Models]
 ```
