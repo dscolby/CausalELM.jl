@@ -2,7 +2,7 @@ name: Documentation
 on:
   push:
     branches:
-      - mgh-pages
+      - gh-pages
     tags: '*'
   pull_request:
 jobs:
