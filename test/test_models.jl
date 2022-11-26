@@ -7,6 +7,7 @@ using Test
 # ExtremeLearning.jl
 
 x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
+x2 = [5.3 5.4; 9.6 8.2; 1.1 4.4; 6.2 2.2]
 y = [0.0, 1.0, 0.0, 1.0]
 x_test = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 
@@ -16,7 +17,7 @@ predictions1 = predict(m1, x_test)
 predictcounterfactual!(m1, x_test)
 placebo1 = placebotest(m1)
 
-m2 = RegularizedExtremeLearner(x, y, 10, σ)
+m2 = RegularizedExtremeLearner(x2, y, 10, σ)
 f2 = fit!(m2)
 predictions2 = predict(m2, x_test)
 predictcounterfactual!(m2, x_test)
