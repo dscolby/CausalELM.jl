@@ -6,4 +6,6 @@
 - Conduct placebo tests
 - 13 activation functions and user defined activation functions possible
 
-modules = [ActivationFunctions, Models]
+```@autodocs
+Modules = [CausalELM]
+```
