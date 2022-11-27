@@ -159,7 +159,7 @@ function fit!(model::RegularizedExtremeLearner)
 
     k = ridgeconstant(model)   # The optimal L2 penalty
 
-    model.β = inv((transpose(model.H) * model.H) + (k * I)) * transpose(model.H) * model.Y
+    model.β = inv((transpose(model.H) * model.H) + (1/k * I)) * transpose(model.H) * model.Y
 
     model.__fit = true  # Enables running predict
 
