@@ -44,6 +44,7 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     weights::Array
     bias::Array
     β::Array
+    H::Array
     counterfactual::Array
     function ExtremeLearner(X, Y, hidden_nodes, activation)
         new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false, false)
@@ -116,13 +117,9 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
  """
 function fit!(model::ExtremeLearner)
-    model.weights = rand(model.features, model.hidden_nodes)
-    model.bias = rand(model.training_samples)
-    weights_matrix = reduce(hcat, [model.X * model.weights, model.bias])
-    
-    H = model.activation(weights_matrix)
+    setweightsbiases(model)
 
-    model.β = H\model.Y
+    model.β = model.H\model.Y
 
     model.__fit = true  # Enables running predict
 
@@ -149,11 +146,7 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
  """
 function fit!(model::RegularizedExtremeLearner)
-    model.weights = rand(model.features, model.hidden_nodes)
-    model.bias = rand(model.training_samples)
-    weights_matrix = reduce(hcat, [model.X * model.weights, model.bias])
-    
-    model.H = model.activation(weights_matrix)
+    setweightsbiases(model)    
 
     I = ones(size(model.H)[2], size(model.H)[2])
 
@@ -260,6 +253,14 @@ function ridgeconstant(model::RegularizedExtremeLearner)
         (model.features - size(model.H)[2]))
 
     return (model.H[2] * σ̃) / (transpose(β0) * transpose(model.H) * model.H * β0)
+end
+
+function setweightsbiases(model::ExtremeLearningMachine)
+    model.weights = rand(model.features, model.hidden_nodes)
+    model.bias = rand(model.training_samples)
+    weights_matrix = reduce(hcat, [model.X * model.weights, model.bias])
+    
+    model.H = model.activation(weights_matrix)
 end
 
 Base.show(io::IO, model::ExtremeLearner) = print(io, 

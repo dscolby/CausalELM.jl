@@ -10,7 +10,7 @@ y = [0.0, 1.0, 0.0, 1.0]
 x_test = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 
 # Better exaple for L2 penalty to avoid SingularException
-x2 = [1.0 2.0; -4.0 5.0]
+x2 = randn(2, 2)
 y2 = [0.0, 1.0]
 x2_test = [2.0 3.0; 5.0 7.0]
 
