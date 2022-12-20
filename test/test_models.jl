@@ -9,11 +9,6 @@ x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 y = [0.0, 1.0, 0.0, 1.0]
 x_test = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 
-# Better example for L2 penalty to avoid SingularException
-x2 = rand(3, 3)
-y2 = [1, 0, -1]
-x2_test = rand(3)
-
 m1 = ExtremeLearner(x, y, 10, σ)
 f1 = fit!(m1)
 predictions1 = predict(m1, x_test)

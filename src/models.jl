@@ -1,5 +1,7 @@
 module Models
 
+using LinearAlgebra: pinv
+
 abstract type ExtremeLearningMachine end
 
 """
@@ -119,7 +121,7 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
 function fit!(model::ExtremeLearner)
     setweightsbiases(model)
 
-    model.β = model.H\model.Y
+    model.β = pinv(model.H) * model.Y
 
     model.__fit = true  # Enables running predict
 
@@ -152,7 +154,8 @@ function fit!(model::RegularizedExtremeLearner)
 
     k = ridgeconstant(model)   # The optimal L2 penalty
 
-    model.β = ((transpose(model.H) * model.H) + (1/k * I))\(transpose(model.H) * model.Y)
+    model.β = (pinv((transpose(model.H) * model.H) + (1 / k * I)) * 
+        (transpose(model.H) * model.Y))
 
     model.__fit = true  # Enables running predict
 
@@ -248,7 +251,7 @@ function placebotest(model::ExtremeLearningMachine)
 end
 
 function ridgeconstant(model::RegularizedExtremeLearner)
-    β0 = model.H\model.Y
+    β0 = pinv(model.H) * model.Y
     σ̃  = ((transpose(model.Y .- (model.H * β0)) * (model.Y .- (model.H * β0))) / 
         (model.features - size(model.H)[2]))
 
