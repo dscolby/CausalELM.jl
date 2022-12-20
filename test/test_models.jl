@@ -10,9 +10,9 @@ y = [0.0, 1.0, 0.0, 1.0]
 x_test = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 
 # Better example for L2 penalty to avoid SingularException
-x2 = [2.6364995680273595 0.5204218182453689; 1.733284219531911 0.3166076495004341]
-y2 = [1, 0]
-x2_test = [5.0 2.3; 3.3 1.8]
+x2 = rand(3, 3)
+y2 = [1, 0, -1]
+x2_test = rand(3)
 
 m1 = ExtremeLearner(x, y, 10, σ)
 f1 = fit!(m1)
@@ -20,10 +20,10 @@ predictions1 = predict(m1, x_test)
 predictcounterfactual!(m1, x_test)
 placebo1 = placebotest(m1)
 
-m2 = RegularizedExtremeLearner(x2, y2, 10, σ)
+m2 = RegularizedExtremeLearner(x, y, 10, σ)
 f2 = fit!(m2)
-predictions2 = predict(m2, x2_test)
-predictcounterfactual!(m2, x2_test)
+predictions2 = predict(m2, x_test)
+predictcounterfactual!(m2, x_test)
 placebo2 = placebotest(m2)
 
  @testset "Model Fit" begin

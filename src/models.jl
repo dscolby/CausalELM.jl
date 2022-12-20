@@ -152,7 +152,7 @@ function fit!(model::RegularizedExtremeLearner)
 
     k = ridgeconstant(model)   # The optimal L2 penalty
 
-    model.β = inv((transpose(model.H) * model.H) + (1/k * I)) * transpose(model.H) * model.Y
+    model.β = ((transpose(model.H) * model.H) + (1/k * I))\(transpose(model.H) * model.Y)
 
     model.__fit = true  # Enables running predict
 
@@ -248,7 +248,7 @@ function placebotest(model::ExtremeLearningMachine)
 end
 
 function ridgeconstant(model::RegularizedExtremeLearner)
-    β0 = inv(transpose(model.H) * model.H) * transpose(model.H) * model.Y
+    β0 = model.H\model.Y
     σ̃  = ((transpose(model.Y .- (model.H * β0)) * (model.Y .- (model.H * β0))) / 
         (model.features - size(model.H)[2]))
 
