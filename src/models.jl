@@ -48,6 +48,7 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     β::Array
     H::Array
     counterfactual::Array
+    __tol::Float64
     function ExtremeLearner(X, Y, hidden_nodes, activation)
         new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false, false)
     end
@@ -95,6 +96,7 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     k::Float64
     H::Array
     counterfactual::Array
+    __tol::Float64
     function RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
         new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false, false)
     end
@@ -121,7 +123,9 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
 function fit!(model::ExtremeLearner)
     setweightsbiases(model)
 
-    model.β = pinv(model.H) * model.Y
+    model.__tol = sqrt(eps(real(float(one(eltype(model.H))))))  # For numerical stability
+
+    model.β = pinv(model.H, rtol=model.__tol) * model.Y
 
     model.__fit = true  # Enables running predict
 
@@ -148,13 +152,15 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
  """
 function fit!(model::RegularizedExtremeLearner)
-    setweightsbiases(model)    
+    setweightsbiases(model)
+    
+    model.__tol = sqrt(eps(real(float(one(eltype(model.H))))))
 
     I = ones(size(model.H)[2], size(model.H)[2])
 
     k = ridgeconstant(model)   # The optimal L2 penalty
 
-    model.β = (pinv((transpose(model.H) * model.H) + (1 / k * I)) * 
+    model.β = (pinv((transpose(model.H) * model.H) + (1 / k * I), rtol=model.__tol) * 
         (transpose(model.H) * model.Y))
 
     model.__fit = true  # Enables running predict
