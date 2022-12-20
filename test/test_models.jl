@@ -9,10 +9,10 @@ x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 y = [0.0, 1.0, 0.0, 1.0]
 x_test = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 
-# Better exaple for L2 penalty to avoid SingularException
-x2 = randn(2, 2)
+# Better example for L2 penalty to avoid SingularException
+x2 = Float64[1 3; 2 4]
 y2 = [0.0, 1.0]
-x2_test = [2.0 3.0; 5.0 7.0]
+x2_test = [5.0 2.3; 3.3 1.8]
 
 m1 = ExtremeLearner(x, y, 10, σ)
 f1 = fit!(m1)
