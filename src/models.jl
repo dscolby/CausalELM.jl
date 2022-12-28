@@ -33,6 +33,7 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  1.0
  julia> m1 = ExtremeLearner(x, y, 10, σ)
  Extreme Learning Machine with 10 hidden nodes
+ ```
  """
 mutable struct ExtremeLearner <: ExtremeLearningMachine
     X::Array
@@ -80,6 +81,7 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  1.0
  julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
  Regularized Extreme Learning Machine with 10 hidden nodes
+ ```
  """
 mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     X::Array
@@ -119,6 +121,7 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
  -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
+ ```
  """
 function fit!(model::ExtremeLearner)
     setweightsbiases(model)
@@ -150,6 +153,7 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
  [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
  -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
+ ```
  """
 function fit!(model::RegularizedExtremeLearner)
     setweightsbiases(model)
@@ -187,6 +191,7 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
  julia> predict(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
  [9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978]
+ ```
  """
 function predict(model::ExtremeLearningMachine, X::Array) 
     @assert model.__fit "Run fit! before calling predict"
@@ -216,6 +221,7 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
  julia> predictcounterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
  [9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978]
+ ```
  """
 function predictcounterfactual!(model::ExtremeLearningMachine, X::Array)
     model.counterfactual = predict(model, X)
@@ -248,6 +254,7 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  julia> placebotest(m1)
  ([9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978],
  [0.5, 0.4, 0.3, 0.2])
+ ```
  """
 function placebotest(model::ExtremeLearningMachine)
     m = "Use predictcounterfactual to estimate a counterfactual before calling placebotest"
