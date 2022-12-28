@@ -74,7 +74,7 @@ julia> tanh([1, 0])
 [0.7615941559557649, 0.0]
 ```
 """
-tanh(x::Array) = Base.tanh.(x)
+tanh(x::Array) = @fastmath Base.tanh.(x)
 
 """
 
@@ -88,7 +88,7 @@ julia> relu(1)
 1
 ```
 """
-relu(x::Real) = ifelse(x < 0, zero(x), x)
+relu(x::Real) = @fastmath ifelse(x < 0, zero(x), x)
 
 """
 
@@ -116,7 +116,7 @@ julia> leakyrelu(1)
 1
 ```
 """
-leakyrelu(x::Real) = ifelse(x < 0, 0.01 * x, x)
+leakyrelu(x::Real) = @fastmath ifelse(x < 0, 0.01 * x, x)
 
 """
     leakyrelu(x)
@@ -173,7 +173,7 @@ julia> softmax(1)
 2.718281828459045
 ```
 """
-softmax(x::Real) = exp(x) / sum(x)
+softmax(x::Real) = @fastmath exp(x) / sum(x)
 
 """
 
@@ -203,7 +203,7 @@ julia> softplus(1)
 1.3132616875182228
 ```
 """
-softplus(x::Real) = log1p(exp(-abs(x))) + relu(x)
+softplus(x::Real) = @fastmath log1p(exp(-abs(x))) + relu(x)
 
 """
 
@@ -231,7 +231,7 @@ julia> gelu(1)
 0.8411919906082768
 ```
 """
-gelu(x::Real) = (x * (1 + Base.tanh(sqrt(2 / π) * (x + (0.044715 * x^3))))) / 2
+gelu(x::Real) = @fastmath (x * (1 + Base.tanh(sqrt(2 / π) * (x + (0.044715 * x^3))))) / 2
 
 """
 
@@ -259,7 +259,7 @@ julia> gaussian(1)
 0.11443511435028261
 ```
 """
-gaussian(x::Real) = exp(-abs(x)^2)
+gaussian(x::Real) = @fastmath exp(-abs(x)^2)
 
 """
     gaussian(x)

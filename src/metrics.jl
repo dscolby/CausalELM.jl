@@ -58,7 +58,7 @@ julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
 ```
 """
 function accuracy(y_actual::Vector, y_pred::Vector)
-    differences = y_actual .- y_pred
+    @fastmath differences = y_actual .- y_pred
     return length(differences[differences .== 0]) / length(y_pred)
 end
 
@@ -84,18 +84,19 @@ function precision(y_actual::Vector, y_pred::Vector)
     # Binary classification
     if size(confmat) == (2, 2)
         tp = confmat[2, 2]
-        return tp / sum(confmat[2, :])
+        return @fastmath tp / sum(confmat[2, :])
     
     # Multiclass classification
     else
         classwise_prec = Array{Float64, 1}(undef, n)
 
         for idx in axes(confmat, 1)
-            tp = confmat[idx, idx]
-            sum(confmat[idx, :]) == 0 ? single = 0 : single = tp / sum(confmat[idx, :])
+            tp, all_pos = confmat[idx, idx], sum(confmat[idx, :])
+            @fastmath all_pos == 0 ? single = 0 : single = tp / all_pos
+
             classwise_prec[idx] = single
         end
-        return sum(classwise_prec) / n
+        return @fastmath sum(classwise_prec) / n
     end
 end
 
@@ -121,18 +122,18 @@ function recall(y_actual::Vector, y_pred::Vector)
     # Binary classification
     if size(confmat) == (2, 2)
         tp = confmat[2, 2]
-        return tp / sum(confmat[:, 2])
+        return @fastmath tp / sum(confmat[:, 2])
     
     # Multiclass classification
     else
         classwise_rec = Array{Float64, 1}(undef, n)
 
         for idx in axes(confmat, 2)
-            tp = confmat[idx, idx]
-            sum(confmat[:, idx]) == 0 ? single = 0 : single = tp / sum(confmat[:, idx])
+            tp, all_pos = confmat[idx, idx], sum(confmat[:, idx])
+            @fastmath all_pos == 0 ? single = 0 : single = tp / all_pos
             classwise_rec[idx] = single
         end
-        return sum(classwise_rec) / n
+        return @fastmath sum(classwise_rec) / n
     end
 end
 
@@ -151,7 +152,7 @@ julia> F1([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
 """
 function F1(y_actual::Vector, y_pred::Vector)
     prec, rec = precision(y_actual, y_pred), recall(y_actual, y_pred)
-    return 2(prec * rec) / (prec + rec)
+    return @fastmath 2(prec * rec) / (prec + rec)
 end
 
 """
@@ -177,7 +178,7 @@ function confusionmatrix(y_actual::Vector, y_pred::Vector)
 
     # Recode since Julia is a 1-index language
     if minimum(y_actual) == 0
-        y_actual .+= 1; y_pred .+= 1
+        @fastmath y_actual .+= 1; @fastmath y_pred .+= 1
     end
 
     for (predicted, actual) in zip(y_pred, y_actual)

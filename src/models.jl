@@ -168,7 +168,7 @@ function fit!(model::ExtremeLearner)
 
     model.__tol = sqrt(eps(real(float(one(eltype(model.H))))))  # For numerical stability
 
-    model.β = pinv(model.H, rtol=model.__tol) * model.Y
+    model.β = @fastmath pinv(model.H, rtol=model.__tol) * model.Y
 
     model.__fit = true  # Enables running predict
 
@@ -204,8 +204,8 @@ function fit!(model::RegularizedExtremeLearner)
 
     k = ridgeconstant(model)   # The optimal L2 penalty
 
-    model.β = (pinv((transpose(model.H) * model.H) + (1 / k * I), rtol=model.__tol) * 
-        (transpose(model.H) * model.Y))
+    model.β = @fastmath (pinv((transpose(model.H) * model.H) + (1 / k * I), 
+        rtol=model.__tol) * (transpose(model.H) * model.Y))
 
     model.__fit = true  # Enables running predict
 
@@ -238,7 +238,7 @@ function predict(model::ExtremeLearningMachine, X::Array)
 
     weights_matrix = reduce(hcat, [X * model.weights, model.bias])
 
-    return model.activation(weights_matrix) * model.β
+    return @fastmath model.activation(weights_matrix) * model.β
 end
 
 """
@@ -304,11 +304,11 @@ function placebotest(model::ExtremeLearningMachine)
 end
 
 function ridgeconstant(model::RegularizedExtremeLearner)
-    β0 = pinv(model.H) * model.Y
-    σ̃  = ((transpose(model.Y .- (model.H * β0)) * (model.Y .- (model.H * β0))) / 
+    β0 = @fastmath pinv(model.H) * model.Y
+    σ̃  = @fastmath ((transpose(model.Y .- (model.H * β0)) * (model.Y .- (model.H * β0))) / 
         (model.features - size(model.H)[2]))
 
-    return (model.H[2] * σ̃) / (transpose(β0) * transpose(model.H) * model.H * β0)
+    return @fastmath (model.H[2] * σ̃) / (transpose(β0) * transpose(model.H) * model.H * β0)
 end
 
 function setweightsbiases(model::ExtremeLearningMachine)
