@@ -1,10 +1,50 @@
+"""
+Base models to perform extreme learning with and without L2 penalization.
+
+For details on Extreme learning machines see;
+    Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
+    and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
+
+For details on Extreme learning machines with an L2 penalty see:
+    Li, Guoqiang, and Peifeng Niu. "An enhanced extreme learning machine based on ridge 
+    regression for regression." Neural Computing and Applications 22, no. 3 (2013): 
+    803-810.
+"""
 module Models
 
 using LinearAlgebra: pinv
 
+"""Abstract type that includes vanilla and L2 regularized Extreme Learning Machines"""
 abstract type ExtremeLearningMachine end
 
-"""
+"""Struct to hold data for an Extreme Learning machine"""
+mutable struct ExtremeLearner <: ExtremeLearningMachine
+    """Training features"""
+    X::Array
+    """Training outcome data, which may be continuous or discrete"""
+    Y::Array
+    """Number of training samples"""
+    training_samples::Integer
+    """Number of features used in training"""
+    features::Integer
+    """Number of hidden nodes"""
+    hidden_nodes::Integer
+    """Activation function to be used"""
+    activation::Function
+    __fit::Bool             # Whether fit! has been called
+    __estimated::Bool       # Whether a counterfactual has been predicted
+    """Random weights used in the model"""
+    weights::Array
+    """Random biase used in the model"""
+    bias::Array
+    """Estimated coefficients"""
+    β::Array
+    """Output from hidden nodes"""
+    H::Array
+    """Predicted counterfactual data"""
+    counterfactual::Array
+    __tol::Float64
+    """
     ExtremeLearner(X, Y, hidden_nodes, activation)
 
 Construct an ExtremeLearner for fitting and prediction.
@@ -16,6 +56,8 @@ While it is possible to use an ExtremeLearner for regression, it is recommended 
 For more details see: 
     Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
     and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
+
+See also ['RegularizedExtremeLearner'](@ref).
 
 Examples
 ```julia-repl
@@ -35,27 +77,41 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  Extreme Learning Machine with 10 hidden nodes
  ```
  """
-mutable struct ExtremeLearner <: ExtremeLearningMachine
-    X::Array
-    Y::Array
-    training_samples::Integer
-    features::Integer
-    hidden_nodes::Integer
-    activation::Function
-    __fit::Bool             # Whether fit! has been called
-    __estimated::Bool       # Whether a counterfactual has been predicted
-    weights::Array
-    bias::Array
-    β::Array
-    H::Array
-    counterfactual::Array
-    __tol::Float64
     function ExtremeLearner(X, Y, hidden_nodes, activation)
         new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false, false)
     end
 end
 
-"""
+"""Struct to hold data for a regularized Extreme Learning Machine"""
+mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
+    """Training Features"""
+    X::Array
+    """Training outcome data, which may be continuous or discrete"""
+    Y::Array
+    """Number of training samples"""
+    training_samples::Integer
+    """Number of features used in training"""
+    features::Integer
+    """Number of hidden nodes"""
+    hidden_nodes::Integer
+    """Activation function to be used"""
+    activation::Function
+    __fit::Bool             # Whether fit! has been called
+    __estimated::Bool       # Whether a counterfactual has been estimated
+    """Random weights used in the model"""
+    weights::Array
+    """Random bias used in the model"""
+    bias::Array
+    """Estimated coefficients"""
+    β::Array
+    """L2 penalty term"""
+    k::Float64
+    """Output from hidden nodes"""
+    H::Array
+    """Predicted counterfactual data"""
+    counterfactual::Array
+    __tol::Float64
+    """
     RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
 
 Construct a RegularizedExtremeLearner for fitting and prediction.
@@ -83,22 +139,6 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  Regularized Extreme Learning Machine with 10 hidden nodes
  ```
  """
-mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
-    X::Array
-    Y::Array
-    training_samples::Integer
-    features::Integer
-    hidden_nodes::Integer
-    activation::Function
-    __fit::Bool             # Whether fit! has been called
-    __estimated::Bool       # Whether a counterfactual has been estimated
-    weights::Array
-    bias::Array
-    β::Array
-    k::Float64
-    H::Array
-    counterfactual::Array
-    __tol::Float64
     function RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
         new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false, false)
     end

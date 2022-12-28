@@ -1,9 +1,15 @@
+"""
+Metrics to evaluate the performance of an Extreme learning machine for regression
+and classification tasks.
+"""
 module Metrics
 
 """
     mse(y_actual, y_pred)
 
 Calculate the mean squared error
+
+See also ['mae'](@ref).
 
 Examples
 ```julia-repl
@@ -22,6 +28,8 @@ end
     mae(y_actual, y_pred)
 
 Calculate the mean absolute error
+
+See also ['mse'](@ref).
 
 Examples
 ```julia-repl
@@ -59,6 +67,8 @@ end
 
 Calculate the precision for a classification task
 
+See also ['recall'](@ref).
+
 Examples
 ```julia-repl
 julia> precision([0, 1, 0, 0], [0, 1, 1, 0])
@@ -93,6 +103,8 @@ end
     recall(y_actual, y_pred)
 
 Calculate the recall for a classification task
+
+See also ['precision'](@ref).
 
 Examples
 ```julia-repl
