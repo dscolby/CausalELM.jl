@@ -13,7 +13,7 @@ julia> binarystep(1)
 1
 ```
 """
-binarystep(x::Real) = ifelse(x < 0, 0, 1)
+binarystep(x::Float64) = ifelse(x < 0, 0, 1)
 
 """
 
@@ -27,7 +27,7 @@ julia> binarystep([-1000, 100, 1, 0, -0.001, -3])
 [0, 1, 1, 1, 0, 0]
 ```
 """
-binarystep(x::Array) = binarystep.(x)
+binarystep(x::Array{Float64}) = binarystep.(x)
 
 """
 
@@ -41,7 +41,7 @@ julia> σ(1)
 0.7310585786300049
 ```
 """
-@inline function σ(x::Real)
+@inline function σ(x::Float64)
     t = exp(-abs(x))
     ifelse(x ≥ 0, inv(1 + t), t / (1 + t))
 end
@@ -58,7 +58,7 @@ julia> σ([1, 0])
 [0.7310585786300049, 0.5]
 ```
 """
-σ(x::Array) = σ.(x)
+σ(x::Array{Float64}) = σ.(x)
 
 """
 
@@ -74,7 +74,7 @@ julia> tanh([1, 0])
 [0.7615941559557649, 0.0]
 ```
 """
-tanh(x::Array) = @fastmath Base.tanh.(x)
+tanh(x::Array{Float64}) = @fastmath Base.tanh.(x)
 
 """
 
@@ -88,7 +88,7 @@ julia> relu(1)
 1
 ```
 """
-relu(x::Real) = @fastmath ifelse(x < 0, zero(x), x)
+relu(x::Float64) = @fastmath ifelse(x < 0, zero(x), x)
 
 """
 
@@ -102,7 +102,7 @@ julia> relu([1, 0, -1])
 [1, 0, 0]
 ```
 """
-relu(x::Array) = relu.(x)
+relu(x::Array{Float64}) = relu.(x)
 
 """
 
@@ -116,7 +116,7 @@ julia> leakyrelu(1)
 1
 ```
 """
-leakyrelu(x::Real) = @fastmath ifelse(x < 0, 0.01 * x, x)
+leakyrelu(x::Float64) = @fastmath ifelse(x < 0, 0.01 * x, x)
 
 """
     leakyrelu(x)
@@ -129,7 +129,7 @@ julia> leakyrelu([-0.01, 0, 1])
 [1, 0, 0]
 ```
 """
-leakyrelu(x::Array) = leakyrelu.(x)
+leakyrelu(x::Array{Float64}) = leakyrelu.(x)
 
 """
 
@@ -143,7 +143,7 @@ julia> swish(1)
 0.7310585786300049
 ```
 """
-swish(x::Real) = x * σ(x)
+swish(x::Float64) = x * σ(x)
 
 """
 
@@ -157,7 +157,7 @@ julia> swish([1, 0, -1])
 [0.7310585786300049, 0, -0.2689414213699951]
 ```
 """
-swish(x::Array) = swish.(x)
+swish(x::Array{Float64}) = swish.(x)
 
 """
 
@@ -173,7 +173,7 @@ julia> softmax(1)
 2.718281828459045
 ```
 """
-softmax(x::Real) = @fastmath exp(x) / sum(x)
+softmax(x::Float64) = @fastmath exp(x) / sum(x)
 
 """
 
@@ -189,7 +189,7 @@ julia> softmax([1, -1])
 [2.718281828459045, -0.36787944117144233]
 ```
 """
-softmax(x::Array) = softmax.(x)
+softmax(x::Array{Float64}) = softmax.(x)
 
 """
 
@@ -203,7 +203,7 @@ julia> softplus(1)
 1.3132616875182228
 ```
 """
-softplus(x::Real) = @fastmath log1p(exp(-abs(x))) + relu(x)
+softplus(x::Float64) = @fastmath log1p(exp(-abs(x))) + relu(x)
 
 """
 
@@ -217,7 +217,7 @@ julia> softplus([1, -1])
 [1.3132616875182228, 0.31326168751822286]
 ```
 """
-softplus(x::Array) = softplus.(x)
+softplus(x::Array{Float64}) = softplus.(x)
 
 """
 
@@ -231,7 +231,7 @@ julia> gelu(1)
 0.8411919906082768
 ```
 """
-gelu(x::Real) = @fastmath (x * (1 + Base.tanh(sqrt(2 / π) * (x + (0.044715 * x^3))))) / 2
+gelu(x::Float64) = @fastmath (x * (1 + Base.tanh(sqrt(2 / π) * (x + (0.044715 * x^3))))) / 2
 
 """
 
@@ -245,7 +245,7 @@ julia> gelu([-1, 0, 1])
 [-0.15880800939172324, 0, 0.8411919906082768]
 ```
 """
-gelu(x::Array) = gelu.(x)
+gelu(x::Array{Float64}) = gelu.(x)
 
 """
 
@@ -259,7 +259,7 @@ julia> gaussian(1)
 0.11443511435028261
 ```
 """
-gaussian(x::Real) = @fastmath exp(-abs(x)^2)
+gaussian(x::Float64) = @fastmath exp(-abs(x)^2)
 
 """
     gaussian(x)
@@ -272,7 +272,7 @@ julia> gaussian([1, -1])
 [0.36787944117144233, 0.36787944117144233]
 ```
 """
-gaussian(x::Array) = gaussian.(x)
+gaussian(x::Array{Float64}) = gaussian.(x)
 
 """
 
@@ -286,7 +286,7 @@ julia> hardtanh(-2)
 -1
 ```
 """
-@inline function hardtanh(x::Real) 
+@inline function hardtanh(x::Float64) 
     if x < -1
         -1
     elseif -1 <= x <= 1
@@ -303,11 +303,11 @@ Apply the hardtanh activation function to an array.
 
 # Examples
 ```julia-repl
-julia> gaussian([-2, 0, 2])
+julia> hardtanh([-2, 0, 2])
 [-1, 0, 1]
 ```
 """
-hardtanh(x::Array) = hardtanh.(x)
+hardtanh(x::Array{Float64}) = hardtanh.(x)
 
 """
 
@@ -321,7 +321,7 @@ julia> elish(1)
 0.7310585786300049
 ```
 """
-elish(x::Real) = ifelse(x >= 0, swish(x), ((exp(x)-1)) * σ(x))
+elish(x::Float64) = ifelse(x >= 0, swish(x), ((exp(x)-1)) * σ(x))
 
 """
 
@@ -331,11 +331,11 @@ Apply the ELiSH activation function to an array.
 
 # Examples
 ```julia-repl
-julia> gaussian([-1, 1])
+julia> elish([-1, 1])
 [-0.1700034015685479, 0.7310585786300049]
 ```
 """
-elish(x::Array) = elish.(x)
+elish(x::Array{Float64}) = elish.(x)
 
 """
 
@@ -349,7 +349,7 @@ julia> fourier(1)
 0.8414709848078965
 ```
 """
-fourier(x::Real) = @fastmath sin(x)
+fourier(x::Float64) = @fastmath sin(x)
 
 """
 
@@ -363,6 +363,6 @@ julia> fourier([-1, 1])
 [-0.8414709848078965, 0.8414709848078965]
 ```
 """
-fourier(x::Array) = fourier.(x)
+fourier(x::Array{Float64}) = fourier.(x)
 
 end

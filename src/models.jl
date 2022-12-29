@@ -20,29 +20,29 @@ abstract type ExtremeLearningMachine end
 """Struct to hold data for an Extreme Learning machine"""
 mutable struct ExtremeLearner <: ExtremeLearningMachine
     """Training features"""
-    X::Array
+    X::Array{Float64}
     """Training outcome data, which may be continuous or discrete"""
-    Y::Array
+    Y::Array{Float64}
     """Number of training samples"""
-    training_samples::Integer
+    training_samples::Int64
     """Number of features used in training"""
-    features::Integer
+    features::Int64
     """Number of hidden nodes"""
-    hidden_nodes::Integer
+    hidden_nodes::Int64
     """Activation function to be used"""
     activation::Function
     __fit::Bool             # Whether fit! has been called
     __estimated::Bool       # Whether a counterfactual has been predicted
     """Random weights used in the model"""
-    weights::Array
+    weights::Array{Float64}
     """Random biase used in the model"""
-    bias::Array
+    bias::Array{Float64}
     """Estimated coefficients"""
-    β::Array
+    β::Array{Float64}
     """Output from hidden nodes"""
-    H::Array
+    H::Array{Float64}
     """Predicted counterfactual data"""
-    counterfactual::Array
+    counterfactual::Array{Float64}
     __tol::Float64
     """
     ExtremeLearner(X, Y, hidden_nodes, activation)
@@ -85,31 +85,31 @@ end
 """Struct to hold data for a regularized Extreme Learning Machine"""
 mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     """Training Features"""
-    X::Array
+    X::Array{Float64}
     """Training outcome data, which may be continuous or discrete"""
-    Y::Array
+    Y::Array{Float64}
     """Number of training samples"""
-    training_samples::Integer
+    training_samples::Int64
     """Number of features used in training"""
-    features::Integer
+    features::Int64
     """Number of hidden nodes"""
-    hidden_nodes::Integer
+    hidden_nodes::Int64
     """Activation function to be used"""
     activation::Function
     __fit::Bool             # Whether fit! has been called
     __estimated::Bool       # Whether a counterfactual has been estimated
     """Random weights used in the model"""
-    weights::Array
+    weights::Array{Float64}
     """Random bias used in the model"""
-    bias::Array
+    bias::Array{Float64}
     """Estimated coefficients"""
-    β::Array
+    β::Array{Float64}
     """L2 penalty term"""
     k::Float64
     """Output from hidden nodes"""
-    H::Array
+    H::Array{Float64}
     """Predicted counterfactual data"""
-    counterfactual::Array
+    counterfactual::Array{Float64}
     __tol::Float64
     """
     RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
@@ -200,7 +200,7 @@ function fit!(model::RegularizedExtremeLearner)
     
     model.__tol = sqrt(eps(real(float(one(eltype(model.H))))))
 
-    I = ones(size(model.H)[2], size(model.H)[2])
+    I = ones(Float64, size(model.H)[2], size(model.H)[2])
 
     k = ridgeconstant(model)   # The optimal L2 penalty
 
@@ -312,8 +312,8 @@ function ridgeconstant(model::RegularizedExtremeLearner)
 end
 
 function setweightsbiases(model::ExtremeLearningMachine)
-    model.weights = rand(model.features, model.hidden_nodes)
-    model.bias = rand(model.training_samples)
+    model.weights = rand(Float64, model.features, model.hidden_nodes)
+    model.bias = rand(Float64, model.training_samples)
     weights_matrix = reduce(hcat, [model.X * model.weights, model.bias])
     
     model.H = model.activation(weights_matrix)
