@@ -259,8 +259,10 @@ julia> gaussian(1)
 0.11443511435028261
 ```
 """
-gaussian(x::Float64) = @fastmath exp(-abs(x)^2)
-
+function gaussian(x::Float64) 
+    @fastmath t = abs(x)^2
+    return @fastmath exp(-t)
+end
 """
     gaussian(x)
 
@@ -272,7 +274,7 @@ julia> gaussian([1, -1])
 [0.36787944117144233, 0.36787944117144233]
 ```
 """
-gaussian(x::Array{Float64}) = @. @fastmath exp(-abs(x)^2)
+gaussian(x::Array{Float64}) = gaussian.(x)
 
 """
 
