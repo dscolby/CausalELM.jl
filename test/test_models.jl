@@ -32,9 +32,9 @@ placebo2 = placebotest(m2)
     @test predictions1[3] < 0.1
     @test predictions1[4] > 0.9
 
-    # Predictioins would be terrible with two points so we will chek the types
-    @test isa(predictions2[1], Real)
-    @test isa(predictions2[2], Real)
+    # Predictions would be terrible with two points so we will chek the types
+    @test isa(predictions2[1], Float64)
+    @test isa(predictions2[2], Float64)
 
     # Ensure the counterfactual attribute gets step
     @test m1.counterfactual == predictions1
