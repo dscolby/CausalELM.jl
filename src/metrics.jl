@@ -58,6 +58,7 @@ julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
 ```
 """
 function accuracy(y::Vector{Int64}, ŷ::Vector{Int64})
+    @assert length(y) == length(ŷ) "y_actual and y_pred must be the same length"
     @fastmath differences = y .- ŷ
     return @fastmath length(differences[differences .== 0]) / length(ŷ)
 end
@@ -91,8 +92,8 @@ function precision(y::Vector{Int64}, ŷ::Vector{Int64})
         classwise_prec = Array{Float64, 1}(undef, n)
 
         for idx in axes(confmat, 1)
-            tp, all_pos = confmat[idx, idx], sum(confmat[idx, :])
-            @fastmath all_pos == 0 ? single = 0 : single = tp / all_pos
+            tp, all_pos = confmat[idx, idx], @fastmath sum(confmat[idx, :])
+            single = ifelse(all_pos == 0, 0, @fastmath tp / all_pos)
 
             classwise_prec[idx] = single
         end
@@ -129,8 +130,8 @@ function recall(y::Vector{Int64}, ŷ::Vector{Int64})
         classwise_rec = Array{Float64, 1}(undef, n)
 
         for idx in axes(confmat, 2)
-            tp, all_pos = confmat[idx, idx], sum(confmat[:, idx])
-            @fastmath all_pos == 0 ? single = 0 : single = tp / all_pos
+            tp, all_pos = confmat[idx, idx], @fastmath sum(confmat[:, idx])
+            single = ifelse(all_pos == 0, 0, @fastmath tp / all_pos)
             classwise_rec[idx] = single
         end
         return @fastmath sum(classwise_rec) / n
@@ -182,7 +183,7 @@ function confusionmatrix(y::Vector{Int64}, ŷ::Vector{Int64})
     end
 
     for (predicted, actual) in zip(ŷ, y)
-        @inbounds confmat[predicted, actual] += 1
+        @inbounds @fastmath confmat[predicted, actual] += 1
     end
     return confmat
 end
