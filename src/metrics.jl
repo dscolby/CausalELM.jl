@@ -59,7 +59,7 @@ julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
 """
 function accuracy(y::Vector{Int64}, ŷ::Vector{Int64})
     @fastmath differences = y .- ŷ
-    return length(differences[differences .== 0]) / length(ŷ)
+    return @fastmath length(differences[differences .== 0]) / length(ŷ)
 end
 
 """
