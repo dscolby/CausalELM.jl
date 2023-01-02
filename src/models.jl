@@ -44,7 +44,7 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     """Predicted counterfactual data"""
     counterfactual::Array{Float64}
     __tol::Float64
-    """
+"""
     ExtremeLearner(X, Y, hidden_nodes, activation)
 
 Construct an ExtremeLearner for fitting and prediction.
@@ -111,7 +111,7 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     """Predicted counterfactual data"""
     counterfactual::Array{Float64}
     __tol::Float64
-    """
+"""
     RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
 
 Construct a RegularizedExtremeLearner for fitting and prediction.
@@ -145,7 +145,7 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 end
 
 """
-    fit!(model, activation)
+    fit!(model)
 
 Make predictions with an ExtremeLearner.
 
@@ -157,7 +157,7 @@ Examples
 ```julia-repl
 julia> m1 = ExtremeLearner(x, y, 10, σ)
  Extreme Learning Machine with 10 hidden nodes
- julia> f1 = fit!(m1, σ)
+ julia> f1 = fit!(m1)
  [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
  -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
@@ -176,7 +176,7 @@ function fit!(model::ExtremeLearner)
 end
 
 """
-    fit!(model, activation)
+    fit!(model)
 
 Fit a Regularized Extreme Learner.
 
@@ -189,7 +189,7 @@ Examples
 ```julia-repl
 julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
  Regularized Extreme Learning Machine with 10 hidden nodes
- julia> f1 = fit!(m1, σ)
+ julia> f1 = fit!(m1)
  [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
  -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
@@ -204,7 +204,7 @@ function fit!(model::RegularizedExtremeLearner)
 
     k = ridgeconstant(model)   # The optimal L2 penalty
 
-    model.β = @fastmath (pinv((transpose(model.H) * model.H) + (1 / k * I), 
+    model.β = @fastmath (pinv((transpose(model.H) * model.H) + ((1.0/k) * I), 
         rtol=model.__tol) * (transpose(model.H) * model.Y))
 
     model.__fit = true  # Enables running predict
@@ -236,9 +236,7 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
 function predict(model::ExtremeLearningMachine, X::Array) 
     @assert model.__fit "Run fit! before calling predict"
 
-    weights_matrix = reduce(hcat, [X * model.weights, model.bias])
-
-    return @fastmath model.activation(weights_matrix) * model.β
+    return @fastmath model.activation(X * model.weights .+ model.bias) * model.β
 end
 
 """
@@ -308,15 +306,14 @@ function ridgeconstant(model::RegularizedExtremeLearner)
     σ̃  = @fastmath ((transpose(model.Y .- (model.H * β0)) * (model.Y .- (model.H * β0))) / 
         (model.features - size(model.H)[2]))
 
-    return @fastmath (model.H[2] * σ̃) / (transpose(β0) * transpose(model.H) * model.H * β0)
+    return @fastmath first((model.H[2] * σ̃) / (transpose(β0) * transpose(model.H) * model.H * β0))
 end
 
 function setweightsbiases(model::ExtremeLearningMachine)
     model.weights = rand(Float64, model.features, model.hidden_nodes)
-    model.bias = rand(Float64, model.training_samples)
-    weights_matrix = reduce(hcat, [model.X * model.weights, model.bias])
-    
-    model.H = model.activation(weights_matrix)
+    model.bias = rand(Float64, 1, model.hidden_nodes)
+
+    model.H = @fastmath model.activation((model.X * model.weights) .+ model.bias)
 end
 
 Base.show(io::IO, model::ExtremeLearner) = print(io, 

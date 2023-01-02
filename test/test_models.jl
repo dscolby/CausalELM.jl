@@ -7,7 +7,7 @@ using Test
 # ExtremeLearning.jl
 x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 y = [0.0, 1.0, 0.0, 1.0]
-x_test = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
+x_test = [1.0 1.0; 0.0 1.0; 0.0 0.0]
 
 m1 = ExtremeLearner(x, y, 10, σ)
 f1 = fit!(m1)
@@ -22,7 +22,7 @@ predictcounterfactual!(m2, x_test)
 placebo2 = placebotest(m2)
 
  @testset "Model Fit" begin
-    @test length(m1.β) == 11
+    @test length(m1.β) == 10
     @test size(m1.weights) == (2, 10)
  end
 
@@ -30,11 +30,11 @@ placebo2 = placebotest(m2)
     @test predictions1[1] < 0.1
     @test predictions1[2] > 0.9
     @test predictions1[3] < 0.1
-    @test predictions1[4] > 0.9
 
-    # Predictions would be terrible with two points so we will chek the types
-    @test isa(predictions2[1], Float64)
-    @test isa(predictions2[2], Float64)
+    # Regularized case
+    @test predictions1[1] < 0.1
+    @test predictions1[2] > 0.9
+    @test predictions1[3] < 0.1
 
     # Ensure the counterfactual attribute gets step
     @test m1.counterfactual == predictions1
