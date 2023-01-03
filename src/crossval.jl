@@ -99,7 +99,19 @@ function traintest(X::Array{Float64}, Y::Vector{Float64}, folds::Int64, iteratio
     return X[1:last_idx, :], Y[1:last_idx], X[last_idx+1:end, :], Y[last_idx+1:end]
 end
 
-function onestep(X::Array{Float64}, Y::Array{Float64}, nodes::Integer, metric::Function, 
+"""
+    validate(X, Y, nodes, metric, iteration...; activation, regularized, folds)
+
+Calculate a validation metric for a single fold in k-fold cross validation.
+
+Examples
+```julia-repl
+julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
+julia> validate(x, y, 5, accuracy, 3)
+0.0
+```
+"""
+function validate(X::Array{Float64}, Y::Array{Float64}, nodes::Integer, metric::Function, 
     iteration...; activation::Function=relu,  regularized::Bool=true, folds::Integer=5)
 
     xtrain, ytrain, xtest, ytest = traintest(X, Y, folds, iteration...)
@@ -113,28 +125,81 @@ function onestep(X::Array{Float64}, Y::Array{Float64}, nodes::Integer, metric::F
     fit!(network)
     predictions = predict(network, xtest)
 
-    return xtrain
+    return metric(ytest[1, :], predictions[1, :])
 end
 
-function setnodes(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::String,
-    activation::Function=relu, min_nodes::Integer=1, max_nodes::Integer=100, regularized::Bool=true, 
-    folds::Integer=5, temporal::Bool=false, iterations::Integer=round(size(X)/10),
-    approximator_nodes=size(X, 1)/size(X, 2))
-    
-    pred_metrics = Vector{Float64}(undef, max_nodes-min_nodes)
+"""
+    crossvalidate(X, Y, nodes, metric, activation, regularized, folds)
 
-    # Cross validation loop    
+Calculate a validation metric for k folds using a single set of hyperparameters.
+
+Examples
+```julia-repl
+julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
+julia> crossvalidate(x, y, 5, accuracy)
+0.0257841765251021
+```
+"""
+function crossvalidate(X::Array{Float64}, Y::Array{Float64}, nodes::Integer, 
+    metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5, 
+        temporal::Bool=false)
+    mean_metric = 0.0
+
+    for fold in 1:folds
+        
+        # For time series or panel data
+        if temporal
+            mean_metric += validate(X, Y, nodes, metric, fold, activation=activation, 
+                regularized=regularized, folds=folds)
+        else
+            mean_metric += validate(X, Y, nodes, metric, activation=activation, 
+                regularized=regularized, folds=folds)
+        end
+    end
+    return mean_metric/folds
+end
+
+"""
+    bestsize(X, Y, nodes, metric, task, activation, min_nodes, max_nodes, regularized, 
+        folds, temporal, iterations, approximator_nodes)
+
+Compute the best number of nodes for an Extreme Learning Machine.
+
+The procedure tests network a sequence of sizes between min_nodes and max_nodes whose
+length is iterations. Then, it uses the networks sizes and validation errors for this 
+sequence to predict the validation error or metric for every network size between min_nodes 
+and max_nodes using the function approximation ability of an Extreme Learning Machine.
+Finally, it returns the network size with the best validation error or metric.
+
+Examples
+```julia-repl
+julia> bestsize(rand(100, 5), rand(100), mse, "regression")
+11
+```
+"""
+function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::String,
+    activation::Function=relu, min_nodes::Integer=1, max_nodes::Integer=100, regularized::Bool=true, 
+    folds::Integer=5, temporal::Bool=false, iterations::Integer=Int(round(size(X, 1)/10)),
+    approximator_nodes=Integer=Int(round(size(X, 1)/10)))
     
+    act = Vector{Float64}(undef, iterations)
+    loops = round.(Int, collect(range(min_nodes, max_nodes, length=iterations)))
+   
+    for (i, n) in enumerate(loops)
+        if temporal
+            act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, 
+                folds, true)
+        else
+            act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, 
+                folds)
+        end
+    end
     
     # Approximate error function using validation error from cross validation
-    approximator = ExtremeLearner(X, Y, approximator_nodes, relu)
+    approximator = ExtremeLearner(reshape(loops, :, 1), reshape(act, :, 1), approximator_nodes, relu)
     fit!(approximator)
-    pred_metrics = predict(Float64[min_nodes:max_nodes;], avg_per_it)
+    pred_metrics = predict(approximator, Float64[min_nodes:max_nodes;])
 
-    if task == "classification"
-        return argmax([pred_metrics])
-    else
-        return argmin([pred_metrics])
-    end
+    return ifelse(startswith(task, "c"), argmax([pred_metrics]), argmin([pred_metrics]))
 end
 end

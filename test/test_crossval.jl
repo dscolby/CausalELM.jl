@@ -1,5 +1,5 @@
-using CausalELM.CrossValidation: recode, traintest, onestep
-using CausalELM.Metrics: mse
+using CausalELM.CrossValidation: recode, traintest, validate, crossvalidate, bestsize
+using CausalELM.Metrics: mse, accuracy
 using Test
 
 xtrain, ytrain, xtest, ytest = traintest(zeros(20, 2), zeros(20), 5)
@@ -38,5 +38,37 @@ end
 end
 
 @testset "Single cross validation iteration" begin
-    @test onestep(rand(100, 5), rand(100), 5, mse) == 5
+
+    # Regression: Not TS L2, TS L2
+    @test isa(validate(rand(100, 5), rand(100), 5, mse), Float64)
+    @test isa(validate(rand(100, 5), rand(100), 5, mse, 3), Float64)
+    @test isa(validate(rand(100, 5), rand(100), 5, mse, regularized=false), Float64)
+    @test isa(validate(rand(100, 5), rand(100), 5, mse, 3, regularized=false), Float64)
+
+    # Classification: Not TS L2, TS L2
+    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy), Float64)
+    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy, 3), Float64)
+    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy, 
+        regularized=false), Float64)
+
+    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy, 3, 
+        regularized=false), Float64)
+end
+
+@testset "Cross validation" begin
+
+    # Regression
+    @test isa(crossvalidate(rand(100, 5), rand(100), 5, mse), Float64)
+    @test isa(crossvalidate(rand(100, 5), rand(100), 5, mse), Float64)
+
+    # Classification
+    @test isa(crossvalidate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy), Float64)
+    @test isa(crossvalidate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy), Float64)
+end
+
+@testset "Best network size" begin
+    @test 100>= bestsize(rand(100, 5), Float64.(rand(100) .> 0.5), accuracy, 
+        "classification") >= 1
+
+    @test 100 >= bestsize(rand(100, 5), rand(100), mse, "regression") >= 1
 end

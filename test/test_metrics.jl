@@ -20,10 +20,10 @@ end
 end
 
 @testset "Accuracy" begin
-    @test accuracy([1, 1, 1, 1], [0, 0, 0, 0]) == 0
-    @test accuracy([1, 1, 1, 1], [1, 1, 1, 1]) == 1
-    @test accuracy([1, 1, 1, 1], [0, 1, 1, 0]) == 0.5
-    @test accuracy([1, 2, 3, 4], [1, 1, 1, 1]) == 0.25
+    @test accuracy([1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0]) == 0
+    @test accuracy([1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]) == 1
+    @test accuracy([1.0, 1.0, 1.0, 1.0], [0.0, 1.0, 1.0, 0.0]) == 0.5
+    @test accuracy([1.0, 2.0, 3.0, 4.0], [1.0, 1.0, 1.0, 1.0]) == 0.25
 end
 
 @testset "Precision" begin

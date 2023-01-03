@@ -57,7 +57,7 @@ julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
 0.25
 ```
 """
-function accuracy(y::Vector{Int64}, ŷ::Vector{Int64})
+function accuracy(y::Vector{Float64}, ŷ::Vector{Float64})
     @assert length(y) == length(ŷ) "y_actual and y_pred must be the same length"
     @fastmath differences = y .- ŷ
     return @fastmath length(differences[differences .== 0]) / length(ŷ)
