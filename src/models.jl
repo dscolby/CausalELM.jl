@@ -44,6 +44,7 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     """Predicted counterfactual data"""
     counterfactual::Array{Float64}
     __tol::Float64
+
 """
     ExtremeLearner(X, Y, hidden_nodes, activation)
 
@@ -111,6 +112,7 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     """Predicted counterfactual data"""
     counterfactual::Array{Float64}
     __tol::Float64
+    
 """
     RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
 
