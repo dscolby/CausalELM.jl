@@ -1,11 +1,11 @@
 """
-Methods to perform cross validation and find the optimum number of nodes
+Methods to perform cross validation and find the optimum number of neurons.
 
-To reduce computation time, the number of nodes is optimized by using cross validation
-to estimate the validation error on a subset of the range of possible umbers of nodes.
-Then, an Extreme Learning Machine is trained to predict validation loss from the given
-cross validation sets. Finally, the number of nodes is selected that has the smallest
-predicted loss or the highest classification metric.
+To reduce computation time, the number of neurons is optimized by using cross validation
+to estimate the validation error on a small subset of the range of possible numbers of 
+neurons. Then, an Extreme Learning Machine is trained to predict validation loss from 
+the given cross validation sets. Finally, the number of neurons is selected that has the 
+smallest predicted loss or the highest classification metric.
 """
 module CrossValidation
 
@@ -129,7 +129,7 @@ function validate(X::Array{Float64}, Y::Array{Float64}, nodes::Integer, metric::
 end
 
 """
-    crossvalidate(X, Y, nodes, metric, activation, regularized, folds)
+    crossvalidate(X, Y, neurons, metric, activation, regularized, folds)
 
 Calculate a validation metric for k folds using a single set of hyperparameters.
 
@@ -140,7 +140,7 @@ julia> crossvalidate(x, y, 5, accuracy)
 0.0257841765251021
 ```
 """
-function crossvalidate(X::Array{Float64}, Y::Array{Float64}, nodes::Integer, 
+function crossvalidate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer, 
     metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5, 
     temporal::Bool=false)
     mean_metric = 0.0
@@ -149,10 +149,10 @@ function crossvalidate(X::Array{Float64}, Y::Array{Float64}, nodes::Integer,
         
         # For time series or panel data
         if temporal
-            mean_metric += validate(X, Y, nodes, metric, fold, activation=activation, 
+            mean_metric += validate(X, Y, neurons, metric, fold, activation=activation, 
                 regularized=regularized, folds=folds)
         else
-            mean_metric += validate(X, Y, nodes, metric, activation=activation, 
+            mean_metric += validate(X, Y, neurons, metric, activation=activation, 
                 regularized=regularized, folds=folds)
         end
     end
@@ -160,16 +160,17 @@ function crossvalidate(X::Array{Float64}, Y::Array{Float64}, nodes::Integer,
 end
 
 """
-    bestsize(X, Y, nodes, metric, task, activation, min_nodes, max_nodes, regularized, 
-        folds, temporal, iterations, approximator_nodes)
+    bestsize(X, Y, neurons, metric, task, activation, min_neurons, max_neurons, regularized, 
+        folds, temporal, iterations, approximator_neurons)
 
-Compute the best number of nodes for an Extreme Learning Machine.
+Compute the best number of neurons for an Extreme Learning Machine.
 
-The procedure tests network a sequence of sizes between min_nodes and max_nodes whose
-length is iterations. Then, it uses the networks sizes and validation errors for this 
-sequence to predict the validation error or metric for every network size between min_nodes 
-and max_nodes using the function approximation ability of an Extreme Learning Machine.
-Finally, it returns the network size with the best validation error or metric.
+The procedure tests networks with numbers of neurons in a sequence whose length is given 
+by iterations on the interval [min_neurons, max_neurons]. Then, it uses the networks 
+sizes and validation errors from the sequence to predict the validation error or metric 
+for every network size between min_neurons and max_neurons using the function 
+approximation ability of an Extreme Learning Machine. Finally, it returns the network 
+size with the best predicted validation error or metric.
 
 Examples
 ```julia-repl
@@ -178,12 +179,13 @@ julia> bestsize(rand(100, 5), rand(100), mse, "regression")
 ```
 """
 function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::String,
-    activation::Function=relu, min_nodes::Integer=1, max_nodes::Integer=100, regularized::Bool=true, 
-    folds::Integer=5, temporal::Bool=false, iterations::Integer=Int(round(size(X, 1)/10)),
-    approximator_nodes=Integer=Int(round(size(X, 1)/10)))
+    activation::Function=relu, min_neurons::Integer=1, max_neurons::Integer=100, 
+    regularized::Bool=true, folds::Integer=5, temporal::Bool=false, 
+    iterations::Integer=Int(round(size(X, 1)/10)), 
+    approximator_neurons=Integer=Int(round(size(X, 1)/10)))
     
     act = Vector{Float64}(undef, iterations)
-    loops = round.(Int, collect(range(min_nodes, max_nodes, length=iterations)))
+    loops = round.(Int, collect(range(min_neurons, max_neurons, length=iterations)))
    
     @inbounds for (i, n) in enumerate(loops)
         if temporal
@@ -196,9 +198,10 @@ function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::
     end
     
     # Approximate error function using validation error from cross validation
-    approximator = ExtremeLearner(reshape(loops, :, 1), reshape(act, :, 1), approximator_nodes, relu)
+    approximator = ExtremeLearner(reshape(loops, :, 1), reshape(act, :, 1), 
+        approximator_neurons, relu)
     fit!(approximator)
-    pred_metrics = predict(approximator, Float64[min_nodes:max_nodes;])
+    pred_metrics = predict(approximator, Float64[min_neurons:max_neurons;])
 
     return ifelse(startswith(task, "c"), argmax([pred_metrics]), argmin([pred_metrics]))
 end

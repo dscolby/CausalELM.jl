@@ -27,32 +27,31 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     training_samples::Int64
     """Number of features used in training"""
     features::Int64
-    """Number of hidden nodes"""
-    hidden_nodes::Int64
+    """Number of hidden neurons"""
+    hidden_neurons::Int64
     """Activation function to be used"""
     activation::Function
     __fit::Bool             # Whether fit! has been called
     __estimated::Bool       # Whether a counterfactual has been predicted
     """Random weights used in the model"""
     weights::Array{Float64}
-    """Random biase used in the model"""
+    """Random bias used in the model"""
     bias::Array{Float64}
     """Estimated coefficients"""
     β::Array{Float64}
-    """Output from hidden nodes"""
+    """Output from hidden neurons"""
     H::Array{Float64}
     """Predicted counterfactual data"""
     counterfactual::Array{Float64}
     __tol::Float64
 
 """
-    ExtremeLearner(X, Y, hidden_nodes, activation)
+    ExtremeLearner(X, Y, hidden_neurons, activation)
 
 Construct an ExtremeLearner for fitting and prediction.
 
 While it is possible to use an ExtremeLearner for regression, it is recommended to use 
-    RegularizedExtremeLearner, which imposes an L2 penalty, to reduce 
-    multicollinearity.
+RegularizedExtremeLearner, which imposes an L2 penalty, to reduce multicollinearity.
 
 For more details see: 
     Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
@@ -75,11 +74,11 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  0.0
  1.0
  julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden nodes
+ Extreme Learning Machine with 10 hidden neurons
  ```
  """
-    function ExtremeLearner(X, Y, hidden_nodes, activation)
-        new(X, Y, size(X, 1), size(X, 2), hidden_nodes, activation, false, false)
+    function ExtremeLearner(X, Y, hidden_neurons, activation)
+        new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end
 end
 
@@ -93,8 +92,8 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     training_samples::Int64
     """Number of features used in training"""
     features::Int64
-    """Number of hidden nodes"""
-    hidden_nodes::Int64
+    """Number of hidden neurons"""
+    hidden_neurons::Int64
     """Activation function to be used"""
     activation::Function
     __fit::Bool             # Whether fit! has been called
@@ -114,7 +113,7 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     __tol::Float64
     
 """
-    RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
+    RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
 
 Construct a RegularizedExtremeLearner for fitting and prediction.
 
@@ -138,11 +137,11 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  0.0
  1.0
  julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
- Regularized Extreme Learning Machine with 10 hidden nodes
+ Regularized Extreme Learning Machine with 10 hidden neurons
  ```
  """
-    function RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
-        new(X, Y, size(X, 1), size(X, 2), hidden_nodes, activation, false, false)
+    function RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
+        new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end
 end
 
@@ -158,7 +157,7 @@ For more details see:
 Examples
 ```julia-repl
 julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden nodes
+ Extreme Learning Machine with 10 hidden neurons
  julia> f1 = fit!(m1)
  [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
  -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
@@ -183,14 +182,14 @@ end
 Fit a Regularized Extreme Learner.
 
 For more details see: 
-Li, Guoqiang, and Peifeng Niu. "An enhanced extreme learning machine based on ridge 
+    Li, Guoqiang, and Peifeng Niu. "An enhanced extreme learning machine based on ridge 
     regression for regression." Neural Computing and Applications 22, no. 3 (2013): 
     803-810.
 
 Examples
 ```julia-repl
 julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
- Regularized Extreme Learning Machine with 10 hidden nodes
+ Regularized Extreme Learning Machine with 10 hidden neurons
  julia> f1 = fit!(m1)
  [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
  -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
@@ -226,7 +225,7 @@ For more details see:
 Examples
 ```julia-repl
 julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden nodes
+ Extreme Learning Machine with 10 hidden neurons
  julia> f1 = fit(m1, sigmoid)
  [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
  -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
@@ -254,7 +253,7 @@ See also ['predict'](@ref).
 Examples
 ```julia-repl
 julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden nodes
+ Extreme Learning Machine with 10 hidden neurons
  julia> f1 = fit(m1, sigmoid)
  [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
  -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
@@ -284,7 +283,7 @@ returns the predictions but does not test for statistical significance.
 Examples
 ```julia-repl
 julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden nodes
+ Extreme Learning Machine with 10 hidden neurons
  julia> f1 = fit(m1, sigmoid)
  [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
  -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
@@ -312,16 +311,16 @@ function ridgeconstant(model::RegularizedExtremeLearner)
 end
 
 function setweightsbiases(model::ExtremeLearningMachine)
-    model.weights = rand(Float64, model.features, model.hidden_nodes)
-    model.bias = rand(Float64, 1, model.hidden_nodes)
+    model.weights = rand(Float64, model.features, model.hidden_neurons)
+    model.bias = rand(Float64, 1, model.hidden_neurons)
 
     model.H = @fastmath model.activation((model.X * model.weights) .+ model.bias)
 end
 
 Base.show(io::IO, model::ExtremeLearner) = print(io, 
-    "Extreme Learning Machine with ", model.hidden_nodes, " hidden nodes")
+    "Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons")
 
 Base.show(io::IO, model::ExtremeLearner) = print(io, 
-    "Regularized Extreme Learning Machine with ", model.hidden_nodes, " hidden nodes")
+    "Regularized Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons")
 
 end
