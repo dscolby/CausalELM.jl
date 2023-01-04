@@ -259,10 +259,7 @@ julia> gaussian(1)
 0.11443511435028261
 ```
 """
-function gaussian(x::Float64) 
-    @fastmath t = abs(x)^2
-    return @fastmath exp(-t)
-end
+gaussian(x::Float64) = @fastmath exp(-abs2(x))
 """
     gaussian(x)
 
@@ -323,7 +320,7 @@ julia> elish(1)
 0.7310585786300049
 ```
 """
-elish(x::Float64) = ifelse(x >= 0, swish(x), ((exp(x)-1)) * σ(x))
+elish(x::Float64) = ifelse(x >= 0, swish(x), @fastmath ((exp(x)-1)) * σ(x))
 
 """
 
@@ -334,7 +331,7 @@ Apply the ELiSH activation function to an array.
 # Examples
 ```julia-repl
 julia> elish([-1, 1])
-[-0.1700034015685479, 0.7310585786300049]
+[-0.17000340156854793, 0.7310585786300049]
 ```
 """
 elish(x::Array{Float64}) = elish.(x)
