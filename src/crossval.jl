@@ -142,10 +142,10 @@ julia> crossvalidate(x, y, 5, accuracy)
 """
 function crossvalidate(X::Array{Float64}, Y::Array{Float64}, nodes::Integer, 
     metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5, 
-        temporal::Bool=false)
+    temporal::Bool=false)
     mean_metric = 0.0
 
-    for fold in 1:folds
+    @inbounds for fold in 1:folds
         
         # For time series or panel data
         if temporal
@@ -185,7 +185,7 @@ function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::
     act = Vector{Float64}(undef, iterations)
     loops = round.(Int, collect(range(min_nodes, max_nodes, length=iterations)))
    
-    for (i, n) in enumerate(loops)
+    @inbounds for (i, n) in enumerate(loops)
         if temporal
             act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, 
                 folds, true)
