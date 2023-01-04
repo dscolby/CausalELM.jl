@@ -1,7 +1,7 @@
 """
 Macros, functions, and structs for applying Extreme Learning Machines to causal inference
 tasks where the counterfactual is unavailable or biased and must be predicted. Provides 
-macros for event study designs, IPW, parametric G-computation, and doubly robust Machines
+macros for event study designs, IPW, parametric G-computation, and doubly robust machine
 learning. Additionally, these tasks can be performed with or without L2 penalization and
 will automatically choose the best number of neurons and L2 penalty. For more details on
 Extreme Learning Machines see:
