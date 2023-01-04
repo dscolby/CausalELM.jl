@@ -78,7 +78,7 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  ```
  """
     function ExtremeLearner(X, Y, hidden_nodes, activation)
-        new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false, false)
+        new(X, Y, size(X, 1), size(X, 2), hidden_nodes, activation, false, false)
     end
 end
 
@@ -140,7 +140,7 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  ```
  """
     function RegularizedExtremeLearner(X, Y, hidden_nodes, activation)
-        new(X, Y, size(X)[1], size(X)[2], hidden_nodes, activation, false, false)
+        new(X, Y, size(X, 1), size(X, 2), hidden_nodes, activation, false, false)
     end
 end
 
@@ -200,7 +200,7 @@ function fit!(model::RegularizedExtremeLearner)
     
     model.__tol = sqrt(eps(real(float(one(eltype(model.H))))))
 
-    I = ones(Float64, size(model.H)[2], size(model.H)[2])
+    I = ones(Float64, size(model.H, 2), size(model.H, 2))
 
     k = ridgeconstant(model)   # The optimal L2 penalty
 
@@ -306,7 +306,7 @@ function ridgeconstant(model::RegularizedExtremeLearner)
     σ̃  = @fastmath ((transpose(model.Y .- (model.H * β0)) * (model.Y .- (model.H * β0))) / 
         (model.features - size(model.H)[2]))
 
-    return @fastmath first((model.H[2] * σ̃) / (transpose(β0) * transpose(model.H) * model.H * β0))
+    return @fastmath first((model.H[2]*σ̃)/(transpose(β0)*transpose(model.H)*model.H*β0))
 end
 
 function setweightsbiases(model::ExtremeLearningMachine)
