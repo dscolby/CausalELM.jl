@@ -1,6 +1,6 @@
 module Estimators
 
-using .CausalELM
+using CausalELM
 
 mutable struct EventStudy
     X₀::Array{Float64}
