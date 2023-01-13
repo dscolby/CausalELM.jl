@@ -11,13 +11,15 @@ Extreme Learning Machines see:
 module CausalELM
 
 export binarystep, σ, tanh, relu, leakyrelu, swish, softmax, softplus, gelu, gaussian,
-    hardtanh, elish, fourier, ExtremeLearner, RegularizedExtremeLearner, fit!, predict,
-    predictcounterfactual!, placebotest!, mse, mae, accuracy, precision, recall, F1, recode,
-    traintest, validate, crossvalidate, bestsize
+    hardtanh, elish, fourier, ExtremeLearningMachine, ExtremeLearner, 
+    RegularizedExtremeLearner, fit!, predict, predictcounterfactual!, placebotest!, mse, 
+    mae, accuracy, precision, recall, F1, recode, traintest, validate, crossvalidate, 
+    bestsize, EventStudy, estimatetreatmenteffect!
 
 include("activation.jl")
 include("models.jl")
 include("metrics.jl")
 include("crossval.jl")
+include("estimators.jl")
 
 end
