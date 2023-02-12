@@ -12,9 +12,6 @@
         <img src="https://codecov.io/gh/dscolby/CausalELM.jl/branch/main/graph/badge.svg"
          alt="Code Coverage">
     </a>
-    <a href=https://travis-ci.com/dscolby/CausalELM.jl>
-        <img src=https://travis-ci.com/dscolby/CausalELM.jl.svg?branch=master>
-    </a>
     <a href="https://opensource.org/licenses/MIT">
         <img src="https://img.shields.io/badge/License-MIT-yelllow"
             alt="License">
