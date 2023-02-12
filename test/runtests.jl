@@ -1,6 +1,9 @@
 using CausalELM
 using Test
 
-@testset "CausalELM.jl" begin
-    # Write your tests here.
-end
+include("test_activation.jl")
+include("test_models.jl")
+include("test_metrics.jl")
+include("test_crossval.jl")
+include("test_estimators.jl")
+include("test_metalearners.jl")
