@@ -14,8 +14,6 @@ a good balance between prediction accuracy, generalization, ease of implementati
 and interpretability. In addition, CausalELM provides the ability to incorporate an L2 
 penalty.
 
-# Getting Started
-
 # Installation
 ```julia
 Pkg.add("CausalELM")
