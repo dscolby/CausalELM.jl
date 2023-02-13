@@ -16,7 +16,7 @@
         <img src="https://img.shields.io/badge/License-MIT-yelllow"
             alt="License">
     </a>
-    <a href="https://dscolby.github.io/CausalELM.jl/">
+    <a href="https://dscolby.github.io/CausalELM.jl/stable">
     <img src="https://img.shields.io/badge/docs-stable-blue.svg"
          alt="Documentation">
   </a>
