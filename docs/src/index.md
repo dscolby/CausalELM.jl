@@ -2,10 +2,6 @@
 CurrentModule = CausalELM
 ```
 
-# CausalELM
-
-Documentation for [CausalELM](https://github.com/dscolby/CausalELM.jl).
-
 # Overview
 
 CausalELM enables Estimation of causal quantities of interest in research designs where a 
@@ -18,14 +14,14 @@ a good balance between prediction accuracy, generalization, ease of implementati
 and interpretability. In addition, CausalELM provides the ability to incorporate an L2 
 penalty.
 
-## Getting Started
+# Getting Started
 
-### Installation
+# Installation
 ```julia
 Pkg.add("CausalELM")
 ```
 
-### Estimating Causal Effects
+# Estimating Causal Effects
 ```julia
 
 using CausalELM
@@ -48,11 +44,4 @@ event_study = EventStudy(x0, y0, x1, y1)
 estimatecausaleffect!(event_study)
 
 summarize(event_study)
-```
-
-```@index
-```
-
-```@autodocs
-Modules = [CausalELM]
 ```
