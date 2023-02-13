@@ -11,7 +11,7 @@ For more details on Extreme Learning Machines see:
 """
 module CausalELM
 
-export summarise
+export summarise, summarize
 
 include("activation.jl")
 using .ActivationFunctions

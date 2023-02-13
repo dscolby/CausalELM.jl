@@ -19,7 +19,7 @@ estimatecausaleffect!(m1)
 summarize(m1)
 ```
 
-# GComputation
+# G-Computation
 ```julia
 # Create some data with a binary treatment
 X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]

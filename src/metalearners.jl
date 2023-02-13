@@ -17,6 +17,7 @@ import CausalELM.Estimators: summarize, estimatecausaleffect!
 
 export summarize, estimatecausaleffect!
 
+"""Abstract type for metalearners"""
 abstract type Metalearner end
 
 """S-Learner for CATE estimation."""

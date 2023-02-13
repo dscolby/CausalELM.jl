@@ -53,7 +53,6 @@ CausalELM.Metalearners
 CausalELM.Metalearners.SLearner
 CausalELM.Metalearners.TLearner
 CausalELM.Metalearners.XLearner
-CausalELM.Metalearners.summarize
 ```
 
 ## Validation Metrics
@@ -76,5 +75,5 @@ CausalELM.Models.RegularizedExtremeLearner
 CausalELM.Models.fit!
 CausalELM.Models.predict
 CausalELM.Models.predictcounterfactual!
-CausalELM.Models.placebotest!
+CausalELM.Models.placebotest
 ```
