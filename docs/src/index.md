@@ -16,6 +16,7 @@ penalty.
 
 # Installation
 ```julia
+using Pkg
 Pkg.add("CausalELM")
 ```
 
