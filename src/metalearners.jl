@@ -83,7 +83,7 @@ julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, temporal, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons)
+            approximator_neurons, 0)
     end
 end
 
@@ -150,7 +150,7 @@ julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, temporal, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons)
+            approximator_neurons, 0)
     end
 end
 
@@ -225,7 +225,7 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, temporal, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons)
+            approximator_neurons, 0)
     end
 end
 
@@ -257,9 +257,14 @@ function estimatecausaleffect!(s::SLearner)
 
     Xₜ, Xᵤ= hcat(s.X, ones(size(s.T, 1))), hcat(s.X, zeros(size(s.T, 1)))
 
-    s.num_neurons = bestsize(full_covariates, s.Y, s.validation_metric, s.task, 
-        s.activation, s.min_neurons, s.max_neurons, s.regularized, s.folds, s.temporal, 
-        s.iterations, s.approximator_neurons)
+    # We will not find the best number of neurons after we have already estimated the causal
+    # effect and are getting p-values, confidence intervals, or standard errors. We will use
+    # the same number that was found when calling this method.
+    if s.num_neurons === 0
+        s.num_neurons = bestsize(full_covariates, s.Y, s.validation_metric, s.task, 
+            s.activation, s.min_neurons, s.max_neurons, s.regularized, s.folds, s.temporal, 
+            s.iterations, s.approximator_neurons)
+    end
 
     if s.regularized
         s.learner = RegularizedExtremeLearner(full_covariates, s.Y, s.num_neurons, 
@@ -300,9 +305,14 @@ julia> estimatecausaleffect!(m1)
 function estimatecausaleffect!(t::TLearner)
     x₀, x₁, y₀, y₁ = t.X[t.T .== 0,:], t.X[t.T .== 1,:], t.Y[t.T .== 0], t.Y[t.T .== 1]
 
-    t.num_neurons = bestsize(t.X, t.Y, t.validation_metric, t.task, t.activation, 
-        t.min_neurons, t.max_neurons, t.regularized, t.folds, t.temporal, t.iterations, 
-        t.approximator_neurons)
+    # We will not find the best number of neurons after we have already estimated the causal
+    # effect and are getting p-values, confidence intervals, or standard errors. We will use
+    # the same number that was found when calling this method.
+    if t.num_neurons === 0
+        t.num_neurons = bestsize(t.X, t.Y, t.validation_metric, t.task, t.activation, 
+            t.min_neurons, t.max_neurons, t.regularized, t.folds, t.temporal, t.iterations, 
+            t.approximator_neurons)
+    end
 
     if t.regularized
         t.μ₀, t.μ₁ = RegularizedExtremeLearner(x₀, y₀, t.num_neurons, t.activation), 
@@ -344,9 +354,14 @@ julia> estimatecausaleffect!(m1)
 ```
 """
 function estimatecausaleffect!(x::XLearner)
-    x.num_neurons = bestsize(x.X, x.Y, x.validation_metric, x.task, x.activation, 
-        x.min_neurons, x.max_neurons, x.regularized, x.folds, x.temporal, x.iterations, 
-        x.approximator_neurons)
+    # We will not find the best number of neurons after we have already estimated the causal
+    # effect and are getting p-values, confidence intervals, or standard errors. We will use
+    # the same number that was found when calling this method.
+    if x.num_neurons === 0
+        x.num_neurons = bestsize(x.X, x.Y, x.validation_metric, x.task, x.activation, 
+            x.min_neurons, x.max_neurons, x.regularized, x.folds, x.temporal, x.iterations, 
+            x.approximator_neurons)
+    end
     
     stage1!(x); stage2!(x)
 

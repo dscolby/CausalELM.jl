@@ -98,7 +98,7 @@ julia> m4 = EventStudy(X₀, Y₀, X₁, Y₁; task="regression", regularized=tr
 
         new(Float64.(X₀), Float64.(Y₀), Float64.(X₁), Float64.(Y₁), task, regularized, 
             activation, validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons)
+            approximator_neurons, 0)
     end
 end
 
@@ -171,7 +171,7 @@ julia> regularized=true)
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
             activation, temporal, validation_metric, min_neurons, max_neurons, folds, 
-            iterations, approximator_neurons)
+            iterations, approximator_neurons, 0)
     end
 end
 
@@ -243,7 +243,7 @@ julia> m3 = DoublyRobust(X, Y, T; task="regression", quantity_of_interest="ATE)
 
         new(Float64.(X), Float64.(Xₚ), Float64.(Y), Float64.(T), task, quantity_of_interest, 
             regularized, activation, validation_metric, min_neurons, max_neurons, folds, 
-            iterations, approximator_neurons)
+            iterations, approximator_neurons, 0)
     end
 end
 
@@ -261,9 +261,15 @@ julia> estimatecausaleffect!(m1)
 ```
 """
 function estimatecausaleffect!(study::EventStudy)
-    study.num_neurons = bestsize(study.X₀, study.Y₀, study.validation_metric, study.task, 
-        study.activation, study.min_neurons, study.max_neurons, study.regularized, 
-        study.folds, true, study.iterations, study.approximator_neurons)
+    # We will not find the best number of neurons after we have already estimated the causal
+    # effect and are getting p-values, confidence intervals, or standard errors. We will use
+    # the same number that was found when calling this method.
+    if study.num_neurons === 0
+        study.num_neurons = bestsize(study.X₀, study.Y₀, study.validation_metric, 
+            study.task, study.activation, study.min_neurons, study.max_neurons, 
+            study.regularized, study.folds, true, study.iterations, 
+            study.approximator_neurons)
+    end
 
     if study.regularized
         study.learner = RegularizedExtremeLearner(study.X₀, study.Y₀, study.num_neurons, 
@@ -308,9 +314,14 @@ function estimatecausaleffect!(g::GComputation)
         Xₜ, Xᵤ = hcat(g.X, g.T), hcat(g.X, zeros(size(g.Y, 1)))
     end
 
-    g.num_neurons = bestsize(full_covariates, g.Y, g.validation_metric, g.task, 
-        g.activation, g.min_neurons, g.max_neurons, g.regularized, g.folds, g.temporal, 
-        g.iterations, g.approximator_neurons)
+    # We will not find the best number of neurons after we have already estimated the causal
+    # effect and are getting p-values, confidence intervals, or standard errors. We will use
+    # the same number that was found when calling this method.
+    if g.num_neurons === 0
+        g.num_neurons = bestsize(full_covariates, g.Y, g.validation_metric, g.task, 
+            g.activation, g.min_neurons, g.max_neurons, g.regularized, g.folds, g.temporal, 
+            g.iterations, g.approximator_neurons)
+    end
 
     if g.regularized
         g.learner = RegularizedExtremeLearner(full_covariates, g.Y, g.num_neurons, 
@@ -346,9 +357,14 @@ function estimatecausaleffect!(DRE::DoublyRobust)
     x₀, x₁, y₀, y₁ = DRE.X[DRE.T .== 0,:], DRE.X[DRE.T .== 1,:], DRE.Y[DRE.T .== 0], 
         DRE.Y[DRE.T .== 1]
 
-    DRE.num_neurons = bestsize(DRE.X, DRE.Y, DRE.validation_metric, DRE.task, 
-        DRE.activation, DRE.min_neurons, DRE.max_neurons, DRE.regularized, DRE.folds, false, 
-        DRE.iterations, DRE.approximator_neurons)
+    # We will not find the best number of neurons after we have already estimated the causal
+    # effect and are getting p-values, confidence intervals, or standard errors. We will use
+    # the same number that was found when calling this method.
+    if DRE.num_neurons === 0
+        DRE.num_neurons = bestsize(DRE.X, DRE.Y, DRE.validation_metric, DRE.task, 
+            DRE.activation, DRE.min_neurons, DRE.max_neurons, DRE.regularized, DRE.folds, 
+            false, DRE.iterations, DRE.approximator_neurons)
+    end
 
     if DRE.regularized && DRE.quantity_of_interest ∈ ("ATE", "ITE")
         ps_model, μ₀_model = dre_att!(DRE, x₀, y₀)
