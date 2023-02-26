@@ -11,34 +11,21 @@ For more details on Extreme Learning Machines see:
 """
 module CausalELM
 
-export summarise, summarize
+export binarystep, σ, tanh, relu, leakyrelu, swish, softmax, softplus, gelu, gaussian, 
+    hardtanh, elish, fourier, ExtremeLearningMachine, ExtremeLearner, 
+    RegularizedExtremeLearner, fit!, predict, 
+    predictcounterfactual!, placebotest!, mse, mae, accuracy, precision, recall, F1, recode, 
+    traintest, validate, crossvalidate, bestsize, EventStudy, GComputation, DoublyRobust, 
+    estimatecausaleffect!, summarize, CausalEstimator, Metalearner, SLearner, TLearner, 
+    XLearner, estimatecausaleffect!, summarize, generatenulldistribution, summarise, 
+    summarize
 
 include("activation.jl")
-using .ActivationFunctions
-export binarystep, σ, tanh, relu, leakyrelu, swish, softmax, softplus, gelu, gaussian, 
-    hardtanh, elish, fourier
-
 include("models.jl")
-using .Models
-export ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, predict, 
-    predictcounterfactual!, placebotest!
-
 include("metrics.jl")
-using .Metrics
-export mse, mae, accuracy, precision, recall, F1
-
 include("crossval.jl")
-using .CrossValidation
-export recode, traintest, validate, crossvalidate, bestsize
-
 include("estimators.jl")
-using .Estimators
-export EventStudy, GComputation, DoublyRobust, estimatecausaleffect!, summarize
-
 include("metalearners.jl")
-using .Metalearners
-export Metalearner, SLearner, TLearner, XLearner, estimatecausaleffect!, summarize
-
-const summarise = summarize
+include("inference.jl")
 
 end
