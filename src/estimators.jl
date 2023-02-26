@@ -17,6 +17,9 @@ using .Models: ExtremeLearner, RegularizedExtremeLearner, ExtremeLearningMachine
 
 import CausalELM: summarize, estimatecausaleffect!
 
+"""Abstract type for GComputation and DoublyRobust"""
+abstract type  CausalEstimator end
+
 """Container for the results of an event study"""
 mutable struct EventStudy
     """Covariates for the pre-event period"""
@@ -104,7 +107,7 @@ end
 
 
 """Container for the results of G-Computation"""
-mutable struct GComputation
+mutable struct GComputation <: CausalEstimator
     """Covariates"""
     X::Array{Float64}
     """Outomes variable"""
@@ -176,7 +179,7 @@ julia> regularized=true)
 end
 
 """Container for the results of doubly robust estimation"""
-mutable struct DoublyRobust
+mutable struct DoublyRobust <: CausalEstimator
     """Covariates"""
     X::Array{Float64}
     """Propensity score covariates"""

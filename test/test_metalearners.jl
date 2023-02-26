@@ -6,13 +6,13 @@ using Test
 x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 slearner1, slearner2 = SLearner(x, y, t), SLearner(x, y, t, regularized=true)
 estimatecausaleffect!(slearner1); estimatecausaleffect!(slearner2)
-summary1 = summarise(slearner1)
-summary2 = summarise(slearner2)
+summary1 = summarize(slearner1)
+summary2 = summarize(slearner2)
 
 tlearner1, tlearner2 = TLearner(x, y, t), TLearner(x, y, t, regularized=true)
 estimatecausaleffect!(tlearner1); estimatecausaleffect!(tlearner2)
-summary1t = summarise(tlearner1)
-summary2t = summarise(tlearner2)
+summary1t = summarize(tlearner1)
+summary2t = summarize(tlearner2)
 
 xlearner1 = XLearner(x, y, t)
 xlearner1.num_neurons = 5
@@ -24,11 +24,11 @@ stage1!(xlearner2); stage2!(xlearner2)
 
 xlearner3 = XLearner(x, y, t)
 estimatecausaleffect!(xlearner3)
-summary3 = summarise(xlearner3)
+summary3 = summarize(xlearner3)
 
 xlearner4 = XLearner(x, y, t, regularized=true)
 estimatecausaleffect!(xlearner4)
-summary4 = summarise(xlearner3)
+summary4 = summarize(xlearner3)
 
 @testset "S-Learner Structure" begin
     @test slearner1.X !== Nothing
