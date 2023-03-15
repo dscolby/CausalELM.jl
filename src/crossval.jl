@@ -10,12 +10,8 @@ smallest predicted loss or the highest classification metric.
 module CrossValidation
 
 using Random: shuffle
-
-include("models.jl")
-using .Models: ExtremeLearner, RegularizedExtremeLearner, fit!, predict
-
-include("activation.jl")
-using .ActivationFunctions: relu
+using ..ActivationFunctions: relu
+using ..Models: ExtremeLearner, RegularizedExtremeLearner, fit!, predict
 
 """
     recode(ŷ)

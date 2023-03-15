@@ -4,18 +4,13 @@ estiamtion using Extreme Learning machines.
    """
 module Estimators
 
-include("activation.jl")
-include("crossval.jl")
-include("metrics.jl")
-include("models.jl")
-
-using .ActivationFunctions: relu
-using .CrossValidation: bestsize
-using .Metrics: mse
-using .Models: ExtremeLearner, RegularizedExtremeLearner, ExtremeLearningMachine, fit!, 
+using ..ActivationFunctions: relu
+using ..Metrics: mse
+using ..CrossValidation: bestsize
+using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predictcounterfactual!, placebotest, predict
 
-import CausalELM: summarize, estimatecausaleffect!
+import CausalELM: estimatecausaleffect!, summarize
 
 """Abstract type for GComputation and DoublyRobust"""
 abstract type  CausalEstimator end

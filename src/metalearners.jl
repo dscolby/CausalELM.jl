@@ -1,21 +1,13 @@
 """Metalearners to estimate the conditional average treatment effect (CATE)."""
 module Metalearners
 
-include("activation.jl")
-include("crossval.jl")
-include("metrics.jl")
-include("models.jl")
+using ..ActivationFunctions: relu
+using ..Metrics: mse
+using ..CrossValidation: bestsize
+using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
+    predict
 
-using .ActivationFunctions: relu
-using .CrossValidation: bestsize
-using .Metrics: mse
-using .Models: ExtremeLearner, RegularizedExtremeLearner, ExtremeLearningMachine, fit!, 
-    predictcounterfactual!, placebotest, predict
-
-import CausalELM: summarize, estimatecausaleffect!
-import CausalELM.Estimators: summarize, estimatecausaleffect!
-
-export summarize, estimatecausaleffect!
+import CausalELM: estimatecausaleffect!, summarize
 
 """Abstract type for metalearners"""
 abstract type Metalearner end

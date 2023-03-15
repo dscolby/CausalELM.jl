@@ -11,14 +11,57 @@ For more details on Extreme Learning Machines see:
 """
 module CausalELM
 
-export binarystep, σ, tanh, relu, leakyrelu, swish, softmax, softplus, gelu, gaussian, 
-    hardtanh, elish, fourier, ExtremeLearningMachine, ExtremeLearner, 
-    RegularizedExtremeLearner, fit!, predict, 
-    predictcounterfactual!, placebotest!, mse, mae, accuracy, precision, recall, F1, recode, 
-    traintest, validate, crossvalidate, bestsize, EventStudy, GComputation, DoublyRobust, 
-    estimatecausaleffect!, summarize, CausalEstimator, Metalearner, SLearner, TLearner, 
-    XLearner, estimatecausaleffect!, summarize, generatenulldistribution, summarise, 
-    summarize
+export binarystep, 
+       σ, 
+       tanh, 
+       relu, 
+       leakyrelu, 
+       swish, 
+       softmax, 
+       softplus, 
+       gelu, 
+       gaussian, 
+       hardtanh, 
+       elish, 
+       fourier, 
+       ExtremeLearningMachine, 
+       ExtremeLearner, 
+       RegularizedExtremeLearner, 
+       fit!, 
+       predict, 
+       predictcounterfactual!, 
+       placebotest!, 
+       mse, 
+       mae, 
+       accuracy, 
+       confusionmatrix, 
+       precision, 
+       recall, 
+       F1, 
+       recode, 
+       traintest, 
+       validate, 
+       crossvalidate, 
+       bestsize, 
+       EventStudy, 
+       GComputation, 
+       DoublyRobust, 
+       estimatecausaleffect!, 
+       summarize, 
+       CausalEstimator, 
+       Metalearner, 
+       SLearner, 
+       TLearner, 
+       XLearner, 
+       estimatecausaleffect!, 
+       summarize, 
+       generatenulldistribution
+
+function estimatecausaleffect!() end
+
+function summarize() end
+
+const summarise = summarize
 
 include("activation.jl")
 include("models.jl")
