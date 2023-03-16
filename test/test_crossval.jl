@@ -16,7 +16,7 @@ xtrain_ts2, ytrain_ts2, xtest_ts2, ytest_ts2 = traintest(float.(hcat([1:10;], 11
 end
 
 @testset "Train-test split" begin
-    @test_throws AssertionError traintest(zeros(5, 2), zeros(5), 6)
+    @test_throws ArgumentError traintest(zeros(5, 2), zeros(5), 6)
     @test size(xtrain, 1) == 16
     @test length(ytrain) == 16
     @test size(xtest, 1) == 4
@@ -24,8 +24,8 @@ end
     @test isa(xtrain, Array)
 
     # Time series or panel data
-    @test_throws AssertionError traintest(zeros(5, 2), zeros(5), 6, 1)
-    @test_throws AssertionError traintest(zeros(5, 2), zeros(5), 5, 5)
+    @test_throws ArgumentError traintest(zeros(5, 2), zeros(5), 6, 1)
+    @test_throws ArgumentError traintest(zeros(5, 2), zeros(5), 5, 5)
     @test isa(xtrain_ts, Array)
     @test xtrain_ts == [1.0 11.0; 2.0 12.0]
     @test ytrain_ts == [1.0, 2.0]

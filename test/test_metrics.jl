@@ -1,6 +1,8 @@
 using Test
 using CausalELM.Metrics: mse, mae, confusionmatrix, accuracy, precision, recall, F1
 
+length4, length5  = rand(4), rand(5)
+
 @testset "Mean squared error" begin
     @test mse([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) == 0
     @test mse([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]) == 4
@@ -45,4 +47,10 @@ end
     @test F1([0, 1, 0, 0], [0, 1, 0, 0]) == 1
     @test F1([1, 2, 1, 3, 0], [2, 2, 2, 3, 1]) == 0.4
     @test F1([1, 2, 1, 3, 2], [2, 2, 2, 3, 1]) == 0.47058823529411764
+end
+
+@testset "Dimension Mismatch" begin
+    @test_throws DimensionMismatch mse(length4, length5)
+    @test_throws DimensionMismatch mae(length4, length5)
+    @test_throws DimensionMismatch accuracy(length4, length5)
 end

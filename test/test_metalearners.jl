@@ -132,7 +132,7 @@ end
 end
 
 @testset "Task Errors" begin
-    @test_throws AssertionError SLearner(x, y, t, task="abc")
-    @test_throws AssertionError TLearner(x, y, t, task="def")
-    @test_throws AssertionError XLearner(x, y, t, task="xyz")
+    @test_throws ArgumentError SLearner(x, y, t, task="abc")
+    @test_throws ArgumentError TLearner(x, y, t, task="def")
+    @test_throws ArgumentError XLearner(x, y, t, task="xyz")
 end

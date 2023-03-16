@@ -33,6 +33,8 @@ m4 = RegularizedExtremeLearner(x1, y1, 10, σ)
 fit!(m4)
 predictions4 = predict(m4, x1test)
 
+nofit = ExtremeLearner(x1, y1, 10, σ)
+
  @testset "Model Fit" begin
     @test length(m1.β) == 10
     @test size(m1.weights) == (2, 10)
@@ -60,4 +62,9 @@ predictions4 = predict(m4, x1test)
  @testset "Placebo Test" begin
     @test length(placebo1) == 2
     @test length(placebo2) == 2
+ end
+
+ @testset "Predict Before Fit" begin
+    @test_throws ErrorException predict(nofit, x1test)
+    @test_throws ErrorException placebotest(nofit)
  end

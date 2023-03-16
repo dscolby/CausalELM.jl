@@ -2,7 +2,8 @@ using CausalELM.Estimators: EventStudy, GComputation, DoublyRobust, estimatecaus
     mean, summarize
 using Test
 
-event_study = EventStudy(rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10))
+x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+event_study = EventStudy(x₀, y₀, x₁, y₁)
 estimatecausaleffect!(event_study)
 summary1 = summarize(event_study)
 
@@ -81,9 +82,15 @@ end
     end
 end
 
-@testset "Quanities of Interest" begin
-    @test_throws AssertionError GComputation(x, y, t, quantity_of_interest="abc")
-    @test_throws AssertionError DoublyRobust(x, x, y, t, quantity_of_interest="xyz")
+@testset "Quanities of Interest Errors" begin
+    @test_throws ArgumentError GComputation(x, y, t, quantity_of_interest="abc")
+    @test_throws ArgumentError DoublyRobust(x, x, y, t, quantity_of_interest="xyz")
+end
+
+@testset "Task Errors" begin
+    @test_throws ArgumentError EventStudy(x₀, y₀, x₁, y₁, task="abc")
+    @test_throws ArgumentError GComputation(x, y, t, task="abc")
+    @test_throws ArgumentError DoublyRobust(x, x, y, t, task="xyz")
 end
 
 @test mean([1, 2, 3]) == 2
