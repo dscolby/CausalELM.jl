@@ -1,7 +1,6 @@
 module Inference
 
-using CausalELM
-using ..Estimators: CausalEstimator, EventStudy
+using ..Estimators: CausalEstimator, EventStudy, estimatecausaleffect!
 
 """
     generatenulldistribution(e, n)
