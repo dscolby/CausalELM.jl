@@ -20,7 +20,10 @@ julia> mse([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
 ```
 """
 function mse(y::Vector{Float64}, ŷ::Vector{Float64}) 
-    @assert length(y) == length(ŷ) "y_actual and y_pred must be the same length"
+    if length(y) !== length(ŷ)
+        throw(DimensionMismatch("y and ̂y must be the same length"))
+    end
+
     return @fastmath sum((y - ŷ).^2) / length(y)
 end
 
@@ -40,7 +43,10 @@ julia> mae([1.0, 1.0, 1.0], [2.0, 2.0, 2.0])
 ```
 """
 function mae(y::Vector{Float64}, ŷ::Vector{Float64}) 
-    @assert length(y) == length(ŷ) "y_actual and y_pred must be the same length"
+    if length(y) !== length(ŷ)
+        throw(DimensionMismatch("y and ̂y must be the same length"))
+    end
+
     return @fastmath sum(abs.(y .- ŷ)) / length(y)
 end
 
@@ -58,7 +64,10 @@ julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
 ```
 """
 function accuracy(y::Vector{Float64}, ŷ::Vector{Float64})
-    @assert length(y) == length(ŷ) "y_actual and y_pred must be the same length"
+    if length(y) !== length(ŷ)
+        throw(DimensionMismatch("y and ̂y must be the same length"))
+    end
+
     @fastmath differences = y .- ŷ
     return @fastmath length(differences[differences .== 0]) / length(ŷ)
 end

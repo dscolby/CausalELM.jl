@@ -231,7 +231,9 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  ```
  """
 function predict(model::ExtremeLearningMachine, X::Array) 
-    @assert model.__fit "Run fit! before calling predict"
+    if !model.__fit
+        throw(ErrorException("run fit! before calling predict"))
+    end
 
     return @fastmath model.activation(X * model.weights .+ model.bias) * model.β
 end
@@ -292,8 +294,9 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  """
 function placebotest(model::ExtremeLearningMachine)
     m = "Use predictcounterfactual to estimate a counterfactual before calling placebotest"
-    @assert model.__estimated m
-
+    if !model.__estimated
+        throw(ErrorException(m))
+    end
     return predict(model, model.X), model.counterfactual
 end
 

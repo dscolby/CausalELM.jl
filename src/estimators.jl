@@ -91,8 +91,9 @@ julia> m4 = EventStudy(X₀, Y₀, X₁, Y₁; task="regression", regularized=tr
         iterations=Int(round(size(X₀, 1)/10)), 
         approximator_neurons=Int(round(size(X₀, 1)/10)))
 
-        m1 = "Task must be one of regression or classification"
-        @assert task ∈ ("regression", "classification") m1
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        end
 
         new(Float64.(X₀), Float64.(Y₀), Float64.(X₁), Float64.(Y₁), task, regularized, 
             activation, validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -163,9 +164,11 @@ julia> regularized=true)
         min_neurons=1, max_neurons=100, folds=5, iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
-        msg1, msg2 = "Task must be one of ", "Quantity of interest must be one of "
-        @assert task ∈ ("regression", "classification") msg1 *"regression or classification"
-        @assert quantity_of_interest ∈ ("ATE", "ITE", "ATT") msg2 * "ATE, ITE, or ATT"
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        elseif quantity_of_interest ∉ ("ATE", "ITE", "ATT")
+            throw(ArgumentError("quantity_of_interest must be ATE, ITE, or ATT"))
+        end
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
             activation, temporal, validation_metric, min_neurons, max_neurons, folds, 
@@ -235,9 +238,11 @@ julia> m3 = DoublyRobust(X, Y, T; task="regression", quantity_of_interest="ATE)
         max_neurons=100, folds=5, iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
-        msg1, msg2 = "Task must be one of ", "Quantity of interest must be one of "
-        @assert task ∈ ("regression", "classification") msg1 *"regression or classification"
-        @assert quantity_of_interest ∈ ("ATE", "ITE", "ATT") msg2 * "ATT, ITE, or ATT"
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        elseif quantity_of_interest ∉ ("ATE", "ITE", "ATT")
+            throw(ArgumentError("quantity_of_interest must be ATE, ITE, or ATT"))
+        end
 
         new(Float64.(X), Float64.(Xₚ), Float64.(Y), Float64.(T), task, quantity_of_interest, 
             regularized, activation, validation_metric, min_neurons, max_neurons, folds, 

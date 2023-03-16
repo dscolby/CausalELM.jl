@@ -70,8 +70,9 @@ julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
         iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
-        msg = "Task must be one of "
-        @assert task ∈ ("regression", "classification") msg * "regression or classification"
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        end
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, temporal, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -137,8 +138,9 @@ julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
         iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
-        msg = "Task must be one of "
-        @assert task ∈ ("regression", "classification") msg * "regression or classification"
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        end
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, temporal, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -212,8 +214,9 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
         iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
-        msg = "Task must be one of "
-        @assert task ∈ ("regression", "classification") msg * "regression or classification"
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        end
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, temporal, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 

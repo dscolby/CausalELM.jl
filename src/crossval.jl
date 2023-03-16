@@ -65,8 +65,12 @@ julia> xtrain, ytrain, xtest, ytest = traintest(zeros(20, 2), zeros(20), 5)
 ```
 """
 function traintest(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
+    msg = "the number of folds must be less than the number of observations"
     n = size(Y, 1)
-    @assert folds <= n
+    
+    if folds >= n
+        throw(ArgumentError(msg))
+    end
 
     idx, train_size = shuffle(1:n), @fastmath n*(folds-1)/folds
 
@@ -92,8 +96,13 @@ julia> xtrain, ytrain, xtest, ytest = traintest(zeros(20, 2), zeros(20), 5, 1)
 ```
 """
 function traintest(X::Array{Float64}, Y::Vector{Float64}, folds::Int64, iteration::Integer)
+    msg = """the number of folds must be less than the number of 
+             observations and greater than or equal to iteration"""
     n = length(Y)
-    @assert folds <= n && folds > iteration
+    
+    if folds >= n || folds < iteration
+        throw(ArgumentError(msg))
+    end
 
     last_idx = floor(Int, (iteration/folds)*n)
 
