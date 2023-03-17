@@ -51,7 +51,7 @@ distribution of cummulative differences, set the mean_effect argument to false.
 
 Instead of randomizing the assignment of units to the treamtent or control group, this 
 method generates the null distribution by reestimating the event study with the intervention
-set to different times.
+set to n intervals within the total study duration.
 
 Note that lowering the number of iterations increases the probability of failing to reject
 the null hypothesis.
@@ -71,7 +71,7 @@ function generatenulldistribution(e::EventStudy, n::Integer=1000, mean_effect=tr
     model = deepcopy(e)
     nobs = size(model.Y₀, 1) + size(model.Y₁, 1)
     results = Vector{Float64}(undef, n)
-    n = ifelse(n > nobs-1, nobs-1, n)
+    n -= 1
 
     # Generate random treatment assignments and estimate the causal effects
     for iter in 1:n

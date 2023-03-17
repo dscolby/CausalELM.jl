@@ -24,3 +24,7 @@ event_study_inference2 = generatenulldistribution(event_study, 10, false)
     @test size(event_study_inference2, 1) === 10
     @test event_study_inference2 isa Array{Float64}
 end
+
+@testset "More Splits Than Observations" begin
+    @test_throws BoundsError generatenulldistribution(event_study, 101)
+end
