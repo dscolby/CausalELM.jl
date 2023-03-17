@@ -29,7 +29,7 @@ julia> generatenulldistribution(g_computer, 500)
 ```
 """
 function generatenulldistribution(e::CausalEstimator, n::Integer=1000)
-    model = deepcopy(e)
+    local model = deepcopy(e)
     nobs = size(model.T, 1)
     results = Vector{Float64}(undef, n)
     
@@ -68,7 +68,7 @@ julia> generatenulldistribution(event_study, 10)
 ```
 """
 function generatenulldistribution(e::EventStudy, n::Integer=1000, mean_effect=true)
-    model = deepcopy(e)
+    local model = deepcopy(e)
     nobs = size(model.Y₀, 1) + size(model.Y₁, 1)
     results = Vector{Float64}(undef, n)
     n -= 1
