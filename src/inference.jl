@@ -1,16 +1,17 @@
 module Inference
 
 using ..Estimators: CausalEstimator, EventStudy, estimatecausaleffect!, mean
+using ..Metalearners: Metalearner
 
 """
     generatenulldistribution(e, n)
 
-Generate a null distribution for the treatment effect of G-computation or doubly robust 
-estimation.
+Generate a null distribution for the treatment effect of G-computation, doubly robust 
+estimation, or metalearning.
 
 This method estimates the same model that is provided using random permutations of the 
 treatment assignment to generate a vector of estimated effects under different treatment
-regimes.
+regimes. When e is a metalearner the null statistic is the difference is the ATE.
 
 Note that lowering the number of iterations increases the probability of failing to reject
 the null hypothesis.
@@ -28,16 +29,16 @@ julia> generatenulldistribution(g_computer, 500)
 23.52056245175936, 24.739658523175912, 25.30523686137909, 28.07474553316176]
 ```
 """
-function generatenulldistribution(e::CausalEstimator, n::Integer=1000)
-    local model = deepcopy(e)
-    nobs = size(model.T, 1)
+function generatenulldistribution(e::Union{CausalEstimator, Metalearner}, n::Integer=1000)
+    local m = deepcopy(e)
+    nobs = size(m.T, 1)
     results = Vector{Float64}(undef, n)
     
     # Generate random treatment assignments and estimate the causal effects
     for iter in 1:n 
-        model.T = float(rand(0:1, nobs))
-        estimatecausaleffect!(model)
-        results[iter] = model.causal_effect
+        m.T = float(rand(0:1, nobs))
+        estimatecausaleffect!(m)
+        results[iter] = ifelse(e isa Metalearner, mean(m.causal_effect), m.causal_effect)
     end
     return sort(results)
 end
@@ -56,6 +57,9 @@ set to n intervals within the total study duration.
 Note that lowering the number of iterations increases the probability of failing to reject
 the null hypothesis.
 
+For a primer on randomization inference see: 
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
 Examples
 ```julia-repl
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
@@ -67,7 +71,7 @@ julia> generatenulldistribution(event_study, 10)
 -0.05905529159312335, -0.04927743270606937]
 ```
 """
-function generatenulldistribution(e::EventStudy, n::Integer=1000, mean_effect=true)
+function generatenulldistribution(e::EventStudy, n::Integer=1000, mean_effect::Bool=true)
     local model = deepcopy(e)
     nobs = size(model.Y₀, 1) + size(model.Y₁, 1)
     results = Vector{Float64}(undef, n)
@@ -89,6 +93,80 @@ function generatenulldistribution(e::EventStudy, n::Integer=1000, mean_effect=tr
             sum(model.abnormal_returns))
     end
     return sort(results)
+end
+
+"""
+    quantitiesofinterest(model, n)
+
+Generate a p-value and standard error through randomization inference
+
+This method generates a null distribution of treatment effects by reestimating treatment 
+effects from permutations of the treatment vector and estimates a p-value and standard from
+the generated distribution.
+
+Note that lowering the number of iterations increases the probability of failing to reject
+the null hypothesis.
+
+For a primer on randomization inference see:
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
+Examples
+```julia-repl
+julia> x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
+julia> g_computer = GComputation(x, y, t)
+julia> estimatecausaleffect!(g_computer)
+julia> quantitiesofinterest(g_computer, 1000)
+(0.114, 6.953133617011371)
+```
+"""
+function quantitiesofinterest(model::Union{CausalEstimator, Metalearner}, n::Integer=1000)
+    local null_dist = generatenulldistribution(model, n)
+    local avg_effect = mean(null_dist)
+
+    extremes = length(null_dist[abs(model.causal_effect) .>= abs.(null_dist)])
+    pvalue = extremes/n
+
+    stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist])/(n-1))
+
+    return pvalue, stderr
+end
+
+"""
+    quantitiesofinterest(model, n)
+
+Generate a p-value and standard error through randomization inference
+
+This method generates a null distribution of treatment effects by reestimating treatment 
+effects from permutations of the treatment vector and estimates a p-value and standard from 
+the generated distribution. Randomization for event studies is done by permuting the times
+that the event ocurred.
+
+Note that lowering the number of iterations increases the probability of failing to reject
+the null hypothesis.
+
+For a primer on randomization inference see:
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
+Examples
+```julia-repl
+julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+julia> event_study = EventStudy(x₀, y₀, x₁, y₁)
+julia> estimatecausaleffect!(event_study)
+julia> quantitiesofinterest(event_study, 10)
+(0.0, 0.07703275541001667)
+```
+"""
+function quantitiesofinterest(model::EventStudy, n::Integer=1000, mean_effect::Bool=true)
+    local null_dist = generatenulldistribution(model, n, mean_effect)
+    local avg_effect = mean(null_dist)
+    metric = ifelse(mean_effect, mean, sum)
+
+    extremes = length(null_dist[metric(model.abnormal_returns) .>= abs.(null_dist)])
+    pvalue = extremes/n
+
+    stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist])/(n-1))
+
+    return pvalue, stderr
 end
 
 end
