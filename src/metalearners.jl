@@ -7,7 +7,7 @@ using ..CrossValidation: bestsize
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predict
 
-import CausalELM: estimatecausaleffect!, summarize
+import CausalELM: estimatecausaleffect!
 
 """Abstract type for metalearners"""
 abstract type Metalearner end
@@ -364,49 +364,6 @@ function estimatecausaleffect!(x::XLearner)
         ((1 .- x.gᵢ).*predict(x.μχ₁, x.X)))
 
     return x.causal_effect
-end
-
-"""
-    summarise(m)
-
-Return a summary from a metalearner.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = SLearner(X, Y, T)
-julia> estimatecate!(m1)
-[0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
-0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 0.20729633391630703, 
-0.20729633391630697, 0.20729633391630697  …  0.20729633391630703, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697]
-julia> summarise(m1)
-{"Task" => "Regression", Regularized" => "true", "Activation Function" => "relu", 
-"Time Series/Panel Data" => "false", "Validation Metric" => "mse", 
-"Number of Neurons" => "5", "Number of Neurons in Approximator" => "10", 
-"β" => "[0.3100468253]", "Causal Effect: [0.20729633391630697, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 
-0.20729633391630697, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697  …  
-0.20729633391630703, 0.20729633391630697, 0.20729633391630692, 0.20729633391630703, 
-0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
-0.20729633391630697, 0.20729633391630697]}
-```
-"""
-function summarize(m::Metalearner)
-    summary_dict = Dict()
-    nicenames = ["Task", "Regularized", "Activation Function", "Time Series/Panel Data", 
-        "Validation Metric", "Number of Neurons", "Number of Neurons in Approximator", 
-        "Causal Effect"]
-
-    values = [m.task, m.regularized, m.activation, m.temporal, m.validation_metric, m.num_neurons, 
-        m.approximator_neurons, m.causal_effect]
-
-    for (nicename, value) in zip(nicenames, values)
-        summary_dict[nicename] = string(value)
-    end
-
-    return summary_dict
 end
 
 function stage1!(x::XLearner)

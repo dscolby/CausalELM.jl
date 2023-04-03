@@ -5,12 +5,13 @@ estiamtion using Extreme Learning machines.
 module Estimators
 
 using ..ActivationFunctions: relu
+using CausalELM: mean
 using ..Metrics: mse
 using ..CrossValidation: bestsize
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predictcounterfactual!, placebotest, predict
 
-import CausalELM: estimatecausaleffect!, summarize
+import CausalELM: estimatecausaleffect!
 
 """Abstract type for GComputation and DoublyRobust"""
 abstract type  CausalEstimator end
@@ -385,108 +386,6 @@ function estimatecausaleffect!(DRE::DoublyRobust)
     end
     return DRE.causal_effect
 end
-
-"""
-    summarize(study)
-
-Return a summary from an event study.
-
-Examples
-```julia-repl
-julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m1 = EventStudy(X₀, Y₀, X₁, Y₁)
-julia> estimatetreatmenteffect!(m1)
-[0.25714308]
-julia> summarize(m1)
-{"Task" => "Regression", "Regularized" => "true", "Activation Function" => "relu", 
-"Validation Metric" => "mse","Number of Neurons" => "2", "Number of Neurons in Approximator" => "10", 
-"β" => "[0.25714308]"}
-```
-"""
-function summarize(event_study::EventStudy)
-    summary_dict = Dict()
-    nicenames = ["Task", "Regularized", "Activation Function", "Validation Metric", 
-        "Number of Neurons", "Number of Neurons in Approximator", "β"]
-
-    values = [event_study.task, event_study.regularized, event_study.activation, 
-        event_study.validation_metric, event_study.num_neurons, 
-        event_study.approximator_neurons, event_study.β]
-
-    for (nicename, value) in zip(nicenames, values)
-        summary_dict[nicename] = string(value)
-    end
-
-    return summary_dict
-end
-
-"""
-    summarize(study)
-
-Return a summary from an event study.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = GComputation(X, Y, T)
-julia> estimatetreatmenteffect!(m1)
-[0.3100468253]
-julia> summarize(m1)
-{"Task" => "Regression", "Quantity of Interest" => "ATE", Regularized" => "true", 
-"Activation Function" => "relu", "Time Series/Panel Data" => "false", "Validation Metric" => "mse",
-"Number of Neurons" => "5", "Number of Neurons in Approximator" => "10", "β" => "[0.3100468253]",
-"Causal Effect: 0.00589761} 
-```
-"""
-function summarize(g::GComputation)
-    summary_dict = Dict()
-    nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
-        "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
-        "Number of Neurons in Approximator", "β", "Causal Effect"]
-
-    values = [g.task, g.quantity_of_interest, g.regularized, g.activation, g.temporal, 
-        g.validation_metric, g.num_neurons, g.approximator_neurons, g.β, g.causal_effect]
-
-    for (nicename, value) in zip(nicenames, values)
-        summary_dict[nicename] = string(value)
-    end
-
-    return summary_dict
-end
-
-"""
-    summarize(dre)
-
-Return a summary from a doubly robust estimator.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoublyRobust(X, X, Y, T)
-julia> estimatetreatmenteffect!(m1)
-[0.5804032956]
-julia> summarize(m1)
-{"Task" => "Regression", "Quantity of Interest" => "ATE", Regularized" => "true", 
-"Activation Function" => "relu", "Validation Metric" => "mse", "Number of Neurons" => "5", 
-"Number of Neurons in Approximator" => "10", "Causal Effect" = 0.5804032956}
-```
-"""
-function summarize(dre::DoublyRobust)
-    summary_dict = Dict()
-    nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
-        "Validation Metric", "Number of Neurons", "Number of Neurons in Approximator", 
-        "Causal Effect"]
-
-    values = [dre.task, dre.quantity_of_interest, dre.regularized, dre.activation,  
-        dre.validation_metric, dre.num_neurons, dre.approximator_neurons, dre.causal_effect]
-
-    for (nicename, value) in zip(nicenames, values)
-        summary_dict[nicename] = string(value)
-    end
-
-    return summary_dict
-end
-
-mean(x) = sum(x)/size(x, 1)
 
 """
     dre_att!(DRE, x₀, y₀)

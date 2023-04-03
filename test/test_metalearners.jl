@@ -1,18 +1,14 @@
 using CausalELM.Metalearners: SLearner, TLearner, XLearner, estimatecausaleffect!, stage1!, 
-    stage2!, summarize
+    stage2!
 using CausalELM.Models: ExtremeLearningMachine
 using Test
 
 x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 slearner1, slearner2 = SLearner(x, y, t), SLearner(x, y, t, regularized=true)
 estimatecausaleffect!(slearner1); estimatecausaleffect!(slearner2)
-summary1 = summarize(slearner1)
-summary2 = summarize(slearner2)
 
 tlearner1, tlearner2 = TLearner(x, y, t), TLearner(x, y, t, regularized=true)
 estimatecausaleffect!(tlearner1); estimatecausaleffect!(tlearner2)
-summary1t = summarize(tlearner1)
-summary2t = summarize(tlearner2)
 
 xlearner1 = XLearner(x, y, t)
 xlearner1.num_neurons = 5
@@ -24,11 +20,9 @@ stage1!(xlearner2); stage2!(xlearner2)
 
 xlearner3 = XLearner(x, y, t)
 estimatecausaleffect!(xlearner3)
-summary3 = summarize(xlearner3)
 
 xlearner4 = XLearner(x, y, t, regularized=true)
 estimatecausaleffect!(xlearner4)
-summary4 = summarize(xlearner3)
 
 @testset "S-Learner Structure" begin
     @test slearner1.X !== Nothing
@@ -103,32 +97,6 @@ end
     @test xlearner3.causal_effect isa Array{Float64}
     @test typeof(xlearner3.μχ₀) <: ExtremeLearningMachine
     @test typeof(xlearner3.μχ₁) <: ExtremeLearningMachine
-end
-
-@testset "Metalearners Summary" begin
-    for (k, v) in summary1
-        @test v isa String
-    end
-
-    for (k, v) in summary2
-        @test v isa String
-    end
-
-    for (k, v) in summary1t
-        @test v isa String
-    end
-
-    for (k, v) in summary2t
-        @test v isa String
-    end
-
-    for (k, v) in summary3
-        @test v isa String
-    end
-
-    for (k, v) in summary4
-        @test v isa String
-    end
 end
 
 @testset "Task Errors" begin

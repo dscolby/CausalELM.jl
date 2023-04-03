@@ -61,6 +61,8 @@ function estimatecausaleffect!() end
 
 function summarize() end
 
+mean(x) = sum(x)/size(x, 1)
+
 const summarise = summarize
 
 include("activation.jl")
