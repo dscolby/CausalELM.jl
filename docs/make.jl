@@ -1,13 +1,10 @@
 using CausalELM
 using Documenter
-using DocThemeIndigo
 
 DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true)
-indigo = DocThemeIndigo.install(CausalELM)
 
 makedocs(;
     modules=[CausalELM],
-    assets=String["docs/build/assets/indigo.css"],
     authors="Darren Colby <dscolby17@gmail.com> and contributors",
     repo="https://github.com/dscolby/CausalELM.jl/blob/{commit}{path}#{line}",
     sitename="CausalELM.jl",
