@@ -54,7 +54,9 @@ CausalELM.Metalearners.Metalearner
 CausalELM.Metalearners.SLearner
 CausalELM.Metalearners.TLearner
 CausalELM.Metalearners.XLearner
-CausalELM.Metalearners.estimatecausaleffect!
+CausalELM.Metalearners.SLearner.estimatecausaleffect!
+CausalELM.Metalearners.TLearner.estimatecausaleffect!
+CausalELM.Metalearners.XLearner.estimatecausaleffect!
 ```
 
 ## Inference and Summarization
