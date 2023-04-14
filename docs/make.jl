@@ -3,7 +3,7 @@ using Documenter
 using DocThemeIndigo
 
 DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true)
-indigo = DocThemeIndigo.install(MyPackageModule)
+indigo = DocThemeIndigo.install(CausalELM)
 
 makedocs(;
     modules=[CausalELM],
