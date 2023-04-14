@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples · CausalELM.jl</title><script data-outdated-warner src="assets/warner.js"></script><link rel="canonical" href="https://dscolby.github.io/CausalELM.jl/examples.html"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="index.html"><img src="assets/logo.png" alt="CausalELM.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="index.html">CausalELM.jl</a></span></div><form class="docs-search" action="search.html"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="index.html">CausalELM</a></li><li class="is-active"><a class="tocitem" href="examples.html">Examples</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Event-Study-Estimation"><span>Event Study Estimation</span></a></li><li class="toplevel"><a class="tocitem" href="#G-Computation"><span>G-Computation</span></a></li><li class="toplevel"><a class="tocitem" href="#Doubly-Robust-Estimation"><span>Doubly Robust Estimation</span></a></li><li class="toplevel"><a class="tocitem" href="#S-Learning"><span>S-Learning</span></a></li><li class="toplevel"><a class="tocitem" href="#T-Learning"><span>T-Learning</span></a></li><li class="toplevel"><a class="tocitem" href="#X-Learning"><span>X-Learning</span></a></li></ul></li><li><a class="tocitem" href="api.html">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href="examples.html">Examples</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="examples.html">Examples</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/dscolby/CausalELM.jl/blob/main/docs/src/examples.md#" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h1><p>Below are some small examples for estimating causal quantities of interest with CausalELM. Regardless of the estimator, the workflow is the same; get some data, initialize an  estimator, estimate the causal effect of interest, and get a summary of the model.</p><h1 id="Event-Study-Estimation"><a class="docs-heading-anchor" href="#Event-Study-Estimation">Event Study Estimation</a><a id="Event-Study-Estimation-1"></a><a class="docs-heading-anchor-permalink" href="#Event-Study-Estimation" title="Permalink"></a></h1><pre><code class="language-julia hljs"># Generate some data
+X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+
+# Initialize an event study estimator
+m1 = EventStudy(X₀, Y₀, X₁, Y₁)
+
+# Estimate the average treatment effect
+# We can also estimate the ATT of ITE
+estimatecausaleffect!(m1)
+
+# Get a summary
+summarize(m1)</code></pre><h1 id="G-Computation"><a class="docs-heading-anchor" href="#G-Computation">G-Computation</a><a id="G-Computation-1"></a><a class="docs-heading-anchor-permalink" href="#G-Computation" title="Permalink"></a></h1><pre><code class="language-julia hljs"># Create some data with a binary treatment
+X, Y, T =  rand(100, 5), rand(100), [rand()&lt;0.4 for i in 1:100]
+
+# Initialize a model
+m1 = GComputation(X, Y, T)
+
+# Estimate the ATE
+# Note that we could also estimate the ATT or ITE
+estimatecausaleffect!(m1)
+
+# Get a summary that includes a p-value and standard error via randomization inference
+summarize(m1)</code></pre><h1 id="Doubly-Robust-Estimation"><a class="docs-heading-anchor" href="#Doubly-Robust-Estimation">Doubly Robust Estimation</a><a id="Doubly-Robust-Estimation-1"></a><a class="docs-heading-anchor-permalink" href="#Doubly-Robust-Estimation" title="Permalink"></a></h1><pre><code class="language-julia hljs"># Create some data with a binary treatment
+X, Y, T =  rand(100, 5), rand(100), [rand()&lt;0.4 for i in 1:100]
+
+# Initialize a model
+m1 = DoublyRobust(X, Y, T)
+
+# Estimate the ATE
+# Note that we could also estimate the ATT or ITE
+estimatecausaleffect!(m1)
+
+# Get a summary with a p-value and standard error via randomization inference
+summarize(m1)</code></pre><h1 id="S-Learning"><a class="docs-heading-anchor" href="#S-Learning">S-Learning</a><a id="S-Learning-1"></a><a class="docs-heading-anchor-permalink" href="#S-Learning" title="Permalink"></a></h1><pre><code class="language-julia hljs"># Generate data
+X, Y, T =  rand(100, 5), rand(100), [rand()&lt;0.4 for i in 1:100]
+
+# Initialize an S-Learner
+m1 = SLearner(X, Y, T)
+
+# Estimate the CATE
+estimatecausaleffect!(m1)
+
+# Get a summary that includes a p-value and standard via randomization inference
+summarize(m1)</code></pre><h1 id="T-Learning"><a class="docs-heading-anchor" href="#T-Learning">T-Learning</a><a id="T-Learning-1"></a><a class="docs-heading-anchor-permalink" href="#T-Learning" title="Permalink"></a></h1><pre><code class="language-julia hljs"># Generate data
+X, Y, T =  rand(100, 5), rand(100), [rand()&lt;0.4 for i in 1:100]
+
+# Initialize an S-Learner
+m1 = TLearner(X, Y, T)
+
+# Estimate the CATE
+estimatecausaleffect!(m1)
+
+# Get a summary that includes a p-value and standard error via randomization inference
+summarize(m1)</code></pre><h1 id="X-Learning"><a class="docs-heading-anchor" href="#X-Learning">X-Learning</a><a id="X-Learning-1"></a><a class="docs-heading-anchor-permalink" href="#X-Learning" title="Permalink"></a></h1><pre><code class="language-julia hljs"># Generate data
+X, Y, T =  rand(100, 5), rand(100), [rand()&lt;0.4 for i in 1:100]
+
+# Initialize an S-Learner
+m1 = XLearner(X, Y, T)
+
+# Estimate the CATE
+estimatecausaleffect!(m1)
+
+# Get a summary that includes a p-value and standard error via randomization inference
+summarize(m1)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="index.html">« CausalELM</a><a class="docs-footer-nextpage" href="api.html">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Thursday 13 April 2023 23:22">Thursday 13 April 2023</span>. Using Julia version 1.8.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
