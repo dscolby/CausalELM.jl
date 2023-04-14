@@ -1,3 +1,4 @@
+"""Methods for summarization and inference from estimators and metalearners."""
 module Inference
 
 using CausalELM: mean

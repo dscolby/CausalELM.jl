@@ -31,7 +31,7 @@ m1 = GComputation(X, Y, T)
 # Note that we could also estimate the ATT or ITE
 estimatecausaleffect!(m1)
 
-# Get a summary
+# Get a summary that includes a p-value and standard error via randomization inference
 summarize(m1)
 ```
 
@@ -47,7 +47,7 @@ m1 = DoublyRobust(X, Y, T)
 # Note that we could also estimate the ATT or ITE
 estimatecausaleffect!(m1)
 
-# Get a summary
+# Get a summary with a p-value and standard error via randomization inference
 summarize(m1)
 ```
 
@@ -62,7 +62,7 @@ m1 = SLearner(X, Y, T)
 # Estimate the CATE
 estimatecausaleffect!(m1)
 
-# Get a summary
+# Get a summary that includes a p-value and standard via randomization inference
 summarize(m1)
 ```
 
@@ -77,7 +77,7 @@ m1 = TLearner(X, Y, T)
 # Estimate the CATE
 estimatecausaleffect!(m1)
 
-# Get a summary
+# Get a summary that includes a p-value and standard error via randomization inference
 summarize(m1)
 ```
 
@@ -92,6 +92,6 @@ m1 = XLearner(X, Y, T)
 # Estimate the CATE
 estimatecausaleffect!(m1)
 
-# Get a summary
+# Get a summary that includes a p-value and standard error via randomization inference
 summarize(m1)
 ```

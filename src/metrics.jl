@@ -9,7 +9,7 @@ module Metrics
 
 Calculate the mean squared error
 
-See also ['mae'](@ref).
+See also [`mae`](@ref).
 
 Examples
 ```julia-repl
@@ -32,7 +32,7 @@ end
 
 Calculate the mean absolute error
 
-See also ['mse'](@ref).
+See also [`mse`](@ref).
 
 Examples
 ```julia-repl
@@ -77,7 +77,7 @@ end
 
 Calculate the precision for a classification task
 
-See also ['recall'](@ref).
+See also [`recall`](@ref).
 
 Examples
 ```julia-repl
@@ -115,7 +115,7 @@ end
 
 Calculate the recall for a classification task
 
-See also ['precision'](@ref).
+See also [`precision`](@ref).
 
 Examples
 ```julia-repl

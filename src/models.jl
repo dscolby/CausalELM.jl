@@ -246,7 +246,7 @@ Use an ExtremeLearningMachine to predict the counterfactual.
 This should be run with the observed covariates. To use synthtic data for what-if 
     scenarios use predict.
 
-See also ['predict'](@ref).
+See also [`predict`](@ref).
 
 Examples
 ```julia-repl

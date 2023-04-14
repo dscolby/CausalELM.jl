@@ -8,11 +8,12 @@ CausalELM enables Estimation of causal quantities of interest in research design
 counterfactual must be predicted and compared to the observed outcomes. More specifically, 
 CausalELM provides structs and methods to execute event study designs (interupted time 
 series analysis), G-Computation, and doubly robust estimation as well as estimation of the 
-CATE via S-Learning, T-Learning, and X-Learning. In all of these implementations, CausalELM 
-predicts the counterfactuals using an Extreme Learning Machine. In this context, ELMs strike
-a good balance between prediction accuracy, generalization, ease of implementation, speed, 
-and interpretability. In addition, CausalELM provides the ability to incorporate an L2 
-penalty.
+CATE via S-Learning, T-Learning, and X-Learning. Once a causal model has beeen estimated, 
+CausalELM's summarize method provides basic information about the model as well as a p-value 
+and standard error estimated with approximate randomization inference. In all of these 
+implementations, CausalELM predicts the counterfactuals using an Extreme Learning Machine 
+that includes an L2 penalty by default. In this context, ELMs strike a good balance between 
+prediction accuracy, generalization, ease of implementation, speed, and interpretability. 
 
 # Installation
 ```julia
@@ -42,5 +43,6 @@ event_study = EventStudy(x0, y0, x1, y1)
 
 estimatecausaleffect!(event_study)
 
+# Get information about the model including the p-value and standard error
 summarize(event_study)
 ```

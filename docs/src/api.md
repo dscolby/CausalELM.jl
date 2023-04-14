@@ -40,19 +40,29 @@ CausalELM.CrossValidation.bestsize
 ## ATE/ATE/ITT Estimation
 ```@docs
 CausalELM.Estimators
+CausalELM.Estimators.CausalEstimator
 CausalELM.Estimators.EventStudy
 CausalELM.Estimators.GComputation
 CausalELM.Estimators.DoublyRobust
 CausalELM.Estimators.estimatecausaleffect!
-CausalELM.Estimators.summarize
 ```
 
 ## CATE Estimation
 ```@docs
 CausalELM.Metalearners
+CausalELM.Metalearners.Metalearner
 CausalELM.Metalearners.SLearner
 CausalELM.Metalearners.TLearner
 CausalELM.Metalearners.XLearner
+CausalELM.Metalearners.estimatecausaleffect!
+```
+
+## Inference and Summarization
+```@docs
+CausalELM.Inference
+CausalELM.Inference.summarize
+CausalELM.Inference.quantitiesofinterest
+CausalELM.Inference.generatenulldistribution
 ```
 
 ## Validation Metrics
@@ -60,6 +70,7 @@ CausalELM.Metalearners.XLearner
 CausalELM.Metrics
 CausalELM.Metrics.mse
 CausalELM.Metrics.mae
+CausalELM.Metrics.confusionmatrix
 CausalELM.Metrics.accuracy
 CausalELM.Metrics.precision
 CausalELM.Metrics.recall
