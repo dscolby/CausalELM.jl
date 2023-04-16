@@ -16,7 +16,12 @@ makedocs(;
     ),
     pages=[
         "CausalELM" => "index.md",
-        "Examples" => "examples.md",
+        "Guide" => Any[
+            "Event Study Estimation" => "guide/event_study.md",
+            "G-computation" => "guide/gcomputation.md",
+            "Doubly Robust Estimation" => "guide/doublyrobust.md",
+            "Metalearners" => "guide/metalearners.md"
+        ],
         "Reference" => Any[
             "CausalELM" => "reference/api.md",
             "Activation Functions" => "reference/activations.md",
@@ -28,7 +33,6 @@ makedocs(;
             "Base Models" => "reference/base.md"
         ],
         "Contributing" => Any[
-            "contributing/contributing.md",
             "contributing/bug.md",
             "contributing/features.md", 
             "contributing/code.md"

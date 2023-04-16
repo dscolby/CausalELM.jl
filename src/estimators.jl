@@ -219,7 +219,7 @@ mutable struct DoublyRobust <: CausalEstimator
     causal_effect::Float64
 
     """
-DoublyRobust(X, Y, T, task, quantity_of_interest, regularized, activation, 
+DoublyRobust(X, Xₚ, Y, T, task, quantity_of_interest, regularized, activation, 
     validation_metric, min_neurons, max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a doubly robust estimator.
@@ -228,10 +228,10 @@ Note that X, Y, and T must all be floating point numbers.
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoublyRobust(X, Y, T)
-julia> m2 = DoublyRobust(X, Y, T; task="regression")
-julia> m3 = DoublyRobust(X, Y, T; task="regression", quantity_of_interest="ATE)
+julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 4), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = DoublyRobust(X, Xₚ, Y, T)
+julia> m2 = DoublyRobust(X, Xₚ, Y, T; task="regression")
+julia> m3 = DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest="ATE)
 ```
 """
     function DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest="ATE", 
