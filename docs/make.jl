@@ -17,7 +17,16 @@ makedocs(;
     pages=[
         "CausalELM" => "index.md",
         "Examples" => "examples.md",
-        "API" => "api.md",
+        "API" => Any[
+            "CausalELM" => "api.md",
+            "Activation Functions" => "activations.md",
+            "Cross Validation" => "crossval.md",
+            "ATE/ATT/ITT Estimation" => "average.md",
+            "CATE Estimation" => "cate.md",
+            "Inference and Summarization" => "inference.md",
+            "Validation Metrics" => "metrics.md",
+            "Base Models" => "base.md"
+        ],
         "Contributing" => Any[
             "contributing/contributing.md",
             "contributing/bug.md",
