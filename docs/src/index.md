@@ -15,34 +15,25 @@ implementations, CausalELM predicts the counterfactuals using an Extreme Learnin
 that includes an L2 penalty by default. In this context, ELMs strike a good balance between 
 prediction accuracy, generalization, ease of implementation, speed, and interpretability. 
 
+# Comparison with Other Packages
+Other packages, mainly EconML, DoWhy, and CausalML, have similar funcitonality. Beides being 
+written in Julia rather than Python, the main differences between CausalELM and these 
+libraries are:
+
+*   CausalELM uses extreme learning machines rather than tree-based or deep learners
+*   CausalELM performs cross validation during training
+*   CausalELM performs inference via asymptotic randomization inference rather than 
+    bootstrapping
+*   CausalELM does not require you to instantiate a model and pass it into a separate class 
+    or struct for training
+*   CausalELM creates train/test splits automatically
+*   CausalELM does not have external dependencies: all the functions it uses are in the 
+    Julia standard library
+
 # Installation
+CausalELM reuires Julia version 1.7 or greater and an be installed from the REPL using as 
+shown below.
 ```julia
 using Pkg
 Pkg.add("CausalELM")
-```
-
-# Estimating Causal Effects
-```julia
-
-using CausalELM
-
-# 1000 data points with 5 features in pre-event period
-x0 = rand(1000, 5)
-
-# Pre-event outcome
-y0 = rand(1000)
-
-# 200 data points in the post-event period
-x1 = rand(200, 5)
-
-# Pose-event outcome
-y1 = rand(200)
-
-# Instantiate an EventStudy struct
-event_study = EventStudy(x0, y0, x1, y1)
-
-estimatecausaleffect!(event_study)
-
-# Get information about the model including the p-value and standard error
-summarize(event_study)
 ```
