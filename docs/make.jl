@@ -17,7 +17,8 @@ makedocs(;
     pages=[
         "CausalELM" => "index.md",
         "Examples" => "examples.md",
-        "API" => "api.md"
+        "API" => "api.md",
+        "Contributing" => "contributing.md"
     ],
 )
 

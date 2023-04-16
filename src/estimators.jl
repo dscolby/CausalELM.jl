@@ -167,8 +167,8 @@ julia> regularized=true)
 
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
-        elseif quantity_of_interest ∉ ("ATE", "ITE", "ATT")
-            throw(ArgumentError("quantity_of_interest must be ATE, ITE, or ATT"))
+        elseif quantity_of_interest ∉ ("ATE", "ITT", "ATT")
+            throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
         end
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
@@ -189,7 +189,7 @@ mutable struct DoublyRobust <: CausalEstimator
     T::Array{Float64}
     """Either regression or classification"""
     task::String
-    """Either ATE, ITE, or ATT"""
+    """Either ATE, ITT, or ATT"""
     quantity_of_interest::String
     """Whether to use L2 regularization"""
     regularized::Bool
