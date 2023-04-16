@@ -18,14 +18,14 @@ makedocs(;
         "CausalELM" => "index.md",
         "Examples" => "examples.md",
         "API" => Any[
-            "CausalELM" => "api.md",
-            "Activation Functions" => "activations.md",
-            "Cross Validation" => "crossval.md",
-            "ATE/ATT/ITT Estimation" => "average.md",
-            "CATE Estimation" => "cate.md",
-            "Inference and Summarization" => "inference.md",
-            "Validation Metrics" => "metrics.md",
-            "Base Models" => "base.md"
+            "CausalELM" => "API/api.md",
+            "Activation Functions" => "API/activations.md",
+            "Cross Validation" => "API/crossval.md",
+            "ATE/ATT/ITT Estimation" => "API/average.md",
+            "CATE Estimation" => "API/cate.md",
+            "Inference and Summarization" => "API/inference.md",
+            "Validation Metrics" => "API/metrics.md",
+            "Base Models" => "API/base.md"
         ],
         "Contributing" => Any[
             "contributing/contributing.md",
