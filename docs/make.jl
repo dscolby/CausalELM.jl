@@ -18,7 +18,12 @@ makedocs(;
         "CausalELM" => "index.md",
         "Examples" => "examples.md",
         "API" => "api.md",
-        "Contributing" => "contributing.md"
+        "Contributing" => Any[
+            "contributing/contributing.md",
+            "contributing/bug.md",
+            "contributing/features.md", 
+            "contributing/code.md"
+        ]
     ],
 )
 
