@@ -40,8 +40,8 @@ libraries are:
     Julia standard library
 
 ### Installation
-CausalELM reuires Julia version 1.7 or greater and an be installed from the REPL using as 
-shown below.
+CausalELM reuires Julia version 1.7 or greater and an be installed from the REPL as shown 
+below.
 ```julia
 using Pkg
 Pkg.add("CausalELM")
