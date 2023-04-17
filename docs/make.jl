@@ -45,6 +45,6 @@ deploydocs(;
     versions = [
         "stable" => "v0.2.0", 
         "v0.1", 
-        devurl => "https://dscolby.github.io/CausalELM.jl/dev"]
+        devurl => "https://dscolby.github.io/CausalELM.jl/dev"],
     devbranch="main",
 )
