@@ -8,5 +8,10 @@ CausalELM.Estimators.CausalEstimator
 CausalELM.Estimators.EventStudy
 CausalELM.Estimators.GComputation
 CausalELM.Estimators.DoublyRobust
+CausalELM.Metalearners
+CausalELM.Metalearners.Metalearner
+CausalELM.Metalearners.SLearner
+CausalELM.Metalearners.TLearner
+CausalELM.Metalearners.XLearner
 CausalELM.Estimators.estimatecausaleffect!
 ```

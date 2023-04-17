@@ -26,8 +26,7 @@ makedocs(;
             "CausalELM" => "reference/api.md",
             "Activation Functions" => "reference/activations.md",
             "Cross Validation" => "reference/crossval.md",
-            "ATE/ATT/ITT Estimation" => "reference/average.md",
-            "CATE Estimation" => "reference/cate.md",
+            "Casual Effect Estimation" => "reference/estimation.md",
             "Inference and Summarization" => "reference/inference.md",
             "Validation Metrics" => "reference/metrics.md",
             "Base Models" => "reference/base.md"
