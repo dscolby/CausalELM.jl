@@ -12,7 +12,7 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://dscolby.github.io/CausalELM.jl",
         edit_link="main",
-        assets=String["docs/build/assets/themes/indigo.css"],
+        assets=[],
     ),
     pages=[
         "CausalELM" => "index.md",
