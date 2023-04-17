@@ -44,7 +44,6 @@ deploydocs(;
     repo="github.com/dscolby/CausalELM.jl",
     versions = [
         "stable" => "v0.2.0", 
-        "v0.1", 
-        dev => "v0.2.0"],
+        "v0.1"],
     devbranch="main",
 )
