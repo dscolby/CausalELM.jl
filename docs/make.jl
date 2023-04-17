@@ -42,9 +42,6 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/dscolby/CausalELM.jl",
-    versions = [
-        "stable" => "v0.2.0", 
-        "v0.2.0",
-        "v0.1.0"],
-    devbranch="main",
+    devbranch = "main",
+    versions = ["stable" => "v^", "v#.#.#"]
 )
