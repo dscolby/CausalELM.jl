@@ -15,6 +15,15 @@ implementations, CausalELM predicts the counterfactuals using an Extreme Learnin
 that includes an L2 penalty by default. In this context, ELMs strike a good balance between 
 prediction accuracy, generalization, ease of implementation, speed, and interpretability. 
 
+### Features
+*   Simple interface enables estimating causal effects in only a few lines of code
+*   Analytically derived L2 penalty reduces cross validation time and multicollinearity
+*   *Fast automatic cross validation works with longitudinal, panel, and time series data
+*   Includes 13 activation functions and allows user-defined activation functions
+*   Single interface for continous, binary, and categorical outcome variables
+*   Estimation of p-values and standard errors via asymptotic randomization inference
+*   No dependencies outside of the Julia standard library
+
 ### Comparison with Other Packages
 Other packages, mainly EconML, DoWhy, and CausalML, have similar funcitonality. Beides being 
 written in Julia rather than Python, the main differences between CausalELM and these 
