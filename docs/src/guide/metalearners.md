@@ -1,10 +1,10 @@
 # Metalearners
-Instead of knowing the avereage cuasal effect, we might want to know which units benefit and 
-which units lose by being exposed to a treatment. For example, a cahs transfer program might 
-motivate some people to work harder and incentivize tohers to work less. Thus, we might want 
-to know how the cash transfer program affects individuals isntead of it average affect on 
+Instead of knowing the average cuasal effect, we might want to know which units benefit and 
+which units lose by being exposed to a treatment. For example, a cash transfer program might 
+motivate some people to work harder and incentivize others to work less. Thus, we might want 
+to know how the cash transfer program affects individuals instead of it average affect on 
 the population. To do so, we can use metalearners. Depending on the scenario, we may want to 
-use an S-learners, a T-learner, or an X-learner. The basic steps to use all theree 
+use an S-learner, a T-learner, or an X-learner. The basic steps to use all three 
 metalearners are below.
 
 ## Generate Some data

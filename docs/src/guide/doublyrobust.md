@@ -1,5 +1,5 @@
 # Doubly Robust Estimation
-Doubly robust estimation estimates separate models for the treatmen and outcome variables 
+Doubly robust estimation estimates separate models for the treatment and outcome variables 
 and weights the outcome estimates by the treatment estimates. The advantage of doing this is
 that only one of the models has to be specified correctly to produce an unbiased estimate of 
 the causal effect. The main steps for using doubly robust estimation in CausalELM are below.
@@ -10,9 +10,9 @@ the causal effect. The main steps for using doubly robust estimation in CausalEL
 X, Xₚ, Y, T =  rand(100, 5), rand(100, 4), rand(100), [rand()<0.4 for i in 1:100]
 ```
 
-# # Step 1: Initialize a Model
+## # Step 1: Initialize a Model
 The DoublyRobust constructor takes four arguments, an array of covariates for the outcome 
-model, an array of covariates for the treatment model, a vector or outcomes, and a vector of 
+model, an array of covariates for the treatment model, a vector of outcomes, and a vector of 
 treatment statuses.
 ```julia
 m1 = DoublyRobust(X, Xₚ, Y, T)
