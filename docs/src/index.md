@@ -15,7 +15,7 @@ implementations, CausalELM predicts the counterfactuals using an Extreme Learnin
 that includes an L2 penalty by default. In this context, ELMs strike a good balance between 
 prediction accuracy, generalization, ease of implementation, speed, and interpretability. 
 
-# Comparison with Other Packages
+### Comparison with Other Packages
 Other packages, mainly EconML, DoWhy, and CausalML, have similar funcitonality. Beides being 
 written in Julia rather than Python, the main differences between CausalELM and these 
 libraries are:
@@ -30,7 +30,7 @@ libraries are:
 *   CausalELM does not have external dependencies: all the functions it uses are in the 
     Julia standard library
 
-# Installation
+### Installation
 CausalELM reuires Julia version 1.7 or greater and an be installed from the REPL using as 
 shown below.
 ```julia
