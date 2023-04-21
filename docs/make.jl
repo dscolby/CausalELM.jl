@@ -31,11 +31,7 @@ makedocs(;
             "Validation Metrics" => "reference/metrics.md",
             "Base Models" => "reference/base.md"
         ],
-        "Contributing" => Any[
-            "contributing/bug.md",
-            "contributing/features.md", 
-            "contributing/code.md"
-        ]
+        "Contributing" => "contributing.md"
     ],
 )
 
