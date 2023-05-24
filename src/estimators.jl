@@ -375,6 +375,7 @@ function estimatecausaleffect!(DRE::DoublyRobust)
         dre_ate!(DRE, x₁, y₁)
 
     elseif DRE.regularized && DRE.quantity_of_interest === "ATT"
+        ps_model, μ₀_model = dre_att!(DRE, x₀, y₀)
         DRE.causal_effect = mean(((1 .- DRE.T).*(DRE.Y .- DRE.μ₀))/((1 .- DRE.ps) .+ DRE.μ₀))
 
     elseif !DRE.regularized && DRE.quantity_of_interest ∈ ("ATE", "ITE")
@@ -382,6 +383,7 @@ function estimatecausaleffect!(DRE::DoublyRobust)
         dre_ate!(DRE, x₁, y₁)
         
     else
+        ps_model, μ₀_model = dre_att!(DRE, x₀, y₀)
         DRE.causal_effect = mean(((1 .- DRE.T).*(DRE.Y .- DRE.μ₀))/((1 .- DRE.ps).+ DRE.μ₀))
     end
     return DRE.causal_effect
