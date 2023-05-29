@@ -1,13 +1,10 @@
-using CausalELM.CrossValidation: recode, traintest, validate, crossvalidate, bestsize
+using CausalELM.CrossValidation: recode, generatefolds, validate, crossvalidate, bestsize
 using CausalELM.Metrics: mse, accuracy
+using CausalELM.ActivationFunctions: gelu
 using Test
 
-xtrain, ytrain, xtest, ytest = traintest(zeros(20, 2), zeros(20), 5)
-xtrain_ts, ytrain_ts, xtest_ts, ytest_ts = traintest(float.(hcat([1:10;], 11:20)), 
-    [1.0:1.0:10.0;], 5, 1)
-
-xtrain_ts2, ytrain_ts2, xtest_ts2, ytest_ts2 = traintest(float.(hcat([1:10;], 11:20)), 
-    [1.0:1.0:10.0;], 5, 4)
+xfolds, yfolds = generatefolds(zeros(20, 2), zeros(20), 5)
+xfolds_ts, yfolds_ts = generatefolds(float.(hcat([1:10;], 11:20)), [1.0:1.0:10.0;], 5)
 
 @testset "Recode" begin
     @test recode([-0.7, 0.2, 1.1]) == [1, 2, 3]
@@ -15,44 +12,52 @@ xtrain_ts2, ytrain_ts2, xtest_ts2, ytest_ts2 = traintest(float.(hcat([1:10;], 11
     @test recode([1.1, 1.51, 1.8]) == [1, 2, 2]
 end
 
-@testset "Train-test split" begin
-    @test_throws ArgumentError traintest(zeros(5, 2), zeros(5), 6)
-    @test size(xtrain, 1) == 16
-    @test length(ytrain) == 16
-    @test size(xtest, 1) == 4
-    @test size(ytest, 1) == 4
-    @test isa(xtrain, Array)
+@testset "Fold Generation" begin
+    @test_throws ArgumentError generatefolds(zeros(5, 2), zeros(5), 6)
+    @test_throws ArgumentError generatefolds(zeros(5, 2), zeros(5), 5)
+    @test size(xfolds, 1) == 5
+    @test size(xfolds[1], 1) == 4
+    @test size(xfolds[2], 2) == 2
+    @test length(yfolds) == 5
+    @test size(yfolds[1], 1) == 4
+    @test size(yfolds[2], 2) == 1
+    @test isa(xfolds, Array)
+    @test isa(yfolds, Array)
 
     # Time series or panel data
-    @test_throws ArgumentError traintest(zeros(5, 2), zeros(5), 6, 1)
-    @test_throws ArgumentError traintest(zeros(5, 2), zeros(5), 5, 5)
-    @test isa(xtrain_ts, Array)
-    @test xtrain_ts == [1.0 11.0; 2.0 12.0]
-    @test ytrain_ts == [1.0, 2.0]
-    @test xtest_ts == [3. 13.; 4. 14.; 5. 15.; 6. 16.; 7. 17.; 8. 18.; 9. 19.; 10. 20.]
-    @test ytest_ts == [3., 4., 5., 6., 7., 8., 9., 10.]
-    @test xtrain_ts2 == [1. 11.; 2. 12.; 3. 13.; 4. 14.; 5. 15.; 6. 16.; 7. 17.; 8. 18.]
-    @test ytrain_ts2 == [1., 2., 3., 4., 5., 6., 7., 8.]
-    @test xtest_ts2 == [9.0 19.0; 10.0 20.0]
-    @test ytest_ts2 == [9.0, 10.0]
+    @test_throws ArgumentError generatefolds(zeros(5, 2), zeros(5), 6)
+    @test_throws ArgumentError generatefolds(zeros(5, 2), zeros(5), 5)
+    @test size(xfolds_ts, 1) == 5
+    @test size(xfolds_ts[1], 1) == 2
+    @test size(xfolds_ts[2], 2) == 2
+    @test length(yfolds_ts) == 5
+    @test size(yfolds_ts[1], 1) == 2
+    @test size(yfolds_ts[2], 2) == 1
+    @test isa(xfolds_ts, Array)
+    @test isa(yfolds_ts, Array)
 end
 
 @testset "Single cross validation iteration" begin
 
     # Regression: Not TS L2, TS L2
-    @test isa(validate(rand(100, 5), rand(100), 5, mse), Float64)
-    @test isa(validate(rand(100, 5), rand(100), 5, mse, 3), Float64)
-    @test isa(validate(rand(100, 5), rand(100), 5, mse, regularized=false), Float64)
-    @test isa(validate(rand(100, 5), rand(100), 5, mse, 3, regularized=false), Float64)
+    @test isa(validate(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
+    @test isa(validate(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
+    @test isa(validate(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse, 
+        regularized=false), Float64)
+    @test isa(validate(rand(100, 5), rand(100), rand(20, 5), rand(20), 5,  mse, 
+        regularized=false, activation=gelu), Float64)
 
     # Classification: Not TS L2, TS L2
-    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy), Float64)
-    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy, 3), Float64)
-    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy, 
-        regularized=false), Float64)
+    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+        Float64.(rand(20) .> 0.5), 5, accuracy), Float64)
+    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+        Float64.(rand(20) .> 0.5), 5, accuracy), Float64)
+    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+        Float64.(rand(20) .> 0.5), 5, accuracy, regularized=false, activation=gelu), 
+        Float64)
 
-    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy, 3, 
-        regularized=false), Float64)
+    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+        Float64.(rand(20) .> 0.5), 5, accuracy, regularized=false), Float64)
 end
 
 @testset "Cross validation" begin

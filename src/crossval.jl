@@ -52,65 +52,43 @@ julia> recode([1.1, 1.51, 1.8])
 end
 
 """
-    traintest(X, Y, folds)
+    generatefolds(X, Y, folds)
 
-Create a train-test split.
-
-If an iteration is specified, the train test split will be treated as time series/panel
-data.
+Creates folds for cross validation.
 
 Examples
 ```julia-repl
-julia> xtrain, ytrain, xtest, ytest = traintest(zeros(20, 2), zeros(20), 5)
+julia> xfolds, y_folds = generatefolds(zeros(20, 2), zeros(20), 5)
 ```
 """
-function traintest(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
-    msg = "the number of folds must be less than the number of observations"
-    n = size(Y, 1)
+function generatefolds(X::Array{Float64}, Y::Vector{Float64}, folds::Int64)
+    msg = """the number of folds must be less than the number of 
+             observations and greater than or equal to iteration"""
+    n = length(Y)
     
     if folds >= n
         throw(ArgumentError(msg))
     end
 
-    idx, train_size = shuffle(1:n), @fastmath n*(folds-1)/folds
+    fold_setx = Array{Array{Float64, 2}}(undef, folds)
+    fold_sety = Array{Array{Float64, 1}}(undef, folds)
 
-    train_idx, test_idx = view(idx, 1:floor(Int, train_size)), 
-        view(idx, (floor(Int, train_size)+1):n)
+    # Indices to start and stop
+    stops = round.(Int, range(start=1, stop=n, length=folds+1))
 
-    xtrain, ytrain, xtest, ytest = X[train_idx, :], Y[train_idx, :], 
-        X[test_idx, :], Y[test_idx, :]
-        
-    return xtrain, ytrain, xtest, ytest
-end
+    # Indices to use for making folds
+    indices = [s:e-(e < n)*1 for (s, e) in zip(stops[1:end-1], stops[2:end])]
 
-"""
-    traintest(X, Y, folds, iteration)
-
-Create a rolling train-test split for time series/panel data.
-
-An iteration should not be specified for non-time series/panel data.
-
-Examples
-```julia-repl
-julia> xtrain, ytrain, xtest, ytest = traintest(zeros(20, 2), zeros(20), 5, 1)
-```
-"""
-function traintest(X::Array{Float64}, Y::Vector{Float64}, folds::Int64, iteration::Integer)
-    msg = """the number of folds must be less than the number of 
-             observations and greater than or equal to iteration"""
-    n = length(Y)
-    
-    if folds >= n || folds < iteration
-        throw(ArgumentError(msg))
+    for (i, idx) in enumerate(indices)
+        fold_setx[i] = X[idx, :]
+        fold_sety[i] = Y[idx]
     end
 
-    last_idx = floor(Int, (iteration/folds)*n)
-
-    return X[1:last_idx, :], Y[1:last_idx], X[last_idx+1:end, :], Y[last_idx+1:end]
+    return fold_setx, fold_sety
 end
 
 """
-    validate(X, Y, nodes, metric, iteration...; activation, regularized, folds)
+    validate(xtrain, ytrain, xtest, ytest, nodes, metric; activation, regularized)
 
 Calculate a validation metric for a single fold in k-fold cross validation.
 
@@ -121,10 +99,9 @@ julia> validate(x, y, 5, accuracy, 3)
 0.0
 ```
 """
-function validate(X::Array{Float64}, Y::Array{Float64}, nodes::Integer, metric::Function, 
-    iteration...; activation::Function=relu,  regularized::Bool=true, folds::Integer=5)
-
-    xtrain, ytrain, xtest, ytest = traintest(X, Y, folds, iteration...)
+function validate(xtrain::Array{Float64}, ytrain::Array{Float64}, xtest::Array{Float64}, 
+    ytest::Array{Float64}, nodes::Integer, metric::Function; activation::Function=relu,  
+    regularized::Bool=true)
 
     if regularized
         network = RegularizedExtremeLearner(xtrain, ytrain, nodes, activation)
@@ -151,22 +128,20 @@ julia> crossvalidate(x, y, 5, accuracy)
 ```
 """
 function crossvalidate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer, 
-    metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5, 
-    temporal::Bool=false)
+    metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5)
+
     mean_metric = 0.0
-
-    folds = ifelse(temporal, folds+1, folds)
-
+    x_folds, y_folds = generatefolds(X, Y, folds)
+    
     @inbounds for fold in 1:folds
-        
-        # For time series or panel data
-        if temporal && fold < folds
-            mean_metric += validate(X, Y, neurons, metric, fold, activation=activation, 
-                regularized=regularized, folds=folds)
-        else
-            mean_metric += validate(X, Y, neurons, metric, activation=activation, 
-                regularized=regularized, folds=folds)
-        end
+        training_size = sum([size(x_folds[f], 1) for f in 1:folds if f != fold])
+
+        xtrain = reduce(vcat, [x_folds[f] for f in 1:folds if f != fold])
+        ytrain = reduce(vcat, [y_folds[f] for f in 1:folds if f != fold])
+        xtest, ytest = x_folds[fold], y_folds[fold]
+
+        mean_metric += validate(xtrain, ytrain, xtest, ytest, neurons, metric, 
+            activation=activation, regularized=regularized)
     end
     return mean_metric/folds
 end
@@ -202,7 +177,7 @@ function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::
     @inbounds for (i, n) in enumerate(loops)
         if temporal
             act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, 
-                folds, true)
+                folds)
         else
             act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, 
                 folds)
