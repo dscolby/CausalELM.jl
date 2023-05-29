@@ -3,7 +3,7 @@ module Metalearners
 
 using ..ActivationFunctions: relu
 using ..Metrics: mse
-using ..CrossValidation: bestsize
+using ..CrossValidation: bestsize, shuffledata
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predict
 
@@ -72,6 +72,9 @@ julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
             throw(ArgumentError("task must be either regression or classification"))
         end
 
+        # Shuffles the data for cross validation
+        X, Y, T = shuffledata(Float64.(X), Float64.(Y), Float64.(T))
+
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, 0)
@@ -137,6 +140,9 @@ julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
         end
+
+        # Shuffles the data for cross validation
+        X, Y, T = shuffledata(Float64.(X), Float64.(Y), Float64.(T))
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -211,6 +217,9 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
         end
+
+        # Shuffles the data for cross validation
+        X, Y, T = shuffledata(Float64.(X), Float64.(Y), Float64.(T))
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 

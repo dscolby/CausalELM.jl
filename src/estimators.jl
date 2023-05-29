@@ -250,6 +250,9 @@ julia> m3 = DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest=
             throw(ArgumentError("quantity_of_interest must be ATE, ITE, or ATT"))
         end
 
+        # Shuffles the data for cross validation
+        X, Y, T = shuffledata(Float64.(X), Float64.(Y), Float64.(T))
+
         new(Float64.(X), Float64.(Xₚ), Float64.(Y), Float64.(T), task, quantity_of_interest, 
             regularized, activation, validation_metric, min_neurons, max_neurons, folds, 
             iterations, approximator_neurons, 0)

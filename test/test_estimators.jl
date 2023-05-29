@@ -13,6 +13,10 @@ estimatecausaleffect!(g_computer)
 gcomputer_att = GComputation(x, y, t, quantity_of_interest="ATT")
 estimatecausaleffect!(gcomputer_att)
 
+# Mak sure the data isn't shuffled
+g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), rand(10), 
+    Float64.([rand()<0.4 for i in 1:10]), temporal=true)
+
 dr = DoublyRobust(x, x, y, t)
 estimatecausaleffect!(dr)
 
@@ -46,6 +50,12 @@ end
     @test g_computer.X !== Nothing
     @test g_computer.Y !== Nothing
     @test g_computer.T !== Nothing
+
+    # Make sure temporal data isn't shuffled
+    @test g_computer_ts.X[1, 1] === 1.0
+    @test g_computer_ts.X[2, 1] === 2.0
+    @test g_computer_ts.X[9, 2] === 19.0
+    @test g_computer_ts.X[10, 2] === 20.0
 end
 
 @testset "G-Computation Estimation" begin
