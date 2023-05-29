@@ -6,7 +6,7 @@ using CausalELM.CrossValidation: recode, generatefolds, validate, crossvalidate,
 
 xfolds, yfolds = generatefolds(zeros(20, 2), zeros(20), 5)
 xfolds_ts, yfolds_ts = generatefolds(float.(hcat([1:10;], 11:20)), [1.0:1.0:10.0;], 5)
-x, y, t = shuffledata(rand(100, 5), rand(100), [rand()<0.4 for i in 1:100])
+x, y, t = shuffledata(rand(100, 5), rand(100), Float64.([rand()<0.4 for i in 1:100]))
 
 @testset "Recode" begin
     @test recode([-0.7, 0.2, 1.1]) == [1, 2, 3]

@@ -165,8 +165,7 @@ julia> bestsize(rand(100, 5), rand(100), mse, "regression")
 11
 ```
 """
-function bestsize(X::Union{Array{Float64}, Matrix{Float64}}, 
-    Y::Union{Array{Float64}, Matrix{Float64}}, metric::Function, task::String,
+function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::String,
     activation::Function=relu, min_neurons::Integer=1, max_neurons::Integer=100, 
     regularized::Bool=true, folds::Integer=5,  
     iterations::Integer=Int(round(size(X, 1)/10)), 
@@ -210,13 +209,12 @@ julia> shuffledata(x, y, t)
 Float64[0, 0, 1, 1, 0, 1, 0, 0, 1, 0  …  0, 0, 1, 1, 1, 1, 0, 1, 0, 0])
 ```
 """
-function shuffledata(X::Array{Float64}, Y::Array{Float64}, 
-    T::Union{Vector{Float64}, Vector{Bool}})
+function shuffledata(X::Array{Float64}, Y::Array{Float64}, T::Array{Float64})
         idx = randperm(size(X, 1))
         new_data = mapslices.(x->x[idx], [X, Y, T], dims=1)
         X, Y, T = new_data[1], new_data[2], Float64.(new_data[3])
 
-        return X, Y, T
+        return X, vec(Y), vec(T)
 end
 
 end

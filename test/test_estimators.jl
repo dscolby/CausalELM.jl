@@ -6,7 +6,7 @@ x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 event_study = EventStudy(x₀, y₀, x₁, y₁)
 estimatecausaleffect!(event_study)
 
-x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
+x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), [rand()<0.4 for i in 1:100]
 g_computer = GComputation(x, y, t)
 estimatecausaleffect!(g_computer)
 
