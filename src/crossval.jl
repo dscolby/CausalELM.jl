@@ -189,10 +189,32 @@ function bestsize(X::Union{Array{Float64}, Matrix{Float64}},
     return ifelse(startswith(task, "c"), argmax([pred_metrics]), argmin([pred_metrics]))
 end
 
-function shuffledata(X::Matrix{Float64}, Y::Matrix{Float64}, T::Vector{Float64})
+"""
+    shuffledata(X, Y, T)
+
+Shuffles covariates, treatment vector, and outcome vector for cross validation.
+
+Examples
+```julia-repl
+julia> x, y, t = rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> shuffledata(x, y, t)
+([0.6124923085225416 0.2713900065807924 … 0.6094796972512194 0.6067966603192685; 
+0.7186612932571539 0.8047878363606299 … 0.9787878554455594 0.885819212905816; … ; 
+0.773543733306263 0.10880091279797399 … 0.10525512055751185 0.6303472234021711; 
+0.10845217539341823 0.9911071602976902 … 0.014754069216096566 0.5256103389041187], 
+[0.4302689295553531, 0.2396683446618325, 0.7954433314513768, 0.7191098533903124, 
+0.8168563428651753, 0.7064320936729905, 0.048113106979693065, 0.3102938851371281, 
+0.6246380539228858, 0.3510284321966193  …  0.5324022501182528, 0.8354720951777901, 
+0.7526652774981095, 0.3639742621882005, 0.21030903031988923, 0.6936212944871928, 
+0.3910592143534404, 0.15152013651215301, 0.38891692138831735, 0.08827711410802941], 
+Float64[0, 0, 1, 1, 0, 1, 0, 0, 1, 0  …  0, 0, 1, 1, 1, 1, 0, 1, 0, 0])
+```
+"""
+function shuffledata(X::Array{Float64}, Y::Array{Float64}, 
+    T::Union{Vector{Float64}, Vector{Bool}})
         idx = randperm(size(X, 1))
         new_data = mapslices.(x->x[idx], [X, Y, T], dims=1)
-        X, Y, T = new_data[1], new_data[2], new_data[3]
+        X, Y, T = new_data[1], new_data[2], Float64.(new_data[3])
 
         return X, Y, T
 end

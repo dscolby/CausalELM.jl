@@ -1,10 +1,12 @@
-using CausalELM.CrossValidation: recode, generatefolds, validate, crossvalidate, bestsize
 using CausalELM.Metrics: mse, accuracy
 using CausalELM.ActivationFunctions: gelu
 using Test
+using CausalELM.CrossValidation: recode, generatefolds, validate, crossvalidate, bestsize, 
+    shuffledata
 
 xfolds, yfolds = generatefolds(zeros(20, 2), zeros(20), 5)
 xfolds_ts, yfolds_ts = generatefolds(float.(hcat([1:10;], 11:20)), [1.0:1.0:10.0;], 5)
+x, y, t = shuffledata(rand(100, 5), rand(100), [rand()<0.4 for i in 1:100])
 
 @testset "Recode" begin
     @test recode([-0.7, 0.2, 1.1]) == [1, 2, 3]
@@ -76,4 +78,13 @@ end
         "classification") >= 1
 
     @test 100 >= bestsize(rand(100, 5), rand(100), mse, "regression") >= 1
+end
+
+@testset "Data Shuffling" begin
+    @test size(x) === (100, 5)
+    @test x isa Array{Float64}
+    @test size(y, 1) === 100
+    @test y isa Vector{Float64}
+    @test size(t, 1) === 100
+    @test t isa Vector{Float64}
 end
