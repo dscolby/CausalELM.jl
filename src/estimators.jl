@@ -370,42 +370,39 @@ function estimatecausaleffect!(DRE::DoublyRobust)
             false, DRE.iterations, DRE.approximator_neurons)
     end
 
-    if DRE.regularized && DRE.quantity_of_interest ∈ ("ATE", "ITE")
-        ps_model, μ₀_model = dre_att!(DRE, x₀, y₀)
+    if DRE.quantity_of_interest ∈ ("ATE", "ITE")
+        ps_model, μ₀_model = dre_first_stage!(DRE, x₀, y₀)
         dre_ate!(DRE, x₁, y₁)
 
-    elseif DRE.regularized && DRE.quantity_of_interest === "ATT"
-        ps_model, μ₀_model = dre_att!(DRE, x₀, y₀)
+    else DRE.quantity_of_interest === "ATT"
+        ps_model, μ₀_model = dre_first_stage!(DRE, x₀, y₀)
         DRE.causal_effect = mean(((1 .- DRE.T).*(DRE.Y .- DRE.μ₀))/((1 .- DRE.ps) .+ DRE.μ₀))
-
-    elseif !DRE.regularized && DRE.quantity_of_interest ∈ ("ATE", "ITE")
-        ps_model, μ₀_model = dre_att!(DRE, x₀, y₀)
-        dre_ate!(DRE, x₁, y₁)
-        
-    else
-        ps_model, μ₀_model = dre_att!(DRE, x₀, y₀)
-        DRE.causal_effect = mean(((1 .- DRE.T).*(DRE.Y .- DRE.μ₀))/((1 .- DRE.ps).+ DRE.μ₀))
     end
     return DRE.causal_effect
 end
 
 """
-    dre_att!(DRE, x₀, y₀)
+    dre_first_stage!(DRE, x₀, y₀)
 
-Estimate the average treatment for the treated for a boudlby robust estimator.
+Estimate the average treatment for the treated for a doubly robust estimator.
 
 Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = DoublyRobust(X, Y, T)
-julia> dre_att!(m1, x₀, y₀)
+julia> dre_first_stage!(m1, x₀, y₀)
 -0.0003169188577114481s
 ```
 """
-function dre_att!(DRE::DoublyRobust, x₀::Array{Float64}, y₀::Array{Float64})
+function dre_first_stage!(DRE::DoublyRobust, x₀::Array{Float64}, y₀::Array{Float64})
     # Propensity score and separate outcome models
-    ps_model = RegularizedExtremeLearner(DRE.Xₚ, DRE.T, DRE.num_neurons, DRE.activation)
-    μ₀_model = RegularizedExtremeLearner(x₀, y₀, DRE.num_neurons, DRE.activation)
+    if DRE.regularized
+        ps_model = RegularizedExtremeLearner(DRE.Xₚ, DRE.T, DRE.num_neurons, DRE.activation)
+        μ₀_model = RegularizedExtremeLearner(x₀, y₀, DRE.num_neurons, DRE.activation)
+    else
+        ps_model = ExtremeLearner(DRE.Xₚ, DRE.T, DRE.num_neurons, DRE.activation)
+        μ₀_model = ExtremeLearner(x₀, y₀, DRE.num_neurons, DRE.activation)
+    end
 
     fit!(ps_model); fit!(μ₀_model)
     DRE.ps, DRE.μ₀ = predict(ps_model, DRE.X), predict(μ₀_model, DRE.X)
@@ -427,13 +424,17 @@ julia> dre_ate!(m1, x₀, y₀)
 ```
 """
 function dre_ate!(DRE::DoublyRobust, x₁::Array{Float64}, y₁::Array{Float64})
-    μ₁_model = RegularizedExtremeLearner(x₁, y₁, DRE.num_neurons, DRE.activation)
-            fit!(μ₁_model)
-            DRE.μ₁ = predict(μ₁_model, DRE.X)
+    if DRE.regularized
+        μ₁_model = RegularizedExtremeLearner(x₁, y₁, DRE.num_neurons, DRE.activation)
+    else
+        μ₁_model = ExtremeLearner(x₁, y₁, DRE.num_neurons, DRE.activation)
+    end
 
-            E₁ = mean(DRE.T.*(DRE.Y .- DRE.μ₁)/(DRE.ps .+ DRE.μ₁))
-            E₀ = mean(((1 .- DRE.T).*(DRE.Y .- DRE.μ₀))/((1 .- DRE.ps) .+ DRE.μ₀))
-            DRE.causal_effect = E₁ - E₀
+    fit!(μ₁_model); DRE.μ₁ = predict(μ₁_model, DRE.X)
+
+    E₁ = mean(DRE.T.*(DRE.Y .- DRE.μ₁)/(DRE.ps .+ DRE.μ₁))
+    E₀ = mean(((1 .- DRE.T).*(DRE.Y .- DRE.μ₀))/((1 .- DRE.ps) .+ DRE.μ₀))
+    DRE.causal_effect = E₁ - E₀
 end
 
 end

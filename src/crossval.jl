@@ -61,7 +61,7 @@ Examples
 julia> xfolds, y_folds = generatefolds(zeros(20, 2), zeros(20), 5)
 ```
 """
-function generatefolds(X::Array{Float64}, Y::Vector{Float64}, folds::Int64)
+function generatefolds(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
     msg = """the number of folds must be less than the number of 
              observations and greater than or equal to iteration"""
     n = length(Y)

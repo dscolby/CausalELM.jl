@@ -24,6 +24,10 @@ estimatecausaleffect!(dr_noreg)
 dr_att = DoublyRobust(x, x, y, t, quantity_of_interest="ATT")
 estimatecausaleffect!(dr_att)
 
+# Estimating the ATT without regularization
+dr_att_noreg = DoublyRobust(x, x, y, t, regularized=false, quantity_of_interest="ATT")
+estimatecausaleffect!(dr_att_noreg)
+
 @testset "Event Study Structure" begin
     @test event_study.X₀ !== Nothing
     @test event_study.Y₀ !== Nothing
@@ -66,6 +70,11 @@ end
     @test dr_att.X !== Nothing
     @test dr_att.Y !== Nothing
     @test dr_att.T !== Nothing
+
+    # Using the ATT without regularization
+    @test dr_att_noreg.X !== Nothing
+    @test dr_att_noreg.Y !== Nothing
+    @test dr_att_noreg.T !== Nothing
 end
 
 @testset "Doubly Robust Estimation" begin
@@ -80,11 +89,15 @@ end
     @test dr_noreg.μ₁ isa Array{Float64}
     @test dr_noreg.causal_effect isa Float64
 
-    #Using the ATT
+    # Using the ATT
     @test dr_att.ps isa Array{Float64}
     @test dr_att.μ₀ isa Array{Float64}
-    @test dr_att.μ₁ isa Array{Float64}
     @test dr_att.causal_effect isa Float64
+
+    # Using the ATT with no regularization
+    @test dr_att_noreg.ps isa Array{Float64}
+    @test dr_att_noreg.μ₀ isa Array{Float64}
+    @test dr_att_noreg.causal_effect isa Float64
 end
 
 @testset "Quanities of Interest Errors" begin
