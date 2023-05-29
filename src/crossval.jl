@@ -9,7 +9,6 @@ smallest predicted loss or the highest classification metric.
 """
 module CrossValidation
 
-using Random: shuffle
 using ..ActivationFunctions: relu
 using ..Models: ExtremeLearner, RegularizedExtremeLearner, fit!, predict
 
