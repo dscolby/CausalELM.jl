@@ -26,8 +26,6 @@ mutable struct SLearner <: Metalearner
     regularized::Bool
     """Activation function to apply to the outputs from each neuron"""
     activation::Function
-    """Whether the data is of a temporal nature eg. (time series, panel data)"""
-    temporal::Bool
     """Validation metric to use when tuning the number of neurons"""
     validation_metric::Function
     """Minimum number of neurons to test in the hidden layer"""
@@ -50,12 +48,12 @@ mutable struct SLearner <: Metalearner
     causal_effect::Array{Float64}
 
 """
-SLearner(X, Y, T, task, regularized, activation, temporal, validation_metric, min_neurons, 
+SLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
     max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a S-Learner.
 
-Note that X, Y, and T must all be floating point numbers.
+Note that X, Y, and T must all contain floating point numbers.
 
 Examples
 ```julia-repl
@@ -66,7 +64,7 @@ julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
 ```
 """
     function SLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
-        temporal=false, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
@@ -74,7 +72,7 @@ julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
             throw(ArgumentError("task must be either regression or classification"))
         end
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, temporal, 
+        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, 0)
     end
@@ -94,8 +92,6 @@ mutable struct TLearner <: Metalearner
     regularized::Bool
     """Activation function to apply to the outputs from each neuron"""
     activation::Function
-    """Whether the data is of a temporal nature eg. (time series, panel data)"""
-    temporal::Bool
     """Validation metric to use when tuning the number of neurons"""
     validation_metric::Function
     """Minimum number of neurons to test in the hidden layer"""
@@ -118,7 +114,7 @@ mutable struct TLearner <: Metalearner
     causal_effect::Array{Float64}
 
 """
-TLearner(X, Y, T, task, regularized, activation, temporal, validation_metric, min_neurons, 
+TLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
     max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a T-Learner.
@@ -134,7 +130,7 @@ julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
 ```
 """
     function TLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
-        temporal=false, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
@@ -142,7 +138,7 @@ julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
             throw(ArgumentError("task must be either regression or classification"))
         end
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, temporal, 
+        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, 0)
     end
@@ -162,8 +158,6 @@ mutable struct XLearner <: Metalearner
     regularized::Bool
     """Activation function to apply to the outputs from each neuron"""
     activation::Function
-    """Whether the data is of a temporal nature eg. (time series, panel data)"""
-    temporal::Bool
     """Validation metric to use when tuning the number of neurons"""
     validation_metric::Function
     """Minimum number of neurons to test in the hidden layer"""
@@ -194,7 +188,7 @@ mutable struct XLearner <: Metalearner
     causal_effect::Array{Float64}
 
 """
-XLearner(X, Y, T, task, regularized, activation, temporal, validation_metric, min_neurons, 
+XLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
     max_neurons, folds, iterations, approximator_neurons)
 
 Initialize an X-Learner.
@@ -210,7 +204,7 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
 ```
 """
     function XLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
-        temporal=false, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
@@ -218,7 +212,7 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
             throw(ArgumentError("task must be either regression or classification"))
         end
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, temporal, 
+        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, 0)
     end
@@ -257,7 +251,7 @@ function estimatecausaleffect!(s::SLearner)
     # the same number that was found when calling this method.
     if s.num_neurons === 0
         s.num_neurons = bestsize(full_covariates, s.Y, s.validation_metric, s.task, 
-            s.activation, s.min_neurons, s.max_neurons, s.regularized, s.folds, s.temporal, 
+            s.activation, s.min_neurons, s.max_neurons, s.regularized, s.folds,  
             s.iterations, s.approximator_neurons)
     end
 
@@ -305,7 +299,7 @@ function estimatecausaleffect!(t::TLearner)
     # the same number that was found when calling this method.
     if t.num_neurons === 0
         t.num_neurons = bestsize(t.X, t.Y, t.validation_metric, t.task, t.activation, 
-            t.min_neurons, t.max_neurons, t.regularized, t.folds, t.temporal, t.iterations, 
+            t.min_neurons, t.max_neurons, t.regularized, t.folds, t.iterations, 
             t.approximator_neurons)
     end
 
@@ -354,7 +348,7 @@ function estimatecausaleffect!(x::XLearner)
     # the same number that was found when calling this method.
     if x.num_neurons === 0
         x.num_neurons = bestsize(x.X, x.Y, x.validation_metric, x.task, x.activation, 
-            x.min_neurons, x.max_neurons, x.regularized, x.folds, x.temporal, x.iterations, 
+            x.min_neurons, x.max_neurons, x.regularized, x.folds, x.iterations, 
             x.approximator_neurons)
     end
     

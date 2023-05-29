@@ -147,8 +147,8 @@ julia> estimatecate!(m1)
 0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697]
 julia> summarise(m1)
 {"Task" => "Regression", Regularized" => "true", "Activation Function" => "relu", 
-"Time Series/Panel Data" => "false", "Validation Metric" => "mse", 
-"Number of Neurons" => "5", "Number of Neurons in Approximator" => "10", 
+"Validation Metric" => "mse", "Number of Neurons" => "5", 
+"Number of Neurons in Approximator" => "10", 
 "β" => "[0.3100468253]", "Causal Effect: [0.20729633391630697, 0.20729633391630697, 
 0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 
 0.20729633391630697, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697  …  
@@ -160,14 +160,14 @@ julia> summarise(m1)
 """
 function summarize(m::Metalearner, n::Integer=1000)
     summary_dict = Dict()
-    nicenames = ["Task", "Regularized", "Activation Function", "Time Series/Panel Data", 
-        "Validation Metric", "Number of Neurons", "Number of Neurons in Approximator", 
-        "Causal Effect", "Standard Error", "p-value"]
+    nicenames = ["Task", "Regularized", "Activation Function",  "Validation Metric", 
+        "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect", 
+        "Standard Error", "p-value"]
 
     p, stderr = quantitiesofinterest(m, n)
 
-    values = [m.task, m.regularized, m.activation, m.temporal, m.validation_metric, 
-        m.num_neurons, m.approximator_neurons, m.causal_effect, stderr, p]
+    values = [m.task, m.regularized, m.activation, m.validation_metric, m.num_neurons, 
+        m.approximator_neurons, m.causal_effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value

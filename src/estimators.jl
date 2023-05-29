@@ -7,7 +7,7 @@ module Estimators
 using ..ActivationFunctions: relu
 using CausalELM: mean
 using ..Metrics: mse
-using ..CrossValidation: bestsize
+using ..CrossValidation: bestsize, shuffledata
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predictcounterfactual!, placebotest, predict
 
@@ -171,9 +171,14 @@ julia> regularized=true)
             throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
         end
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
-            activation, temporal, validation_metric, min_neurons, max_neurons, folds, 
-            iterations, approximator_neurons, 0)
+        # If not panel or temporal data, randomly shuffle the indices for generating folds
+        if !temporal
+            X, Y, T = shuffledata(Float64.(X), Float64.(Y), Float64.(T))
+        end
+
+        new(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, 0)
     end
 end
 
@@ -271,8 +276,7 @@ function estimatecausaleffect!(study::EventStudy)
     if study.num_neurons === 0
         study.num_neurons = bestsize(study.X₀, study.Y₀, study.validation_metric, 
             study.task, study.activation, study.min_neurons, study.max_neurons, 
-            study.regularized, study.folds, true, study.iterations, 
-            study.approximator_neurons)
+            study.regularized, study.folds, study.iterations, study.approximator_neurons)
     end
 
     if study.regularized
@@ -322,8 +326,8 @@ function estimatecausaleffect!(g::GComputation)
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
     if g.num_neurons === 0
-        g.num_neurons = bestsize(full_covariates, g.Y, g.validation_metric, g.task, 
-            g.activation, g.min_neurons, g.max_neurons, g.regularized, g.folds, g.temporal, 
+        g.num_neurons = bestsize(Array(full_covariates), g.Y, g.validation_metric, g.task, 
+            g.activation, g.min_neurons, g.max_neurons, g.regularized, g.folds,  
             g.iterations, g.approximator_neurons)
     end
 
@@ -367,7 +371,7 @@ function estimatecausaleffect!(DRE::DoublyRobust)
     if DRE.num_neurons === 0
         DRE.num_neurons = bestsize(DRE.X, DRE.Y, DRE.validation_metric, DRE.task, 
             DRE.activation, DRE.min_neurons, DRE.max_neurons, DRE.regularized, DRE.folds, 
-            false, DRE.iterations, DRE.approximator_neurons)
+            DRE.iterations, DRE.approximator_neurons)
     end
 
     if DRE.quantity_of_interest ∈ ("ATE", "ITE")

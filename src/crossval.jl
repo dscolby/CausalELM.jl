@@ -10,6 +10,7 @@ smallest predicted loss or the highest classification metric.
 module CrossValidation
 
 using ..ActivationFunctions: relu
+using Random: randperm
 using ..Models: ExtremeLearner, RegularizedExtremeLearner, fit!, predict
 
 """
@@ -164,9 +165,10 @@ julia> bestsize(rand(100, 5), rand(100), mse, "regression")
 11
 ```
 """
-function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::String,
+function bestsize(X::Union{Array{Float64}, Matrix{Float64}}, 
+    Y::Union{Array{Float64}, Matrix{Float64}}, metric::Function, task::String,
     activation::Function=relu, min_neurons::Integer=1, max_neurons::Integer=100, 
-    regularized::Bool=true, folds::Integer=5, temporal::Bool=false, 
+    regularized::Bool=true, folds::Integer=5,  
     iterations::Integer=Int(round(size(X, 1)/10)), 
     approximator_neurons=Integer=Int(round(size(X, 1)/10)))
     
@@ -174,13 +176,7 @@ function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::
         round.(Int, collect(range(min_neurons, max_neurons, length=iterations)))
    
     @inbounds for (i, n) in enumerate(loops)
-        if temporal
-            act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, 
-                folds)
-        else
-            act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, 
-                folds)
-        end
+        act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, folds)
     end
     
     # Approximate error function using validation error from cross validation
@@ -192,4 +188,13 @@ function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::
 
     return ifelse(startswith(task, "c"), argmax([pred_metrics]), argmin([pred_metrics]))
 end
+
+function shuffledata(X::Matrix{Float64}, Y::Matrix{Float64}, T::Vector{Float64})
+        idx = randperm(size(X, 1))
+        new_data = mapslices.(x->x[idx], [X, Y, T], dims=1)
+        X, Y, T = new_data[1], new_data[2], new_data[3]
+
+        return X, Y, T
+end
+
 end
