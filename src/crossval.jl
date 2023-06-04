@@ -66,22 +66,19 @@ function generatefolds(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
              observations and greater than or equal to iteration"""
     n = length(Y)
     
-    if folds >= n
-        throw(ArgumentError(msg))
-    end
+    if folds >= n throw(ArgumentError(msg)) end
 
     fold_setx = Array{Array{Float64, 2}}(undef, folds)
     fold_sety = Array{Array{Float64, 1}}(undef, folds)
 
-    # Indices to start and stop
+    # Indices to start and stop for each fold
     stops = round.(Int, range(start=1, stop=n, length=folds+1))
 
     # Indices to use for making folds
     indices = [s:e-(e < n)*1 for (s, e) in zip(stops[1:end-1], stops[2:end])]
 
     for (i, idx) in enumerate(indices)
-        fold_setx[i] = X[idx, :]
-        fold_sety[i] = Y[idx]
+        fold_setx[i], fold_sety[i] = X[idx, :], Y[idx]
     end
 
     return fold_setx, fold_sety
@@ -172,13 +169,13 @@ function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::
     approximator_neurons=Integer=Int(round(size(X, 1)/10)))
     
     act, loops = Vector{Float64}(undef, iterations), 
-        round.(Int, collect(range(min_neurons, max_neurons, length=iterations)))
+        round.(Int, range(min_neurons, max_neurons, length=iterations))
    
-    @inbounds for (i, n) in enumerate(loops)
+    @inbounds for (i, n) in pairs(loops)
         act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, folds)
     end
     
-    # Approximate error function using validation error from cross validation
+    # Approximates the error function using validation error from cross validation
     approximator = ExtremeLearner(reshape(loops, :, 1), reshape(act, :, 1), 
         approximator_neurons, relu)
         

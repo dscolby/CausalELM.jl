@@ -1,12 +1,14 @@
 using CausalELM.Estimators: EventStudy, GComputation, DoublyRobust, estimatecausaleffect!, 
-    mean
+    mean, crossfittingsets, firststage!, ate!, predictpropensityscore, 
+    predictcontroloutcomes, predicttreatmentoutcomes
+using CausalELM.Models: ExtremeLearningMachine
 using Test
 
-x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+x₀, y₀, x₁, y₁ = Float64.(rand(1:100, 100, 5)), rand(100), rand(10, 5), rand(10)
 event_study = EventStudy(x₀, y₀, x₁, y₁)
 estimatecausaleffect!(event_study)
 
-x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), [rand()<0.4 for i in 1:100]
+x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 1:100])
 g_computer = GComputation(x, y, t)
 estimatecausaleffect!(g_computer)
 
@@ -18,7 +20,12 @@ g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), rand(10),
     Float64.([rand()<0.4 for i in 1:10]), temporal=true)
 
 dr = DoublyRobust(x, x, y, t)
+dr.num_neurons = 5
+ps_mod, control_mod = firststage!(dr, x₀, x, t, y₀)
+treat_mod = ate!(dr, x₁, y₁)
+dr.num_neurons = 0
 estimatecausaleffect!(dr)
+x_folds, xₚ_folds, y_folds, t_folds = crossfittingsets(dr)
 
 # No regularization
 dr_noreg = DoublyRobust(x, x, y, t, regularized=false)
@@ -87,6 +94,21 @@ end
     @test dr_att_noreg.T !== Nothing
 end
 
+@testset "DRE First Stage" begin
+    @test ps_mod isa ExtremeLearningMachine
+    @test control_mod isa ExtremeLearningMachine
+end
+
+@testset "DRE Second Stage" begin
+    @test treat_mod isa ExtremeLearningMachine
+end
+
+@testset "DRE Predictions" begin
+    @test predictpropensityscore(ps_mod, x₀) isa Array{Float64}
+    @test predictcontroloutcomes(control_mod, x₀) isa Array{Float64}
+    @test predicttreatmentoutcomes(treat_mod, x₀) isa Array{Float64}
+end
+
 @testset "Doubly Robust Estimation" begin
     @test dr.ps isa Array{Float64}
     @test dr.μ₀ isa Array{Float64}
@@ -119,4 +141,15 @@ end
     @test_throws ArgumentError EventStudy(x₀, y₀, x₁, y₁, task="abc")
     @test_throws ArgumentError GComputation(x, y, t, task="abc")
     @test_throws ArgumentError DoublyRobust(x, x, y, t, task="xyz")
+end
+
+@testset "Generating Folds for Cross Fitting" begin
+    @test size(x_folds, 1) === 5
+    @test size(xₚ_folds, 1) === 5
+    @test size(y_folds, 1) === 5
+    @test size(t_folds, 1) === 5
+    @test size(x_folds[1], 1) === 20
+    @test size(xₚ_folds[1], 1) === 20
+    @test size(y_folds[1], 1) === 20
+    @test size(t_folds[1], 1) === 20
 end

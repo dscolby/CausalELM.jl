@@ -240,7 +240,7 @@ julia> m3 = DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest=
 ```
 """
     function DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest="ATE", 
-        regularized=true,activation=relu, validation_metric=mse, min_neurons=1, 
+        regularized=true, activation=relu, validation_metric=mse, min_neurons=1, 
         max_neurons=100, folds=5, iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
@@ -352,73 +352,115 @@ end
 
 Estimate a causal effect of interest using doubly robust estimation.
 
-Unlike other estimators, this method does not support time series or panel data. This method also 
-does not work as well with smaller datasets because it estimates separate outcome models for the 
-treatment and control groups.
+Unlike other estimators, this method does not support time series or panel data. This method 
+also does not work as well with smaller datasets because it estimates separate outcome 
+models for the treatment and control groups.
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoublyRobust(X, Y, T)
+julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = DoublyRobust(X, Xₚ, Y, T)
 julia> estimatecausaleffect!(m1)
 0.31067439
 ```
 """
 function estimatecausaleffect!(DRE::DoublyRobust)
-    x₀, x₁, y₀, y₁ = DRE.X[DRE.T .== 0,:], DRE.X[DRE.T .== 1,:], DRE.Y[DRE.T .== 0], 
-        DRE.Y[DRE.T .== 1]
+    propensity_scores = Array{Array{Float64, 1}}(undef, DRE.folds)
+    control_predictions = Array{Array{Float64, 1}}(undef, DRE.folds)
+    fold_level_effects = Array{Float64}(undef, DRE.folds)
+    X, Xₚ, Y, T = crossfittingsets(DRE)
 
-    # We will not find the best number of neurons after we have already estimated the causal
-    # effect and are getting p-values, confidence intervals, or standard errors. We will use
-    # the same number that was found when calling this method.
+    if DRE.quantity_of_interest ∈ ("ATE", "ITE")
+        treatment_predictions = Array{Array{Float64, 1}}(undef, DRE.folds)
+    end
+
+    # Uses the same number of neurons for all phases of estimation
     if DRE.num_neurons === 0
         DRE.num_neurons = bestsize(DRE.X, DRE.Y, DRE.validation_metric, DRE.task, 
             DRE.activation, DRE.min_neurons, DRE.max_neurons, DRE.regularized, DRE.folds, 
             DRE.iterations, DRE.approximator_neurons)
     end
 
-    if DRE.quantity_of_interest ∈ ("ATE", "ITE")
-        ps_model, μ₀_model = dre_first_stage!(DRE, x₀, y₀)
-        dre_ate!(DRE, x₁, y₁)
+    for fold in 1:DRE.folds 
 
-    else DRE.quantity_of_interest === "ATT"
-        ps_model, μ₀_model = dre_first_stage!(DRE, x₀, y₀)
-        DRE.causal_effect = mean(((1 .- DRE.T).*(DRE.Y .- DRE.μ₀))/((1 .- DRE.ps) .+ DRE.μ₀))
+        # All the data from the folds used for training
+        X_train = reduce(vcat, X[1:end .!== fold])
+        Xₚ_train = reduce(vcat, Xₚ[1:end .!== fold])
+        Y_train = reduce(vcat, Y[1:end .!== fold])
+        T_train = reduce(vcat, T[1:end .!== fold])
+
+        # 0 and 1 subscripts dnote treated and untreated units
+        x₀_train, x₁_train = X_train[T_train .== 0, :], X_train[T_train .== 1, :]
+        y₀_train, y₁_train = Y_train[T_train .== 0], Y_train[T_train .== 1]
+        X_test, Xₚ_test, T_test, Y_test = X[fold], Xₚ[fold], T[fold], Y[fold]
+
+        # Train on K-1 folds
+        ps_model, μ₀_model = firststage!(DRE, x₀_train, Xₚ_train, T_train, y₀_train)
+
+        # Predict on fold K
+        ps_pred = predictpropensityscore(ps_model, Xₚ_test)
+        control_pred = predictcontroloutcomes(μ₀_model, X_test)
+        propensity_scores[fold], control_predictions[fold] = ps_pred, control_pred
+
+        if DRE.quantity_of_interest ∈ ("ATE", "ITE")
+            treatment_model = ate!(DRE, x₁_train, y₁_train)
+            treatment_pred = predicttreatmentoutcomes(treatment_model, X_test)
+            treatment_predictions[fold] = treatment_pred
+            
+            E₁ = mean(T_test.*(Y_test .- treatment_pred)/(ps_pred .+ treatment_pred))
+            E₀ = mean(((1 .-T_test).*(Y_test .-control_pred))/((1 .-ps_pred).+control_pred))
+            fold_level_effects[fold] = E₁ - E₀
+    
+        else DRE.quantity_of_interest === "ATT"
+            numerator = ((1 .- T_test).*(Y_test .- control_pred))
+            fold_level_effects[fold] = mean(numerator/((1 .- ps_pred) .+ control_pred))
+        end
     end
+    DRE.ps = reduce(vcat, propensity_scores)
+    DRE.μ₀ = reduce(vcat, control_predictions)
+
+    # No outcome model for the treatment prediction if estimating ATT
+    if DRE.quantity_of_interest ∈ ("ATE", "ITE")
+        DRE.μ₁ = reduce(vcat, treatment_predictions)
+    end
+
+    DRE.causal_effect = mean(fold_level_effects)
     return DRE.causal_effect
 end
 
 """
-    dre_first_stage!(DRE, x₀, y₀)
+    firststage!(DRE, x₀, xₚ, T, y₀)
 
 Estimate the average treatment for the treated for a doubly robust estimator.
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoublyRobust(X, Y, T)
-julia> dre_first_stage!(m1, x₀, y₀)
--0.0003169188577114481s
+julia> X, Xₚ Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = DoublyRobust(X, Xₚ, Y, T)
+julia> x₀, y₀ = m1.X[m1.T .== 0], m1.Y[m1.T .== 0]
+julia> firststage!(m1, x₀, xₚ, T, y₀)
+(Regularized Extreme Learning Machine with 10 hidden neurons, 
+Regularized Extreme Learning Machine with 10 hidden neurons)
 ```
 """
-function dre_first_stage!(DRE::DoublyRobust, x₀::Array{Float64}, y₀::Array{Float64})
+function firststage!(DRE::DoublyRobust, x₀::Array{Float64}, xₚ::Array{Float64}, 
+    T::Array{Float64}, y₀::Array{Float64})
     # Propensity score and separate outcome models
     if DRE.regularized
-        ps_model = RegularizedExtremeLearner(DRE.Xₚ, DRE.T, DRE.num_neurons, DRE.activation)
+        ps_model = RegularizedExtremeLearner(xₚ, T, DRE.num_neurons, DRE.activation)
         μ₀_model = RegularizedExtremeLearner(x₀, y₀, DRE.num_neurons, DRE.activation)
     else
-        ps_model = ExtremeLearner(DRE.Xₚ, DRE.T, DRE.num_neurons, DRE.activation)
+        ps_model = ExtremeLearner(xₚ, T, DRE.num_neurons, DRE.activation)
         μ₀_model = ExtremeLearner(x₀, y₀, DRE.num_neurons, DRE.activation)
     end
 
     fit!(ps_model); fit!(μ₀_model)
-    DRE.ps, DRE.μ₀ = predict(ps_model, DRE.X), predict(μ₀_model, DRE.X)
 
     return ps_model, μ₀_model
 end
 
 """
-    dre_ate!(DRE, x₁, y₁)
+    ate!(DRE, x₁, y₁)
 
 Estimate the average treatment effect for a boudlby robust estimator.
 
@@ -426,22 +468,119 @@ Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = DoublyRobust(X, Y, T)
-julia> dre_ate!(m1, x₀, y₀)
-0.007359646691854193
+julia> x₁, y₁ = m1.X[m1.T .== 1], m1.Y[m1.T .== 1]
+julia> ate!(m1, x₁, y₁)
+Regularized Extreme Learning Machine with 10 hidden neurons
 ```
 """
-function dre_ate!(DRE::DoublyRobust, x₁::Array{Float64}, y₁::Array{Float64})
+function ate!(DRE::DoublyRobust, x₁::Array{Float64}, y₁::Array{Float64})
     if DRE.regularized
         μ₁_model = RegularizedExtremeLearner(x₁, y₁, DRE.num_neurons, DRE.activation)
     else
         μ₁_model = ExtremeLearner(x₁, y₁, DRE.num_neurons, DRE.activation)
     end
 
-    fit!(μ₁_model); DRE.μ₁ = predict(μ₁_model, DRE.X)
+    fit!(μ₁_model)
 
-    E₁ = mean(DRE.T.*(DRE.Y .- DRE.μ₁)/(DRE.ps .+ DRE.μ₁))
-    E₀ = mean(((1 .- DRE.T).*(DRE.Y .- DRE.μ₀))/((1 .- DRE.ps) .+ DRE.μ₀))
-    DRE.causal_effect = E₁ - E₀
+    return μ₁_model
+end
+
+"""
+    predictpropensityscore(ps_model, x_pred)
+
+Predict the propensity score for an out of sample fold.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> x_pred = rand(20, 5)
+julia> m1 = DoublyRobust(X, Y, T)
+julia> ps_model, _ = firststage!(m1, x₀, y₀)
+julia> predictpropensityscore(ps_model, x_pred)
+```
+"""
+function predictpropensityscore(ps_model::ExtremeLearningMachine, x_pred::Array{Float64})
+    return predict(ps_model, x_pred)
+end
+
+"""
+    predictcontroloutcomes(control_model, x_pred)
+
+Predict the counterfactual control outcomes for an out of sample fold.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> x_pred = rand(20, 5)
+julia> m1 = DoublyRobust(X, Y, T)
+julia> control_model, _ = firststage!(m1, x₀, y₀)
+julia> predictcontroloutcomes(control_model, x_pred)
+```
+"""
+function predictcontroloutcomes(control_model::ExtremeLearningMachine, 
+    x_pred::Array{Float64})
+    return predict(control_model, x_pred)
+end
+
+"""
+    predicttreatmentoutcomes(treatment_model, x_pred)
+
+Predict the counterfactual treatment outcomes for an out of sample fold.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> x_pred = rand(20, 5)
+julia> m1 = DoublyRobust(X, Y, T)
+julia> treatment_model, _ = firststage!(m1, x₀, y₀)
+julia> predicttreatmentoutcomes(treatment_model, x_pred)
+```
+"""
+function predicttreatmentoutcomes(treatment_model::ExtremeLearningMachine, 
+    x_pred::Array{Float64})
+    return predict(treatment_model, x_pred)
+end
+
+"""
+    crossfitting_sets(DRE)
+
+Creates folds for cross fitting a doubly robust estimator.
+
+Examples
+```julia-repl
+julia> xfolds, y_folds = crossfiting_sets(DRE)
+([[0.0 0.0; 0.0 0.0; 0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0; 0.0 0.0], 
+[0.0 0.0; 0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0; … ; 
+0.0 0.0; 0.0 0.0]], [[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 
+0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0]])
+```
+"""
+function crossfittingsets(DRE::DoublyRobust)
+    msg = """the number of folds must be less than the number of 
+             observations and greater than or equal to iteration"""
+    n = length(DRE.Y)
+    
+    if DRE.folds >= n throw(ArgumentError(msg)) end
+
+    # Vectors of arrays for each fold in the covariates, propensity score covariates, 
+    # outcome, and treatment
+    x_set = Array{Array{Float64, 2}}(undef, DRE.folds)
+    xₚ_set = Array{Array{Float64, 2}}(undef, DRE.folds)
+    y_set = Array{Array{Float64, 1}}(undef, DRE.folds)
+    t_set = Array{Array{Float64, 1}}(undef, DRE.folds)
+
+    # Indices to start and stop
+    stops = round.(Int, range(start=1, stop=n, length=DRE.folds+1))
+
+    # Indices to use for making folds
+    indices = [s:e-(e < n)*1 for (s, e) in zip(stops[1:end-1], stops[2:end])]
+
+    for (i, idx) in enumerate(indices)
+        x_set[i], xₚ_set[i] = DRE.X[idx, :], DRE.Xₚ[idx, :]
+        y_set[i], t_set[i] = DRE.Y[idx], DRE.T[idx]
+    end
+
+    return x_set, xₚ_set, y_set, t_set
 end
 
 end
