@@ -407,13 +407,14 @@ function estimatecausaleffect!(DRE::DoublyRobust)
             treatment_pred = predicttreatmentoutcomes(treatment_model, X_test)
             treatment_predictions[fold] = treatment_pred
             
-            E₁ = mean(T_test.*(Y_test .- treatment_pred)/(ps_pred .+ treatment_pred))
-            E₀ = mean(((1 .-T_test).*(Y_test .-control_pred))/((1 .-ps_pred).+control_pred))
+            E₁ = @fastmath mean(T_test.*(Y_test.-treatment_pred)/(ps_pred.+treatment_pred))
+            E₀ = @fastmath mean(((1 .-T_test).*(Y_test.-control_pred))/((1 .-ps_pred) 
+                .+control_pred))
             fold_level_effects[fold] = E₁ - E₀
     
         else DRE.quantity_of_interest === "ATT"
-            numerator = ((1 .- T_test).*(Y_test .- control_pred))
-            fold_level_effects[fold] = mean(numerator/((1 .- ps_pred) .+ control_pred))
+            num = @fastmath ((1 .- T_test).*(Y_test .- control_pred))
+            fold_level_effects[fold] = @fastmath mean(num/((1 .- ps_pred) .+ control_pred))
         end
     end
     DRE.ps = reduce(vcat, propensity_scores)
