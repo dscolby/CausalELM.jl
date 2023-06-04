@@ -206,7 +206,7 @@ mutable struct DoublyRobust <: CausalEstimator
     min_neurons::Int64
     """Maximum number of neurons to test in the hidden layer"""
     max_neurons::Int64
-    """Number of cross validation folds"""
+    """Number of folds to use in cross validation and cross fitting"""
     folds::Int64
     """Number of iterations to perform cross validation"""
     iterations::Int64
@@ -229,7 +229,7 @@ DoublyRobust(X, Xₚ, Y, T, task, quantity_of_interest, regularized, activation,
 
 Initialize a doubly robust estimator.
 
-Note that X, Y, and T must all be floating point numbers.
+Note that X, Xₚ, Y, and T must all contain floating point numbers.
 
 Examples
 ```julia-repl
@@ -493,9 +493,9 @@ Predict the propensity score for an out of sample fold.
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> x_pred = rand(20, 5)
-julia> m1 = DoublyRobust(X, Y, T)
+julia> m1 = DoublyRobust(X, Xₚ, Y, T)
 julia> ps_model, _ = firststage!(m1, x₀, y₀)
 julia> predictpropensityscore(ps_model, x_pred)
 ```
