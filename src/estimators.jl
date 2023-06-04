@@ -250,6 +250,11 @@ julia> m3 = DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest=
             throw(ArgumentError("quantity_of_interest must be ATE, ITE, or ATT"))
         end
 
+        if size(X, 1) !== size(Xₚ, 1)
+            throw(ArgumentError("outcome and treatment covariates must have the same number 
+                of observations"))
+        end
+
         # Shuffles the data for cross validation
         X, Y, T = shuffledata(Float64.(X), Float64.(Y), Float64.(T))
 

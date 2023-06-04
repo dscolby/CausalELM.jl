@@ -143,6 +143,10 @@ end
     @test_throws ArgumentError DoublyRobust(x, x, y, t, task="xyz")
 end
 
+@testset "X and Xₚ Different Size Error" begin
+    @test_throws ArgumentError DoublyRobust(x, rand(50, 5), y, t)
+end
+
 @testset "Generating Folds for Cross Fitting" begin
     @test size(x_folds, 1) === 5
     @test size(xₚ_folds, 1) === 5
