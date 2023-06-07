@@ -28,13 +28,13 @@
 <h2>TL;DR</h2>
 <p>
 CausalELM enables estimation of causal effects in settings where a randomized control trial 
-would be impossible or infeasible. Estimation of the averatge treatment effect (ATE), intent
-to treat effect (ITT), and average treatment effect on the treated (ATT) can be estimated 
+would be impossible or infeasible. Estimation of the average treatment effect (ATE), intent
+to treat effect (ITE), and average treatment effect on the treated (ATT) can be estimated 
 via G-computation or doubly robust estimation (DRE) while abnormal returns can be estimated 
-from an event study design. CausalELM also supports estimation of individual treatment 
-effects or conditional average treatment effects (CATE) vis S-learning, T-learning, and 
-X-learning. The underlying machine learning model for all these estimators is an extreme 
-learning machine or L2 regularized extreme learning machine.
+from an event study. CausalELM also supports estimation of individual treatment effects or 
+conditional average treatment effects (CATE) via S-learning, T-learning, and X-learning. 
+The underlying machine learning model for all these estimators is an extreme learning 
+machine or L2 regularized extreme learning machine.
 </p>
 
 <h2>Extreme Learning Machines and Causal Inference</h2>
@@ -59,21 +59,22 @@ patients recieved the treatment, and compares it to the predictions of the outco
 of the patients recieved the treatment. Doubly robust estimation (DRE) takes a similar 
 approach but also models the treatment mechanism and uses it to adjust the initial 
 estimates. The advantage of DRE is that only the model of the outcome OR the model of the 
-treatment mechanism has to be correctly specified to yield unbiased estimates. Furthermore, 
-we might be more interested in how much an individual can benefit from a treatment, as 
-opposed to the average treatment effect. Depending on the characteristics of our data, we 
-can use metalearning methods such as S-Learning, T-Learning, or X-Learning to do so. In all 
-of these scenarios, how well we estimate the treatment effect depends on how well we can 
-predict the counterfactual. The most common approaches to getting accurate predictions of 
-the counterfactual are to use a super learner, which combines multiple machine learning 
-methods and requires extensive tuning, or tree-based methods, which also have large 
-hyperparameter spaces. In these cases hyperparameter tuning can be computationally expensive 
-and requires researchers to make arbitrary decisions about how many and what models to use, 
-how much regularization to apply, the depth of trees, interaction effects, etc. On the other 
-hands, ELMs are able to achieve good accuracy on a variety of regression and classification 
-tasks and generalize well. Moreover, they have a much smaller hyperparameter space to tune 
-and are fast to train becasue they do not use backpropagation to update their weights like 
-conventional neural networks.
+treatment mechanism has to be correctly specified to yield unbiased estimates. The DRE 
+implementation in CausalELM.jl also overcomes bias from overfitting by employing cross 
+fitting. Furthermore, we might be more interested in how much an individual can benefit from 
+a treatment, as opposed to the average treatment effect. Depending on the characteristics of 
+our data, we can use metalearning methods such as S-Learning, T-Learning, or X-Learning to 
+do so. In all of these scenarios, how well we estimate the treatment effect depends on how 
+well we can predict the counterfactual. The most common approaches to getting accurate 
+predictions of the counterfactual are to use a super learner, which combines multiple 
+machine learning methods and requires extensive tuning, or tree-based methods, which also 
+have large hyperparameter spaces. In these cases hyperparameter tuning can be 
+computationally expensive and requires researchers to make arbitrary decisions about how 
+many and what models to use, how much regularization to apply, the depth of trees, 
+interaction effects, etc. On the other hands, ELMs are able to achieve good accuracy on a 
+variety of regression and classification tasks and generalize well. Moreover, they have a 
+much smaller hyperparameter space to tune and are fast to train becasue they do not use 
+backpropagation to update their weights like conventional neural networks.
 </p>
 
 <h2>CausalELM Features</h2>
