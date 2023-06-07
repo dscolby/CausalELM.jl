@@ -41,7 +41,7 @@ libraries are:
 
 ### Installation
 CausalELM requires Julia version 1.7 or greater and can be installed from the REPL as shown 
-below.
+below. 
 ```julia
 using Pkg
 Pkg.add("CausalELM")
