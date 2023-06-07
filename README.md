@@ -60,7 +60,7 @@ of the patients recieved the treatment. Doubly robust estimation (DRE) takes a s
 approach but also models the treatment mechanism and uses it to adjust the initial 
 estimates. The advantage of DRE is that only the model of the outcome OR the model of the 
 treatment mechanism has to be correctly specified to yield unbiased estimates. The DRE 
-implementation in CausalELM.jl also overcomes bias from overfitting by employing cross 
+implementation in CausalELM. also overcomes bias from overfitting by employing cross 
 fitting. Furthermore, we might be more interested in how much an individual can benefit from 
 a treatment, as opposed to the average treatment effect. Depending on the characteristics of 
 our data, we can use metalearning methods such as S-Learning, T-Learning, or X-Learning to 
