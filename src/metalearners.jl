@@ -53,6 +53,11 @@ SLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons,
 
 Initialize a S-Learner.
 
+For an overview of S-Learners and other metalearners see:
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
 Note that X, Y, and T must all contain floating point numbers.
 
 Examples
@@ -121,6 +126,11 @@ TLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons,
     max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a T-Learner.
+
+For an overview of T-Learners and other metalearners see:
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
 
 Note that X, Y, and T must all be floating point numbers.
 
@@ -198,6 +208,11 @@ XLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons,
     max_neurons, folds, iterations, approximator_neurons)
 
 Initialize an X-Learner.
+
+For an overview of X-Learners and other metalearners see:
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
 
 Note that X, Y, and T must all be floating point numbers.
 
@@ -283,7 +298,6 @@ end
 Estimate the CATE using a T-Learner.
 
 For an overview of meatlearning, including T-Learners see:
-
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
@@ -333,7 +347,6 @@ end
 Estimate the CATE using an X-Learner.
 
 For an overview of meatlearning, including X-Learners see:
-
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.

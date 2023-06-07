@@ -74,7 +74,12 @@ mutable struct EventStudy
     EventStudy(X₀, Y₀, X₁, Y₁; task, regularized, activation, validation_metric, 
         min_neurons, max_neurons, folds, iterations, approximator_neurons)
 
-Initialize an event study estimator, also known as interrupted time series analysis.
+Initialize an event study estimator, as commonly used in finance (also known as interrupted 
+time series analysis). 
+
+For an overview see:
+    MacKinlay, A. Craig. "Event studies in economics and finance." Journal of economic 
+    literature 35, no. 1 (1997): 13-39.
 
 Note that X₀, Y₀, X₁, and Y₁ must all be floating point numbers.
 
@@ -147,6 +152,13 @@ GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, tempo
     validation_metric, min_neurons, max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a G-Computation estimator.
+
+For a good overview of G-Computation see:
+    Chatton, Arthur, Florent Le Borgne, Clémence Leyrat, Florence Gillaizeau, Chloé 
+    Rousseau, Laetitia Barbin, David Laplaud, Maxime Léger, Bruno Giraudeau, and Yohann 
+    Foucher. "G-computation, propensity score-based methods, and targeted maximum likelihood 
+    estimator for causal inference with different covariates sets: a comparative simulation 
+    study." Scientific reports 10, no. 1 (2020): 9219.
 
 Note that X, Y, and T must all be floating point numbers.
 
@@ -227,7 +239,12 @@ mutable struct DoublyRobust <: CausalEstimator
 DoublyRobust(X, Xₚ, Y, T, task, quantity_of_interest, regularized, activation, 
     validation_metric, min_neurons, max_neurons, folds, iterations, approximator_neurons)
 
-Initialize a doubly robust estimator.
+Initialize a doubly robust estimator with cross fitting.
+
+For more information see:
+    Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
+    Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
+    structural parameters." (2018): C1-C68.
 
 Note that X, Xₚ, Y, and T must all contain floating point numbers.
 
@@ -307,11 +324,11 @@ end
 
 Estimate a causal effect of interest using G-Computation.
 
-If treatents are administered at multiple time periods, the effect will be estimated as the average
-difference between the outcome of being treated in all periods and being treated in no periods.
-For example, given that individuals 1, 2, ..., i ∈ I recieved either a treatment or a placebo in p 
-different periods, the model would estimate the average treatment effect as 
-E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0, Xₚ].
+If treatents are administered at multiple time periods, the effect will be estimated as the 
+average difference between the outcome of being treated in all periods and being treated in 
+no periods.For example, given that individuals 1, 2, ..., i ∈ I recieved either a treatment 
+or a placebo in p different periods, the model would estimate the average treatment effect 
+as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0, Xₚ].
 
 Examples
 ```julia-repl
@@ -394,7 +411,7 @@ function estimatecausaleffect!(DRE::DoublyRobust)
         Y_train = reduce(vcat, Y[1:end .!== fold])
         T_train = reduce(vcat, T[1:end .!== fold])
 
-        # 0 and 1 subscripts dnote treated and untreated units
+        # 0 and 1 subscripts denote treated and untreated units
         x₀_train, x₁_train = X_train[T_train .== 0, :], X_train[T_train .== 1, :]
         y₀_train, y₁_train = Y_train[T_train .== 0], Y_train[T_train .== 1]
         X_test, Xₚ_test, T_test, Y_test = X[fold], Xₚ[fold], T[fold], Y[fold]
@@ -437,7 +454,8 @@ end
 """
     firststage!(DRE, x₀, xₚ, T, y₀)
 
-Estimate the average treatment for the treated for a doubly robust estimator.
+Estimate the average treatment for the treated for a doubly robust estimator with cross 
+fitting.
 
 Examples
 ```julia-repl
@@ -468,7 +486,7 @@ end
 """
     ate!(DRE, x₁, y₁)
 
-Estimate the average treatment effect for a boudlby robust estimator.
+Estimate the average treatment effect for a doubly robust estimator with cross fitting.
 
 Examples
 ```julia-repl
@@ -494,7 +512,7 @@ end
 """
     predictpropensityscore(ps_model, x_pred)
 
-Predict the propensity score for an out of sample fold.
+Predict the propensity score for an out of sample fold for the doubly robust estimator.
 
 Examples
 ```julia-repl
@@ -581,7 +599,7 @@ function crossfittingsets(DRE::DoublyRobust)
     # Indices to use for making folds
     indices = [s:e-(e < n)*1 for (s, e) in zip(stops[1:end-1], stops[2:end])]
 
-    for (i, idx) in enumerate(indices)
+    for (i, idx) in pairs(indices)
         x_set[i], xₚ_set[i] = DRE.X[idx, :], DRE.Xₚ[idx, :]
         y_set[i], t_set[i] = DRE.Y[idx], DRE.T[idx]
     end

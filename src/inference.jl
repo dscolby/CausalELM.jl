@@ -13,6 +13,12 @@ import CausalELM: summarize
 
 Return a summary from an event study.
 
+p-values and standard errors are estimated using approximate randomization inference that
+permutes the time of the intervention.
+
+For a primer on randomization inference see: 
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
 Examples
 ```julia-repl
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
@@ -58,6 +64,11 @@ end
 
 Return a summary from a G-Computation estimator.
 
+p-values and standard errors are estimated using approximate randomization inference.
+
+For a primer on randomization inference see: 
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
 Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
@@ -96,6 +107,11 @@ end
     summarize(dre, n)
 
 Return a summary from a doubly robust estimator.
+
+p-values and standard errors are estimated using approximate randomization inference.
+
+For a primer on randomization inference see: 
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
 Examples
 ```julia-repl
