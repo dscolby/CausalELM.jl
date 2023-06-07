@@ -9,6 +9,10 @@ predict what would have happened. The abnormal returns are just the difference o
 difference between the predicted post-event outcomes and the actual post-event outcomes. 
 Estimating an event study in CausalELM consists of three steps.
 
+For a deeper dive see:
+    MacKinlay, A. Craig. "Event studies in economics and finance." Journal of economic 
+    literature 35, no. 1 (1997): 13-39.
+
 ## Generate Data
 ```julia
 X₀, Y₀, X₁, Y₁ =  rand(1000, 5), rand(1000), rand(100, 5), rand(100)

@@ -2,7 +2,13 @@
 Doubly robust estimation estimates separate models for the treatment and outcome variables 
 and weights the outcome estimates by the treatment estimates. The advantage of doing this is
 that only one of the models has to be specified correctly to produce an unbiased estimate of 
-the causal effect. The main steps for using doubly robust estimation in CausalELM are below.
+the causal effect. This implementation also uses cross fitting to avoid bias from 
+overfitting. The main steps for using doubly robust estimation in CausalELM are below.
+
+For more information see:
+    Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
+    Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
+    structural parameters." (2018): C1-C68.
 
 ## Generate Data
 ```julia

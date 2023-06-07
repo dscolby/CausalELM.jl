@@ -7,6 +7,11 @@ the population. To do so, we can use metalearners. Depending on the scenario, we
 use an S-learner, a T-learner, or an X-learner. The basic steps to use all three 
 metalearners are below.
 
+For a deeper dive on metalearners see:
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
 ## Generate Some data
 ```julia
 X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
