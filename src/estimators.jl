@@ -1,6 +1,6 @@
 """
-Estimate causal effects with event study designs, G-computation, and doubly robust 
-estiamtion using Extreme Learning machines.
+Estimate causal effects with interrupted time series analysis, G-computation, and doubly 
+robust estimation using Extreme Learning machines.
    """
 module Estimators
 
@@ -16,8 +16,8 @@ import CausalELM: estimatecausaleffect!
 """Abstract type for GComputation and DoublyRobust"""
 abstract type  CausalEstimator end
 
-"""Container for the results of an event study"""
-mutable struct EventStudy
+"""Container for the results of an interrupted time series analysis"""
+mutable struct InterruptedTimeSeries
     """Covariates for the pre-event period"""
     X₀::Array{Float64}
     """Outcomes for the pre-event period"""
@@ -61,7 +61,7 @@ mutable struct EventStudy
     interval during the post-treatment period
 
     """
-    abnormal_returns::Array{Float64}
+    Δ::Array{Float64}
     """
     Predictions of the counterfactual using covariates from the pre-treatment period and the 
     post-treatment period. If they are significantly different, there is likely an omitted 
@@ -71,28 +71,29 @@ mutable struct EventStudy
     placebo_test::Tuple{Vector{Float64}, Vector{Float64}}
 
 """
-    EventStudy(X₀, Y₀, X₁, Y₁; task, regularized, activation, validation_metric, 
+    InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task, regularized, activation, validation_metric, 
         min_neurons, max_neurons, folds, iterations, approximator_neurons)
 
-Initialize an event study estimator, as commonly used in finance (also known as interrupted 
-time series analysis). 
+Initialize an interrupted time series estimator. 
 
-For an overview see:
-    MacKinlay, A. Craig. "Event studies in economics and finance." Journal of economic 
-    literature 35, no. 1 (1997): 13-39.
+For a simple linear regression-based tutorial on interrupted time series analysis see:
+    Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
+    regression for the evaluation of public health interventions: a tutorial." International 
+    journal of epidemiology 46, no. 1 (2017): 348-355.
 
 Note that X₀, Y₀, X₁, and Y₁ must all be floating point numbers.
 
 Examples
 ```julia-repl
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m1 = EventStudy(X₀, Y₀, X₁, Y₁)
-julia> m2 = EventStudy(X₀, Y₀, X₁, Y₁; task="regression")
-julia> m3 = EventStudy(X₀, Y₀, X₁, Y₁; task="regression", regularized=true)
-julia> m4 = EventStudy(X₀, Y₀, X₁, Y₁; task="regression", regularized=true, activation=relu)
+julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+julia> m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression")
+julia> m3 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression", regularized=true)
+julia> m4 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression", regularized=true, 
+           activation=relu)
 ```
 """
-    function EventStudy(X₀, Y₀, X₁, Y₁; task="regression", regularized=true, 
+    function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression", regularized=true, 
         activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X₀, 1)/10)), 
         approximator_neurons=Int(round(size(X₀, 1)/10)))
@@ -282,41 +283,39 @@ julia> m3 = DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest=
 end
 
 """
-    estimatecausaleffect!(study)
+    estimatecausaleffect!(its)
 
-Estimate the abnormal returns in an event study.
+Estimate the effect of an event relative to a predicted counterfactual.
 
 Examples
 ```julia-repl
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m1 = EventStudy(X₀, Y₀, X₁, Y₁)
+julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimatecausaleffect!(m1)
 0.25714308
 ```
 """
-function estimatecausaleffect!(study::EventStudy)
+function estimatecausaleffect!(its::InterruptedTimeSeries)
     # We will not find the best number of neurons after we have already estimated the causal
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
-    if study.num_neurons === 0
-        study.num_neurons = bestsize(study.X₀, study.Y₀, study.validation_metric, 
-            study.task, study.activation, study.min_neurons, study.max_neurons, 
-            study.regularized, study.folds, study.iterations, study.approximator_neurons)
+    if its.num_neurons === 0
+        its.num_neurons = bestsize(its.X₀, its.Y₀, its.validation_metric, its.task, 
+            its.activation, its.min_neurons, its.max_neurons, its.regularized, its.folds, 
+            its.iterations, its.approximator_neurons)
     end
 
-    if study.regularized
-        study.learner = RegularizedExtremeLearner(study.X₀, study.Y₀, study.num_neurons, 
-            study.activation)
+    if its.regularized
+        its.learner = RegularizedExtremeLearner(its.X₀, its.Y₀, its.num_neurons, 
+            its.activation)
     else
-        study.learner = ExtremeLearner(study.X₀, study.Y₀, study.num_neurons, 
-            study.activation)
+        its.learner = ExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
     end
 
-    study.β, study.Ŷ = fit!(study.learner), predictcounterfactual!(study.learner, study.X₁)
-    study.abnormal_returns, study.placebo_test = study.Ŷ - study.Y₁, 
-        placebotest(study.learner)
+    its.β, its.Ŷ = fit!(its.learner), predictcounterfactual!(its.learner, its.X₁)
+    its.Δ, its.placebo_test = its.Ŷ - its.Y₁, placebotest(its.learner)
 
-    return study.abnormal_returns
+    return its.Δ
 end
 
 """

@@ -17,7 +17,7 @@ makedocs(;
     pages=[
         "CausalELM" => "index.md",
         "Guide" => Any[
-            "Event Study Estimation" => "guide/event_study.md",
+            "Interrupted Time Series Estimation" => "guide/its.md",
             "G-computation" => "guide/gcomputation.md",
             "Doubly Robust Estimation" => "guide/doublyrobust.md",
             "Metalearners" => "guide/metalearners.md"
@@ -38,5 +38,5 @@ makedocs(;
 deploydocs(;
     repo="github.com/dscolby/CausalELM.jl",
     devbranch = "main",
-    versions = ["stable" => "v^", "v#.#"]
+    versions = ["stable" => "v^", "v#.#.#"]
 )

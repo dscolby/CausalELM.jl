@@ -3,15 +3,15 @@ module Inference
 
 using CausalELM: mean
 using ..Metalearners: Metalearner
-using ..Estimators: CausalEstimator, EventStudy, GComputation, DoublyRobust, 
+using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, DoublyRobust, 
     estimatecausaleffect!, mean
 
 import CausalELM: summarize
 
 """
-    summarize(study, mean_effect)
+    summarize(its, mean_effect)
 
-Return a summary from an event study.
+Return a summary from an interrupted time series estimator.
 
 p-values and standard errors are estimated using approximate randomization inference that
 permutes the time of the intervention.
@@ -22,7 +22,7 @@ For a primer on randomization inference see:
 Examples
 ```julia-repl
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m1 = EventStudy(X₀, Y₀, X₁, Y₁)
+julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimatetreatmenteffect!(m1)
 [0.25714308]
 julia> summarize(m1)
@@ -32,25 +32,24 @@ julia> summarize(m1)
 "Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
 ```
 """
-function summarize(event_study::EventStudy, nsplits::Integer=1000, mean_effect::Bool=true)
-    if !isdefined(event_study, :abnormal_returns)
+function summarize(its::InterruptedTimeSeries, nsplits::Integer=1000, 
+    mean_effect::Bool=true)
+    if !isdefined(its, :Δ)
         throw(ErrorException("call estimatecausaleffect! before calling summarize"))
     end
 
 
-    effect = ifelse(mean_effect, mean(event_study.abnormal_returns), 
-        sum(event_study.abnormal_returns))
+    effect = ifelse(mean_effect, mean(its.Δ), sum(its.Δ))
 
-    p, stderr = quantitiesofinterest(event_study, nsplits, mean_effect)
+    p, stderr = quantitiesofinterest(its, nsplits, mean_effect)
 
     summary_dict = Dict()
     nicenames = ["Task", "Regularized", "Activation Function", "Validation Metric", 
         "Number of Neurons", "Number of Neurons in Approximator", "β", "Causal Effect", 
         "Standard Error", "p-value"]
 
-    values = [event_study.task, event_study.regularized, event_study.activation, 
-        event_study.validation_metric, event_study.num_neurons, 
-        event_study.approximator_neurons, event_study.β, effect, stderr, p]
+    values = [its.task, its.regularized, its.activation, its.validation_metric, 
+        its.num_neurons, its.approximator_neurons, its.β, effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value
@@ -235,12 +234,12 @@ end
 """
     generatenulldistribution(e, n, mean_effect)
 
-Generate a null distribution for the treatment effect in an event study design. By default, 
-this method generates a null distribution of mean differences. To generate a null 
-distribution of cummulative differences, set the mean_effect argument to false.
+Generate a null distribution for the treatment effect in an interrupted time series 
+analysis. By default, this method generates a null distribution of mean differences. To 
+generate a null distribution of cummulative differences, set the mean_effect argument to false.
 
 Instead of randomizing the assignment of units to the treamtent or control group, this 
-method generates the null distribution by reestimating the event study with the intervention
+method generates the null distribution by reestimating the time series with the intervention
 set to n splits at even intervals within the total study duration.
 
 Note that lowering the number of iterations increases the probability of failing to reject
@@ -252,17 +251,17 @@ For a primer on randomization inference see:
 Examples
 ```julia-repl
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
-julia> event_study = EventStudy(x₀, y₀, x₁, y₁)
-julia> estimatecausaleffect!(event_study)
-julia> generatenulldistribution(event_study, 10)
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimatecausaleffect!(its)
+julia> generatenulldistribution(its, 10)
 [-0.5012456678829079, -0.33790650529972194, -0.2534340182760628, -0.21030239864895905, 
 -0.11672915615117885, -0.08149441936166794, -0.0685134758182695, -0.06217013151235991, 
 -0.05905529159312335, -0.04927743270606937]
 ```
 """
-function generatenulldistribution(e::EventStudy, nsplits::Integer=1000, 
+function generatenulldistribution(its::InterruptedTimeSeries, nsplits::Integer=1000, 
     mean_effect::Bool=true)
-    local model = deepcopy(e)
+    local model = deepcopy(its)
     nobs = size(model.Y₀, 1) + size(model.Y₁, 1)
     results = Vector{Float64}(undef, nsplits)
     nsplits -= 1
@@ -276,15 +275,14 @@ function generatenulldistribution(e::EventStudy, nsplits::Integer=1000,
 
         # Find the index to split at the nth interval
         split_idx = floor(Int, iter*(nobs/nsplits))-1
-        X, Y = vcat(e.X₀, e.X₁), vcat(e.Y₀, e.Y₁)
+        X, Y = vcat(its.X₀, its.X₁), vcat(its.Y₀, its.Y₁)
         x₀, y₀ = X[1:split_idx, :], Y[1:split_idx]
         x₁, y₁ = X[split_idx+1:end, :], Y[split_idx+1:end]
 
         # Reestimate the model with the intervention now at the nth interval
         model.X₀, model.Y₀, model.X₁, model.Y₁ = x₀, y₀, x₁, y₁
         estimatecausaleffect!(model)
-        results[iter] = ifelse(mean_effect, mean(model.abnormal_returns), 
-            sum(model.abnormal_returns))
+        results[iter] = ifelse(mean_effect, mean(model.Δ), sum(model.Δ))
     end
     return sort(results)
 end
@@ -344,17 +342,17 @@ For a primer on randomization inference see:
 Examples
 ```julia-repl
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
-julia> event_study = EventStudy(x₀, y₀, x₁, y₁)
-julia> estimatecausaleffect!(event_study)
-julia> quantitiesofinterest(event_study, 10)
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimatecausaleffect!(its)
+julia> quantitiesofinterest(its, 10)
 (0.0, 0.07703275541001667)
 ```
 """
-function quantitiesofinterest(model::EventStudy, nsplits::Integer=1000, 
+function quantitiesofinterest(model::InterruptedTimeSeries, nsplits::Integer=1000, 
     mean_effect::Bool=true)
     local null_dist = generatenulldistribution(model, nsplits, mean_effect)
     local metric = ifelse(mean_effect, mean, sum)
-    local effect = metric(model.abnormal_returns)
+    local effect = metric(model.Δ)
 
     extremes = length(null_dist[effect .>= abs.(null_dist)])
     pvalue = extremes/nsplits

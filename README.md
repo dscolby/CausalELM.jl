@@ -30,11 +30,11 @@
 CausalELM enables estimation of causal effects in settings where a randomized control trial 
 would be impossible or infeasible. Estimation of the average treatment effect (ATE), intent
 to treat effect (ITE), and average treatment effect on the treated (ATT) can be estimated 
-via G-computation or doubly robust estimation (DRE) while abnormal returns can be estimated 
-from an event study. CausalELM also supports estimation of individual treatment effects or 
-conditional average treatment effects (CATE) via S-learning, T-learning, and X-learning. 
-The underlying machine learning model for all these estimators is an extreme learning 
-machine or L2 regularized extreme learning machine.
+via G-computation or doubly robust estimation (DRE) while temporal changes can be estimated 
+from an interrupted time series analysis. CausalELM also supports estimation of individual 
+treatment effects or conditional average treatment effects (CATE) via S-learning, 
+T-learning, and X-learning. The underlying machine learning model for all these estimators 
+is an extreme learning machine or L2 regularized extreme learning machine.
 </p>
 
 <h2>Extreme Learning Machines and Causal Inference</h2>
@@ -43,9 +43,9 @@ In some cases we would like to know the causal effect of some intervention but w
 have the counterfactual, making conventional methods of statistical analysis infeasible. 
 However, it may still be possible to get an unbiased estimate of the causal effect (ATE, 
 ATE, or ITT) by predicting the counterfactual and comparing it to the observed outcomes. 
-This is the approach CausalELM takes to estimate event study designs (interrupted time 
-series analysis), G-Computation, DRE, and meatlearning via S-Learners, T-Learners, and 
-X-Learners. In event study designs, we want to estimate the effect of some intervention on 
+This is the approach CausalELM takes to conduct interrupted time series analysis, 
+G-Computation, DRE, and meatlearning via S-Learners, T-Learners, and X-Learners. In 
+interrupted time series analysis, we want to estimate the effect of some intervention on 
 the outcome of a single unit that we observe during multiple time periods. For example, we 
 might want to know how the announcement of a merger affected the price of Stock A. To do 
 this, we need to know what the price of stock A would have been if the merger had not been 

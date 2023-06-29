@@ -1,5 +1,6 @@
 using CausalELM.Inference: generatenulldistribution, quantitiesofinterest, summarize
-using CausalELM.Estimators: CausalEstimator, EventStudy, GComputation, DoublyRobust
+using CausalELM.Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
+    DoublyRobust
 using CausalELM.Metalearners: SLearner, TLearner, XLearner, Metalearner, 
     estimatecausaleffect!
 using Test
@@ -19,14 +20,14 @@ p2, stderr2 = quantitiesofinterest(dr)
 summary2 = summarize(dr)
 
 x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
-event_study = EventStudy(x₀, y₀, x₁, y₁)
-estimatecausaleffect!(event_study)
-summary3 = summarize(event_study, 10)
+its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+estimatecausaleffect!(its)
+summary3 = summarize(its, 10)
 
 # Null distributions for the mean and cummulative changes
-event_study_inference1 = generatenulldistribution(event_study, 10)
-event_study_inference2 = generatenulldistribution(event_study, 10, false)
-p3, stderr3 = quantitiesofinterest(event_study, 10)
+its_inference1 = generatenulldistribution(its, 10)
+its_inference2 = generatenulldistribution(its, 10, false)
+p3, stderr3 = quantitiesofinterest(its, 10)
 
 slearner = SLearner(x, y, t)
 estimatecausaleffect!(slearner)
@@ -51,10 +52,10 @@ summary6 = summarize(xlearner)
     @test g_inference isa Array{Float64}
     @test size(dr_inference, 1) === 1000
     @test dr_inference isa Array{Float64}
-    @test size(event_study_inference1, 1) === 10
-    @test event_study_inference1 isa Array{Float64}
-    @test size(event_study_inference2, 1) === 10
-    @test event_study_inference2 isa Array{Float64}
+    @test size(its_inference1, 1) === 10
+    @test its_inference1 isa Array{Float64}
+    @test size(its_inference2, 1) === 10
+    @test its_inference2 isa Array{Float64}
     @test size(slearner_inference, 1) === 1000
     @test slearner_inference isa Array{Float64}
     @test size(tlearner_inference, 1) === 1000
@@ -63,9 +64,9 @@ summary6 = summarize(xlearner)
     @test xlearner_inference isa Array{Float64}
 end
 
-@testset "More Splits Than Observations" begin
-    @test_throws BoundsError generatenulldistribution(event_study, 101)
-    @test_throws BoundsError generatenulldistribution(event_study, 100)
+@testset "ITS With More Splits Than Observations" begin
+    @test_throws BoundsError generatenulldistribution(its, 101)
+    @test_throws BoundsError generatenulldistribution(its, 100)
 end
 
 @testset "P-values and Standard Errors" begin

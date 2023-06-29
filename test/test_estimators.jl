@@ -1,12 +1,12 @@
-using CausalELM.Estimators: EventStudy, GComputation, DoublyRobust, estimatecausaleffect!, 
-    mean, crossfittingsets, firststage!, ate!, predictpropensityscore, 
-    predictcontroloutcomes, predicttreatmentoutcomes
+using CausalELM.Estimators: InterruptedTimeSeries, GComputation, DoublyRobust, 
+    estimatecausaleffect!, mean, crossfittingsets, firststage!, ate!, 
+    predictpropensityscore, predictcontroloutcomes, predicttreatmentoutcomes
 using CausalELM.Models: ExtremeLearningMachine
 using Test
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:100, 100, 5)), rand(100), rand(10, 5), rand(10)
-event_study = EventStudy(x₀, y₀, x₁, y₁)
-estimatecausaleffect!(event_study)
+its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+estimatecausaleffect!(its)
 
 x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 1:100])
 g_computer = GComputation(x, y, t)
@@ -39,18 +39,18 @@ estimatecausaleffect!(dr_att)
 dr_att_noreg = DoublyRobust(x, x, y, t, regularized=false, quantity_of_interest="ATT")
 estimatecausaleffect!(dr_att_noreg)
 
-@testset "Event Study Structure" begin
-    @test event_study.X₀ !== Nothing
-    @test event_study.Y₀ !== Nothing
-    @test event_study.X₁ !== Nothing
-    @test event_study.Y₁ !== Nothing
+@testset "Interrupted Time Series Structure" begin
+    @test its.X₀ !== Nothing
+    @test its.Y₀ !== Nothing
+    @test its.X₁ !== Nothing
+    @test its.Y₁ !== Nothing
 end
 
-@testset "Event Study Estimation" begin
-    @test isa(event_study.β, Array)
-    @test isa(event_study.Ŷ, Array)
-    @test isa(event_study.abnormal_returns, Array)
-    @test isa(event_study.placebo_test, Tuple{Vector{Float64}, Vector{Float64}})
+@testset "Interrupted Time Series Estimation" begin
+    @test isa(its.β, Array)
+    @test isa(its.Ŷ, Array)
+    @test isa(its.Δ, Array)
+    @test isa(its.placebo_test, Tuple{Vector{Float64}, Vector{Float64}})
 end
 
 @testset "G-Computation Structure" begin
@@ -138,7 +138,7 @@ end
 end
 
 @testset "Task Errors" begin
-    @test_throws ArgumentError EventStudy(x₀, y₀, x₁, y₁, task="abc")
+    @test_throws ArgumentError InterruptedTimeSeries(x₀, y₀, x₁, y₁, task="abc")
     @test_throws ArgumentError GComputation(x, y, t, task="abc")
     @test_throws ArgumentError DoublyRobust(x, x, y, t, task="xyz")
 end

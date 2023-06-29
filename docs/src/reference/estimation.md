@@ -1,11 +1,11 @@
 # ATE/ATT/ITT Estimation
-Structs and methods to estimate the ATE, ATT, ITT, and abnormal returns from observational
+Structs and methods to estimate the ATE, ATT, ITT, and change over time from observational
 research designs.
 
 ```@docs
 CausalELM.Estimators
 CausalELM.Estimators.CausalEstimator
-CausalELM.Estimators.EventStudy
+CausalELM.Estimators.InterruptedTimeSeries
 CausalELM.Estimators.GComputation
 CausalELM.Estimators.DoublyRobust
 CausalELM.Metalearners
