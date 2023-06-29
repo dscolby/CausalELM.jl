@@ -13,15 +13,15 @@ its_no_ar = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimatecausaleffect!(its_no_ar)
 
 x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 1:100])
-g_computer = GComputation(x, y, t)
+g_computer = GComputation(x, y, t, temporal=false)
 estimatecausaleffect!(g_computer)
 
-gcomputer_att = GComputation(x, y, t, quantity_of_interest="ATT")
+gcomputer_att = GComputation(x, y, t, quantity_of_interest="ATT", temporal=false)
 estimatecausaleffect!(gcomputer_att)
 
 # Mak sure the data isn't shuffled
 g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), rand(10), 
-    Float64.([rand()<0.4 for i in 1:10]), temporal=true)
+    Float64.([rand()<0.4 for i in 1:10]))
 
 dr = DoublyRobust(x, x, y, t)
 dr.num_neurons = 5

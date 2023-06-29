@@ -180,7 +180,7 @@ julia> regularized=true)
 ```
 """
     function GComputation(X, Y, T; task="regression", quantity_of_interest="ATE", 
-        regularized=true,activation=relu, temporal=false, validation_metric=mse, 
+        regularized=true,activation=relu, temporal=true, validation_metric=mse, 
         min_neurons=1, max_neurons=100, folds=5, iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
