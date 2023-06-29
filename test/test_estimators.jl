@@ -1,12 +1,16 @@
 using CausalELM.Estimators: InterruptedTimeSeries, GComputation, DoublyRobust, 
     estimatecausaleffect!, mean, crossfittingsets, firststage!, ate!, 
-    predictpropensityscore, predictcontroloutcomes, predicttreatmentoutcomes
+    predictpropensityscore, predictcontroloutcomes, predicttreatmentoutcomes, movingaverage
 using CausalELM.Models: ExtremeLearningMachine
 using Test
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:100, 100, 5)), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimatecausaleffect!(its)
+
+# No autoregressive term
+its_no_ar = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+estimatecausaleffect!(its_no_ar)
 
 x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 1:100])
 g_computer = GComputation(x, y, t)
@@ -44,6 +48,12 @@ estimatecausaleffect!(dr_att_noreg)
     @test its.Y₀ !== Nothing
     @test its.X₁ !== Nothing
     @test its.Y₁ !== Nothing
+
+    # No autocorrelation term
+    @test its_no_ar.X₀ !== Nothing
+    @test its_no_ar.Y₀ !== Nothing
+    @test its_no_ar.X₁ !== Nothing
+    @test its_no_ar.Y₁ !== Nothing
 end
 
 @testset "Interrupted Time Series Estimation" begin
@@ -51,6 +61,12 @@ end
     @test isa(its.Ŷ, Array)
     @test isa(its.Δ, Array)
     @test isa(its.placebo_test, Tuple{Vector{Float64}, Vector{Float64}})
+
+    # Without autocorrelation
+    @test isa(its_no_ar.β, Array)
+    @test isa(its_no_ar.Ŷ, Array)
+    @test isa(its_no_ar.Δ, Array)
+    @test isa(its_no_ar.placebo_test, Tuple{Vector{Float64}, Vector{Float64}})
 end
 
 @testset "G-Computation Structure" begin
@@ -156,4 +172,10 @@ end
     @test size(xₚ_folds[1], 1) === 20
     @test size(y_folds[1], 1) === 20
     @test size(t_folds[1], 1) === 20
+end
+
+@testset "Moving Averages" begin
+    @test movingaverage(Float64[]) isa Array{Float64}
+    @test movingaverage([1.0]) == [1.0]
+    @test movingaverage([1.0, 2.0, 3.0]) == [1.0, 1.5, 2.0]
 end

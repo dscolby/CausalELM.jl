@@ -44,6 +44,8 @@ mutable struct InterruptedTimeSeries
     iterations::Int64
     """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
     approximator_neurons::Int64
+    """Whether to a cumulative moving average as an autoregressive term"""
+    autoregression::Bool
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
     """Extreme Learning Machine used to estimate the abnormal returns"""
@@ -96,15 +98,19 @@ julia> m4 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression", reg
     function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression", regularized=true, 
         activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X₀, 1)/10)), 
-        approximator_neurons=Int(round(size(X₀, 1)/10)))
+        approximator_neurons=Int(round(size(X₀, 1)/10)), autoregression=true)
 
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
         end
 
-        new(Float64.(X₀), Float64.(Y₀), Float64.(X₁), Float64.(Y₁), task, regularized, 
-            activation, validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, 0)
+        # Add autoregressive term
+        X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, movingaverage(Y₀))), X₀)
+        X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, movingaverage(Y₁))), X₁)
+
+        new(X₀, Float64.(Y₀), X₁, Float64.(Y₁), task, regularized, activation, 
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, autoregression, 0)
     end
 end
 
@@ -605,5 +611,21 @@ function crossfittingsets(DRE::DoublyRobust)
 
     return x_set, xₚ_set, y_set, t_set
 end
+
+"""
+    movingaverage(g)
+
+Calculates a cumulative moving average.
+
+Examples
+```julia-repl
+julia> movingaverage([1, 2, 3])
+3-element Vector{Float64}
+1.0
+1.5
+2.0
+```
+"""
+movingaverage(g::Vector{Float64}) = [mean.([1:i])[1] for i in 1:length(g)]
 
 end

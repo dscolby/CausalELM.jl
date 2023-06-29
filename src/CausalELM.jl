@@ -55,8 +55,10 @@ export binarystep,
        TLearner, 
        XLearner, 
        estimatecausaleffect!, 
+       movingaverage,
        summarize, 
-       generatenulldistribution
+       generatenulldistribution, 
+       mean
 
 function estimatecausaleffect!() end
 
