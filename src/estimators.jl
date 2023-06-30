@@ -26,7 +26,7 @@ mutable struct InterruptedTimeSeries
     X₁::Array{Float64}
     """Outcomes for the post-event period"""
     Y₁::Array{Float64}
-    """Either \"regression\" of \"classification\""""
+    """Either \"regression\" or \"classification\""""
     task::String
     """Whether to use L2 regularization"""
     regularized::Bool
