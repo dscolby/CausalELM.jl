@@ -315,7 +315,7 @@ function quantitiesofinterest(model::Union{CausalEstimator, Metalearner}, n::Int
     local null_dist = generatenulldistribution(model, n)
     local avg_effect = mean(model.causal_effect)
 
-    extremes = length(null_dist[abs(avg_effect) .>= abs.(null_dist)])
+    extremes = length(null_dist[abs(avg_effect) .< abs.(null_dist)])
     pvalue = extremes/n
 
     stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist])/(n-1)) / sqrt(n)
@@ -354,7 +354,7 @@ function quantitiesofinterest(model::InterruptedTimeSeries, nsplits::Integer=100
     local metric = ifelse(mean_effect, mean, sum)
     local effect = metric(model.Δ)
 
-    extremes = length(null_dist[effect .>= abs.(null_dist)])
+    extremes = length(null_dist[effect .< abs.(null_dist)])
     pvalue = extremes/nsplits
 
     stderr = sqrt(sum([(effect .- x)^2 for x in null_dist])/(nsplits-1))
