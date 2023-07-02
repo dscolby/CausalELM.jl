@@ -228,7 +228,7 @@ function generatenulldistribution(e::Union{CausalEstimator, Metalearner}, n::Int
         estimatecausaleffect!(m)
         results[iter] = ifelse(e isa Metalearner, mean(m.causal_effect), m.causal_effect)
     end
-    return sort(results)
+    return results
 end
 
 """
@@ -284,7 +284,7 @@ function generatenulldistribution(its::InterruptedTimeSeries, nsplits::Integer=1
         estimatecausaleffect!(model)
         results[iter] = ifelse(mean_effect, mean(model.Δ), sum(model.Δ))
     end
-    return sort(results)
+    return results
 end
 
 """
