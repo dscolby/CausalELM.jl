@@ -318,7 +318,7 @@ function quantitiesofinterest(model::Union{CausalEstimator, Metalearner}, n::Int
     extremes = length(null_dist[abs(avg_effect) .>= abs.(null_dist)])
     pvalue = extremes/n
 
-    stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist])/(n-1))
+    stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist])/(n-1)) / sqrt(n)
 
     return pvalue, stderr
 end
