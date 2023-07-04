@@ -58,7 +58,9 @@ export binarystep,
        movingaverage,
        summarize, 
        generatenulldistribution, 
-       mean
+       mean, 
+       testcovariateindependence,
+       testomittedpredictor
 
 function estimatecausaleffect!() end
 

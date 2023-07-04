@@ -1,4 +1,4 @@
-using CausalELM.Assumptions: pval, testcovariateindependence
+using CausalELM.Assumptions: pval, testcovariateindependence, testomittedpredictor
 using CausalELM.Estimators: InterruptedTimeSeries, estimatecausaleffect!
 using Test
 
@@ -6,6 +6,7 @@ x₀, y₀, x₁, y₁ = Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10,
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimatecausaleffect!(its)
 its_independence = testcovariateindependence(its)
+ovb = testomittedpredictor(its)
 
 @testset "p-value Argument Validation" begin
     @test_throws ArgumentError pval(rand(10, 1), rand(10), 0.5)
@@ -24,6 +25,14 @@ end
 end
 
 @testset "Interrupted Time Series Assumptions" begin
+
+    # Test testcovariateindependence method
     @test length(its_independence) === 5
     @test all(0 .<= values(its_independence) .<= 1) === true
+
+    # Test omittedvariable method
+    # The first test should throw an error because estimatecausaleffect! has not been called
+    @test_throws ErrorException testomittedpredictor(InterruptedTimeSeries(x₀, y₀, x₁, y₁))
+    @test ovb isa Dict{String, Float64}
+    @test isa.(values(ovb), Float64) == Bool[1, 1, 1, 1]
 end

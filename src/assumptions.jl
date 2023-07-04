@@ -1,6 +1,7 @@
 module Assumptions
 
 using ..Estimators: InterruptedTimeSeries, estimatecausaleffect!
+using CausalELM: mean
 
 """
     summarize(its, mean_effect)
@@ -39,7 +40,12 @@ event/intervention then they will not be able to predict the counterfactual outc
 p-values from this test represent the proportion of times that a placebo treatment had a 
 greater estimated effect on a covariate than the actual treatment assignment. Thus, the
 the lower the p-value is for a variable the more evidence there is that the variable was 
-effected by the event/treatment and is not useful in predicting counterfactual outcomes.
+effected by the event/treatment and is not useful in predicting counterfactual outcomes. 
+This is similar to a Chow Test but the p-values are estimated via randomization inference, 
+so the test does not assume homoskedasticity of the error terms. Thus, the p-value is 
+interpreted as the proportion of times randomly assigning observations to the pre or 
+post-intervention period would have a larger estimated effect on the the slope of the 
+covariates.
 
 Examples
 ```julia-repl
@@ -69,29 +75,52 @@ function testcovariateindependence(its::InterruptedTimeSeries, n::Int=1000)
 end
 
 """
-    omittedvariable(its; iterations)
+    testomittedpredictor(its; iterations)
 
-See how an omitted variable would affect the results of an interrupted time series analysis.
+See how an omitted predictor/variable could change the results of an interrupted time series 
+analysis.
 
-This method reestimates interrupted time series models with random variables simulated from 
-normal distributions. If the included covariates are good predictors of the 
-counterfactual outcome, including a random variable should make little to no difference on 
-the estimated treatment effect.
+This method reestimates interrupted time series models with normal random variables with 
+uniform noise. If the included covariates are good predictors of the counterfactual outcome, 
+adding a random variable as a covariate should not have a large effect on the predicted 
+counterfactual outcomes and therefore the estimated average effect.
 
 Examples
 ```julia-repl
-julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-julia> estimatetreatmenteffect!(m1)
-[0.25714308]
-julia> summarize(m1)
-{"Task" => "Regression", "Regularized" => true, "Activation Function" => relu, 
-"Validation Metric" => "mse","Number of Neurons" => 2, 
-"Number of Neurons in Approximator" => 10, "β" => [0.25714308], 
-"Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
+julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
+           randn(10))
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimatecausaleffect!(its)
+julia> testomittedvariable(its)
+Dict("Mean Biased Effect/Original Effect" => -0.1943184744720332, "Median Biased 
+Effect/Original Effect" => -0.1881814122689084, "Minimum Biased Effect/Original Effect" => 
+-0.2725194360603799, "Maximum Biased Effect/Original Effect" => -0.1419197976977072)
 ```
 """
-function omittedvariable(its::InterruptedTimeSeries)
+function testomittedpredictor(its::InterruptedTimeSeries, n::Int=1000)
+    if !isdefined(its, :Δ)
+        throw(ErrorException("call estimatecausaleffect! before calling omittedvariable"))
+    end
+
+    its_copy = deepcopy(its)
+    biased_effects = Vector{Float64}(undef, n)
+    results = Dict{String, Float64}()
+
+    for i in 1:n
+        its_copy.X₀ = reduce(hcat, (its.X₀, randn(size(its.X₀, 1)).+rand(size(its.X₀, 1))))
+        its_copy.X₁ = reduce(hcat, (its.X₁, randn(size(its.X₁, 1)).+rand(size(its.X₁, 1))))
+        biased_effects[i] = mean(estimatecausaleffect!(its_copy))
+    end
+    
+    biased_effects = sort(biased_effects)
+    results["Minimum Biased Effect/Original Effect"] = biased_effects[1]
+    results["Mean Biased Effect/Original Effect"] = mean(biased_effects)
+    results["Maximum Biased Effect/Original Effect"] = biased_effects[n]
+    median = ifelse(n%2 === 1, biased_effects[Int(ceil(n/2))], 
+        mean([biased_effects[Int(n/2)], biased_effects[Int(n/2)+1]]))
+    results["Median Biased Effect/Original Effect"] = median
+
+    return results
 end
 
 """
