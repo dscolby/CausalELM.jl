@@ -357,7 +357,7 @@ function quantitiesofinterest(model::InterruptedTimeSeries, nsplits::Integer=100
     extremes = length(null_dist[effect .< abs.(null_dist)])
     pvalue = extremes/nsplits
 
-    stderr = sqrt(sum([(effect .- x)^2 for x in null_dist])/(nsplits-1))
+    stderr = (sum([(effect .- x)^2 for x in null_dist])/(nsplits-1))/sqrt(nsplits)
 
     return pvalue, stderr
 end
