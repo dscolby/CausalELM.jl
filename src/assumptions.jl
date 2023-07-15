@@ -4,12 +4,29 @@ using ..Estimators: InterruptedTimeSeries, estimatecausaleffect!
 using CausalELM: mean
 
 """
-    summarize(its, mean_effect)
+    testassumptions(its, mean_effect)
 
-Return a summary from an interrupted time series estimator.
+Test the validity of an estimated interrupted time series analysis.
 
-p-values and standard errors are estimated using approximate randomization inference that
-permutes the time of the intervention.
+This method coducts a Chow Test on the covariates used to predict the counterfactual 
+outcome, a Wald supremeum test, and tests the covariates' predictive power. For the Chow 
+Test, p-values are the proportion of times randomly assigning observations to the pre or 
+post-intervention period would have a larger effect on the the slope of the covariates. The 
+lower the p-values, the more likely it is that the event/intervention effected the 
+covariate/s and they cannot provide an unbiased prediction of the counterfactual outcomes. 
+The Wald supremum test identifies the structural break with the highest Wald statistic. If 
+this is not the same as the hypothesized break, it could indicate an anticipation effect, 
+confounding by some other event or intervention, or that the intervention or policy took 
+place in multiple phases. p-values represent the proportion of times we would see a larger 
+Wald statistic if the data points were randomly allocated to pre and post-event periods for 
+the predicted structural break. The omitted predictors test adds normal random variables 
+with uniform noise as predictors. If the included covariates are good predictors of the 
+counterfactual outcome, adding random variables as covariates should not have a large effect 
+on the predicted counterfactual outcomes and therefore the estimated average effect.
+
+For more details on the assumptions and validity of interrupted time series designs, see:
+    Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
+    interrupted time series design. No. w26080. National Bureau of Economic Research, 2019.
 
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
@@ -27,7 +44,14 @@ julia> summarize(m1)
 "Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
 ```
 """
-function testassumptions(its::InterruptedTimeSeries)
+function testassumptions(its::InterruptedTimeSeries; n::Int=1000, low::Float64=0.15, 
+    high::Float64=0.85)
+    if !isdefined(its, :Δ)
+        throw(ErrorException("call estimatecausaleffect! before calling testassumptions"))
+    end
+
+    return testcovariateindependence(its; n=n), supwald(its; low=low, high=high, n=n), 
+        testomittedpredictor(its; n=n)
 end
 
 """
@@ -35,17 +59,19 @@ end
 
 Test for independence between covariates and the event or intervention.
 
-If the covariates used to predict the counterfactual outcomes are effected by the 
-event/intervention then they will not be able to predict the counterfactual outcomes. 
-p-values from this test represent the proportion of times that a placebo treatment had a 
-greater estimated effect on a covariate than the actual treatment assignment. Thus, the
-the lower the p-value is for a variable the more evidence there is that the variable was 
-effected by the event/treatment and is not useful in predicting counterfactual outcomes. 
-This is similar to a Chow Test but the p-values are estimated via randomization inference, 
-so the test does not assume homoskedasticity of the error terms. Thus, the p-value is 
-interpreted as the proportion of times randomly assigning observations to the pre or 
+This is a Chow Test for covariates with p-values estimated via randomization inference. The 
+p-values are the proportion of times randomly assigning observations to the pre or 
 post-intervention period would have a larger estimated effect on the the slope of the 
-covariates.
+covariates. The lower the p-values, the more likely it is that the event/intervention 
+effected the covariates and they cannot provide an unbiased prediction of the counterfactual 
+outcomes.
+
+For more information on using a Chow Test to test for structural breaks see:
+    Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
+    interrupted time series design. No. w26080. National Bureau of Economic Research, 2019.
+
+For a primer on randomization inference see: 
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
 Examples
 ```julia-repl
@@ -58,7 +84,7 @@ Dict("Column 1 p-value" => 0.421, "Column 5 p-value" => 0.07, "Column 3 p-value"
 "Column 2 p-value" => 0.713, "Column 4 p-value" => 0.043)
 ```
 """
-function testcovariateindependence(its::InterruptedTimeSeries, n::Int=1000)
+function testcovariateindependence(its::InterruptedTimeSeries; n::Int=1000)
     y₀ = reduce(hcat, (its.X₀[:, 1:end-1], zeros(size(its.X₀, 1))))
     y₁ = reduce(hcat, (its.X₁[:, 1:end-1], ones(size(its.X₁, 1))))
     all_vars = [reduce(vcat, (y₀, y₁)) ones(size(y₀, 1) + size(y₁, 1))]
@@ -75,7 +101,7 @@ function testcovariateindependence(its::InterruptedTimeSeries, n::Int=1000)
 end
 
 """
-    testomittedpredictor(its; iterations)
+    testomittedpredictor(its; n)
 
 See how an omitted predictor/variable could change the results of an interrupted time series 
 analysis.
@@ -85,19 +111,26 @@ uniform noise. If the included covariates are good predictors of the counterfact
 adding a random variable as a covariate should not have a large effect on the predicted 
 counterfactual outcomes and therefore the estimated average effect.
 
+For more information on using a Chow Test to test for structural breaks see:
+    Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
+    interrupted time series design. No. w26080. National Bureau of Economic Research, 2019.
+
+For a primer on randomization inference see: 
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
 Examples
 ```julia-repl
 julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
            randn(10))
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimatecausaleffect!(its)
-julia> testomittedvariable(its)
+julia> testomittedpredictor(its)
 Dict("Mean Biased Effect/Original Effect" => -0.1943184744720332, "Median Biased 
 Effect/Original Effect" => -0.1881814122689084, "Minimum Biased Effect/Original Effect" => 
 -0.2725194360603799, "Maximum Biased Effect/Original Effect" => -0.1419197976977072)
 ```
 """
-function testomittedpredictor(its::InterruptedTimeSeries, n::Int=1000)
+function testomittedpredictor(its::InterruptedTimeSeries; n::Int=1000)
     if !isdefined(its, :Δ)
         throw(ErrorException("call estimatecausaleffect! before calling omittedvariable"))
     end
@@ -124,6 +157,64 @@ function testomittedpredictor(its::InterruptedTimeSeries, n::Int=1000)
 end
 
 """
+    supwald(its; low, high, n)
+
+Check if the predicted structural break is the hypothesized structural break.
+
+This method conducts Wald tests and identifies the structural break with the highest Wald 
+statistic. If this break is not the same as the hypothesized break, it could indicate an 
+anticipation effect, confounding by some other event or intervention, or that the 
+intervention or policy took place in multiple phases. p-values are estimated using 
+approximate randomization inference and represent the proportion of times we would see a 
+larger Wald statistic if the data points were randomly allocated to pre and post-event 
+periods for the predicted structural break.
+
+For more information on using a Chow Test to test for structural breaks see:
+    Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
+    interrupted time series design. No. w26080. National Bureau of Economic Research, 2019.
+    
+For a primer on randomization inference see: 
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
+Examples
+```julia-repl
+julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
+           randn(10))
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimatecausaleffect!(its)
+julia> supwald(its)
+Dict{String, Real}("Wald Statistic" => 58.16649796321913, "p-value" => 0.005, "Predicted 
+Break Point" => 39, "Hypothesized Break Point" => 100)
+```
+"""
+function supwald(its::InterruptedTimeSeries; low::Float64=0.15, high::Float64=0.85, 
+    n::Int=1000)
+    hypothesized_break, current_break, wald = size(its.X₀, 1), size(its.X₀, 1), 0.0
+    high_idx, low_idx = Int(floor(high * size(its.X₀, 1))), Int(ceil(low * size(its.X₀, 1)))
+    x, y = reduce(vcat, (its.X₀, its.X₁))[:, 1:end-1], reduce(vcat, (its.Y₀, its.Y₁))
+    t = reduce(vcat, (zeros(size(its.X₀, 1)), ones(size(its.X₁, 1))))
+    best_x = reduce(hcat, (t, x, ones(length(t))))
+    best_β = first(best_x\y)
+    
+    # Set each time as a potential break and calculate its Wald statistic
+    for idx in low_idx:high_idx
+        t = reduce(vcat, (zeros(idx), ones(size(x, 1)-idx)))
+        new_x = reduce(hcat, (t, x, ones(size(x, 1))))
+        β = new_x\y
+        ŷ = new_x*β
+        se = sqrt(1/(size(x, 1)-2))*(sum(y .- ŷ)^2/sum(t .- mean(t))^2)
+        wald_candidate = first(β)/se
+
+        if wald_candidate > wald
+            current_break, wald, best_x, best_β = idx, wald_candidate, new_x, best_β
+        end
+    end
+    p = pval(best_x, y, best_β, n=n)
+    return Dict("Hypothesized Break Point" => hypothesized_break, 
+        "Predicted Break Point" => current_break, "Wald Statistic" => wald, "p-value" => p)
+end
+
+"""
     pval(x, y, β; n)
 
 Estimate the p-value for the hypothesis that an event had a statistically significant effect 
@@ -140,15 +231,11 @@ julia> pval(x, y, β, n=100)
 """
 function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000)
     m2 = "the first column of x should be a treatment vector of 0s and 1s"
-    if size(x, 2) !== 2
-        throw(ArgumentError("x should only contain treatment and intercept columns"))
-    end
-
     if sort(union(x[:, 1], [0, 1])) != [0, 1]
         throw(ArgumentError(m2))
     end
 
-    l = unique(x[:, 2])
+    l = unique(x[:, end])
 
     if length(l) !== 1 | (length(l) === 1 && l[1] !== 1.0)
         throw(ArgumentError("the second column in x should be an intercept with all 1s"))
