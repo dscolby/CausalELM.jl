@@ -1,7 +1,7 @@
 using Test
 using CausalELM.Estimators: InterruptedTimeSeries, estimatecausaleffect!
-using CausalELM.Assumptions: pval, testcovariateindependence, testomittedpredictor, supwald, 
-    testassumptions
+using CausalELM.ModelValidation: pval, testcovariateindependence, testomittedpredictor, 
+    supwald, testassumptions
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)

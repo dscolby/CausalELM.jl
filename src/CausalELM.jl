@@ -79,6 +79,6 @@ include("crossval.jl")
 include("estimators.jl")
 include("metalearners.jl")
 include("inference.jl")
-include("assumptions.jl")
+include("model_validation.jl")
 
 end

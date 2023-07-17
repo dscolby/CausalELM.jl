@@ -1,4 +1,4 @@
-module Assumptions
+module ModelValidation
 
 using ..Estimators: InterruptedTimeSeries, estimatecausaleffect!
 using CausalELM: mean
