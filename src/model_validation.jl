@@ -4,7 +4,7 @@ using ..Estimators: InterruptedTimeSeries, estimatecausaleffect!
 using CausalELM: mean
 
 """
-    testassumptions(its; n, low, high)
+    validate(its; n, low, high)
 
 Test the validity of an estimated interrupted time series analysis.
 
@@ -49,7 +49,7 @@ julia> testassumptions(m1)
 "Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
 ```
 """
-function testassumptions(its::InterruptedTimeSeries; n::Int=1000, low::Float64=0.15, 
+function validate(its::InterruptedTimeSeries; n::Int=1000, low::Float64=0.15, 
     high::Float64=0.85)
     if !isdefined(its, :Δ)
         throw(ErrorException("call estimatecausaleffect! before calling testassumptions"))

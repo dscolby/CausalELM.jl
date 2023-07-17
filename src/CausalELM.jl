@@ -40,7 +40,7 @@ export binarystep,
        F1, 
        recode, 
        traintest, 
-       validate, 
+       validatefold, 
        crossvalidate, 
        bestsize, 
        shuffledata,
@@ -62,7 +62,7 @@ export binarystep,
        testcovariateindependence,
        testomittedpredictor, 
        supwald, 
-       testassumptions
+       validate
 
 function estimatecausaleffect!() end
 

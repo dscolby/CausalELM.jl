@@ -1,7 +1,7 @@
 using Test
 using CausalELM.Estimators: InterruptedTimeSeries, estimatecausaleffect!
 using CausalELM.ModelValidation: pval, testcovariateindependence, testomittedpredictor, 
-    supwald, testassumptions
+    supwald, validate
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -9,7 +9,7 @@ estimatecausaleffect!(its)
 its_independence = testcovariateindependence(its)
 wald_test = supwald(its)
 ovb = testomittedpredictor(its)
-its_assumptions = testassumptions(its)
+its_validation = validate(its)
 
 @testset "p-value Argument Validation" begin
     @test_throws ArgumentError pval(rand(10, 1), rand(10), 0.5)
@@ -47,7 +47,7 @@ end
     @test isa.(values(ovb), Float64) == Bool[1, 1, 1, 1]
 
     # All assumptions at once
-    @test_throws ErrorException testassumptions(InterruptedTimeSeries(x₀, y₀, x₁, y₁))
-    @test its_assumptions isa Tuple
-    @test length(its_assumptions) === 3
+    @test_throws ErrorException validate(InterruptedTimeSeries(x₀, y₀, x₁, y₁))
+    @test its_validation isa Tuple
+    @test length(its_validation) === 3
 end
