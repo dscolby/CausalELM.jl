@@ -60,13 +60,11 @@ end
     @test isa(its.β, Array)
     @test isa(its.Ŷ, Array)
     @test isa(its.Δ, Array)
-    @test isa(its.placebo_test, Tuple{Vector{Float64}, Vector{Float64}})
 
     # Without autocorrelation
     @test isa(its_no_ar.β, Array)
     @test isa(its_no_ar.Ŷ, Array)
     @test isa(its_no_ar.Δ, Array)
-    @test isa(its_no_ar.placebo_test, Tuple{Vector{Float64}, Vector{Float64}})
 end
 
 @testset "G-Computation Structure" begin

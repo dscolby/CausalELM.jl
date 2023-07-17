@@ -64,13 +64,6 @@ mutable struct InterruptedTimeSeries
 
     """
     Δ::Array{Float64}
-    """
-    Predictions of the counterfactual using covariates from the pre-treatment period and the 
-    post-treatment period. If they are significantly different, there is likely an omitted 
-    variable bias or other flaw in the experimental design.
-
-    """
-    placebo_test::Tuple{Vector{Float64}, Vector{Float64}}
 
 """
     InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task, regularized, activation, validation_metric, 
@@ -319,7 +312,7 @@ function estimatecausaleffect!(its::InterruptedTimeSeries)
     end
 
     its.β, its.Ŷ = fit!(its.learner), predictcounterfactual!(its.learner, its.X₁)
-    its.Δ, its.placebo_test = its.Ŷ - its.Y₁, placebotest(its.learner)
+    its.Δ = its.Ŷ - its.Y₁
 
     return its.Δ
 end
