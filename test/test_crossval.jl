@@ -1,8 +1,8 @@
 using CausalELM.Metrics: mse, accuracy
 using CausalELM.ActivationFunctions: gelu
 using Test
-using CausalELM.CrossValidation: recode, generatefolds, validate, crossvalidate, bestsize, 
-    shuffledata
+using CausalELM.CrossValidation: recode, generatefolds, validatefold, crossvalidate, 
+    bestsize, shuffledata
 
 xfolds, yfolds = generatefolds(zeros(20, 2), zeros(20), 5)
 xfolds_ts, yfolds_ts = generatefolds(float.(hcat([1:10;], 11:20)), [1.0:1.0:10.0;], 5)
@@ -42,23 +42,23 @@ end
 @testset "Single cross validation iteration" begin
 
     # Regression: Not TS L2, TS L2
-    @test isa(validate(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
-    @test isa(validate(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
-    @test isa(validate(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse, 
+    @test isa(validatefold(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
+    @test isa(validatefold(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
+    @test isa(validatefold(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse, 
         regularized=false), Float64)
-    @test isa(validate(rand(100, 5), rand(100), rand(20, 5), rand(20), 5,  mse, 
+    @test isa(validatefold(rand(100, 5), rand(100), rand(20, 5), rand(20), 5,  mse, 
         regularized=false, activation=gelu), Float64)
 
     # Classification: Not TS L2, TS L2
-    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+    @test isa(validatefold(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
         Float64.(rand(20) .> 0.5), 5, accuracy), Float64)
-    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+    @test isa(validatefold(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
         Float64.(rand(20) .> 0.5), 5, accuracy), Float64)
-    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+    @test isa(validatefold(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
         Float64.(rand(20) .> 0.5), 5, accuracy, regularized=false, activation=gelu), 
         Float64)
 
-    @test isa(validate(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+    @test isa(validatefold(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
         Float64.(rand(20) .> 0.5), 5, accuracy, regularized=false), Float64)
 end
 

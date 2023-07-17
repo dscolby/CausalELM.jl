@@ -85,18 +85,18 @@ function generatefolds(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
 end
 
 """
-    validate(xtrain, ytrain, xtest, ytest, nodes, metric; activation, regularized)
+    validatefold(xtrain, ytrain, xtest, ytest, nodes, metric; activation, regularized)
 
 Calculate a validation metric for a single fold in k-fold cross validation.
 
 Examples
 ```julia-repl
 julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
-julia> validate(x, y, 5, accuracy, 3)
+julia> validatefold(x, y, 5, accuracy, 3)
 0.0
 ```
 """
-function validate(xtrain::Array{Float64}, ytrain::Array{Float64}, xtest::Array{Float64}, 
+function validatefold(xtrain::Array{Float64}, ytrain::Array{Float64}, xtest::Array{Float64}, 
     ytest::Array{Float64}, nodes::Integer, metric::Function; activation::Function=relu,  
     regularized::Bool=true)
 
@@ -137,15 +137,15 @@ function crossvalidate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer,
         ytrain = reduce(vcat, [y_folds[f] for f in 1:folds if f != fold])
         xtest, ytest = x_folds[fold], y_folds[fold]
 
-        mean_metric += validate(xtrain, ytrain, xtest, ytest, neurons, metric, 
+        mean_metric += validatefold(xtrain, ytrain, xtest, ytest, neurons, metric, 
             activation=activation, regularized=regularized)
     end
     return mean_metric/folds
 end
 
 """
-    bestsize(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, folds, temporal, 
-        iterations, approximator_neurons)
+    bestsize(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, folds, 
+        temporal, iterations, approximator_neurons)
 
 Compute the best number of neurons for an Extreme Learning Machine.
 
