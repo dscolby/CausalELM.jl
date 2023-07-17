@@ -41,3 +41,21 @@ randomization inference, by pasing the model to the summarize method.
 ```julia
 summarize(m1)
 ```
+
+## Step 4: Validate the Model
+For an interrupted time series design to work well we need to be able to get an unbiased 
+prediction of the counterfactual outcomes. If the event or intervention effected the 
+covariates we are using to predict the counterfactual outcomes, then we will not be able to 
+get unbiased predictions. We can verify this by conducting a Chow Test on the covariates. An
+ITS design also assumes that any observed effect is due to the hypothesized intervention, 
+rather than any simultaneous interventions, anticipation of the intervention, or any 
+intervention that ocurred after the hypothesized intervention. We can use a Wald supremum 
+test to see if the hypothesized intervention ocurred where there is the largest structural 
+break in the outcome or if there was a larger, statistically significant break in the 
+outcome that could confound an ITS analysis. The covariates in an ITS analysis should be 
+good predictors of the outcome. If this is the case, then adding irrelevant predictors 
+should not have much of a change on the results of the analysis. We can conduct all these 
+tests in one line of code.
+```julia
+validate(m1)
+```
