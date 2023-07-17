@@ -4,29 +4,34 @@ using ..Estimators: InterruptedTimeSeries, estimatecausaleffect!
 using CausalELM: mean
 
 """
-    testassumptions(its, mean_effect)
+    testassumptions(its; n, low, high)
 
 Test the validity of an estimated interrupted time series analysis.
 
-This method coducts a Chow Test on the covariates used to predict the counterfactual 
-outcome, a Wald supremeum test, and tests the covariates' predictive power. For the Chow 
-Test, p-values are the proportion of times randomly assigning observations to the pre or 
-post-intervention period would have a larger effect on the the slope of the covariates. The 
-lower the p-values, the more likely it is that the event/intervention effected the 
-covariate/s and they cannot provide an unbiased prediction of the counterfactual outcomes. 
-The Wald supremum test identifies the structural break with the highest Wald statistic. If 
-this is not the same as the hypothesized break, it could indicate an anticipation effect, 
-confounding by some other event or intervention, or that the intervention or policy took 
-place in multiple phases. p-values represent the proportion of times we would see a larger 
-Wald statistic if the data points were randomly allocated to pre and post-event periods for 
-the predicted structural break. The omitted predictors test adds normal random variables 
-with uniform noise as predictors. If the included covariates are good predictors of the 
-counterfactual outcome, adding random variables as covariates should not have a large effect 
-on the predicted counterfactual outcomes and therefore the estimated average effect.
+This method coducts a Chow Test, a Wald supremeum test, and tests the model's sensitivity to 
+confounders. The Chow Test tests for structural breaks in the covariates between the time 
+before and after the event. p-values represent the proportion of times the magnitude of the 
+break in a covariate would have been greater due to chance. Lower p-values suggest a higher 
+probability the event effected the covariates and they cannot be used to obtain unbiased 
+counterfactual predictions. The Wald supremum test finds the structural break with the 
+highest Wald statistic. If this is not the same as the hypothesized break, it could indicate 
+an anticipation effect, a confounding event, or that the intervention or policy took place 
+in multiple phases. p-values represent the proportion of times we would see a larger Wald 
+statistic if the data points were randomly allocated to pre and post-event periods for the 
+predicted structural break. Ideally, the hypothesized break will be the same as the 
+predicted break and it will also have a low p-value. The omitted predictors test adds 
+normal random variables with uniform noise as predictors. If the included covariates are 
+good predictors of the counterfactual outcome, adding irrelevant predictors should not have 
+a large effect on the predicted counterfactual outcomes or the estimated effect.
 
 For more details on the assumptions and validity of interrupted time series designs, see:
     Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
     interrupted time series design. No. w26080. National Bureau of Economic Research, 2019.
+
+* Note that this method does not implement the second test in Baicker and Svoronos because 
+the estimator in this package models the relationship between covariates and the outcome and 
+uses an extreme learning machine instead of linear regression, so variance in the outcome 
+across different bins is not much of an issue.
 
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
@@ -37,7 +42,7 @@ julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimatetreatmenteffect!(m1)
 [0.25714308]
-julia> summarize(m1)
+julia> testassumptions(m1)
 {"Task" => "Regression", "Regularized" => true, "Activation Function" => relu, 
 "Validation Metric" => "mse","Number of Neurons" => 2, 
 "Number of Neurons in Approximator" => 10, "β" => [0.25714308], 
@@ -209,13 +214,13 @@ function supwald(its::InterruptedTimeSeries; low::Float64=0.15, high::Float64=0.
             current_break, wald, best_x, best_β = idx, wald_candidate, new_x, best_β
         end
     end
-    p = pval(best_x, y, best_β, n=n)
+    p = pval(best_x, y, best_β; n=n, wald=true)
     return Dict("Hypothesized Break Point" => hypothesized_break, 
         "Predicted Break Point" => current_break, "Wald Statistic" => wald, "p-value" => p)
 end
 
 """
-    pval(x, y, β; n)
+    pval(x, y, β; n, wald)
 
 Estimate the p-value for the hypothesis that an event had a statistically significant effect 
 on the slope of a covariate using randomization inference.
@@ -225,11 +230,12 @@ Examples
 julia> x, y, β = reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
 julia> pval(x, y, β)
 0.98
-julia> pval(x, y, β, n=100)
+julia> pval(x, y, β; n=100, wald=true)
 0.08534054
 ```
 """
-function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000)
+function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000, 
+    wald::Bool=false)
     m2 = "the first column of x should be a treatment vector of 0s and 1s"
     if sort(union(x[:, 1], [0, 1])) != [0, 1]
         throw(ArgumentError(m2))
@@ -242,13 +248,14 @@ function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000)
     end
 
     x_copy = deepcopy(x)
-    nulldist = Vector{Float64}(undef, n)
+    null = Vector{Float64}(undef, n)
     for i in 1:n
         x_copy[:, 1] = float(rand(0:1, size(x, 1)))  # Random treatment vector
-        nulldist[i] = first(x_copy\y)
+        null[i] = first(x_copy\y)
     end
-    p = length(nulldist[abs(β) .< abs.(nulldist)])/n
 
+    # Wald test is only one sided
+    p = ifelse(wald === true, length(null[β.<null])/n, length(null[abs(β).<abs.(null)])/n)
     return p
 end
     

@@ -60,7 +60,9 @@ export binarystep,
        generatenulldistribution, 
        mean, 
        testcovariateindependence,
-       testomittedpredictor
+       testomittedpredictor, 
+       supwald, 
+       testassumptions
 
 function estimatecausaleffect!() end
 
