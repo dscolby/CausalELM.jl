@@ -2,6 +2,7 @@ module ModelValidation
 
 using ..Estimators: InterruptedTimeSeries, estimatecausaleffect!
 using CausalELM: mean
+using LinearAlgebra: norm
 
 """
     validate(its; n, low, high)
@@ -12,7 +13,7 @@ This method coducts a Chow Test, a Wald supremeum test, and tests the model's se
 confounders. The Chow Test tests for structural breaks in the covariates between the time 
 before and after the event. p-values represent the proportion of times the magnitude of the 
 break in a covariate would have been greater due to chance. Lower p-values suggest a higher 
-probability the event effected the covariates and they cannot be used to obtain unbiased 
+probability the event effected the covariates and they cannot provide unbiased 
 counterfactual predictions. The Wald supremum test finds the structural break with the 
 highest Wald statistic. If this is not the same as the hypothesized break, it could indicate 
 an anticipation effect, a confounding event, or that the intervention or policy took place 
@@ -258,5 +259,31 @@ function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000,
     p = ifelse(wald === true, length(null[β.<null])/n, length(null[abs(β).<abs.(null)])/n)
     return p
 end
-    
+
+"""
+    ned(a, b)
+
+Calculate the normalized Euclidean distance between two vectors. Before calculating the 
+normalized Euclidean distance, both vectors are sorted and padded with zeros if they are of 
+different lengths.
+
+Examples
+```julia-repl
+julia> ned([1, 1, 1], [0, 0])
+01.0
+julia> ned([1, 1], [0, 0])
+0.7653668647301795
+```
+"""
+function ned(a::Vector{T}, b::Vector{T}) where T <: Number
+    if length(a) !== length(b)
+        if length(a) > length(b)
+            b = reduce(vcat, (b, zeros(abs(length(a)-length(b)))))
+        else
+            a = reduce(vcat, (a, zeros(abs(length(a)-length(b)))))
+        end
+    end
+    @fastmath norm(replace(sort(a)./norm(a), NaN=>0) .- replace((sort(b)./norm(b)), NaN=>0))
+end
+
 end

@@ -1,7 +1,7 @@
 using Test
 using CausalELM.Estimators: InterruptedTimeSeries, estimatecausaleffect!
 using CausalELM.ModelValidation: pval, testcovariateindependence, testomittedpredictor, 
-    supwald, validate
+    supwald, validate, ned
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -50,4 +50,13 @@ end
     @test_throws ErrorException validate(InterruptedTimeSeries(x₀, y₀, x₁, y₁))
     @test its_validation isa Tuple
     @test length(its_validation) === 3
+end
+
+@testset "Normailzed Euclidean Distance" begin
+    @test ned([1, 2, 3], [1, 2, 3]) === 0.0
+    @test ned([1, 1, 1], [0, 0, 0]) === 1.0
+    @test ned([1, 1, 1], [0, 0]) === 1.0
+    @test ned([0, 0], [1, 1, 1]) === 1.0
+    @test ned([0, 0, 0], [0, 0, 0]) === 0.0
+    @test ned([1, 1], [1, 0]) ≈ 0.76536686
 end
