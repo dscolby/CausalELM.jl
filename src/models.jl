@@ -318,7 +318,7 @@ end
 Base.show(io::IO, model::ExtremeLearner) = print(io, 
     "Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons")
 
-Base.show(io::IO, model::ExtremeLearner) = print(io, 
+Base.show(io::IO, model::RegularizedExtremeLearner) = print(io, 
     "Regularized Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons")
 
 end
