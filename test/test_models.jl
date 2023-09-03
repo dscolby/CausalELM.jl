@@ -68,3 +68,11 @@ nofit = ExtremeLearner(x1, y1, 10, σ)
     @test_throws ErrorException predict(nofit, x1test)
     @test_throws ErrorException placebotest(nofit)
  end
+
+
+ @testset "Print Models" begin
+    msg1, msg2 = "Extreme Learning Machine with ", "hidden neurons"
+    msg3 = "Regularized " * msg1
+    @test sprint(print, m1) === msg1 * string(m1.hidden_neurons) * " " * msg2
+    @test sprint(print, m2) === msg3 * string(m2.hidden_neurons) * " " * msg2
+ end
