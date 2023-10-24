@@ -145,7 +145,7 @@ mutable struct GComputation <: CausalEstimator
     """Weights learned during training"""
     β::Array{Float64}
     """The effect of exposure or treatment"""
-    causal_effect::Float64
+    causal_effect::Vector{Float64}
 
 """
 GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
@@ -233,7 +233,7 @@ mutable struct DoublyRobust <: CausalEstimator
     """Predicted outcomes for the treatment group"""
     μ₁::Array{Float64}
     """The effect of exposure or treatment"""
-    causal_effect::Float64
+    causal_effect::Vector{Float64}
 
     """
 DoublyRobust(X, Xₚ, Y, T, task, quantity_of_interest, regularized, activation, 
@@ -362,7 +362,7 @@ function estimatecausaleffect!(g::GComputation)
     end
 
     g.β = fit!(g.learner)
-    g.causal_effect = sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)
+    g.causal_effect = [sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)]
 
     return g.causal_effect
 end
@@ -427,14 +427,15 @@ function estimatecausaleffect!(DRE::DoublyRobust)
             treatment_pred = predicttreatmentoutcomes(treatment_model, X_test)
             treatment_predictions[fold] = treatment_pred
             
-            E₁ = @fastmath mean(T_test.*(Y_test.-treatment_pred)/(ps_pred.+treatment_pred))
-            E₀ = @fastmath mean(((1 .-T_test).*(Y_test.-control_pred))/((1 .-ps_pred) 
+            E₁ = @fastmath mean(vec(T_test.*(Y_test.-treatment_pred)
+                /(ps_pred.+treatment_pred)))
+            E₀ = @fastmath mean(vec(((1 .-T_test).*(Y_test.-control_pred))/((1 .-ps_pred)) 
                 .+control_pred))
             fold_level_effects[fold] = E₁ - E₀
     
         else DRE.quantity_of_interest === "ATT"
             num = @fastmath ((1 .- T_test).*(Y_test .- control_pred))
-            fold_level_effects[fold] = @fastmath mean(num/((1 .- ps_pred) .+ control_pred))
+            fold_level_effects[fold] = @fastmath mean(vec(num/((1 .- ps_pred) .+ control_pred)))
         end
     end
     DRE.ps = reduce(vcat, propensity_scores)
@@ -445,7 +446,7 @@ function estimatecausaleffect!(DRE::DoublyRobust)
         DRE.μ₁ = reduce(vcat, treatment_predictions)
     end
 
-    DRE.causal_effect = mean(fold_level_effects)
+    DRE.causal_effect = [mean(fold_level_effects)]
     return DRE.causal_effect
 end
 
@@ -619,6 +620,12 @@ julia> movingaverage([1, 2, 3])
 2.0
 ```
 """
-movingaverage(g::Vector{Float64}) = [mean.([1:i])[1] for i in 1:length(g)]
+function movingaverage(g::Vector{Float64})
+    result = similar(g)
+    for i = 1:length(g)
+        result[i] = mean(g[1:i])
+    end
+    return result
+end
 
 end

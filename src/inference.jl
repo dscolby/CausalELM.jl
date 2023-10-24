@@ -226,7 +226,7 @@ function generatenulldistribution(e::Union{CausalEstimator, Metalearner}, n::Int
     for iter in 1:n 
         m.T = float(rand(0:1, nobs))
         estimatecausaleffect!(m)
-        results[iter] = ifelse(e isa Metalearner, mean(m.causal_effect), m.causal_effect)
+        results[iter] = ifelse(e isa Metalearner, mean(m.causal_effect), m.causal_effect[1])
     end
     return results
 end

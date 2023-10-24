@@ -81,10 +81,10 @@ end
 
 @testset "G-Computation Estimation" begin
     @test isa(g_computer.β, Array)
-    @test isa(g_computer.causal_effect, Float64)
+    @test isa(g_computer.causal_effect, Vector{Float64})
 
     # Check that the estimats for ATE and ATT are different
-    @test g_computer.causal_effect !== gcomputer_att.causal_effect
+    @test g_computer.causal_effect[1] !== gcomputer_att.causal_effect[1]
 end
 
 @testset "Doubly Robust Estimation Structure" begin
@@ -127,23 +127,23 @@ end
     @test dr.ps isa Array{Float64}
     @test dr.μ₀ isa Array{Float64}
     @test dr.μ₁ isa Array{Float64}
-    @test dr.causal_effect isa Float64
+    @test dr.causal_effect isa Vector{Float64}
 
     # No regularization
     @test dr_noreg.ps isa Array{Float64}
     @test dr_noreg.μ₀ isa Array{Float64}
     @test dr_noreg.μ₁ isa Array{Float64}
-    @test dr_noreg.causal_effect isa Float64
+    @test dr_noreg.causal_effect isa Vector{Float64}
 
     # Using the ATT
     @test dr_att.ps isa Array{Float64}
     @test dr_att.μ₀ isa Array{Float64}
-    @test dr_att.causal_effect isa Float64
+    @test dr_att.causal_effect isa Vector{Float64}
 
     # Using the ATT with no regularization
     @test dr_att_noreg.ps isa Array{Float64}
     @test dr_att_noreg.μ₀ isa Array{Float64}
-    @test dr_att_noreg.causal_effect isa Float64
+    @test dr_att_noreg.causal_effect isa Vector{Float64}
 end
 
 @testset "Quanities of Interest Errors" begin

@@ -24,7 +24,7 @@ function estimatecausaleffect!() end
 
 function summarize() end
 
-mean(x) = sum(x)/length(x)
+mean(x::Vector{<:Real}) = sum(x)/length(x)
 
 function var(x::Vector{<:Real})
     x̄, n = mean(x), length(x)
