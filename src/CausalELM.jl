@@ -11,64 +11,26 @@ For more details on Extreme Learning Machines see:
 """
 module CausalELM
 
-export binarystep, 
-       σ, 
-       tanh, 
-       relu, 
-       leakyrelu, 
-       swish, 
-       softmax, 
-       softplus, 
-       gelu, 
-       gaussian, 
-       hardtanh, 
-       elish, 
-       fourier, 
-       ExtremeLearningMachine, 
-       ExtremeLearner, 
-       RegularizedExtremeLearner, 
-       fit!, 
-       predict, 
-       predictcounterfactual!, 
-       placebotest!, 
-       mse, 
-       mae, 
-       accuracy, 
-       confusionmatrix, 
-       precision, 
-       recall, 
-       F1, 
-       recode, 
-       traintest, 
-       validatefold, 
-       crossvalidate, 
-       bestsize, 
-       shuffledata,
-       InterruptedTimeSeries, 
+export InterruptedTimeSeries, 
        GComputation, 
        DoublyRobust, 
-       estimatecausaleffect!, 
-       summarize, 
-       CausalEstimator, 
-       Metalearner, 
        SLearner, 
        TLearner, 
-       XLearner, 
+       XLearner,
        estimatecausaleffect!, 
-       movingaverage,
-       summarize, 
-       generatenulldistribution, 
-       mean, 
-       testcovariateindependence,
-       testomittedpredictor, 
-       supwald, 
-       validate
+       summarize
 
 function estimatecausaleffect!() end
 
 function summarize() end
 
-mean(x) = sum(x)/size(x, 1)
+mean(x) = sum(x)/length(x)
+
+function var(x::Vector{<:Real})
+    x̄, n = mean(x), length(x)
+
+    return sum((x .- x̄).^2)/(n-1)
+end
 
 const summarise = summarize
 

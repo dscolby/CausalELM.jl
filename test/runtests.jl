@@ -1,8 +1,9 @@
-using CausalELM
 using Test
+import CausalELM
 
-@testset "Average" begin
-    @test mean([1, 2, 3]) == 2
+@testset "Moments" begin
+    @test CausalELM.mean([1, 2, 3]) == 2
+    @test CausalELM.var([1, 2, 3]) == 1
 end
 
 include("test_activation.jl")
