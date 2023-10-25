@@ -1,7 +1,7 @@
 module ModelValidation
 
-using ..Estimators: InterruptedTimeSeries, estimatecausaleffect!
-using CausalELM: mean
+using ..Estimators: InterruptedTimeSeries, estimatecausaleffect!, GComputation
+using CausalELM: mean, var
 using LinearAlgebra: norm
 
 """
@@ -112,7 +112,7 @@ end
 See how an omitted predictor/variable could change the results of an interrupted time series 
 analysis.
 
-This method reestimates interrupted time series models with normal random variables with 
+This method reestimates interrupted time series models with normal random variables and 
 uniform noise. If the included covariates are good predictors of the counterfactual outcome, 
 adding a random variable as a covariate should not have a large effect on the predicted 
 counterfactual outcomes and therefore the estimated average effect.
@@ -260,6 +260,12 @@ function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000,
     return p
 end
 
+function counterfactualconsistency(g::GComputation)
+    treatment_covariates, treatment_outcomes = g.X[g.T == 1, :], g.Y[g.T == 1]
+    ŷ = treatment_covariates\treatment_outcomes
+    observed_residual_variance = var(ŷ)
+end
+
 """
     ned(a, b)
 
@@ -283,6 +289,8 @@ function ned(a::Vector{T}, b::Vector{T}) where T <: Number
             a = reduce(vcat, (a, zeros(abs(length(a)-length(b)))))
         end
     end
+
+    # Changing NaN to zero fixes divde by zero errors
     @fastmath norm(replace(sort(a)./norm(a), NaN=>0) .- replace((sort(b)./norm(b)), NaN=>0))
 end
 

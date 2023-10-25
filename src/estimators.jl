@@ -145,7 +145,7 @@ mutable struct GComputation <: CausalEstimator
     """Weights learned during training"""
     β::Array{Float64}
     """The effect of exposure or treatment"""
-    causal_effect::Vector{Float64}
+    causal_effect::Float64
 
 """
 GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
@@ -233,7 +233,7 @@ mutable struct DoublyRobust <: CausalEstimator
     """Predicted outcomes for the treatment group"""
     μ₁::Array{Float64}
     """The effect of exposure or treatment"""
-    causal_effect::Vector{Float64}
+    causal_effect::Float64
 
     """
 DoublyRobust(X, Xₚ, Y, T, task, quantity_of_interest, regularized, activation, 
@@ -362,7 +362,7 @@ function estimatecausaleffect!(g::GComputation)
     end
 
     g.β = fit!(g.learner)
-    g.causal_effect = [sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)]
+    g.causal_effect = sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)
 
     return g.causal_effect
 end
@@ -446,7 +446,7 @@ function estimatecausaleffect!(DRE::DoublyRobust)
         DRE.μ₁ = reduce(vcat, treatment_predictions)
     end
 
-    DRE.causal_effect = [mean(fold_level_effects)]
+    DRE.causal_effect = mean(fold_level_effects)
     return DRE.causal_effect
 end
 

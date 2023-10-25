@@ -4,7 +4,7 @@ module Inference
 using CausalELM: mean
 using ..Metalearners: Metalearner
 using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, DoublyRobust, 
-    estimatecausaleffect!, mean
+    estimatecausaleffect!
 
 import CausalELM: summarize
 
@@ -226,7 +226,7 @@ function generatenulldistribution(e::Union{CausalEstimator, Metalearner}, n::Int
     for iter in 1:n 
         m.T = float(rand(0:1, nobs))
         estimatecausaleffect!(m)
-        results[iter] = ifelse(e isa Metalearner, mean(m.causal_effect), m.causal_effect[1])
+        results[iter] = e isa Metalearner ? mean(m.causal_effect) : m.causal_effect
     end
     return results
 end
@@ -311,9 +311,9 @@ julia> quantitiesofinterest(g_computer, 1000)
 (0.114, 6.953133617011371)
 ```
 """
-function quantitiesofinterest(model::Union{CausalEstimator, Metalearner}, n::Integer=1000)
-    local null_dist = generatenulldistribution(model, n)
-    local avg_effect = mean(model.causal_effect)
+function quantitiesofinterest(m::Union{CausalEstimator, Metalearner}, n::Integer=1000)
+    local null_dist = generatenulldistribution(m, n)
+    local avg_effect = m isa Metalearner ? mean(m.causal_effect) : m.causal_effect
 
     extremes = length(null_dist[abs(avg_effect) .< abs.(null_dist)])
     pvalue = extremes/n
