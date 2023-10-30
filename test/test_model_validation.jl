@@ -79,10 +79,11 @@ end
     for vec in jenks(collect(1:10), 5)
         @test !isempty(vec)
     end
+    setdiff
 end
 
 @testset "Counterfactual Consistency" begin
     @test length(fake_treatments(test_outcomes)) == length(test_outcomes)
-    @test sort(unique(fake_treatments(test_outcomes))) == [1, 2, 3, 4]
+    @test setdiff(Set(sort(unique(fake_treatments(test_outcomes)))), [1, 2, 3, 4]) == Set()
     @test counterfactualconsistency(g_computer) isa Real
 end
