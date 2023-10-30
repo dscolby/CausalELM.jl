@@ -19,7 +19,7 @@ julia> mse([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
 4
 ```
 """
-function mse(y::Vector{Float64}, ŷ::Vector{Float64}) 
+function mse(y::Vector{<:Real}, ŷ::Vector{<:Real}) 
     if length(y) !== length(ŷ)
         throw(DimensionMismatch("y and ̂y must be the same length"))
     end

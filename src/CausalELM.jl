@@ -34,6 +34,9 @@ end
 
 const summarise = summarize
 
+# Helpers to subtract consecutive elements in a vector
+consecutive(v::Vector{<:Real}; f::String="minus") = [-(v[i+1], v[i]) for i = 1:length(v)-1]
+
 include("activation.jl")
 include("models.jl")
 include("metrics.jl")

@@ -1,7 +1,8 @@
 using Test
-using CausalELM.Estimators: InterruptedTimeSeries, estimatecausaleffect!
+using CausalELM.Estimators: InterruptedTimeSeries, GComputation, estimatecausaleffect!
 using CausalELM.ModelValidation: pval, testcovariateindependence, testomittedpredictor, 
-    supwald, validate, ned
+    supwald, validate, sdam, scdm, gvf, split_vector_ways, consecutive, jenks, 
+    fake_treatments,counterfactualconsistency
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -10,6 +11,19 @@ its_independence = testcovariateindependence(its)
 wald_test = supwald(its)
 ovb = testomittedpredictor(its)
 its_validation = validate(its)
+
+x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 1:100])
+g_computer = GComputation(x, y, t, temporal=false)
+estimatecausaleffect!(g_computer)
+test_outcomes = g_computer.Y[g_computer.T .== 1]
+
+# Test splits for Jenks breaks
+three_split = Vector{Vector{Real}}[[[1], [2], [3, 4, 5]], 
+    [[1], [2, 3], [4, 5]], [[1], [2, 3, 4], [5]], [[1, 2], [3], [4, 5]], 
+    [[1, 2], [3, 4], [5]], [[1, 2, 3], [4], [5]]]
+
+two_split = Vector{Vector{Real}}[[[1], [2, 3, 4, 5]], [[1, 2], [3, 4, 5]], 
+    [[1, 2, 3], [4, 5]], [[1, 2, 3, 4], [5]]]
 
 @testset "p-value Argument Validation" begin
     @test_throws ArgumentError pval(rand(10, 1), rand(10), 0.5)
@@ -52,11 +66,23 @@ end
     @test length(its_validation) === 3
 end
 
-@testset "Normailzed Euclidean Distance" begin
-    @test ned([1, 2, 3], [1, 2, 3]) === 0.0
-    @test ned([1, 1, 1], [0, 0, 0]) === 1.0
-    @test ned([1, 1, 1], [0, 0]) === 1.0
-    @test ned([0, 0], [1, 1, 1]) === 1.0
-    @test ned([0, 0, 0], [0, 0, 0]) === 0.0
-    @test ned([1, 1], [1, 0]) ≈ 0.76536686
+# Examples taken from https://www.ehdp.com/methods/jenks-natural-breaks-2.htm
+@testset "Jenks Breaks" begin
+    @test sdam([5, 4, 9, 10]) == 26
+    @test scdm([[4], [5, 9, 10]]) == 14
+    @test gvf([[4, 5], [9, 10]]) ≈ 0.96153846153
+    @test gvf([[4], [5], [9, 10]]) ≈ 0.9807692307692307
+    @test split_vector_ways([1, 2, 3, 4, 5]; n=3) == three_split
+    @test split_vector_ways([1, 2, 3, 4, 5]; n=2) == two_split
+    @test length(collect(Base.Iterators.flatten(jenks(collect(1:10), 5)))) == 10
+
+    for vec in jenks(collect(1:10), 5)
+        @test !isempty(vec)
+    end
+end
+
+@testset "Counterfactual Consistency" begin
+    @test length(fake_treatments(test_outcomes)) == length(test_outcomes)
+    @test sort(unique(fake_treatments(test_outcomes))) == [1, 2, 3, 4]
+    @test counterfactualconsistency(g_computer) isa Real
 end

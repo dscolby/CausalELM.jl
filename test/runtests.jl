@@ -6,6 +6,11 @@ import CausalELM
     @test CausalELM.var([1, 2, 3]) == 1
 end
 
+@testset "Add and Subtract Consecutive Elements" begin
+    @test CausalELM.consecutive([1, 2, 3, 4, 5], f="minus") == [1, 1, 1, 1]
+    @test CausalELM.consecutive([1, 2, 3, 4, 5]) == [1, 1, 1, 1]
+end
+
 include("test_activation.jl")
 include("test_models.jl")
 include("test_metrics.jl")
