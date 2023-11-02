@@ -11,7 +11,7 @@ using ..CrossValidation: bestsize, shuffledata
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predictcounterfactual!, placebotest, predict
 
-import CausalELM: estimatecausaleffect!
+import CausalELM: estimate_causal_effect!
 
 """Abstract type for GComputation and DoublyRobust"""
 abstract type  CausalEstimator end
@@ -281,20 +281,7 @@ julia> m3 = DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest=
     end
 end
 
-"""
-    estimatecausaleffect!(its)
-
-Estimate the effect of an event relative to a predicted counterfactual.
-
-Examples
-```julia-repl
-julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-julia> estimatecausaleffect!(m1)
-0.25714308
-```
-"""
-function estimatecausaleffect!(its::InterruptedTimeSeries)
+function estimate_causal_effect!(its::InterruptedTimeSeries)
     # We will not find the best number of neurons after we have already estimated the causal
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
@@ -317,26 +304,7 @@ function estimatecausaleffect!(its::InterruptedTimeSeries)
     return its.Δ
 end
 
-"""
-    estimatecausaleffect!(g)
-
-Estimate a causal effect of interest using G-Computation.
-
-If treatents are administered at multiple time periods, the effect will be estimated as the 
-average difference between the outcome of being treated in all periods and being treated in 
-no periods.For example, given that individuals 1, 2, ..., i ∈ I recieved either a treatment 
-or a placebo in p different periods, the model would estimate the average treatment effect 
-as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0, Xₚ].
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = GComputation(X, Y, T)
-julia> estimatecausaleffect!(m1)
-0.31067439
-```
-"""
-function estimatecausaleffect!(g::GComputation)
+function estimate_causal_effect!(g::GComputation)
     full_covariates = hcat(g.X, g.T)
 
     if g.quantity_of_interest ∈ ("ITT", "ATE")
@@ -367,24 +335,7 @@ function estimatecausaleffect!(g::GComputation)
     return g.causal_effect
 end
 
-"""
-    estimatecausaleffect!(DRE)
-
-Estimate a causal effect of interest using doubly robust estimation.
-
-Unlike other estimators, this method does not support time series or panel data. This method 
-also does not work as well with smaller datasets because it estimates separate outcome 
-models for the treatment and control groups.
-
-Examples
-```julia-repl
-julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoublyRobust(X, Xₚ, Y, T)
-julia> estimatecausaleffect!(m1)
-0.31067439
-```
-"""
-function estimatecausaleffect!(DRE::DoublyRobust)
+function estimate_causal_effect!(DRE::DoublyRobust)
     propensity_scores = Array{Array{Float64, 1}}(undef, DRE.folds)
     control_predictions = Array{Array{Float64, 1}}(undef, DRE.folds)
     fold_level_effects = Array{Float64}(undef, DRE.folds)

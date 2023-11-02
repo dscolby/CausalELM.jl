@@ -2,26 +2,26 @@ using CausalELM.Inference: generatenulldistribution, quantitiesofinterest, summa
 using CausalELM.Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
     DoublyRobust
 using CausalELM.Metalearners: SLearner, TLearner, XLearner, Metalearner, 
-    estimatecausaleffect!
+    estimate_causal_effect!
 using Test
 
 x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 
 g_computer = GComputation(x, y, t)
-estimatecausaleffect!(g_computer)
+estimate_causal_effect!(g_computer)
 g_inference = generatenulldistribution(g_computer)
 p1, stderr1 = quantitiesofinterest(g_computer)
 summary1 = summarize(g_computer)
 
 dr = DoublyRobust(x, x, y, t)
-estimatecausaleffect!(dr)
+estimate_causal_effect!(dr)
 dr_inference = generatenulldistribution(dr)
 p2, stderr2 = quantitiesofinterest(dr)
 summary2 = summarize(dr)
 
 x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-estimatecausaleffect!(its)
+estimate_causal_effect!(its)
 summary3 = summarize(its, 10)
 
 # Null distributions for the mean and cummulative changes
@@ -30,19 +30,19 @@ its_inference2 = generatenulldistribution(its, 10, false)
 p3, stderr3 = quantitiesofinterest(its, 10)
 
 slearner = SLearner(x, y, t)
-estimatecausaleffect!(slearner)
+estimate_causal_effect!(slearner)
 slearner_inference = generatenulldistribution(slearner)
 p4, stderr4 = quantitiesofinterest(slearner)
 summary4 = summarize(slearner)
 
 tlearner = TLearner(x, y, t)
-estimatecausaleffect!(tlearner)
+estimate_causal_effect!(tlearner)
 tlearner_inference = generatenulldistribution(tlearner)
 p5, stderr5 = quantitiesofinterest(tlearner)
 summary5 = summarize(tlearner)
 
 xlearner = XLearner(x, y, t)
-estimatecausaleffect!(xlearner)
+estimate_causal_effect!(xlearner)
 xlearner_inference = generatenulldistribution(xlearner)
 p6, stderr6 = quantitiesofinterest(xlearner)
 summary6 = summarize(xlearner)

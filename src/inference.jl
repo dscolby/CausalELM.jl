@@ -4,7 +4,7 @@ module Inference
 using CausalELM: mean
 using ..Metalearners: Metalearner
 using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, DoublyRobust, 
-    estimatecausaleffect!
+    estimate_causal_effect!
 
 import CausalELM: summarize
 
@@ -72,7 +72,7 @@ Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = GComputation(X, Y, T)
-julia> estimatetreatmenteffect!(m1)
+julia> estimate_causal_effect!(m1)
 [0.3100468253]
 julia> summarize(m1)
 {"Task" => "Regression", "Quantity of Interest" => "ATE", Regularized" => "true", 
@@ -116,7 +116,7 @@ Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = DoublyRobust(X, X, Y, T)
-julia> estimatetreatmenteffect!(m1)
+julia> estimate_causal_effect(m1)
 [0.5804032956]
 julia> summarize(m1)
 {"Task" => "Regression", "Quantity of Interest" => "ATE", Regularized" => "true", 
@@ -154,7 +154,7 @@ Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = SLearner(X, Y, T)
-julia> estimatecate!(m1)
+julia> estimate_causal_effect!(m1)
 [0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
 0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 0.20729633391630703, 
 0.20729633391630697, 0.20729633391630697  …  0.20729633391630703, 0.20729633391630697, 
@@ -208,7 +208,7 @@ Examples
 ```julia-repl
 julia> x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 julia> g_computer = GComputation(x, y, t)
-julia> estimatecausaleffect!(g_computer)
+julia> estimate_causal_effect!(g_computer)
 julia> generatenulldistribution(g_computer, 500)
 [0.016297180690693656, 0.0635928694685571, 0.20004144093635673, 0.505893866040335, 
 0.5130594630907543, 0.5432486130493388, 0.6181727442724846, 0.61838399963459, 
@@ -225,7 +225,7 @@ function generatenulldistribution(e::Union{CausalEstimator, Metalearner}, n::Int
     # Generate random treatment assignments and estimate the causal effects
     for iter in 1:n 
         m.T = float(rand(0:1, nobs))
-        estimatecausaleffect!(m)
+        estimate_causal_effect!(m)
         results[iter] = e isa Metalearner ? mean(m.causal_effect) : m.causal_effect
     end
     return results
@@ -252,7 +252,7 @@ Examples
 ```julia-repl
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-julia> estimatecausaleffect!(its)
+julia> estimate_causale_ffect!(its)
 julia> generatenulldistribution(its, 10)
 [-0.5012456678829079, -0.33790650529972194, -0.2534340182760628, -0.21030239864895905, 
 -0.11672915615117885, -0.08149441936166794, -0.0685134758182695, -0.06217013151235991, 
@@ -281,7 +281,7 @@ function generatenulldistribution(its::InterruptedTimeSeries, nsplits::Integer=1
 
         # Reestimate the model with the intervention now at the nth interval
         model.X₀, model.Y₀, model.X₁, model.Y₁ = x₀, y₀, x₁, y₁
-        estimatecausaleffect!(model)
+        estimate_causal_effect!(model)
         results[iter] = ifelse(mean_effect, mean(model.Δ), sum(model.Δ))
     end
     return results
@@ -306,7 +306,7 @@ Examples
 ```julia-repl
 julia> x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 julia> g_computer = GComputation(x, y, t)
-julia> estimatecausaleffect!(g_computer)
+julia> estimate_causal_effect!(g_computer)
 julia> quantitiesofinterest(g_computer, 1000)
 (0.114, 6.953133617011371)
 ```
@@ -343,7 +343,7 @@ Examples
 ```julia-repl
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-julia> estimatecausaleffect!(its)
+julia> estimate_causal_effect!(its)
 julia> quantitiesofinterest(its, 10)
 (0.0, 0.07703275541001667)
 ```

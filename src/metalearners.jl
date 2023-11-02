@@ -7,7 +7,7 @@ using ..CrossValidation: bestsize, shuffledata
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predict
 
-import CausalELM: estimatecausaleffect!
+import CausalELM: estimate_causal_effect!
 
 """Abstract type for metalearners"""
 abstract type Metalearner end
@@ -242,30 +242,7 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
     end
 end
 
-"""
-    estimatecausaleffect!(s)
-
-Estimate the CATE using an S-Learner.
-
-For an overview of meatlearning, including S-Learners see:
-
-    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
-    national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = SLearner(X, Y, T)
-julia> estimatecausaleffect!(m1)
-[0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
-0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 0.20729633391630703, 
-0.20729633391630697, 0.20729633391630697  …  0.20729633391630703, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697]
-```
-"""
-function estimatecausaleffect!(s::SLearner)
+function estimate_causal_effect!(s::SLearner)
     full_covariates = hcat(s.X, s.T)
 
     Xₜ, Xᵤ= hcat(s.X, ones(size(s.T, 1))), hcat(s.X, zeros(size(s.T, 1)))
@@ -292,29 +269,7 @@ function estimatecausaleffect!(s::SLearner)
     return s.causal_effect
 end
 
-"""
-    estimatecausaleffect!(t)
-
-Estimate the CATE using a T-Learner.
-
-For an overview of meatlearning, including T-Learners see:
-    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
-    national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = TLearner(X, Y, T)
-julia> estimatecausaleffect!(m1)
-[0.0493951571746305, 0.049395157174630444, 0.0493951571746305, 0.049395157174630444, 
-0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 
-0.049395157174630444, 0.04939515717463061  …  0.0493951571746305, 0.04939515717463039, 
-0.0493951571746305, 0.04939515717463039, 0.0493951571746305, 0.04939515717463039, 
-0.04939515717463039, 0.049395157174630444, 0.04939515717463039, 0.049395157174630444]
-```
-"""
-function estimatecausaleffect!(t::TLearner)
+function estimate_causal_effect!(t::TLearner)
     x₀, x₁, y₀, y₁ = t.X[t.T .== 0,:], t.X[t.T .== 1,:], t.Y[t.T .== 0], t.Y[t.T .== 1]
 
     # We will not find the best number of neurons after we have already estimated the causal
@@ -341,30 +296,7 @@ function estimatecausaleffect!(t::TLearner)
     return t.causal_effect
 end
 
-"""
-    estimatecausaleffect!(x)
-
-Estimate the CATE using an X-Learner.
-
-For an overview of meatlearning, including X-Learners see:
-    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
-    national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = XLearner(X, Y, T)
-julia> estimatecausaleffect!(m1)
-[-0.025012644892878473, -0.024634294305967294, -0.022144246680543364, -0.023983138957276127, 
--0.024756239357838557, -0.019409519377053822, -0.02312807640357356, -0.016967113188439076, 
--0.020188871831409317, -0.02546526148141366  …  -0.019811641136866287, 
--0.020780821058711863, -0.013588359417922776, -0.020438648396328824, -0.016169487825519843, 
--0.024031422484491572, -0.01884713946778991, -0.021163590874553318, -0.014607310062509895, 
--0.022449034332142046]
-```
-"""
-function estimatecausaleffect!(x::XLearner)
+function estimate_causal_effect!(x::XLearner)
     # We will not find the best number of neurons after we have already estimated the causal
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
