@@ -22,6 +22,21 @@ test_outcomes = g_computer.Y[g_computer.T .== 1]
 sum_of_squares2 = sumsofsquares([1, 2, 3, 4, 5], 2)
 sum_of_squares3 = sumsofsquares([1, 2, 3, 4, 5], 3)
 
+# Generate synthetic data with three distinct clusters
+function generate_synthetic_data()
+    cluster1 = rand(1:10, 50) .+ randn(50)
+    cluster2 = rand(20:30, 60) .+ randn(60)
+    cluster3 = rand(40:50, 40) .+ randn(40)
+    data = vcat(cluster1, cluster2, cluster3)
+    return data
+end
+
+# Generate synthetic data
+data = generate_synthetic_data()
+
+# Find the best number of breaks using the Jenks Natural Breaks algorithm
+num_breaks = length(unique(bestsplits(data, 6)))
+
 @testset "p-values" begin
     @testset "p-value Argument Validation" begin
         @test_throws ArgumentError pval(rand(10, 1), rand(10), 0.5)
@@ -95,8 +110,7 @@ end
     end
 
     @testset "Jenks Breaks Function" begin
-        @test length(unique(jenksbreaks([1, 2, 3, 4, 5], 2))) == 2
-        @test length(unique(jenksbreaks([1, 2, 3, 4, 5], 3))) == 3
+        @test length(unique(jenksbreaks(data, num_breaks))) == num_breaks
     end
 
     @testset "Helpers to Find the Best Number of Breaks" begin
