@@ -109,7 +109,7 @@ function validatefold(xtrain::Array{Float64}, ytrain::Array{Float64}, xtest::Arr
     fit!(network)
     predictions = predict(network, xtest)
 
-    return metric(ytest[1, :], predictions[1, :])
+    return metric(recode(ytest[1, :]), recode(predictions[1, :]))
 end
 
 """
