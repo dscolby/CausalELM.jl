@@ -64,11 +64,6 @@ summary6 = summarize(xlearner)
     @test xlearner_inference isa Array{Float64}
 end
 
-@testset "ITS With More Splits Than Observations" begin
-    @test_throws BoundsError generatenulldistribution(its, 101)
-    @test_throws BoundsError generatenulldistribution(its, 100)
-end
-
 @testset "P-values and Standard Errors" begin
     @test 1 >= p1 >= 0
     @test stderr1 > 0

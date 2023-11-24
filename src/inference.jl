@@ -2,6 +2,7 @@
 module Inference
 
 using CausalELM: mean
+using Random: shuffle
 using ..Metalearners: Metalearner
 using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
     DoubleMachineLearning, estimate_causal_effect!
@@ -32,8 +33,7 @@ julia> summarize(m1)
 "Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
 ```
 """
-function summarize(its::InterruptedTimeSeries, nsplits::Integer=1000, 
-    mean_effect::Bool=true)
+function summarize(its::InterruptedTimeSeries, n::Integer=1000, mean_effect::Bool=true)
     if !isdefined(its, :Δ)
         throw(ErrorException("call estimatecausaleffect! before calling summarize"))
     end
@@ -41,7 +41,7 @@ function summarize(its::InterruptedTimeSeries, nsplits::Integer=1000,
 
     effect = ifelse(mean_effect, mean(its.Δ), sum(its.Δ))
 
-    p, stderr = quantitiesofinterest(its, nsplits, mean_effect)
+    p, stderr = quantitiesofinterest(its, n, mean_effect)
 
     summary_dict = Dict()
     nicenames = ["Task", "Regularized", "Activation Function", "Validation Metric", 
@@ -232,15 +232,16 @@ function generatenulldistribution(e::Union{CausalEstimator, Metalearner}, n::Int
 end
 
 """
-    generatenulldistribution(e, n, mean_effect)
+    generatenulldistribution(its, n, mean_effect)
 
 Generate a null distribution for the treatment effect in an interrupted time series 
 analysis. By default, this method generates a null distribution of mean differences. To 
-generate a null distribution of cummulative differences, set the mean_effect argument to false.
+generate a null distribution of cummulative differences, set the mean_effect argument to 
+false.
 
-Instead of randomizing the assignment of units to the treamtent or control group, this 
-method generates the null distribution by reestimating the time series with the intervention
-set to n splits at even intervals within the total study duration.
+Randomization is conducted by randomly assigning observations to the pre and 
+post-intervention periods, resestimating the causal effect, and repeating n times. The null 
+distribution is the set of n casual effect estimates.
 
 Note that lowering the number of iterations increases the probability of failing to reject
 the null hypothesis.
@@ -259,28 +260,24 @@ julia> generatenulldistribution(its, 10)
 -0.05905529159312335, -0.04927743270606937]
 ```
 """
-function generatenulldistribution(its::InterruptedTimeSeries, nsplits::Integer=1000, 
+function generatenulldistribution(its::InterruptedTimeSeries, n::Integer=1000, 
     mean_effect::Bool=true)
     local model = deepcopy(its)
-    nobs = size(model.Y₀, 1) + size(model.Y₁, 1)
-    results = Vector{Float64}(undef, nsplits)
-    nsplits -= 1
-
-    if nsplits >= nobs
-        throw(BoundsError("nsplits must be less than the number of observations"))
-    end
+    split_idx = size(model.Y₀, 1)
+    results = Vector{Float64}(undef, n)
+    data = reduce(hcat, (reduce(vcat, (its.X₀, its.X₁)), reduce(vcat, (its.Y₀, its.Y₁))))
 
     # Generate random treatment assignments and estimate the causal effects
-    for iter in 1:nsplits
-
-        # Find the index to split at the nth interval
-        split_idx = floor(Int, iter*(nobs/nsplits))-1
-        X, Y = vcat(its.X₀, its.X₁), vcat(its.Y₀, its.Y₁)
-        x₀, y₀ = X[1:split_idx, :], Y[1:split_idx]
-        x₁, y₁ = X[split_idx+1:end, :], Y[split_idx+1:end]
+    for iter in 1:n
+        permuted_data = data[shuffle(1:end), :]
+        permuted_x₀ = permuted_data[1:split_idx, 1:end-1]
+        permuted_x₁ = permuted_data[split_idx+1:end, 1:end-1]
+        permuted_y₀ = permuted_data[1:split_idx, end]
+        permuted_y₁ = permuted_data[split_idx+1:end, end]
 
         # Reestimate the model with the intervention now at the nth interval
-        model.X₀, model.Y₀, model.X₁, model.Y₁ = x₀, y₀, x₁, y₁
+        model.X₀, model.Y₀ = permuted_x₀, permuted_y₀
+        model.X₁, model.Y₁ = permuted_x₁, permuted_y₁
         estimate_causal_effect!(model)
         results[iter] = ifelse(mean_effect, mean(model.Δ), sum(model.Δ))
     end
