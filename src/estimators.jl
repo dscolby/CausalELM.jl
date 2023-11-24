@@ -1,6 +1,6 @@
 """
-Estimate causal effects with interrupted time series analysis, G-computation, and doubly 
-robust estimation using Extreme Learning machines.
+Estimate causal effects with interrupted time series analysis, G-computation, and double 
+machine learning using Extreme Learning machines.
    """
 module Estimators
 
@@ -11,9 +11,9 @@ using ..CrossValidation: bestsize, shuffledata
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predictcounterfactual!, placebotest, predict
 
-import CausalELM: estimate_causal_effect!
+import CausalELM: estimate_causal_effect!, variable_type, Discrete, Continuous
 
-"""Abstract type for GComputation and DoublyRobust"""
+"""Abstract type for GComputation and DoubleMachineLearning"""
 abstract type  CausalEstimator end
 
 """Container for the results of an interrupted time series analysis"""
@@ -76,7 +76,8 @@ For a simple linear regression-based tutorial on interrupted time series analysi
     regression for the evaluation of public health interventions: a tutorial." International 
     journal of epidemiology 46, no. 1 (2017): 348-355.
 
-Note that X₀, Y₀, X₁, and Y₁ must all be floating point numbers.
+Note that X₀, Y₀, X₁, and Y₁ must all be floating point numbers and ordered temporally from 
+the least to the most recent observation.
 
 Examples
 ```julia-repl
@@ -140,12 +141,16 @@ mutable struct GComputation <: CausalEstimator
     approximator_neurons::Int64
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
+    """Whether the causal effect has been estimated"""
+    fit::Bool
     """Extreme Learning Machine used to estimate the causal effect"""
     learner::ExtremeLearningMachine
     """Weights learned during training"""
     β::Array{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Float64
+    """The risk ratio for the estimated model"""
+    risk_ratio::Real
 
 """
 GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
@@ -190,12 +195,12 @@ julia> regularized=true)
 
         new(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, 0)
+            approximator_neurons, 0, false)
     end
 end
 
-"""Container for the results of doubly robust estimation"""
-mutable struct DoublyRobust <: CausalEstimator
+"""Container for the results of a double machine learning estimator"""
+mutable struct DoubleMachineLearning <: CausalEstimator
     """Covariates"""
     X::Array{Float64}
     """Propensity score covariates"""
@@ -228,18 +233,22 @@ mutable struct DoublyRobust <: CausalEstimator
     num_neurons::Int64
     """Propensity scores"""
     ps::Array{Float64}
-    """Predicted outcomes for teh control group"""
+    """Predicted outcomes for the control group"""
     μ₀::Array{Float64}
     """Predicted outcomes for the treatment group"""
     μ₁::Array{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Float64
+    """The risk ratio for discrete outcomes"""
+    risk_ratio::Real
+    """Whether the causal effect has been estimated"""
+    fit::Bool
 
     """
-DoublyRobust(X, Xₚ, Y, T, task, quantity_of_interest, regularized, activation, 
+DoubleMachineLearning(X, Xₚ, Y, T, task, quantity_of_interest, regularized, activation, 
     validation_metric, min_neurons, max_neurons, folds, iterations, approximator_neurons)
 
-Initialize a doubly robust estimator with cross fitting.
+Initialize a double machine learning estimator with cross fitting.
 
 For more information see:
     Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
@@ -251,14 +260,15 @@ Note that X, Xₚ, Y, and T must all contain floating point numbers.
 Examples
 ```julia-repl
 julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 4), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoublyRobust(X, Xₚ, Y, T)
-julia> m2 = DoublyRobust(X, Xₚ, Y, T; task="regression")
-julia> m3 = DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest="ATE)
+julia> m1 = DoubleMachineLearning(X, Xₚ, Y, T)
+julia> m2 = DoubleMachineLearning(X, Xₚ, Y, T; task="regression")
+julia> m3 = DoubleMachineLearning(X, Xₚ, Y, T; task="regression", quantity_of_interest="ATE)
 ```
 """
-    function DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest="ATE", 
-        regularized=true, activation=relu, validation_metric=mse, min_neurons=1, 
-        max_neurons=100, folds=5, iterations=Int(round(size(X, 1)/10)), 
+    function DoubleMachineLearning(X, Xₚ, Y, T; task="regression", 
+        quantity_of_interest="ATE", regularized=true, activation=relu, 
+        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
         if task ∉ ("regression", "classification")
@@ -281,6 +291,19 @@ julia> m3 = DoublyRobust(X, Xₚ, Y, T; task="regression", quantity_of_interest=
     end
 end
 
+"""
+    estimate_causal_effect!(its)
+
+Estimate the effect of an event relative to a predicted counterfactual.
+
+Examples
+```julia-repl
+julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+julia> estimate_causal_effect!(m1)
+0.25714308
+```
+"""
 function estimate_causal_effect!(its::InterruptedTimeSeries)
     # We will not find the best number of neurons after we have already estimated the causal
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
@@ -304,6 +327,25 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     return its.Δ
 end
 
+"""
+    estimate_causal_effect!(g)
+
+Estimate a causal effect of interest using G-Computation.
+
+If treatents are administered at multiple time periods, the effect will be estimated as the 
+average difference between the outcome of being treated in all periods and being treated in 
+no periods.For example, given that individuals 1, 2, ..., i ∈ I recieved either a treatment 
+or a placebo in p different periods, the model would estimate the average treatment effect 
+as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0, Xₚ].
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m2 = GComputation(X, Y, T)
+julia> estimate_causal_effect!(m2)
+0.31067439
+```
+"""
 function estimate_causal_effect!(g::GComputation)
     full_covariates = hcat(g.X, g.T)
 
@@ -332,27 +374,50 @@ function estimate_causal_effect!(g::GComputation)
     g.β = fit!(g.learner)
     g.causal_effect = sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)
 
+    # We use the risk ratio to calculate e-values in the exchangeability methods
+    if variable_type(vec(g.Y)) == Continuous
+        d = mean(vec(g.Y))/sqrt(var(vec(g.Y)))
+        g.risk_ratio = exp(0.91 * d)
+    else
+        g.risk_ratio = mean(vec(predict(g.learner, Xₜ))/mean(vec(predict(g.learner, Xᵤ))))
+    end
+
+    g.fit = true
     return g.causal_effect
 end
 
-function estimate_causal_effect!(DRE::DoublyRobust)
-    propensity_scores = Array{Array{Float64, 1}}(undef, DRE.folds)
-    control_predictions = Array{Array{Float64, 1}}(undef, DRE.folds)
-    fold_level_effects = Array{Float64}(undef, DRE.folds)
-    X, Xₚ, Y, T = crossfittingsets(DRE)
+"""
+    estimate_causal_effect!(DML)
 
-    if DRE.quantity_of_interest ∈ ("ATE", "ITE")
-        treatment_predictions = Array{Array{Float64, 1}}(undef, DRE.folds)
-    end
+Estimate a causal effect of interest using double machine learning.
+
+Unlike other estimators, this method does not support time series or panel data. This method 
+also does not work as well with smaller datasets because it estimates separate outcome 
+models for the treatment and control groups.
+
+Examples
+```julia-repl
+julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m3 = DoubleMachineLearning(X, Xₚ, Y, T)
+julia> estimate_causal_effect!(m3)
+0.31067439
+```
+"""
+function estimate_causal_effect!(DML::DoubleMachineLearning)
+    propensity_scores = Array{Array{Float64, 1}}(undef, DML.folds)
+    treatment_predictions = Array{Array{Float64, 1}}(undef, DML.folds)
+    control_predictions = Array{Array{Float64, 1}}(undef, DML.folds)
+    fold_level_effects = Array{Float64}(undef, DML.folds)
+    X, Xₚ, Y, T = crossfittingsets(DML)
 
     # Uses the same number of neurons for all phases of estimation
-    if DRE.num_neurons === 0
-        DRE.num_neurons = bestsize(DRE.X, DRE.Y, DRE.validation_metric, DRE.task, 
-            DRE.activation, DRE.min_neurons, DRE.max_neurons, DRE.regularized, DRE.folds, 
-            DRE.iterations, DRE.approximator_neurons)
+    if DML.num_neurons === 0
+        DML.num_neurons = bestsize(DML.X, DML.Y, DML.validation_metric, DML.task, 
+            DML.activation, DML.min_neurons, DML.max_neurons, DML.regularized, DML.folds, 
+            DML.iterations, DML.approximator_neurons)
     end
 
-    for fold in 1:DRE.folds 
+    for fold in 1:DML.folds 
 
         # All the data from the folds used for training
         X_train = reduce(vcat, X[1:end .!== fold])
@@ -366,66 +431,73 @@ function estimate_causal_effect!(DRE::DoublyRobust)
         X_test, Xₚ_test, T_test, Y_test = X[fold], Xₚ[fold], T[fold], Y[fold]
 
         # Train on K-1 folds
-        ps_model, μ₀_model = firststage!(DRE, x₀_train, Xₚ_train, T_train, y₀_train)
+        ps_model, μ₀_model = firststage!(DML, x₀_train, Xₚ_train, T_train, y₀_train)
 
         # Predict on fold K
         ps_pred = predictpropensityscore(ps_model, Xₚ_test)
+        treatment_model = ate!(DML, x₁_train, y₁_train)
+        treatment_pred = predicttreatmentoutcomes(treatment_model, X_test)
         control_pred = predictcontroloutcomes(μ₀_model, X_test)
         propensity_scores[fold], control_predictions[fold] = ps_pred, control_pred
+        treatment_predictions[fold] = treatment_pred
 
-        if DRE.quantity_of_interest ∈ ("ATE", "ITE")
-            treatment_model = ate!(DRE, x₁_train, y₁_train)
-            treatment_pred = predicttreatmentoutcomes(treatment_model, X_test)
-            treatment_predictions[fold] = treatment_pred
-            
+        if DML.quantity_of_interest ∈ ("ATE", "ITE")
             E₁ = @fastmath mean(vec(T_test.*(Y_test.-treatment_pred)
                 /(ps_pred.+treatment_pred)))
             E₀ = @fastmath mean(vec(((1 .-T_test).*(Y_test.-control_pred))/((1 .-ps_pred)) 
                 .+control_pred))
             fold_level_effects[fold] = E₁ - E₀
     
-        else DRE.quantity_of_interest === "ATT"
+        else DML.quantity_of_interest === "ATT"
             num = @fastmath ((1 .- T_test).*(Y_test .- control_pred))
             fold_level_effects[fold] = @fastmath mean(vec(num/((1 .- ps_pred) .+ control_pred)))
         end
     end
-    DRE.ps = reduce(vcat, propensity_scores)
-    DRE.μ₀ = reduce(vcat, control_predictions)
+    DML.ps, DML.μ₀ = reduce(vcat, propensity_scores), reduce(vcat, control_predictions)
 
     # No outcome model for the treatment prediction if estimating ATT
-    if DRE.quantity_of_interest ∈ ("ATE", "ITE")
-        DRE.μ₁ = reduce(vcat, treatment_predictions)
+    if DML.quantity_of_interest ∈ ("ATE", "ITE")
+        DML.μ₁ = reduce(vcat, treatment_predictions)
     end
 
-    DRE.causal_effect = mean(fold_level_effects)
-    return DRE.causal_effect
+    # We use the risk ratio to calculate e-values in the exchangeability methods
+    if variable_type(vec(DML.Y)) == Continuous
+        d = mean(vec(DML.Y))/sqrt(var(vec(DML.Y)))
+        DML.risk_ratio = exp(0.91 * d)
+    else
+        DML.risk_ratio = mean(mean.(treatment_predictions))/mean(mean.(control_predictions))
+    end
+
+    DML.causal_effect = mean(fold_level_effects)
+    DML.fit = true
+    return DML.causal_effect
 end
 
 """
-    firststage!(DRE, x₀, xₚ, T, y₀)
+    firststage!(DML, x₀, xₚ, T, y₀)
 
-Estimate the average treatment for the treated for a doubly robust estimator with cross 
-fitting.
+Estimate the average treatment for the treated for a double machine learning estimator with 
+cross fitting.
 
 Examples
 ```julia-repl
 julia> X, Xₚ Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoublyRobust(X, Xₚ, Y, T)
+julia> m1 = DoubleMachineLearning(X, Xₚ, Y, T)
 julia> x₀, y₀ = m1.X[m1.T .== 0], m1.Y[m1.T .== 0]
 julia> firststage!(m1, x₀, xₚ, T, y₀)
 (Regularized Extreme Learning Machine with 10 hidden neurons, 
 Regularized Extreme Learning Machine with 10 hidden neurons)
 ```
 """
-function firststage!(DRE::DoublyRobust, x₀::Array{Float64}, xₚ::Array{Float64}, 
+function firststage!(DML::DoubleMachineLearning, x₀::Array{Float64}, xₚ::Array{Float64}, 
     T::Array{Float64}, y₀::Array{Float64})
     # Propensity score and separate outcome models
-    if DRE.regularized
-        ps_model = RegularizedExtremeLearner(xₚ, T, DRE.num_neurons, DRE.activation)
-        μ₀_model = RegularizedExtremeLearner(x₀, y₀, DRE.num_neurons, DRE.activation)
+    if DML.regularized
+        ps_model = RegularizedExtremeLearner(xₚ, T, DML.num_neurons, DML.activation)
+        μ₀_model = RegularizedExtremeLearner(x₀, y₀, DML.num_neurons, DML.activation)
     else
-        ps_model = ExtremeLearner(xₚ, T, DRE.num_neurons, DRE.activation)
-        μ₀_model = ExtremeLearner(x₀, y₀, DRE.num_neurons, DRE.activation)
+        ps_model = ExtremeLearner(xₚ, T, DML.num_neurons, DML.activation)
+        μ₀_model = ExtremeLearner(x₀, y₀, DML.num_neurons, DML.activation)
     end
 
     fit!(ps_model); fit!(μ₀_model)
@@ -434,24 +506,25 @@ function firststage!(DRE::DoublyRobust, x₀::Array{Float64}, xₚ::Array{Float6
 end
 
 """
-    ate!(DRE, x₁, y₁)
+    ate!(DML, x₁, y₁)
 
-Estimate the average treatment effect for a doubly robust estimator with cross fitting.
+Estimate the average treatment effect for a double machine learning estimator with cross 
+fitting.
 
 Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoublyRobust(X, Y, T)
+julia> m1 = DoubleMachineLearning(X, Y, T)
 julia> x₁, y₁ = m1.X[m1.T .== 1], m1.Y[m1.T .== 1]
 julia> ate!(m1, x₁, y₁)
 Regularized Extreme Learning Machine with 10 hidden neurons
 ```
 """
-function ate!(DRE::DoublyRobust, x₁::Array{Float64}, y₁::Array{Float64})
-    if DRE.regularized
-        μ₁_model = RegularizedExtremeLearner(x₁, y₁, DRE.num_neurons, DRE.activation)
+function ate!(DML::DoubleMachineLearning, x₁::Array{Float64}, y₁::Array{Float64})
+    if DML.regularized
+        μ₁_model = RegularizedExtremeLearner(x₁, y₁, DML.num_neurons, DML.activation)
     else
-        μ₁_model = ExtremeLearner(x₁, y₁, DRE.num_neurons, DRE.activation)
+        μ₁_model = ExtremeLearner(x₁, y₁, DML.num_neurons, DML.activation)
     end
 
     fit!(μ₁_model)
@@ -462,13 +535,14 @@ end
 """
     predictpropensityscore(ps_model, x_pred)
 
-Predict the propensity score for an out of sample fold for the doubly robust estimator.
+Predict the propensity score for an out of sample fold for the double machine learning 
+estimator.
 
 Examples
 ```julia-repl
 julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> x_pred = rand(20, 5)
-julia> m1 = DoublyRobust(X, Xₚ, Y, T)
+julia> m1 = DoubleMachineLearning(X, Xₚ, Y, T)
 julia> ps_model, _ = firststage!(m1, x₀, y₀)
 julia> predictpropensityscore(ps_model, x_pred)
 ```
@@ -486,7 +560,7 @@ Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> x_pred = rand(20, 5)
-julia> m1 = DoublyRobust(X, Y, T)
+julia> m1 = DoubleMachineLearning(X, Y, T)
 julia> control_model, _ = firststage!(m1, x₀, y₀)
 julia> predictcontroloutcomes(control_model, x_pred)
 ```
@@ -505,7 +579,7 @@ Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> x_pred = rand(20, 5)
-julia> m1 = DoublyRobust(X, Y, T)
+julia> m1 = DoubleMachineLearning(X, Y, T)
 julia> treatment_model, _ = firststage!(m1, x₀, y₀)
 julia> predicttreatmentoutcomes(treatment_model, x_pred)
 ```
@@ -516,42 +590,42 @@ function predicttreatmentoutcomes(treatment_model::ExtremeLearningMachine,
 end
 
 """
-    crossfitting_sets(DRE)
+    crossfitting_sets(DML)
 
-Creates folds for cross fitting a doubly robust estimator.
+Creates folds for cross fitting a double machine learning estimator.
 
 Examples
 ```julia-repl
-julia> xfolds, y_folds = crossfiting_sets(DRE)
+julia> xfolds, y_folds = crossfiting_sets(DML)
 ([[0.0 0.0; 0.0 0.0; 0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0; 0.0 0.0], 
 [0.0 0.0; 0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0; … ; 
 0.0 0.0; 0.0 0.0]], [[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 
 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0]])
 ```
 """
-function crossfittingsets(DRE::DoublyRobust)
+function crossfittingsets(DML::DoubleMachineLearning)
     msg = """the number of folds must be less than the number of 
              observations and greater than or equal to iteration"""
-    n = length(DRE.Y)
+    n = length(DML.Y)
     
-    if DRE.folds >= n throw(ArgumentError(msg)) end
+    if DML.folds >= n throw(ArgumentError(msg)) end
 
     # Vectors of arrays for each fold in the covariates, propensity score covariates, 
     # outcome, and treatment
-    x_set = Array{Array{Float64, 2}}(undef, DRE.folds)
-    xₚ_set = Array{Array{Float64, 2}}(undef, DRE.folds)
-    y_set = Array{Array{Float64, 1}}(undef, DRE.folds)
-    t_set = Array{Array{Float64, 1}}(undef, DRE.folds)
+    x_set = Array{Array{Float64, 2}}(undef, DML.folds)
+    xₚ_set = Array{Array{Float64, 2}}(undef, DML.folds)
+    y_set = Array{Array{Float64, 1}}(undef, DML.folds)
+    t_set = Array{Array{Float64, 1}}(undef, DML.folds)
 
     # Indices to start and stop
-    stops = round.(Int, range(start=1, stop=n, length=DRE.folds+1))
+    stops = round.(Int, range(start=1, stop=n, length=DML.folds+1))
 
     # Indices to use for making folds
     indices = [s:e-(e < n)*1 for (s, e) in zip(stops[1:end-1], stops[2:end])]
 
     for (i, idx) in pairs(indices)
-        x_set[i], xₚ_set[i] = DRE.X[idx, :], DRE.Xₚ[idx, :]
-        y_set[i], t_set[i] = DRE.Y[idx], DRE.T[idx]
+        x_set[i], xₚ_set[i] = DML.X[idx, :], DML.Xₚ[idx, :]
+        y_set[i], t_set[i] = DML.Y[idx], DML.T[idx]
     end
 
     return x_set, xₚ_set, y_set, t_set

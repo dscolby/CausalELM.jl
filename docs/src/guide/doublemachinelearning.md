@@ -1,9 +1,11 @@
-# Doubly Robust Estimation
+# Double Machine Learning
 Doubly robust estimation estimates separate models for the treatment and outcome variables 
-and weights the outcome estimates by the treatment estimates. The advantage of doing this is
-that only one of the models has to be specified correctly to produce an unbiased estimate of 
-the causal effect. This implementation also uses cross fitting to avoid bias from 
-overfitting. The main steps for using doubly robust estimation in CausalELM are below.
+and weights the outcome estimates by the treatment estimates. This allows one to model more 
+complex, nonlinear relationships between the treatment and outcome variables. Additonally, 
+double machine learning is doubly robust, which meants that only one of the models has to be 
+specified correctly to produce an unbiased estimate of the causal effect. This 
+implementation also uses cross fitting to avoid regularization bias. The main steps for 
+using doubly robust estimation in CausalELM are below.
 
 For more information see:
     Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
@@ -17,11 +19,11 @@ X, Xₚ, Y, T =  rand(100, 5), rand(100, 4), rand(100), [rand()<0.4 for i in 1:1
 ```
 
 ## # Step 1: Initialize a Model
-The DoublyRobust constructor takes four arguments, an array of covariates for the outcome 
-model, an array of covariates for the treatment model, a vector of outcomes, and a vector of 
-treatment statuses.
+The DoubleMachineLearning constructor takes four arguments, an array of covariates for the 
+outcome model, an array of covariates for the treatment model, a vector of outcomes, and a 
+vector of treatment statuses.
 ```julia
-m1 = DoublyRobust(X, Xₚ, Y, T)
+m1 = DoubleMachineLearning(X, Xₚ, Y, T)
 ```
 
 ## Step 2: Estimate the Causal Effect

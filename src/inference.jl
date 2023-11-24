@@ -3,8 +3,8 @@ module Inference
 
 using CausalELM: mean
 using ..Metalearners: Metalearner
-using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, DoublyRobust, 
-    estimate_causal_effect!
+using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
+    DoubleMachineLearning, estimate_causal_effect!
 
 import CausalELM: summarize
 
@@ -103,7 +103,7 @@ function summarize(g::GComputation, n::Integer=1000)
 end
 
 """
-    summarize(dre, n)
+    summarize(dml, n)
 
 Return a summary from a doubly robust estimator.
 
@@ -115,7 +115,7 @@ For a primer on randomization inference see:
 Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoublyRobust(X, X, Y, T)
+julia> m1 = DoubleMachineLearning(X, X, Y, T)
 julia> estimate_causal_effect(m1)
 [0.5804032956]
 julia> summarize(m1)
@@ -125,16 +125,16 @@ julia> summarize(m1)
 "Standard Error" => 2.129400324, "p-value" => 0.0008342356}
 ```
 """
-function summarize(dre::DoublyRobust, n::Integer=1000)
+function summarize(dml::DoubleMachineLearning, n::Integer=1000)
     summary_dict = Dict()
     nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
         "Validation Metric", "Number of Neurons", "Number of Neurons in Approximator", 
         "Causal Effect", "Standard Error", "p-value"]
 
-    p, stderr = quantitiesofinterest(dre, n)
+    p, stderr = quantitiesofinterest(dml, n)
 
-    values = [dre.task, dre.quantity_of_interest, dre.regularized, dre.activation,  
-        dre.validation_metric, dre.num_neurons, dre.approximator_neurons, dre.causal_effect, 
+    values = [dml.task, dml.quantity_of_interest, dml.regularized, dml.activation,  
+        dml.validation_metric, dml.num_neurons, dml.approximator_neurons, dml.causal_effect, 
         stderr, p]
 
     for (nicename, value) in zip(nicenames, values)

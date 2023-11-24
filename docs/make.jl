@@ -19,7 +19,7 @@ makedocs(;
         "Guide" => Any[
             "Interrupted Time Series Estimation" => "guide/its.md",
             "G-computation" => "guide/gcomputation.md",
-            "Doubly Robust Estimation" => "guide/doublyrobust.md",
+            "Double Machine Learning" => "guide/doublemachinelearning.md",
             "Metalearners" => "guide/metalearners.md"
         ],
         "Reference" => Any[

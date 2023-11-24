@@ -7,7 +7,7 @@ CausalELM.Estimators
 CausalELM.Estimators.CausalEstimator
 CausalELM.Estimators.InterruptedTimeSeries
 CausalELM.Estimators.GComputation
-CausalELM.Estimators.DoublyRobust
+CausalELM.Estimators.DoubleMachineLearning
 CausalELM.Metalearners
 CausalELM.Metalearners.Metalearner
 CausalELM.Metalearners.SLearner

@@ -1,8 +1,13 @@
 module ModelValidation
 
-using ..Estimators: InterruptedTimeSeries, estimate_causal_effect!, GComputation
+using ..Estimators: InterruptedTimeSeries, estimate_causal_effect!, GComputation, 
+    CausalEstimator, predict, DoubleMachineLearning
 using ..Metrics: mse
-using CausalELM: mean, consecutive
+using ..CrossValidation: bestsize
+using ..Models: predict, fit!, ExtremeLearner, RegularizedExtremeLearner
+using ..Metalearners: Metalearner, XLearner, SLearner, TLearner
+import CausalELM: mean, consecutive, validate, exchangeability, e_value, Discrete,
+    Continuous, variable_type, var
 
 """
     validate(its; n, low, high)
@@ -43,7 +48,7 @@ julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimate_causal_effect!(m1)
 [0.25714308]
-julia> testassumptions(m1)
+julia> validate(m1)
 {"Task" => "Regression", "Regularized" => true, "Activation Function" => relu, 
 "Validation Metric" => "mse","Number of Neurons" => 2, 
 "Number of Neurons in Approximator" => 10, "β" => [0.25714308], 
@@ -53,11 +58,65 @@ julia> testassumptions(m1)
 function validate(its::InterruptedTimeSeries; n::Int=1000, low::Float64=0.15, 
     high::Float64=0.85)
     if !isdefined(its, :Δ)
-        throw(ErrorException("call estimatecausaleffect! before calling testassumptions"))
+        throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
     return testcovariateindependence(its; n=n), supwald(its; low=low, high=high, n=n), 
         testomittedpredictor(its; n=n)
+end
+
+"""
+    validate(m; num_treatments)
+
+This method tests the counterfactual consistency, exchangeability, and positivity 
+assumptions required for causal inference. It should be noted that consistency and 
+exchangeability are not directly testable, so instead, these tests do not provide definitive 
+evidence of a violation of these assumptions. To probe the counterfactual consistency 
+assumption, we assume there were multiple levels of treatments and find them by binning the
+dependent vairable for treated observations using Jenks breaks. The optimal number of breaks 
+between 2 and num_treatments is found using the elbow method. Using these hypothesized 
+treatment assignemnts, this method compares the MSE of linear regressions using the observed 
+and hypothesized treatments. If the counterfactual consistency assumption holds then the 
+difference between the MSE with hypothesized treatments and the observed treatments should 
+be positive because the hypothesized treatments should not provide useful information. If 
+it is negative, that indicates there was more useful information provided by the 
+hypothesized treatments than the observed treatments or that there is an unobserved 
+confounder. Next, this methods tests the model's sensitivity to a violation of the 
+exchangeability assumption by calculating the E-value, which is the minimum strength of 
+association, on the risk ratio scale, that an unobserved confounder would need to have with 
+the treatment and outcome variable to fully explain away the estimated effect. Thus, higher 
+E-values imply the model is more robust to a violation of the exchangeability assumption. 
+Finally, this method tests the positivity assumption by estimating propensity scores. Rows
+in the matrix are levels of covariates that have a zero probability of treatment. If the 
+matrix is empty, none of the observations have an estimated aero probability of treatment, 
+which implies the positivity assumption is satisfied.
+
+
+For a thorough review of casual inference assumptions see:
+    Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
+    Francis, 2024. 
+
+For more information on the E-value test see:
+    VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+    introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
+
+Examples
+```julia-repl
+julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
+    Float64.([rand()<0.4 for i in 1:100])
+julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> validate(g_computer)
+2.7653668647301795
+    ```
+"""
+function validate(m::Union{CausalEstimator, Metalearner}; num_treatments::Int=5)
+    if !m.fit
+        throw(ErrorException("call estimate_causal_effect! before calling validate"))
+    end
+
+    return counterfactualconsistency(m, num_treatments=num_treatments), exchangeability(m), 
+        positivity(m)
 end
 
 """
@@ -97,6 +156,8 @@ function testcovariateindependence(its::InterruptedTimeSeries; n::Int=1000)
     x = all_vars[:, end-1:end]
     results = Dict{String, Float64}()
 
+    # Estimate a linear regression with each covariate as a dependent variable and all other
+    # covariates and time as independent variables
     for i in 1:size(all_vars, 2)-2
         y = all_vars[:, i] 
         β = first(x\y)
@@ -146,8 +207,8 @@ function testomittedpredictor(its::InterruptedTimeSeries; n::Int=1000)
     results = Dict{String, Float64}()
 
     for i in 1:n
-        its_copy.X₀ = reduce(hcat, (its.X₀, randn(size(its.X₀, 1)).+rand(size(its.X₀, 1))))
-        its_copy.X₁ = reduce(hcat, (its.X₁, randn(size(its.X₁, 1)).+rand(size(its.X₁, 1))))
+        its_copy.X₀ = reduce(hcat, (its.X₀, rand(size(its.X₀, 1))))
+        its_copy.X₁ = reduce(hcat, (its.X₁, rand(size(its.X₁, 1))))
         biased_effects[i] = mean(estimate_causal_effect!(its_copy))
     end
     
@@ -250,6 +311,8 @@ function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000,
 
     x_copy = deepcopy(x)
     null = Vector{Float64}(undef, n)
+
+    # Run OLS with random treatment vectors to generate a counterfactual distribution
     for i in 1:n
         x_copy[:, 1] = float(rand(0:1, size(x, 1)))  # Random treatment vector
         null[i] = first(x_copy\y)
@@ -261,16 +324,20 @@ function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000,
 end
 
 """
-    counterfactualconsistency(g; num_treatments)
+    counterfactualconsistency(m; num_treatments)
 
-Examine the counterfactual consistency assumption. First, this function generates for Jenks 
+Examine the counterfactual consistency assumption. First, this function generates Jenks 
 breaks based on outcome values for the treatment group. Then, it replaces treatment statuses 
-with the numbers corresponding to each group. Next, it runs two linear regressions, one 
-with and one without the fake treatment assignemnts generated by the Jenks breaks. Finally, 
-it subtracts the mean squared error from the regression with real data from the mean squared 
-error from the regression with the fake treatment statuses. If this number is negative, it 
-might indicate a violation of the counterfactual consistency assumption or omitted variable
-bias.
+with the numbers corresponding to each group. Next, it runs two linear regressions on for 
+the treatment group, one with and one without the fake treatment assignemnts generated by 
+the Jenks breaks. Finally, it subtracts the mean squared error from the regression with real 
+data from the mean squared error from the regression with the fake treatment statuses. If 
+this number is negative, it might indicate a violation of the counterfactual consistency 
+assumption or omitted variable bias.
+
+For a primer on G-computation and its assumptions see:
+    Naimi, Ashley I., Stephen R. Cole, and Edward H. Kennedy. "An introduction to g 
+    methods." International journal of epidemiology 46, no. 2 (2017): 756-762.
 
 Examples
 ```julia-repl
@@ -282,8 +349,9 @@ julia> counterfactualconsistency(g_computer)
 2.7653668647301795
 ```
 """
-function counterfactualconsistency(g::GComputation; num_treatments::Int=5)
-    treatment_covariates, treatment_outcomes = g.X[g.T .== 1, :], g.Y[g.T .== 1]
+function counterfactualconsistency(m::Union{CausalEstimator, Metalearner}; 
+    num_treatments::Int=5)
+    treatment_covariates, treatment_outcomes = m.X[m.T .== 1, :], m.Y[m.T .== 1]
     fake_treat = bestsplits(treatment_outcomes, num_treatments)
     β_real = treatment_covariates\treatment_outcomes
     β_fake = Real.(reduce(hcat, (treatment_covariates, fake_treat))\treatment_outcomes)
@@ -293,6 +361,106 @@ function counterfactualconsistency(g::GComputation; num_treatments::Int=5)
     mse_fake_treat = mse(treatment_outcomes, ŷ_fake)
 
     return mse_fake_treat - mse_real_treat
+end
+
+"""
+    exchangeability(model)
+
+Test the sensitivity of a G-computation or doubly robust estimator or metalearner to a 
+violation of the exchangeability assumption.
+
+For more information on the E-value test see:
+    VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+    introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
+
+Examples
+```julia-repl
+julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
+    Float64.([rand()<0.4 for i in 1:100])
+julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> e_value(g_computer)
+1.13729886008143832
+```
+"""
+function exchangeability(model::Union{CausalEstimator, Metalearner})
+    return e_value(model)
+end
+
+"""
+    e_value(model)
+ 
+Test the sensitivity of an estimator to a violation of the exchangeability assumption.
+
+For more information on the E-value test see:
+    VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+    introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
+
+Examples
+```julia-repl
+julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
+    Float64.([rand()<0.4 for i in 1:100])
+julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> e_value(g_computer)
+2.2555405766985125
+```
+"""
+function e_value(model::Union{CausalEstimator, Metalearner})
+    if model.risk_ratio > 1
+        return model.risk_ratio + sqrt(model.risk_ratio*(model.risk_ratio-1))
+    else
+        rr🥰 = 1/model.risk_ratio
+        return rr🥰 + sqrt(rr🥰*(rr🥰-1))
+    end
+end
+
+"""
+    positivity(model)
+ 
+Find likely violations of the positivity assumption.
+
+This method uses an extreme learning machine or regularized extreme learning machine to 
+estimate probabilities of treatment. The returned matrix, which may be empty, are the 
+covariates that have a zero probability of treatment or zero probability of being assigned 
+to the control group, whith their entry in the last column denoted as 0 or 1 respectively. 
+In other words, they likely violate the positivity assumption.
+
+Examples
+```julia-repl
+julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
+    Float64.([rand()<0.4 for i in 1:100])
+julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> positivity(g_computer)
+0×5 Matrix{Float64}
+```
+"""
+positivity(model::Union{CausalEstimator, Metalearner}) = positivity(model)
+
+function positivity(m::Union{DoubleMachineLearning, XLearner})
+    # Observations that have a zero probability of treatment or control assignment
+    return reduce(hcat, (m.X[m.ps .== 0 .|| m.ps .== 1, :], 
+        m.ps[m.ps .== 0 .|| m.ps .== 1]))
+end
+
+function positivity(m::Union{GComputation, SLearner, TLearner})
+    num_neurons = bestsize(m.X, m.T, m.validation_metric, m.task, m.activation, 
+        m.min_neurons, m.max_neurons, m.regularized, m.folds,  m.iterations, 
+        m.approximator_neurons)
+
+    if m.regularized
+        ps_mod = RegularizedExtremeLearner(m.X, m.T, num_neurons, m.activation)
+    else
+        ps_mod = ExtremeLearner(m.X, m.T, num_neurons, m.activation)
+    end
+
+    fit!(ps_mod)
+    propensity_scores = predict(ps_mod, m.X)
+
+    # Observations that have a zero probability of treatment or control assignment
+    return reduce(hcat, (m.X[propensity_scores .== 0 .|| propensity_scores .== 1, :], 
+        propensity_scores[propensity_scores .== 0 .|| propensity_scores .== 1]))
 end
 
 """
@@ -318,15 +486,15 @@ function sumsofsquares(data::Vector{<:Real}, num_classes::Int=5)
     
     @inbounds for (k, i) in Iterators.product(1:num_classes, 1:n)
         if k == 1
-            sums_of_squares[i, k] = variance(data[1:i])
+            @inbounds sums_of_squares[i, k] = variance(data[1:i])
 
         # Calculates the sums of squares for each potential class and break point
         else
             sums = Vector{Float64}(undef, i)
             for j in 1:i
-                sums[j] = sums_of_squares[j, k-1] + (i-j+1) * variance(data[j:i])
+                @inbounds sums[j] = sums_of_squares[j, k-1] + (i-j+1) * variance(data[j:i])
             end
-            sums_of_squares[i, k] = minimum(sums)
+            @inbounds sums_of_squares[i, k] = minimum(sums)
             end
     end
     return sums_of_squares
@@ -361,13 +529,13 @@ function classpointers(data::Vector{<:Real}, num_classes::Int, sums_of_sqs::Matr
 
     # Initialize the first column of class pointers
     for i in 1:n
-        class_pointers[i, 1] = 1
+        @inbounds class_pointers[i, 1] = 1
     end
 
     # Update class pointers based on their sums of squares
     for k in 2:num_classes
         for i in 2:n
-            map(1:i) do j
+            @inbounds map(1:i) do j
                 class_pointers[i, k] = argmin([sums_of_sqs[j, k-1]+class_pointers[j, k-1]])
             end
         end

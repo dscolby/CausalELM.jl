@@ -1,9 +1,11 @@
 using Test
-using CausalELM.Estimators: InterruptedTimeSeries, GComputation, estimate_causal_effect!
+using CausalELM.Estimators: InterruptedTimeSeries, GComputation, DoubleMachineLearning, 
+    estimate_causal_effect!
+using CausalELM.Metalearners: SLearner, estimate_causal_effect!
 using CausalELM.ModelValidation: pval, testcovariateindependence, testomittedpredictor, 
     supwald, validate, counterfactualconsistency, sumsofsquares, classpointers, 
     backtrack_to_find_breaks, jenksbreaks, faketreatments, sdam, scdm, gvf, bestsplits, 
-    groupbyclass, variance
+    groupbyclass, variance, variable_type, e_value, exchangeability, positivity
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -17,6 +19,34 @@ x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 
 g_computer = GComputation(x, y, t, temporal=false)
 estimate_causal_effect!(g_computer)
 test_outcomes = g_computer.Y[g_computer.T .== 1]
+
+# Create binary GComputation to test E-values with a binary outcome
+x1, y1 = rand(100, 5), Float64.([rand()<0.4 for i in 1:100])
+t1 = Float64.([rand()<0.4 for i in 1:100])
+binary_g_computer = GComputation(x1, y1, t1, temporal=false)
+estimate_causal_effect!(binary_g_computer)
+
+# Create binary GComputation to test E-values with a count outcome
+x2, y2 = rand(100, 5), rand(1.0:5.0, 100)
+t2 = Float64.([rand()<0.4 for i in 1:100])
+count_g_computer = GComputation(x2, y2, t2, temporal=false)
+estimate_causal_effect!(count_g_computer)
+
+# Create double machine learning estimator
+dml = DoubleMachineLearning(x, x, y, t)
+estimate_causal_effect!(dml)
+
+# Initialize an S-learner
+s_learner = SLearner(x, y, t)
+estimate_causal_effect!(s_learner)
+
+# Initialize a T-learner
+t_learner = TLearner(x, y, t)
+estimate_causal_effect!(t_learner)
+
+# Initialize an X-learner
+x_learner = XLearner(x, y, t)
+estimate_causal_effect!(x_learner)
 
 # Used to test helper functions for Jenks breaks
 sum_of_squares2 = sumsofsquares([1, 2, 3, 4, 5], 2)
@@ -126,6 +156,61 @@ end
     end
 end
 
-@testset "Counterfactual Consistency" begin
-    @test counterfactualconsistency(g_computer) isa Real
+@testset "E-values" begin
+    @testset "Generating E-values" begin
+         @test e_value(binary_g_computer) isa Real
+         @test e_value(count_g_computer) isa Real
+         @test e_value(g_computer) isa Real
+         @test e_value(dml) isa Real
+         @test e_value(s_learner) isa Real
+         @test e_value(t_learner) isa Real
+         @test e_value(x_learner) isa Real
+    end
+end
+
+@testset "G-Computation Assumptions" begin
+    @testset "Counterfactual Consistency" begin
+        @test counterfactualconsistency(g_computer) isa Real
+    end
+
+    @testset "Exchangeability" begin
+        @test exchangeability(binary_g_computer) isa Real
+        @test exchangeability(count_g_computer) isa Real
+        @test exchangeability(g_computer) isa Real
+    end
+
+    @testset "Positivity" begin
+        @test size(positivity(binary_g_computer), 2) == size(binary_g_computer.X, 2)+1
+        @test size(positivity(count_g_computer), 2) == size(count_g_computer.X, 2)+1
+        @test size(positivity(g_computer), 2) == size(g_computer.X, 2)+1
+    end
+end
+
+@testset "All Assumptions for G-computation" begin
+    @test_throws ErrorException validate(GComputation(x, y, t))
+    @test length(validate(binary_g_computer)) == 3
+    @test length(validate(count_g_computer)) == 3
+    @test length(validate(g_computer)) == 3
+end
+
+@testset "Double Machine Learning Assumptions" begin
+    @test counterfactualconsistency(dml) isa Real
+    @test exchangeability(dml) isa Real
+    @test size(positivity(dml), 2) == size(dml.X, 2)+1
+    @test length(validate(dml)) == 3
+end
+
+@testset "Metalearner Assumptions" begin
+    @test counterfactualconsistency(s_learner) isa Real
+    @test exchangeability(s_learner) isa Real
+    @test size(positivity(s_learner), 2) == size(s_learner.X, 2)+1
+    @test counterfactualconsistency(t_learner) isa Real
+    @test exchangeability(t_learner) isa Real
+    @test size(positivity(t_learner), 2) == size(t_learner.X, 2)+1
+    @test counterfactualconsistency(x_learner) isa Real
+    @test exchangeability(x_learner) isa Real
+    @test size(positivity(x_learner), 2) == size(x_learner.X, 2)+1
+    @test length(validate(s_learner)) == 3
+    @test length(validate(t_learner)) == 3
+    @test length(validate(x_learner)) == 3
 end

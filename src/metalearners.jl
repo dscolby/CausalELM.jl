@@ -7,7 +7,7 @@ using ..CrossValidation: bestsize, shuffledata
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predict
 
-import CausalELM: estimate_causal_effect!
+import CausalELM: estimate_causal_effect!, Discrete, Continuous, variable_type, mean
 
 """Abstract type for metalearners"""
 abstract type Metalearner end
@@ -46,6 +46,10 @@ mutable struct SLearner <: Metalearner
     β::Array{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
+    """The risk ratio from the estimated model"""
+    risk_ratio::Real
+    """Whether the causal effect has been estimated"""
+    fit::Bool
 
 """
 SLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
@@ -116,10 +120,14 @@ mutable struct TLearner <: Metalearner
     num_neurons::Int64
     """Extreme Learning Machine used to estimate the outcome E[Y|T=0, X]"""
     μ₀::ExtremeLearningMachine
-    """Extreme Learning Machine used to estimate the outcome E[Y|t=1, X]"""
+    """Extreme Learning Machine used to estimate the outcome E[Y|T=1, X]"""
     μ₁::ExtremeLearningMachine
     """Weights learned during training"""
     causal_effect::Array{Float64}
+    """The risk ratio from the estimated model"""
+    risk_ratio::Real
+    """Whether the causal effect has been estimated"""
+    fit::Bool
 
 """
 TLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
@@ -199,9 +207,13 @@ mutable struct XLearner <: Metalearner
     """Extreme learning machine used to estimate the propensity score"""
     g::ExtremeLearningMachine
     """Individual propensity scores"""
-    gᵢ::Array{Float64}
+    ps::Array{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
+    """The risk ratio from the estimated model"""
+    risk_ratio::Real
+    """Whether the causal effect has been estimated"""
+    fit::Bool
 
 """
 XLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
@@ -264,8 +276,18 @@ function estimate_causal_effect!(s::SLearner)
     end
 
     s.β = fit!(s.learner)
-    s.causal_effect = @fastmath predict(s.learner, Xₜ) .- predict(s.learner, Xᵤ)
+    predictionsₜ, predictionsᵪ = predict(s.learner, Xₜ), predict(s.learner, Xᵤ)
+    s.causal_effect = @fastmath predictionsₜ .- predictionsᵪ
 
+    # We use the risk ratio to calculate e-values in the exchangeability methods
+    if variable_type(vec(s.Y)) == Continuous
+        d = mean(vec(s.Y))/sqrt(var(vec(s.Y)))
+        s.risk_ratio = exp(0.91 * d)
+    else
+        s.risk_ratio = mean(vec(predictionsₜ)/mean(vec(predictionsᵪ)))
+    end
+
+    s.fit = true
     return s.causal_effect
 end
 
@@ -290,9 +312,18 @@ function estimate_causal_effect!(t::TLearner)
     end
 
     fit!(t.μ₀); fit!(t.μ₁)
+    predictionsₜ, predictionsᵪ = predict(t.μ₁, t.X), predict(t.μ₀, t.X)
+    t.causal_effect = @fastmath predictionsₜ .- predictionsᵪ
 
-    t.causal_effect = @fastmath predict(t.μ₁, t.X) .- predict(t.μ₀, t.X)
+    # We use the risk ratio to calculate e-values in the exchangeability methods
+    if variable_type(vec(t.Y)) == Continuous
+        d = mean(vec(t.Y))/sqrt(var(vec(t.Y)))
+        t.risk_ratio = exp(0.91 * d)
+    else
+        t.risk_ratio = mean(vec(predictionsₜ)/mean(vec(predictionsᵪ)))
+    end
 
+    t.fit = true
     return t.causal_effect
 end
 
@@ -308,11 +339,71 @@ function estimate_causal_effect!(x::XLearner)
     
     stage1!(x); stage2!(x)
 
-    x.causal_effect = @fastmath ((x.gᵢ.*predict(x.μχ₀, x.X)) .+ 
-        ((1 .- x.gᵢ).*predict(x.μχ₁, x.X)))
+    x.causal_effect = @fastmath ((x.ps.*predict(x.μχ₀, x.X)) .+ 
+        ((1 .- x.ps).*predict(x.μχ₁, x.X)))
 
+    predictionsₜ = predict(x.μ₁, x.X[x.T .== 1, :])
+    predictionsᵪ = predict(x.μ₀, x.X[x.T .== 0, :])
+
+    # We use the risk ratio to calculate e-values in the exchangeability methods
+    if variable_type(vec(x.Y)) == Continuous
+        d = mean(vec(x.Y))/sqrt(var(vec(x.Y)))
+        x.risk_ratio = exp(0.91 * d)
+    else
+        x.risk_ratio = mean(vec(predictionsₜ)/mean(vec(predictionsᵪ)))
+    end
+
+    x.fit = true
     return x.causal_effect
 end
+
+"""
+    estimate_causal_effect!(m)
+
+Estimate the CATE using a metalearner.
+
+For an overview of meatlearning see:
+
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m4 = SLearner(X, Y, T)
+julia> estimate_causal_effect!(m4)
+[0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
+0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 0.20729633391630703, 
+0.20729633391630697, 0.20729633391630697  …  0.20729633391630703, 0.20729633391630697, 
+0.20729633391630692, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697, 
+0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697]
+```
+
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m5 = TLearner(X, Y, T)
+julia> estimatecausaleffect!(m5)
+[0.0493951571746305, 0.049395157174630444, 0.0493951571746305, 0.049395157174630444, 
+0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 
+0.049395157174630444, 0.04939515717463061  …  0.0493951571746305, 0.04939515717463039, 
+0.0493951571746305, 0.04939515717463039, 0.0493951571746305, 0.04939515717463039, 
+0.04939515717463039, 0.049395157174630444, 0.04939515717463039, 0.049395157174630444]
+```
+
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = XLearner(X, Y, T)
+julia> estimatecausaleffect!(m1)
+[-0.025012644892878473, -0.024634294305967294, -0.022144246680543364, -0.023983138957276127, 
+-0.024756239357838557, -0.019409519377053822, -0.02312807640357356, -0.016967113188439076, 
+-0.020188871831409317, -0.02546526148141366  …  -0.019811641136866287, 
+-0.020780821058711863, -0.013588359417922776, -0.020438648396328824, -0.016169487825519843, 
+-0.024031422484491572, -0.01884713946778991, -0.021163590874553318, -0.014607310062509895, 
+-0.022449034332142046]
+```
+"""
+estimate_causal_effect!(m::Metalearner) = estimate_causal_effect!(m)
 
 function stage1!(x::XLearner)
     if x.regularized
@@ -329,7 +420,7 @@ function stage1!(x::XLearner)
 
     # Get propensity scores
     fit!(x.g)
-    x.gᵢ = predict(x.g, x.X)
+    x.ps = predict(x.g, x.X)
 
     # Fit first stage outcome models
     fit!(x.μ₀), fit!(x.μ₁)

@@ -131,8 +131,6 @@ function crossvalidate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer,
     x_folds, y_folds = generatefolds(X, Y, folds)
     
     @inbounds for fold in 1:folds
-        training_size = sum([size(x_folds[f], 1) for f in 1:folds if f != fold])
-
         xtrain = reduce(vcat, [x_folds[f] for f in 1:folds if f != fold])
         ytrain = reduce(vcat, [y_folds[f] for f in 1:folds if f != fold])
         xtest, ytest = x_folds[fold], y_folds[fold]

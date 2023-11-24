@@ -1,4 +1,4 @@
-using CausalELM.Estimators: InterruptedTimeSeries, GComputation, DoublyRobust, 
+using CausalELM.Estimators: InterruptedTimeSeries, GComputation, DoubleMachineLearning, 
     estimate_causal_effect!, mean, crossfittingsets, firststage!, ate!, 
     predictpropensityscore, predictcontroloutcomes, predicttreatmentoutcomes, movingaverage
 using CausalELM.Models: ExtremeLearningMachine
@@ -23,25 +23,25 @@ estimate_causal_effect!(gcomputer_att)
 g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), rand(10), 
     Float64.([rand()<0.4 for i in 1:10]))
 
-dr = DoublyRobust(x, x, y, t)
-dr.num_neurons = 5
-ps_mod, control_mod = firststage!(dr, x₀, x, t, y₀)
-treat_mod = ate!(dr, x₁, y₁)
-dr.num_neurons = 0
-estimate_causal_effect!(dr)
-x_folds, xₚ_folds, y_folds, t_folds = crossfittingsets(dr)
+dm = DoubleMachineLearning(x, x, y, t)
+dm.num_neurons = 5
+ps_mod, control_mod = firststage!(dm, x₀, x, t, y₀)
+treat_mod = ate!(dm, x₁, y₁)
+dm.num_neurons = 0
+estimate_causal_effect!(dm)
+x_folds, xₚ_folds, y_folds, t_folds = crossfittingsets(dm)
 
 # No regularization
-dr_noreg = DoublyRobust(x, x, y, t, regularized=false)
-estimate_causal_effect!(dr_noreg)
+dm_noreg = DoubleMachineLearning(x, x, y, t, regularized=false)
+estimate_causal_effect!(dm_noreg)
 
 # Estimating the ATT instead of the ATE
-dr_att = DoublyRobust(x, x, y, t, quantity_of_interest="ATT")
-estimate_causal_effect!(dr_att)
+dm_att = DoubleMachineLearning(x, x, y, t, quantity_of_interest="ATT")
+estimate_causal_effect!(dm_att)
 
 # Estimating the ATT without regularization
-dr_att_noreg = DoublyRobust(x, x, y, t, regularized=false, quantity_of_interest="ATT")
-estimate_causal_effect!(dr_att_noreg)
+dm_att_noreg = DoubleMachineLearning(x, x, y, t, regularized=false, quantity_of_interest="ATT")
+estimate_causal_effect!(dm_att_noreg)
 
 @testset "Interrupted Time Series Estimation" begin
     @testset "Interrupted Time Series Structure" begin
@@ -88,71 +88,83 @@ end
 
         # Check that the estimats for ATE and ATT are different
         @test g_computer.causal_effect !== gcomputer_att.causal_effect
+
+        @test g_computer.risk_ratio isa Real
+        @test g_computer.fit = true
     end
 end
 
-@testset "Doubly Robust Estimation" begin
-    @testset "Doubly Robust Estimation Structure" begin
-        @test dr.X !== Nothing
-        @test dr.Y !== Nothing
-        @test dr.T !== Nothing
+@testset "Doubly Machine Learning" begin
+    @testset "Doubly Machine Learning Structure" begin
+        @test dm.X !== Nothing
+        @test dm.Y !== Nothing
+        @test dm.T !== Nothing
 
         # No regularization
-        @test dr_noreg.X !== Nothing
-        @test dr_noreg.Y !== Nothing
-        @test dr_noreg.T !== Nothing
+        @test dm_noreg.X !== Nothing
+        @test dm_noreg.Y !== Nothing
+        @test dm_noreg.T !== Nothing
 
         # Using the ATT
-        @test dr_att.X !== Nothing
-        @test dr_att.Y !== Nothing
-        @test dr_att.T !== Nothing
+        @test dm_att.X !== Nothing
+        @test dm_att.Y !== Nothing
+        @test dm_att.T !== Nothing
 
         # Using the ATT without regularization
-        @test dr_att_noreg.X !== Nothing
-        @test dr_att_noreg.Y !== Nothing
-        @test dr_att_noreg.T !== Nothing
+        @test dm_att_noreg.X !== Nothing
+        @test dm_att_noreg.Y !== Nothing
+        @test dm_att_noreg.T !== Nothing
     end
 
-    @testset "DRE First Stage" begin
+    @testset "Double Machine Learning First Stage" begin
         @test ps_mod isa ExtremeLearningMachine
         @test control_mod isa ExtremeLearningMachine
     end
 
-    @testset "DRE Second Stage" begin
+    @testset "Double Machine Learning Second Stage" begin
         @test treat_mod isa ExtremeLearningMachine
     end
 
-    @testset "DRE Predictions" begin
+    @testset "Double Machine Learning Predictions" begin
         @test predictpropensityscore(ps_mod, x₀) isa Array{Float64}
         @test predictcontroloutcomes(control_mod, x₀) isa Array{Float64}
         @test predicttreatmentoutcomes(treat_mod, x₀) isa Array{Float64}
     end
 
     @testset "X and Xₚ Different Size Error" begin
-        @test_throws ArgumentError DoublyRobust(x, rand(50, 5), y, t)
+        @test_throws ArgumentError DoubleMachineLearning(x, rand(50, 5), y, t)
     end
 
     @testset "Doubly Robust Post-estimation Structure" begin
-        @test dr.ps isa Array{Float64}
-        @test dr.μ₀ isa Array{Float64}
-        @test dr.μ₁ isa Array{Float64}
-        @test dr.causal_effect isa Float64
+        @test dm.ps isa Array{Float64}
+        @test dm.μ₀ isa Array{Float64}
+        @test dm.μ₁ isa Array{Float64}
+        @test dm.causal_effect isa Float64
 
         # No regularization
-        @test dr_noreg.ps isa Array{Float64}
-        @test dr_noreg.μ₀ isa Array{Float64}
-        @test dr_noreg.μ₁ isa Array{Float64}
-        @test dr_noreg.causal_effect isa Float64
+        @test dm_noreg.ps isa Array{Float64}
+        @test dm_noreg.μ₀ isa Array{Float64}
+        @test dm_noreg.μ₁ isa Array{Float64}
+        @test dm_noreg.causal_effect isa Float64
 
         # Using the ATT
-        @test dr_att.ps isa Array{Float64}
-        @test dr_att.μ₀ isa Array{Float64}
-        @test dr_att.causal_effect isa Float64
+        @test dm_att.ps isa Array{Float64}
+        @test dm_att.μ₀ isa Array{Float64}
+        @test dm_att.causal_effect isa Float64
 
         # Using the ATT with no regularization
-        @test dr_att_noreg.ps isa Array{Float64}
-        @test dr_att_noreg.μ₀ isa Array{Float64}
-        @test dr_att_noreg.causal_effect isa Float64
+        @test dm_att_noreg.ps isa Array{Float64}
+        @test dm_att_noreg.μ₀ isa Array{Float64}
+        @test dm_att_noreg.causal_effect isa Float64
+
+        # Estimating the risk ratio
+        @test dm_att_noreg.risk_ratio isa Real
+        @test dm.risk_ratio isa Real
+
+        # Testing the fit boolean
+        @test dm_att_noreg.fit = true
+        @test dm_att.fit = true
+        @test dm_noreg.fit = true
     end
 
     @testset "Generating Folds for Cross Fitting" begin
@@ -170,13 +182,13 @@ end
 @testset "Summarization and Inference" begin
     @testset "Quanities of Interest Errors" begin
         @test_throws ArgumentError GComputation(x, y, t, quantity_of_interest="abc")
-        @test_throws ArgumentError DoublyRobust(x, x, y, t, quantity_of_interest="xyz")
+        @test_throws ArgumentError DoubleMachineLearning(x, x, y, t, quantity_of_interest="xyz")
     end
 
     @testset "Task Errors" begin
         @test_throws ArgumentError InterruptedTimeSeries(x₀, y₀, x₁, y₁, task="abc")
         @test_throws ArgumentError GComputation(x, y, t, task="abc")
-        @test_throws ArgumentError DoublyRobust(x, x, y, t, task="xyz")
+        @test_throws ArgumentError DoubleMachineLearning(x, x, y, t, task="xyz")
     end
 
     @testset "Moving Averages" begin

@@ -7,7 +7,7 @@ CurrentModule = CausalELM
 CausalELM enables Estimation of causal quantities of interest in research designs where a 
 counterfactual must be predicted and compared to the observed outcomes. More specifically, 
 CausalELM provides structs and methods to execute interupted time series analysis, 
-G-Computation, and doubly robust estimation as well as estimation of the CATE via 
+G-Computation, and double machine learning as well as estimation of the CATE via 
 S-Learning, T-Learning, and X-Learning. Once a causal model has beeen estimated, CausalELM's 
 summarize method provides basic information about the model as well as a p-value and 
 standard error estimated with approximate randomization inference. In all of these 

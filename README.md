@@ -30,7 +30,7 @@
 CausalELM enables estimation of causal effects in settings where a randomized control trial 
 would be impossible or infeasible. Estimation of the average treatment effect (ATE), intent
 to treat effect (ITE), and average treatment effect on the treated (ATT) can be estimated 
-via G-computation or doubly robust estimation (DRE) while temporal changes can be estimated 
+via G-computation or double machine learning (DML) while temporal changes can be estimated 
 from an interrupted time series analysis. CausalELM also supports estimation of individual 
 treatment effects or conditional average treatment effects (CATE) via S-learning, 
 T-learning, and X-learning. The underlying machine learning model for all these estimators 
@@ -44,7 +44,7 @@ have the counterfactual, making conventional methods of statistical analysis inf
 However, it may still be possible to get an unbiased estimate of the causal effect (ATE, 
 ATE, or ITT) by predicting the counterfactual and comparing it to the observed outcomes. 
 This is the approach CausalELM takes to conduct interrupted time series analysis, 
-G-Computation, DRE, and meatlearning via S-Learners, T-Learners, and X-Learners. In 
+G-Computation, DML, and meatlearning via S-Learners, T-Learners, and X-Learners. In 
 interrupted time series analysis, we want to estimate the effect of some intervention on 
 the outcome of a single unit that we observe during multiple time periods. For example, we 
 might want to know how the announcement of a merger affected the price of Stock A. To do 
@@ -56,11 +56,14 @@ but the administration of X was not random and it might have also been administe
 mulitiple time periods, which would produce biased estimates. To overcome this, 
 G-computation models the observed data, uses the model to predict the outcomes if all 
 patients recieved the treatment, and compares it to the predictions of the outcomes if none 
-of the patients recieved the treatment. Doubly robust estimation (DRE) takes a similar 
+of the patients recieved the treatment. Double machine learning (DML) takes a similar 
 approach but also models the treatment mechanism and uses it to adjust the initial 
-estimates. The advantage of DRE is that only the model of the outcome OR the model of the 
-treatment mechanism has to be correctly specified to yield unbiased estimates. The DRE 
-implementation in CausalELM. also overcomes bias from overfitting by employing cross 
+estimates. This approach has three advantages. First, it is more efficient with high 
+dimensional data than conventional methods. Second, it allows one to model complex, 
+nonlinear relationships between the treatment and the outcome. Finally, it is a doubly 
+robust estimator, meaning that only the model of the outcome OR the model of the 
+treatment mechanism has to be correctly specified to yield unbiased estimates. The DML 
+implementation in CausalELM. also overcomes bias from regularization by employing cross 
 fitting. Furthermore, we might be more interested in how much an individual can benefit from 
 a treatment, as opposed to the average treatment effect. Depending on the characteristics of 
 our data, we can use metalearning methods such as S-Learning, T-Learning, or X-Learning to 

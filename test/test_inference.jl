@@ -1,6 +1,6 @@
 using CausalELM.Inference: generatenulldistribution, quantitiesofinterest, summarize
 using CausalELM.Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
-    DoublyRobust
+    DoubleMachineLearning
 using CausalELM.Metalearners: SLearner, TLearner, XLearner, Metalearner, 
     estimate_causal_effect!
 using Test
@@ -13,11 +13,11 @@ g_inference = generatenulldistribution(g_computer)
 p1, stderr1 = quantitiesofinterest(g_computer)
 summary1 = summarize(g_computer)
 
-dr = DoublyRobust(x, x, y, t)
-estimate_causal_effect!(dr)
-dr_inference = generatenulldistribution(dr)
-p2, stderr2 = quantitiesofinterest(dr)
-summary2 = summarize(dr)
+dm = DoubleMachineLearning(x, x, y, t)
+estimate_causal_effect!(dm)
+dm_inference = generatenulldistribution(dm)
+p2, stderr2 = quantitiesofinterest(dm)
+summary2 = summarize(dm)
 
 x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -50,8 +50,8 @@ summary6 = summarize(xlearner)
 @testset "Generating Null Distributions" begin
     @test size(g_inference, 1) === 1000
     @test g_inference isa Array{Float64}
-    @test size(dr_inference, 1) === 1000
-    @test dr_inference isa Array{Float64}
+    @test size(dm_inference, 1) === 1000
+    @test dm_inference isa Array{Float64}
     @test size(its_inference1, 1) === 10
     @test its_inference1 isa Array{Float64}
     @test size(its_inference2, 1) === 10
