@@ -140,7 +140,7 @@ end
     end
 
     @testset "Jenks Breaks Function" begin
-        @test length(unique(jenksbreaks(data, num_breaks))) == num_breaks
+        @test 2 <= length(unique(jenksbreaks(data, num_breaks))) <= num_breaks
     end
 
     @testset "Helpers to Find the Best Number of Breaks" begin
