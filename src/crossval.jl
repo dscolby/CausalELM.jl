@@ -113,7 +113,7 @@ function validatefold(xtrain::Array{Float64}, ytrain::Array{Float64}, xtest::Arr
 end
 
 """
-    crossvalidate(X, Y, neurons, metric, activation, regularized, folds)
+    crossvalidate(X, Y, neurons, metric, activation, regularized, folds, temporal)
 
 Calculate a validation metric for k folds using a single set of hyperparameters.
 
@@ -125,10 +125,17 @@ julia> crossvalidate(x, y, 5, accuracy)
 ```
 """
 function crossvalidate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer, 
-    metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5)
-
+    metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5, 
+    temporal::Bool=false)
     mean_metric = 0.0
-    x_folds, y_folds = generatefolds(X, Y, folds)
+
+    if temporal
+        indices = reduce(vcat, (collect(1:5:size(X, 1)), size(X, 1)))
+        x_folds = [X[i:j, :] for (i, j) in zip(indices, indices[2:end] .- 1)]
+        y_folds = [Y[i:j] for (i, j) in zip(indices, indices[2:end] .- 1)]
+    else
+        x_folds, y_folds = generatefolds(X, Y, folds)
+    end
     
     @inbounds for fold in 1:folds
         xtrain = reduce(vcat, [x_folds[f] for f in 1:folds if f != fold])
@@ -162,7 +169,7 @@ julia> bestsize(rand(100, 5), rand(100), mse, "regression")
 """
 function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::String,
     activation::Function=relu, min_neurons::Integer=1, max_neurons::Integer=100, 
-    regularized::Bool=true, folds::Integer=5,  
+    regularized::Bool=true, folds::Integer=5, temporal::Bool=false,
     iterations::Integer=Int(round(size(X, 1)/10)), 
     approximator_neurons=Integer=Int(round(size(X, 1)/10)))
     
@@ -170,7 +177,8 @@ function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::
         round.(Int, range(min_neurons, max_neurons, length=iterations))
    
     @inbounds for (i, n) in pairs(loops)
-        act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, folds)
+        act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, folds, 
+            temporal)
     end
     
     # Approximates the error function using validation error from cross validation

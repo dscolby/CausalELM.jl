@@ -15,18 +15,6 @@ export InterruptedTimeSeries, GComputation, DoubleMachineLearning
 export SLearner, TLearner, XLearner
 export estimate_causal_effect!, summarize
 
-function estimate_causal_effect!() end
-
-function summarize() end
-
-mean(x::Vector{<:Real}) = sum(x)/length(x)
-
-function var(x::Vector{<:Real})
-    x̄, n = mean(x), length(x)
-
-    return sum((x .- x̄).^2)/(n-1)
-end
-
 # Allows dispatching e_value methods based on the type of outcome variable
 struct Discrete end
 struct Continuous end
@@ -40,6 +28,18 @@ function variable_type(y::Vector{<:Real})
     else
         return Continuous()
     end
+end
+
+function estimate_causal_effect!() end
+
+function summarize() end
+
+mean(x::Vector{<:Real}) = sum(x)/length(x)
+
+function var(x::Vector{<:Real})
+    x̄, n = mean(x), length(x)
+
+    return sum((x .- x̄).^2)/(n-1)
 end
 
 const summarise = summarize

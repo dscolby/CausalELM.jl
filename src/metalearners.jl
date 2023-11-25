@@ -264,7 +264,7 @@ function estimate_causal_effect!(s::SLearner)
     # the same number that was found when calling this method.
     if s.num_neurons === 0
         s.num_neurons = bestsize(full_covariates, s.Y, s.validation_metric, s.task, 
-            s.activation, s.min_neurons, s.max_neurons, s.regularized, s.folds,  
+            s.activation, s.min_neurons, s.max_neurons, s.regularized, s.folds, false,
             s.iterations, s.approximator_neurons)
     end
 
@@ -299,7 +299,7 @@ function estimate_causal_effect!(t::TLearner)
     # the same number that was found when calling this method.
     if t.num_neurons === 0
         t.num_neurons = bestsize(t.X, t.Y, t.validation_metric, t.task, t.activation, 
-            t.min_neurons, t.max_neurons, t.regularized, t.folds, t.iterations, 
+            t.min_neurons, t.max_neurons, t.regularized, t.folds, false, t.iterations, 
             t.approximator_neurons)
     end
 
@@ -333,7 +333,7 @@ function estimate_causal_effect!(x::XLearner)
     # the same number that was found when calling this method.
     if x.num_neurons === 0
         x.num_neurons = bestsize(x.X, x.Y, x.validation_metric, x.task, x.activation, 
-            x.min_neurons, x.max_neurons, x.regularized, x.folds, x.iterations, 
+            x.min_neurons, x.max_neurons, x.regularized, x.folds, false, x.iterations, 
             x.approximator_neurons)
     end
     

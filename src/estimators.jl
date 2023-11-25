@@ -311,7 +311,7 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     if its.num_neurons === 0
         its.num_neurons = bestsize(its.X₀, its.Y₀, its.validation_metric, its.task, 
             its.activation, its.min_neurons, its.max_neurons, its.regularized, its.folds, 
-            its.iterations, its.approximator_neurons)
+            true, its.iterations, its.approximator_neurons)
     end
 
     if its.regularized
@@ -360,7 +360,7 @@ function estimate_causal_effect!(g::GComputation)
     # the same number that was found when calling this method.
     if g.num_neurons === 0
         g.num_neurons = bestsize(Array(full_covariates), g.Y, g.validation_metric, g.task, 
-            g.activation, g.min_neurons, g.max_neurons, g.regularized, g.folds,  
+            g.activation, g.min_neurons, g.max_neurons, g.regularized, g.folds, g.temporal, 
             g.iterations, g.approximator_neurons)
     end
 
@@ -414,7 +414,7 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
     if DML.num_neurons === 0
         DML.num_neurons = bestsize(DML.X, DML.Y, DML.validation_metric, DML.task, 
             DML.activation, DML.min_neurons, DML.max_neurons, DML.regularized, DML.folds, 
-            DML.iterations, DML.approximator_neurons)
+            false, DML.iterations, DML.approximator_neurons)
     end
 
     for fold in 1:DML.folds 

@@ -446,7 +446,7 @@ end
 
 function positivity(m::Union{GComputation, SLearner, TLearner})
     num_neurons = bestsize(m.X, m.T, m.validation_metric, m.task, m.activation, 
-        m.min_neurons, m.max_neurons, m.regularized, m.folds,  m.iterations, 
+        m.min_neurons, m.max_neurons, m.regularized, m.folds, false,  m.iterations, 
         m.approximator_neurons)
 
     if m.regularized
