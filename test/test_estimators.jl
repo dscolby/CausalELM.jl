@@ -95,7 +95,7 @@ end
     end
 end
 
-@testset "Doubly Machine Learning" begin
+@testset "Double Machine Learning" begin
     @testset "Doubly Machine Learning Structure" begin
         @test dm.X !== Nothing
         @test dm.Y !== Nothing
