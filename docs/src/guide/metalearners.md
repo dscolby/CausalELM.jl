@@ -21,22 +21,62 @@ X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
 S-learners, T-learners, and X-learners all take three arguments: an array of covariates, a 
 vector of outcomes, and a vector of treatment statuses.
 ```julia
-m1 = SLearner(X, Y, T)
-m2 = TLearner(X, Y, T)
-m3 = XLearner(X, Y, T)
+s_learner = SLearner(X, Y, T)
+t_learner = TLearner(X, Y, T)
+x_learner = XLearner(X, Y, T)
 ```
 
 # Estimate the CATE
 We can estimate the CATE for all the models by passing them to estimatecausaleffect!.
 ```julia
-estimatecausaleffect!(m1)
-estimatecausaleffect!(m2)
-estimatecausaleffect!(m3)
+estimatecausaleffect!(s_learner)
+estimatecausaleffect!(t_learner)
+estimatecausaleffect!(x_learner)
 ```
 
 # Get a Summary
 We can get a summary of the models that includes p0values and standard errors for the 
 average treatment effect by passing the models to the summarize method.
 ```julia
-summarize(m1)
+summarize(s_learner)
+summarize(t_learner)
+summarize(x_learner)
+```
+
+## Step 4: Validate the Model
+We can validate the model by examining the plausibility that the main assumptions of causal 
+inference, counterfactual consistency, exchangeability, and positivity, hold. It should be 
+noted that consistency and exchangeability are not directly testable, so instead, these 
+tests do not provide definitive evidence of a violation of these assumptions. To probe the 
+counterfactual consistency assumption, we assume there were multiple levels of treatments 
+and find them by binning the dependent vairable for treated observations using Jenks breaks. 
+The optimal number of breaks between 2 and num_treatments is found using the elbow method. 
+Using these hypothesized treatment assignemnts, this method compares the MSE of linear 
+regressions using the observed and hypothesized treatments. If the counterfactual 
+consistency assumption holds then the difference between the MSE with hypothesized 
+treatments and the observed treatments should be positive because the hypothesized 
+treatments should not provide useful information. If it is negative, that indicates there 
+was more useful information provided by the hypothesized treatments than the observed 
+treatments or that there is an unobserved confounder. Next, this methods tests the model's 
+sensitivity to a violation of the exchangeability assumption by calculating the E-value, 
+which is the minimum strength of association, on the risk ratio scale, that an unobserved 
+confounder would need to have with the treatment and outcome variable to fully explain away 
+the estimated effect. Thus, higher E-values imply the model is more robust to a violation of 
+the exchangeability assumption. Finally, this method tests the positivity assumption by 
+estimating propensity scores. Rows in the matrix are levels of covariates that have a zero 
+probability of treatment. If the matrix is empty, none of the observations have an estimated 
+zero probability of treatment, which implies the positivity assumption is satisfied.
+
+
+For a thorough review of casual inference assumptions see:
+    Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
+    Francis, 2024. 
+
+For more information on the E-value test see:
+    VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+    introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
+```julia
+validate(s_learner)
+validate(t_learner)
+validate(x_learner)
 ```

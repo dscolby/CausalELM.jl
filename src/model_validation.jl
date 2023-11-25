@@ -88,7 +88,7 @@ the treatment and outcome variable to fully explain away the estimated effect. T
 E-values imply the model is more robust to a violation of the exchangeability assumption. 
 Finally, this method tests the positivity assumption by estimating propensity scores. Rows
 in the matrix are levels of covariates that have a zero probability of treatment. If the 
-matrix is empty, none of the observations have an estimated aero probability of treatment, 
+matrix is empty, none of the observations have an estimated zero probability of treatment, 
 which implies the positivity assumption is satisfied.
 
 

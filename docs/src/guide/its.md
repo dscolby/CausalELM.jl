@@ -25,21 +25,21 @@ The InterruptedTimeSeries method takes four agruments: an array of pre-event cov
 vector of pre-event outcomes, an array of post-event covariates, and a vector of post-event 
 outcomes.
 ```julia
-m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+its = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 ```
 
 ## Step 2: Estimate the Treatment Effect
 Estimating the treatment effect only requires one argument: an InterruptedTimeSeries struct.
 ```julia
 # We can also estimate the ATT by passing quantity_of_interest="ATT"
-estimatecausaleffect!(m1)
+estimatecausaleffect!(its)
 ```
 
 ## Step 3: Get a Summary
 We can get a summary of the model, including a p-value and statndard via asymptotic 
 randomization inference, by pasing the model to the summarize method.
 ```julia
-summarize(m1)
+summarize(its)
 ```
 
 ## Step 4: Validate the Model
@@ -57,5 +57,5 @@ good predictors of the outcome. If this is the case, then adding irrelevant pred
 should not have much of a change on the results of the analysis. We can conduct all these 
 tests in one line of code.
 ```julia
-validate(m1)
+validate(its)
 ```
