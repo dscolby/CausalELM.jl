@@ -5,7 +5,7 @@ Validation metrics used in cross validation of CausalELM estimators
 CausalELM.Metrics
 CausalELM.Metrics.mse
 CausalELM.Metrics.mae
-CausalELM.Metrics.confusionmatrix
+CausalELM.Metrics.confusion_matrix
 CausalELM.Metrics.accuracy
 CausalELM.Metrics.precision
 CausalELM.Metrics.recall

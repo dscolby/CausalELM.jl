@@ -8,6 +8,8 @@ CausalELM.Models.ExtremeLearner
 CausalELM.Models.RegularizedExtremeLearner
 CausalELM.Models.fit!
 CausalELM.Models.predict
-CausalELM.Models.predictcounterfactual!
-CausalELM.Models.placebotest
+CausalELM.Models.predict_counterfactual!
+CausalELM.Models.placebo_test
+CausalELM.Models.ridge_constant
+CausalELM.Models.set_weights_biases
 ```

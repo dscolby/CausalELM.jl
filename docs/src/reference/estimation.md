@@ -8,10 +8,12 @@ CausalELM.Estimators.CausalEstimator
 CausalELM.Estimators.InterruptedTimeSeries
 CausalELM.Estimators.GComputation
 CausalELM.Estimators.DoubleMachineLearning
-CausalELM.Metalearners
-CausalELM.Metalearners.Metalearner
-CausalELM.Metalearners.SLearner
-CausalELM.Metalearners.TLearner
-CausalELM.Metalearners.XLearner
 CausalELM.Estimators.estimatecausaleffect!
+CausalELM.Estimators.first_stage!
+CausalELM.Estimators.ate!
+CausalELM.Estimators.predict_propensity_score
+CausalELM.Estimators.predict_control_outcomes
+CausalELM.Estimators.predict_treatment_outcomes
+CausalELM.Estimators.crossfitting_sets
+CausalELM.Estimators.moving_average
 ```

@@ -3,17 +3,17 @@ Activation functions for CausalELM estimators
 
 ```@docs
 CausalELM.ActivationFunctions
-CausalELM.ActivationFunctions.binarystep
+CausalELM.ActivationFunctions.binary_step
 CausalELM.ActivationFunctions.σ
 CausalELM.ActivationFunctions.tanh
 CausalELM.ActivationFunctions.relu
-CausalELM.ActivationFunctions.leakyrelu
+CausalELM.ActivationFunctions.leaky_relu
 CausalELM.ActivationFunctions.swish
 CausalELM.ActivationFunctions.softmax
 CausalELM.ActivationFunctions.softplus
 CausalELM.ActivationFunctions.gelu
 CausalELM.ActivationFunctions.gaussian
-CausalELM.ActivationFunctions.hardtanh
+CausalELM.ActivationFunctions.hard_tanh
 CausalELM.ActivationFunctions.elish
 CausalELM.ActivationFunctions.fourier
 ```
