@@ -12,15 +12,13 @@ For a deeper dive on metalearners see:
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
 
-## Generate Some data
-```julia
-X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
-```
-
 # Initialize a Metalearner
 S-learners, T-learners, and X-learners all take three arguments: an array of covariates, a 
 vector of outcomes, and a vector of treatment statuses.
 ```julia
+# Generate data to use
+X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
+
 s_learner = SLearner(X, Y, T)
 t_learner = TLearner(X, Y, T)
 x_learner = XLearner(X, Y, T)

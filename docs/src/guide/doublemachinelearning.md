@@ -12,17 +12,14 @@ For more information see:
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
     structural parameters." (2018): C1-C68.
 
-## Generate Data
-```julia
-# Create some data with a binary treatment
-X, Xₚ, Y, T =  rand(100, 5), rand(100, 4), rand(100), [rand()<0.4 for i in 1:100]
-```
-
 ## # Step 1: Initialize a Model
 The DoubleMachineLearning constructor takes four arguments, an array of covariates for the 
 outcome model, an array of covariates for the treatment model, a vector of outcomes, and a 
 vector of treatment statuses.
 ```julia
+# Create some data with a binary treatment
+X, Xₚ, Y, T =  rand(100, 5), rand(100, 4), rand(100), [rand()<0.4 for i in 1:100]
+
 dml = DoubleMachineLearning(X, Xₚ, Y, T)
 ```
 

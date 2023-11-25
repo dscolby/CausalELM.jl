@@ -12,16 +12,13 @@ For a good overview of G-Computation see:
     estimator for causal inference with different covariates sets: a comparative simulation 
     study." Scientific reports 10, no. 1 (2020): 9219.
 
-## Generate Data
-```julia
-# Create some data with a binary treatment
-X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
-```
-
 ## Step 1: Initialize a Model
 The GComputation method takes three arguments: an array of covariates, a vector of 
 outcomes, and a vector of treatment statuses.
 ```julia
+# Create some data with a binary treatment
+X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
+
 g_computer = GComputation(X, Y, T)
 ```
 

@@ -15,16 +15,14 @@ For a deeper dive see:
     regression for the evaluation of public health interventions: a tutorial." International 
     journal of epidemiology 46, no. 1 (2017): 348-355.
 
-## Generate Data
-```julia
-X₀, Y₀, X₁, Y₁ =  rand(1000, 5), rand(1000), rand(100, 5), rand(100)
-```
-
 ## Step 1: Initialize an interrupted time series estimator
 The InterruptedTimeSeries method takes four agruments: an array of pre-event covariates, a 
 vector of pre-event outcomes, an array of post-event covariates, and a vector of post-event 
 outcomes.
 ```julia
+# Generate some data to use
+X₀, Y₀, X₁, Y₁ =  rand(1000, 5), rand(1000), rand(100, 5), rand(100)
+
 its = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 ```
 
