@@ -6,14 +6,15 @@ CurrentModule = CausalELM
 
 CausalELM enables Estimation of causal quantities of interest in research designs where a 
 counterfactual must be predicted and compared to the observed outcomes. More specifically, 
-CausalELM provides structs and methods to execute interupted time series analysis, 
-G-Computation, and double machine learning as well as estimation of the CATE via 
-S-Learning, T-Learning, and X-Learning. Once a causal model has beeen estimated, CausalELM's 
-summarize method provides basic information about the model as well as a p-value and 
-standard error estimated with approximate randomization inference. In all of these 
-implementations, CausalELM predicts the counterfactuals using an Extreme Learning Machine 
-that includes an L2 penalty by default. In this context, ELMs strike a good balance between 
-prediction accuracy, generalization, ease of implementation, speed, and interpretability. 
+CausalELM provides a simple API to execute interupted time series analysis, G-Computation, 
+and double machine learning as well as estimation of the CATE via S-Learning, T-Learning, 
+and X-Learning. Once a causal model has beeen estimated, CausalELM's summarize method 
+provides basic information about the model as well as a p-value and standard error estimated 
+with approximate randomization inference. One can then validate causal modeling assumptions 
+for any model with a single call to the validate method. In all of these implementations, 
+CausalELM predicts the counterfactuals using an Extreme Learning Machine that includes an L2 
+penalty by default. In this context, ELMs strike a good balance between prediction accuracy, 
+generalization, ease of implementation, speed, and interpretability. 
 
 ### Features
 *   Simple interface enables estimating causal effects in only a few lines of code
@@ -23,6 +24,14 @@ prediction accuracy, generalization, ease of implementation, speed, and interpre
 *   Single interface for continous, binary, and categorical outcome variables
 *   Estimation of p-values and standard errors via asymptotic randomization inference
 *   No dependencies outside of the Julia standard library
+*   Validate causal modeling assumptiions with one line of code
+
+### What's New?
+*   All functions and methods converted to snake case
+*   Randomization inference for interrupted time series randomizes all indices
+*   Implemented validate method to probe assumptions for all estimators and metalearners
+*   Reimplemented cross validation for temporal data
+*   Fixed issue related to recoding variables to calculate validation metrics for cross validation
 
 ### Comparison with Other Packages
 Other packages, mainly EconML, DoWhy, and CausalML, have similar funcitonality. Beides being 

@@ -91,12 +91,27 @@ backpropagation to update their weights like conventional neural networks.
   <li>No dependencies outside of the Julia standard library</li>
 </ul>
 
+<h2>What's New?</h2>
+<ul>
+  <li>All functions and methods converted to snake case</li>
+  <li>Randomization inference for interrupted time series randomizes all indices</li>
+  <li>Implemented validate method to probe assumptions for all estimators and metalearners</li>
+  <li>Reimplemented cross validation for temporal data</li>
+  <li>Fixed issue related to recoding variables to calculate validation metrics for cross validation</li>
+</ul>
+
 <h2>Next Steps</h2>
 <p>
-The plan for version 0.3.0 of CausalELM is to implement robustness checks for the estimators
-so that users can estimate, summarize, and test the robustness of causal models in four 
-lines of code.
+The next version/s will focus on optimizing the codebase for maintainability and modularity. 
+More specifically, all functions will be generalized to accepts any real numbers, long 
+functions and methods will be broken up into smaller functions or methods, and design 
+patterns will be used where applicable.
 </p>
+
+<h2>Disclaimer</h2>
+CausalELM is extensively tested and almost every function or method has multiple tests. That
+being said, CausalELM is still in the early stages of development and may have some bugs. 
+Also, expect breaking releases for now.
 
 <h2>Contributing</h2>
 <p>
