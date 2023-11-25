@@ -16,13 +16,13 @@ makedocs(;
     ),
     pages=[
         "CausalELM" => "index.md",
-        "Guide" => Any[
+        "Getting Started" => Any[
             "Interrupted Time Series Estimation" => "guide/its.md",
             "G-computation" => "guide/gcomputation.md",
             "Double Machine Learning" => "guide/doublemachinelearning.md",
             "Metalearners" => "guide/metalearners.md"
         ],
-        "Reference" => Any[
+        "API Reference" => Any[
             "CausalELM" => "reference/api.md",
             "Activation Functions" => "reference/activations.md",
             "Cross Validation" => "reference/crossval.md",
