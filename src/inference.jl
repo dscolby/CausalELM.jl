@@ -41,7 +41,7 @@ function summarize(its::InterruptedTimeSeries, n::Integer=1000, mean_effect::Boo
 
     effect = ifelse(mean_effect, mean(its.Δ), sum(its.Δ))
 
-    p, stderr = quantitiesofinterest(its, n, mean_effect)
+    p, stderr = quantities_of_interest(its, n, mean_effect)
 
     summary_dict = Dict()
     nicenames = ["Task", "Regularized", "Activation Function", "Validation Metric", 
@@ -89,7 +89,7 @@ function summarize(g::GComputation, n::Integer=1000)
         "Number of Neurons in Approximator", "β", "Causal Effect", "Standard Error", 
         "p-value"]
     
-    p, stderr = quantitiesofinterest(g, n)
+    p, stderr = quantities_of_interest(g, n)
 
     values = [g.task, g.quantity_of_interest, g.regularized, g.activation, g.temporal, 
         g.validation_metric, g.num_neurons, g.approximator_neurons, g.β, g.causal_effect,
@@ -131,7 +131,7 @@ function summarize(dml::DoubleMachineLearning, n::Integer=1000)
         "Validation Metric", "Number of Neurons", "Number of Neurons in Approximator", 
         "Causal Effect", "Standard Error", "p-value"]
 
-    p, stderr = quantitiesofinterest(dml, n)
+    p, stderr = quantities_of_interest(dml, n)
 
     values = [dml.task, dml.quantity_of_interest, dml.regularized, dml.activation,  
         dml.validation_metric, dml.num_neurons, dml.approximator_neurons, dml.causal_effect, 
@@ -179,7 +179,7 @@ function summarize(m::Metalearner, n::Integer=1000)
         "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect", 
         "Standard Error", "p-value"]
 
-    p, stderr = quantitiesofinterest(m, n)
+    p, stderr = quantities_of_interest(m, n)
 
     values = [m.task, m.regularized, m.activation, m.validation_metric, m.num_neurons, 
         m.approximator_neurons, m.causal_effect, stderr, p]
@@ -192,7 +192,7 @@ function summarize(m::Metalearner, n::Integer=1000)
 end
 
 """
-    generatenulldistribution(e, n)
+    generate_null_distribution(e, n)
 
 Generate a null distribution for the treatment effect of G-computation, doubly robust 
 estimation, or metalearning.
@@ -209,7 +209,7 @@ Examples
 julia> x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 julia> g_computer = GComputation(x, y, t)
 julia> estimate_causal_effect!(g_computer)
-julia> generatenulldistribution(g_computer, 500)
+julia> generate_null_distribution(g_computer, 500)
 [0.016297180690693656, 0.0635928694685571, 0.20004144093635673, 0.505893866040335, 
 0.5130594630907543, 0.5432486130493388, 0.6181727442724846, 0.61838399963459, 
 0.7038981488009489, 0.7043407710415689  …  21.909186142780246, 21.960498059428854, 
@@ -217,7 +217,7 @@ julia> generatenulldistribution(g_computer, 500)
 23.52056245175936, 24.739658523175912, 25.30523686137909, 28.07474553316176]
 ```
 """
-function generatenulldistribution(e::Union{CausalEstimator, Metalearner}, n::Integer=1000)
+function generate_null_distribution(e::Union{CausalEstimator, Metalearner}, n::Integer=1000)
     local m = deepcopy(e)
     nobs = size(m.T, 1)
     results = Vector{Float64}(undef, n)
@@ -232,7 +232,7 @@ function generatenulldistribution(e::Union{CausalEstimator, Metalearner}, n::Int
 end
 
 """
-    generatenulldistribution(its, n, mean_effect)
+    generate_null_distribution(its, n, mean_effect)
 
 Generate a null distribution for the treatment effect in an interrupted time series 
 analysis. By default, this method generates a null distribution of mean differences. To 
@@ -254,13 +254,13 @@ Examples
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causale_ffect!(its)
-julia> generatenulldistribution(its, 10)
+julia> generate_null_distribution(its, 10)
 [-0.5012456678829079, -0.33790650529972194, -0.2534340182760628, -0.21030239864895905, 
 -0.11672915615117885, -0.08149441936166794, -0.0685134758182695, -0.06217013151235991, 
 -0.05905529159312335, -0.04927743270606937]
 ```
 """
-function generatenulldistribution(its::InterruptedTimeSeries, n::Integer=1000, 
+function generate_null_distribution(its::InterruptedTimeSeries, n::Integer=1000, 
     mean_effect::Bool=true)
     local model = deepcopy(its)
     split_idx = size(model.Y₀, 1)
@@ -285,7 +285,7 @@ function generatenulldistribution(its::InterruptedTimeSeries, n::Integer=1000,
 end
 
 """
-    quantitiesofinterest(model, n)
+    quantities_of_interest(model, n)
 
 Generate a p-value and standard error through randomization inference
 
@@ -304,12 +304,12 @@ Examples
 julia> x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 julia> g_computer = GComputation(x, y, t)
 julia> estimate_causal_effect!(g_computer)
-julia> quantitiesofinterest(g_computer, 1000)
+julia> quantities_of_interest(g_computer, 1000)
 (0.114, 6.953133617011371)
 ```
 """
-function quantitiesofinterest(m::Union{CausalEstimator, Metalearner}, n::Integer=1000)
-    local null_dist = generatenulldistribution(m, n)
+function quantities_of_interest(m::Union{CausalEstimator, Metalearner}, n::Integer=1000)
+    local null_dist = generate_null_distribution(m, n)
     local avg_effect = m isa Metalearner ? mean(m.causal_effect) : m.causal_effect
 
     extremes = length(null_dist[abs(avg_effect) .< abs.(null_dist)])
@@ -321,7 +321,7 @@ function quantitiesofinterest(m::Union{CausalEstimator, Metalearner}, n::Integer
 end
 
 """
-    quantitiesofinterest(model, nsplits)
+    quantities_of_interest(model, nsplits)
 
 Generate a p-value and standard error through randomization inference
 
@@ -341,13 +341,13 @@ Examples
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)
-julia> quantitiesofinterest(its, 10)
+julia> quantities_of_interest(its, 10)
 (0.0, 0.07703275541001667)
 ```
 """
-function quantitiesofinterest(model::InterruptedTimeSeries, nsplits::Integer=1000, 
+function quantities_of_interest(model::InterruptedTimeSeries, nsplits::Integer=1000, 
     mean_effect::Bool=true)
-    local null_dist = generatenulldistribution(model, nsplits, mean_effect)
+    local null_dist = generate_null_distribution(model, nsplits, mean_effect)
     local metric = ifelse(mean_effect, mean, sum)
     local effect = metric(model.Δ)
 

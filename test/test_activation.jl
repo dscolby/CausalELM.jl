@@ -1,24 +1,24 @@
-using CausalELM.ActivationFunctions: binarystep, σ, tanh, relu, leakyrelu, swish, softmax,
-    softplus, gelu, gaussian, hardtanh, elish, fourier
+using CausalELM.ActivationFunctions: binary_step, σ, tanh, relu, leaky_relu, swish, softmax,
+    softplus, gelu, gaussian, hard_tanh, elish, fourier
 using Test
 
 @testset "Binary Step Activation" begin
 
     # Single numbers
-    @test binarystep(-1000.0) == 0
-    @test binarystep(-0.00001) == 0
-    @test binarystep(0.0) == 1
-    @test binarystep(0.00001) == 1
-    @test binarystep(100.0) == 1
+    @test binary_step(-1000.0) == 0
+    @test binary_step(-0.00001) == 0
+    @test binary_step(0.0) == 1
+    @test binary_step(0.00001) == 1
+    @test binary_step(100.0) == 1
     
     # Vectors
-    @test binarystep([-100.0]) == [0]
-    @test binarystep([-100.0, -100.0, -100.0]) == [0, 0, 0]
-    @test binarystep([-0.00001, -0.00001, -0.00001]) == [0, 0, 0]
-    @test binarystep([0.0, 0.0, 0.0]) == [1, 1, 1]
-    @test binarystep([0.00001, 0.00001, 0.00001]) == [1, 1, 1]
-    @test binarystep([100.0, 100.0, 100.0]) == [1, 1, 1]
-    @test binarystep([-1000.0, 100.0, 1.0, 0.0, -0.001, -3]) == [0, 1, 1, 1, 0, 0]
+    @test binary_step([-100.0]) == [0]
+    @test binary_step([-100.0, -100.0, -100.0]) == [0, 0, 0]
+    @test binary_step([-0.00001, -0.00001, -0.00001]) == [0, 0, 0]
+    @test binary_step([0.0, 0.0, 0.0]) == [1, 1, 1]
+    @test binary_step([0.00001, 0.00001, 0.00001]) == [1, 1, 1]
+    @test binary_step([100.0, 100.0, 100.0]) == [1, 1, 1]
+    @test binary_step([-1000.0, 100.0, 1.0, 0.0, -0.001, -3]) == [0, 1, 1, 1, 0, 0]
 end
 
 @testset "Sigmoid Activation" begin
@@ -54,10 +54,10 @@ end
 end
 
 @testset "Leaky ReLU Activation" begin
-    @test leakyrelu(-1.0) == -0.01
-    @test leakyrelu(0.0) == 0
-    @test leakyrelu(1.0) == 1
-    @test leakyrelu([-1.0, 0.0, 1.0]) == [-0.01, 0, 1]
+    @test leaky_relu(-1.0) == -0.01
+    @test leaky_relu(0.0) == 0
+    @test leaky_relu(1.0) == 1
+    @test leaky_relu([-1.0, 0.0, 1.0]) == [-0.01, 0, 1]
 end
 
 @testset "swish Activation" begin
@@ -103,11 +103,11 @@ end
     @test gaussian([1.0, -1.0, 0.0]) ≈ [0.36787944117144233, 0.36787944117144233, 1.0]
 end
 
-@testset "hardtanh Activation" begin
-    @test hardtanh(-2.0) == -1
-    @test hardtanh(0.0) == 0
-    @test hardtanh(2.0) == 1
-    @test hardtanh([-1.0, 0.0, 1.0]) == [-1, 0, 1]
+@testset "hard_tanh Activation" begin
+    @test hard_tanh(-2.0) == -1
+    @test hard_tanh(0.0) == 0
+    @test hard_tanh(2.0) == 1
+    @test hard_tanh([-1.0, 0.0, 1.0]) == [-1, 0, 1]
 end
 
 @testset "ELiSH Activation" begin

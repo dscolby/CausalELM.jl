@@ -1,6 +1,7 @@
 using CausalELM.Estimators: InterruptedTimeSeries, GComputation, DoubleMachineLearning, 
-    estimate_causal_effect!, mean, crossfittingsets, firststage!, ate!, 
-    predictpropensityscore, predictcontroloutcomes, predicttreatmentoutcomes, movingaverage
+    estimate_causal_effect!, mean, crossfitting_sets, first_stage!, ate!, 
+    predict_propensity_score, predict_control_outcomes, predict_treatment_outcomes, 
+    moving_average
 using CausalELM.Models: ExtremeLearningMachine
 using Test
 
@@ -25,11 +26,11 @@ g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), rand(10),
 
 dm = DoubleMachineLearning(x, x, y, t)
 dm.num_neurons = 5
-ps_mod, control_mod = firststage!(dm, x₀, x, t, y₀)
+ps_mod, control_mod = first_stage!(dm, x₀, x, t, y₀)
 treat_mod = ate!(dm, x₁, y₁)
 dm.num_neurons = 0
 estimate_causal_effect!(dm)
-x_folds, xₚ_folds, y_folds, t_folds = crossfittingsets(dm)
+x_folds, xₚ_folds, y_folds, t_folds = crossfitting_sets(dm)
 
 # No regularization
 dm_noreg = DoubleMachineLearning(x, x, y, t, regularized=false)
@@ -126,9 +127,9 @@ end
     end
 
     @testset "Double Machine Learning Predictions" begin
-        @test predictpropensityscore(ps_mod, x₀) isa Array{Float64}
-        @test predictcontroloutcomes(control_mod, x₀) isa Array{Float64}
-        @test predicttreatmentoutcomes(treat_mod, x₀) isa Array{Float64}
+        @test predict_propensity_score(ps_mod, x₀) isa Array{Float64}
+        @test predict_control_outcomes(control_mod, x₀) isa Array{Float64}
+        @test predict_treatment_outcomes(treat_mod, x₀) isa Array{Float64}
     end
 
     @testset "X and Xₚ Different Size Error" begin
@@ -192,8 +193,8 @@ end
     end
 
     @testset "Moving Averages" begin
-        @test movingaverage(Float64[]) isa Array{Float64}
-        @test movingaverage([1.0]) == [1.0]
-        @test movingaverage([1.0, 2.0, 3.0]) == [1.0, 1.5, 2.0]
+        @test moving_average(Float64[]) isa Array{Float64}
+        @test moving_average([1.0]) == [1.0]
+        @test moving_average([1.0, 2.0, 3.0]) == [1.0, 1.5, 2.0]
     end
 end

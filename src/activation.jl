@@ -2,30 +2,30 @@
 module ActivationFunctions
 
 """
-    binarystep(x)
+    binary_step(x)
 
 Apply the binary step activation function to a real number.
 
 # Examples
 ```julia-repl
-julia> binarystep(1)
+julia> binary_step(1)
 1
 ```
 """
-binarystep(x::Float64) = ifelse(x < 0, 0, 1)
+binary_step(x::Float64) = ifelse(x < 0, 0, 1)
 
 """
-    binarystep(x)
+    binary_step(x)
 
 Apply the binary step activation function to an array.
 
 # Examples
 ```julia-repl
-julia> binarystep([-1000, 100, 1, 0, -0.001, -3])
+julia> binary_step([-1000, 100, 1, 0, -0.001, -3])
 [0, 1, 1, 1, 0, 0]
 ```
 """
-binarystep(x::Array{Float64}) = binarystep.(x)
+binary_step(x::Array{Float64}) = binary_step.(x)
 
 """
     σ(x)
@@ -98,30 +98,30 @@ julia> relu([1, 0, -1])
 relu(x::Array{Float64}) = relu.(x)
 
 """
-    leakyrelu(x)
+    leaky_relu(x)
 
 Apply the leaky ReLU activation function to a real number.
 
 # Examples
 ```julia-repl
-julia> leakyrelu(1)
+julia> leaky_relu(1)
 1
 ```
 """
-leakyrelu(x::Float64) = @fastmath ifelse(x < 0, 0.01 * x, x)
+leaky_relu(x::Float64) = @fastmath ifelse(x < 0, 0.01 * x, x)
 
 """
-    leakyrelu(x)
+    leaky_relu(x)
 
 Apply the leaky ReLU activation function to an array.
 
 # Examples
 ```julia-repl
-julia> leakyrelu([-0.01, 0, 1])
+julia> leaky_relu([-0.01, 0, 1])
 [1, 0, 0]
 ```
 """
-leakyrelu(x::Array{Float64}) = leakyrelu.(x)
+leaky_relu(x::Array{Float64}) = leaky_relu.(x)
 
 """
     swish(x)
@@ -258,17 +258,17 @@ julia> gaussian([1, -1])
 gaussian(x::Array{Float64}) = gaussian.(x)
 
 """
-    hardtanh(x)
+    hard_tanh(x)
 
-Apply the hardtanh activation function to a real number.
+Apply the hard_tanh activation function to a real number.
 
 # Examples
 ```julia-repl
-julia> hardtanh(-2)
+julia> hard_tanh(-2)
 -1
 ```
 """
-@inline function hardtanh(x::Float64) 
+@inline function hard_tanh(x::Float64) 
     if x < -1
         -1
     elseif -1 <= x <= 1
@@ -279,17 +279,17 @@ julia> hardtanh(-2)
 end
 
 """
-    hardtanh(x)
+    hard_tanh(x)
 
-Apply the hardtanh activation function to an array.
+Apply the hard_tanh activation function to an array.
 
 # Examples
 ```julia-repl
-julia> hardtanh([-2, 0, 2])
+julia> hard_tanh([-2, 0, 2])
 [-1, 0, 1]
 ```
 """
-hardtanh(x::Array{Float64}) = hardtanh.(x)
+hard_tanh(x::Array{Float64}) = hard_tanh.(x)
 
 """
     elish(x)

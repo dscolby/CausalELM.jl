@@ -2,17 +2,17 @@ using Test
 using CausalELM.Estimators: InterruptedTimeSeries, GComputation, DoubleMachineLearning, 
     estimate_causal_effect!
 using CausalELM.Metalearners: SLearner, estimate_causal_effect!
-using CausalELM.ModelValidation: pval, testcovariateindependence, testomittedpredictor, 
-    supwald, validate, counterfactualconsistency, sumsofsquares, classpointers, 
-    backtrack_to_find_breaks, jenksbreaks, faketreatments, sdam, scdm, gvf, bestsplits, 
-    groupbyclass, variance, variable_type, e_value, exchangeability, positivity
+using CausalELM.ModelValidation: p_val, covariate_independence, omitted_predictor, sup_wald, 
+    validate, counterfactual_consistency, sums_of_squares, class_pointers, 
+    backtrack_to_find_breaks, jenks_breaks, fake_treatments, sdam, scdm, gvf, best_splits, 
+    group_by_class, variance, variable_type, e_value, exchangeability, positivity
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
-its_independence = testcovariateindependence(its)
-wald_test = supwald(its)
-ovb = testomittedpredictor(its)
+its_independence = covariate_independence(its)
+wald_test = sup_wald(its)
+ovb = omitted_predictor(its)
 its_validation = validate(its)
 
 x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 1:100])
@@ -49,8 +49,8 @@ x_learner = XLearner(x, y, t)
 estimate_causal_effect!(x_learner)
 
 # Used to test helper functions for Jenks breaks
-sum_of_squares2 = sumsofsquares([1, 2, 3, 4, 5], 2)
-sum_of_squares3 = sumsofsquares([1, 2, 3, 4, 5], 3)
+sum_of_squares2 = sums_of_squares([1, 2, 3, 4, 5], 2)
+sum_of_squares3 = sums_of_squares([1, 2, 3, 4, 5], 3)
 
 # Generate synthetic data with three distinct clusters
 function generate_synthetic_data()
@@ -65,22 +65,22 @@ end
 data = generate_synthetic_data()
 
 # Find the best number of breaks using the Jenks Natural Breaks algorithm
-num_breaks = length(unique(bestsplits(data, 6)))
+num_breaks = length(unique(best_splits(data, 6)))
 
 @testset "p-values" begin
     @testset "p-value Argument Validation" begin
-        @test_throws ArgumentError pval(rand(10, 1), rand(10), 0.5)
-        @test_throws ArgumentError pval(rand(10, 3), rand(10), 0.5)
-        @test_throws ArgumentError pval(reduce(hcat, (rand(10), ones(10))), rand(10), 0.5)
-        @test_throws ArgumentError pval(reduce(hcat, (float(rand(0:1, 10)), rand(10))), 
+        @test_throws ArgumentError p_val(rand(10, 1), rand(10), 0.5)
+        @test_throws ArgumentError p_val(rand(10, 3), rand(10), 0.5)
+        @test_throws ArgumentError p_val(reduce(hcat, (rand(10), ones(10))), rand(10), 0.5)
+        @test_throws ArgumentError p_val(reduce(hcat, (float(rand(0:1, 10)), rand(10))), 
             rand(10), 0.5)
     end
 
     @testset "p-values for OLS" begin
-        @test 0 <= pval(reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5) <= 1
-        @test 0 <= pval(reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5, 
+        @test 0 <= p_val(reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5) <= 1
+        @test 0 <= p_val(reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5, 
             n=100) <= 1
-        @test 0 <= pval(reduce(hcat, (reduce(vcat, (zeros(5), ones(5))), ones(10))), 
+        @test 0 <= p_val(reduce(hcat, (reduce(vcat, (zeros(5), ones(5))), ones(10))), 
             randn(10), 0.5) <= 1
 end
 end
@@ -88,13 +88,13 @@ end
 @testset "Interrupted Time Series Assumptions" begin
 
     @testset "Covariate Independence Assumption" begin
-        # Test testcovariateindependence method
+        # Test covariate_independence method
         @test length(its_independence) === 5
         @test all(0 .<= values(its_independence) .<= 1) === true
     end
 
     @testset "Wald Supremeum Test for Alternative Change Point" begin
-        # Test supwald method
+        # Test sup_wald method
         @test wald_test isa Dict{String, Real}
         @test wald_test["Hypothesized Break Point"] === size(x₀, 1)
         @test wald_test["Predicted Break Point"] > 0
@@ -105,7 +105,7 @@ end
     @testset "Sensitivity to Omitted Predictors" begin
         # Test omittedvariable method
         # The first test should throw an error since estimatecausaleffect! was not called
-        @test_throws ErrorException testomittedpredictor(InterruptedTimeSeries(x₀, y₀, x₁, y₁))
+        @test_throws ErrorException omitted_predictor(InterruptedTimeSeries(x₀, y₀, x₁, y₁))
         @test ovb isa Dict{String, Float64}
         @test isa.(values(ovb), Float64) == Bool[1, 1, 1, 1]
     end
@@ -126,32 +126,32 @@ end
         @test sum_of_squares3[1, 1] == 0.0
         @test sum_of_squares3[1, 2] == 0.0
         @test sum_of_squares3[5, 3] == 1.6666666666666665
-        @test classpointers([1, 2, 3, 4, 5], 2, sum_of_squares2)[:, 1] == ones(Int, 5)
-        @test length(classpointers([1, 2, 3, 4, 5], 2, 
-            sumsofsquares([1, 2, 3, 4, 5], 2))) == 10
-        @test classpointers([1, 2, 3, 4, 5], 3, sum_of_squares3)[:, 1] == ones(Int, 5)
-        @test length(classpointers([1, 2, 3, 4, 5], 3, 
-            sumsofsquares([1, 2, 3, 4, 5], 3))) == 15
-        @test length(classpointers([1, 2, 3, 4, 5], 3, 
-            sumsofsquares([1, 2, 3, 4, 5], 3))) == 15
+        @test class_pointers([1, 2, 3, 4, 5], 2, sum_of_squares2)[:, 1] == ones(Int, 5)
+        @test length(class_pointers([1, 2, 3, 4, 5], 2, 
+            sums_of_squares([1, 2, 3, 4, 5], 2))) == 10
+        @test class_pointers([1, 2, 3, 4, 5], 3, sum_of_squares3)[:, 1] == ones(Int, 5)
+        @test length(class_pointers([1, 2, 3, 4, 5], 3, 
+            sums_of_squares([1, 2, 3, 4, 5], 3))) == 15
+        @test length(class_pointers([1, 2, 3, 4, 5], 3, 
+            sums_of_squares([1, 2, 3, 4, 5], 3))) == 15
         @test length(backtrack_to_find_breaks([1, 2, 3, 4, 5], 
             [1 1 1 1 1; 2 2 3 4 5])) == 5
         @test variance([1, 2, 3, 4, 5]) == 2.0
     end
 
     @testset "Jenks Breaks Function" begin
-        @test 2 <= length(unique(jenksbreaks(data, num_breaks))) <= num_breaks
+        @test 2 <= length(unique(jenks_breaks(data, num_breaks))) <= num_breaks
     end
 
     @testset "Helpers to Find the Best Number of Breaks" begin
-        @test length(unique(faketreatments([1, 2, 3, 4, 5], 3))) == 3
-        @test groupbyclass([1, 2, 3, 4, 5], [1, 1, 1, 2, 3]) == [[1, 2, 3], [4], [5]]
+        @test length(unique(fake_treatments([1, 2, 3, 4, 5], 3))) == 3
+        @test group_by_class([1, 2, 3, 4, 5], [1, 1, 1, 2, 3]) == [[1, 2, 3], [4], [5]]
         @test sdam([5, 4, 9, 10]) == 26
         @test scdm([[4], [5, 9, 10]]) == 14
         @test gvf([[4, 5], [9, 10]]) ≈ 0.96153846153
         @test gvf([[4], [5], [9, 10]]) ≈ 0.9807692307692307
-        @test length(bestsplits(test_outcomes, 5)) == length(test_outcomes)
-        @test setdiff(Set(sort(unique(faketreatments(test_outcomes, 3)))), 
+        @test length(best_splits(test_outcomes, 5)) == length(test_outcomes)
+        @test setdiff(Set(sort(unique(fake_treatments(test_outcomes, 3)))), 
             [1, 2, 3]) == Set()
     end
 end
@@ -170,7 +170,7 @@ end
 
 @testset "G-Computation Assumptions" begin
     @testset "Counterfactual Consistency" begin
-        @test counterfactualconsistency(g_computer) isa Real
+        @test counterfactual_consistency(g_computer) isa Real
     end
 
     @testset "Exchangeability" begin
@@ -194,20 +194,20 @@ end
 end
 
 @testset "Double Machine Learning Assumptions" begin
-    @test counterfactualconsistency(dml) isa Real
+    @test counterfactual_consistency(dml) isa Real
     @test exchangeability(dml) isa Real
     @test size(positivity(dml), 2) == size(dml.X, 2)+1
     @test length(validate(dml)) == 3
 end
 
 @testset "Metalearner Assumptions" begin
-    @test counterfactualconsistency(s_learner) isa Real
+    @test counterfactual_consistency(s_learner) isa Real
     @test exchangeability(s_learner) isa Real
     @test size(positivity(s_learner), 2) == size(s_learner.X, 2)+1
-    @test counterfactualconsistency(t_learner) isa Real
+    @test counterfactual_consistency(t_learner) isa Real
     @test exchangeability(t_learner) isa Real
     @test size(positivity(t_learner), 2) == size(t_learner.X, 2)+1
-    @test counterfactualconsistency(x_learner) isa Real
+    @test counterfactual_consistency(x_learner) isa Real
     @test exchangeability(x_learner) isa Real
     @test size(positivity(x_learner), 2) == size(x_learner.X, 2)+1
     @test length(validate(s_learner)) == 3

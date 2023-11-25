@@ -88,7 +88,7 @@ julia> precision([0, 1, 0, 0], [0, 1, 0, 0])
 ```
 """
 function precision(y::Vector{Int64}, ŷ::Vector{Int64})
-    confmat = confusionmatrix(y, ŷ)
+    confmat = confusion_matrix(y, ŷ)
     n = length(Set(y))
 
     # Binary classification
@@ -126,7 +126,7 @@ julia> recall([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
 ```
 """
 function recall(y::Vector{Int64}, ŷ::Vector{Int64})
-    confmat, n = confusionmatrix(y, ŷ), length(Set(y))
+    confmat, n = confusion_matrix(y, ŷ), length(Set(y))
 
     # Binary classification
     if size(confmat) == (2, 2)
@@ -165,29 +165,30 @@ function F1(y::Vector{Int64}, ŷ::Vector{Int64})
 end
 
 """
-    confusionmatrix(y, ŷ)
+    confusion_matrix(y, ŷ)
 
 Generate a confusion matrix
 
 Examples
 ```julia-repl
-julia> confusionmatrix([1, 1, 1, 1, 0], [1, 1, 1, 1, 0])
+julia> confusion_matrix([1, 1, 1, 1, 0], [1, 1, 1, 1, 0])
 2×2 Matrix{Int64}:
  1  0
  0 4
-julia> confusionmatrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2])
+julia> confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2])
 3×3 Matrix{Int64}:
  1  0 0
  0 4 0
  0 0 1
 ```
 """
-function confusionmatrix(y::Vector{Int64}, ŷ::Vector{Int64})
+function confusion_matrix(y::Vector{Int64}, ŷ::Vector{Int64})
     confmat = zeros(Int64, length(Set(y)), length(Set(y)))
 
     # Recode since Julia is a 1-index language
     if minimum(y) == 0
-        @fastmath y .+= 1; @fastmath ŷ .+= 1
+        @fastmath y .+= 1
+        @fastmath ŷ .+= 1
     end
 
     for (predicted, actual) in zip(ŷ, y)

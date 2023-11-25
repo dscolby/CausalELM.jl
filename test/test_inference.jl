@@ -1,4 +1,4 @@
-using CausalELM.Inference: generatenulldistribution, quantitiesofinterest, summarize
+using CausalELM.Inference: generate_null_distribution, quantities_of_interest, summarize
 using CausalELM.Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
     DoubleMachineLearning
 using CausalELM.Metalearners: SLearner, TLearner, XLearner, Metalearner, 
@@ -9,14 +9,14 @@ x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 
 g_computer = GComputation(x, y, t)
 estimate_causal_effect!(g_computer)
-g_inference = generatenulldistribution(g_computer)
-p1, stderr1 = quantitiesofinterest(g_computer)
+g_inference = generate_null_distribution(g_computer)
+p1, stderr1 = quantities_of_interest(g_computer)
 summary1 = summarize(g_computer)
 
 dm = DoubleMachineLearning(x, x, y, t)
 estimate_causal_effect!(dm)
-dm_inference = generatenulldistribution(dm)
-p2, stderr2 = quantitiesofinterest(dm)
+dm_inference = generate_null_distribution(dm)
+p2, stderr2 = quantities_of_interest(dm)
 summary2 = summarize(dm)
 
 x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
@@ -25,26 +25,26 @@ estimate_causal_effect!(its)
 summary3 = summarize(its, 10)
 
 # Null distributions for the mean and cummulative changes
-its_inference1 = generatenulldistribution(its, 10)
-its_inference2 = generatenulldistribution(its, 10, false)
-p3, stderr3 = quantitiesofinterest(its, 10)
+its_inference1 = generate_null_distribution(its, 10)
+its_inference2 = generate_null_distribution(its, 10, false)
+p3, stderr3 = quantities_of_interest(its, 10)
 
 slearner = SLearner(x, y, t)
 estimate_causal_effect!(slearner)
-slearner_inference = generatenulldistribution(slearner)
-p4, stderr4 = quantitiesofinterest(slearner)
+slearner_inference = generate_null_distribution(slearner)
+p4, stderr4 = quantities_of_interest(slearner)
 summary4 = summarize(slearner)
 
 tlearner = TLearner(x, y, t)
 estimate_causal_effect!(tlearner)
-tlearner_inference = generatenulldistribution(tlearner)
-p5, stderr5 = quantitiesofinterest(tlearner)
+tlearner_inference = generate_null_distribution(tlearner)
+p5, stderr5 = quantities_of_interest(tlearner)
 summary5 = summarize(tlearner)
 
 xlearner = XLearner(x, y, t)
 estimate_causal_effect!(xlearner)
-xlearner_inference = generatenulldistribution(xlearner)
-p6, stderr6 = quantitiesofinterest(xlearner)
+xlearner_inference = generate_null_distribution(xlearner)
+p6, stderr6 = quantities_of_interest(xlearner)
 summary6 = summarize(xlearner)
 
 @testset "Generating Null Distributions" begin

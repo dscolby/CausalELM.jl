@@ -3,7 +3,7 @@ module Metalearners
 
 using ..ActivationFunctions: relu
 using ..Metrics: mse
-using ..CrossValidation: bestsize, shuffledata
+using ..CrossValidation: best_size, shuffle_data
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
     predict
 
@@ -82,7 +82,7 @@ julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
         end
 
         # Shuffles the data for cross validation
-        X, Y, T = shuffledata(Float64.(X), Float64.(Y), Float64.(T))
+        X, Y, T = shuffle_data(Float64.(X), Float64.(Y), Float64.(T))
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -160,7 +160,7 @@ julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
         end
 
         # Shuffles the data for cross validation
-        X, Y, T = shuffledata(Float64.(X), Float64.(Y), Float64.(T))
+        X, Y, T = shuffle_data(Float64.(X), Float64.(Y), Float64.(T))
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -246,7 +246,7 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
         end
 
         # Shuffles the data for cross validation
-        X, Y, T = shuffledata(Float64.(X), Float64.(Y), Float64.(T))
+        X, Y, T = shuffle_data(Float64.(X), Float64.(Y), Float64.(T))
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -263,7 +263,7 @@ function estimate_causal_effect!(s::SLearner)
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
     if s.num_neurons === 0
-        s.num_neurons = bestsize(full_covariates, s.Y, s.validation_metric, s.task, 
+        s.num_neurons = best_size(full_covariates, s.Y, s.validation_metric, s.task, 
             s.activation, s.min_neurons, s.max_neurons, s.regularized, s.folds, false,
             s.iterations, s.approximator_neurons)
     end
@@ -298,7 +298,7 @@ function estimate_causal_effect!(t::TLearner)
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
     if t.num_neurons === 0
-        t.num_neurons = bestsize(t.X, t.Y, t.validation_metric, t.task, t.activation, 
+        t.num_neurons = best_size(t.X, t.Y, t.validation_metric, t.task, t.activation, 
             t.min_neurons, t.max_neurons, t.regularized, t.folds, false, t.iterations, 
             t.approximator_neurons)
     end
@@ -332,7 +332,7 @@ function estimate_causal_effect!(x::XLearner)
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
     if x.num_neurons === 0
-        x.num_neurons = bestsize(x.X, x.Y, x.validation_metric, x.task, x.activation, 
+        x.num_neurons = best_size(x.X, x.Y, x.validation_metric, x.task, x.activation, 
             x.min_neurons, x.max_neurons, x.regularized, x.folds, false, x.iterations, 
             x.approximator_neurons)
     end

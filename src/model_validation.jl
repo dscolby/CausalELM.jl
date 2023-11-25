@@ -3,7 +3,7 @@ module ModelValidation
 using ..Estimators: InterruptedTimeSeries, estimate_causal_effect!, GComputation, 
     CausalEstimator, predict, DoubleMachineLearning
 using ..Metrics: mse
-using ..CrossValidation: bestsize
+using ..CrossValidation: best_size
 using ..Models: predict, fit!, ExtremeLearner, RegularizedExtremeLearner
 using ..Metalearners: Metalearner, XLearner, SLearner, TLearner
 import CausalELM: mean, consecutive, validate, exchangeability, e_value, Discrete,
@@ -61,8 +61,8 @@ function validate(its::InterruptedTimeSeries; n::Int=1000, low::Float64=0.15,
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
-    return testcovariateindependence(its; n=n), supwald(its; low=low, high=high, n=n), 
-        testomittedpredictor(its; n=n)
+    return covariate_independence(its; n=n), sup_wald(its; low=low, high=high, n=n), 
+        omitted_predictor(its; n=n)
 end
 
 """
@@ -115,12 +115,12 @@ function validate(m::Union{CausalEstimator, Metalearner}; num_treatments::Int=5)
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
-    return counterfactualconsistency(m, num_treatments=num_treatments), exchangeability(m), 
+    return counterfactual_consistency(m, num_treatments=num_treatments), exchangeability(m), 
         positivity(m)
 end
 
 """
-    testcovariateindependence(its; n)
+    covariate_independence(its; n)
 
 Test for independence between covariates and the event or intervention.
 
@@ -144,12 +144,12 @@ julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1
            randn(10))
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)
-julia> testcovariateindependence(its)
+julia> covariate_independence(its)
 Dict("Column 1 p-value" => 0.421, "Column 5 p-value" => 0.07, "Column 3 p-value" => 0.01, 
 "Column 2 p-value" => 0.713, "Column 4 p-value" => 0.043)
 ```
 """
-function testcovariateindependence(its::InterruptedTimeSeries; n::Int=1000)
+function covariate_independence(its::InterruptedTimeSeries; n::Int=1000)
     y₀ = reduce(hcat, (its.X₀[:, 1:end-1], zeros(size(its.X₀, 1))))
     y₁ = reduce(hcat, (its.X₁[:, 1:end-1], ones(size(its.X₁, 1))))
     all_vars = [reduce(vcat, (y₀, y₁)) ones(size(y₀, 1) + size(y₁, 1))]
@@ -161,14 +161,14 @@ function testcovariateindependence(its::InterruptedTimeSeries; n::Int=1000)
     for i in 1:size(all_vars, 2)-2
         y = all_vars[:, i] 
         β = first(x\y)
-        p = pval(x, y, β, n=n)
+        p = p_val(x, y, β, n=n)
         results["Column " * string(i) * " p-value"] = p
     end
     return results
 end
 
 """
-    testomittedpredictor(its; n)
+    omitted_predictor(its; n)
 
 See how an omitted predictor/variable could change the results of an interrupted time series 
 analysis.
@@ -191,13 +191,13 @@ julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1
            randn(10))
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)
-julia> testomittedpredictor(its)
+julia> omitted_predictor(its)
 Dict("Mean Biased Effect/Original Effect" => -0.1943184744720332, "Median Biased 
 Effect/Original Effect" => -0.1881814122689084, "Minimum Biased Effect/Original Effect" => 
 -0.2725194360603799, "Maximum Biased Effect/Original Effect" => -0.1419197976977072)
 ```
 """
-function testomittedpredictor(its::InterruptedTimeSeries; n::Int=1000)
+function omitted_predictor(its::InterruptedTimeSeries; n::Int=1000)
     if !isdefined(its, :Δ)
         throw(ErrorException("call estimatecausaleffect! before calling omittedvariable"))
     end
@@ -224,7 +224,7 @@ function testomittedpredictor(its::InterruptedTimeSeries; n::Int=1000)
 end
 
 """
-    supwald(its; low, high, n)
+    sup_wald(its; low, high, n)
 
 Check if the predicted structural break is the hypothesized structural break.
 
@@ -249,12 +249,12 @@ julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1
            randn(10))
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)
-julia> supwald(its)
+julia> sup_wald(its)
 Dict{String, Real}("Wald Statistic" => 58.16649796321913, "p-value" => 0.005, "Predicted 
 Break Point" => 39, "Hypothesized Break Point" => 100)
 ```
 """
-function supwald(its::InterruptedTimeSeries; low::Float64=0.15, high::Float64=0.85, 
+function sup_wald(its::InterruptedTimeSeries; low::Float64=0.15, high::Float64=0.85, 
     n::Int=1000)
     hypothesized_break, current_break, wald = size(its.X₀, 1), size(its.X₀, 1), 0.0
     high_idx, low_idx = Int(floor(high * size(its.X₀, 1))), Int(ceil(low * size(its.X₀, 1)))
@@ -276,13 +276,13 @@ function supwald(its::InterruptedTimeSeries; low::Float64=0.15, high::Float64=0.
             current_break, wald, best_x, best_β = idx, wald_candidate, new_x, best_β
         end
     end
-    p = pval(best_x, y, best_β; n=n, wald=true)
+    p = p_val(best_x, y, best_β; n=n, wald=true)
     return Dict("Hypothesized Break Point" => hypothesized_break, 
         "Predicted Break Point" => current_break, "Wald Statistic" => wald, "p-value" => p)
 end
 
 """
-    pval(x, y, β; n, wald)
+    p_val(x, y, β; n, wald)
 
 Estimate the p-value for the hypothesis that an event had a statistically significant effect 
 on the slope of a covariate using randomization inference.
@@ -290,13 +290,13 @@ on the slope of a covariate using randomization inference.
 Examples
 ```julia-repl
 julia> x, y, β = reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
-julia> pval(x, y, β)
+julia> p_val(x, y, β)
 0.98
-julia> pval(x, y, β; n=100, wald=true)
+julia> p_val(x, y, β; n=100, wald=true)
 0.08534054
 ```
 """
-function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000, 
+function p_val(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000, 
     wald::Bool=false)
     m2 = "the first column of x should be a treatment vector of 0s and 1s"
     if sort(union(x[:, 1], [0, 1])) != [0, 1]
@@ -324,7 +324,7 @@ function pval(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000,
 end
 
 """
-    counterfactualconsistency(m; num_treatments)
+    counterfactual_consistency(m; num_treatments)
 
 Examine the counterfactual consistency assumption. First, this function generates Jenks 
 breaks based on outcome values for the treatment group. Then, it replaces treatment statuses 
@@ -345,14 +345,14 @@ julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)),
     Float64.([rand()<0.4 for i in 1:100])
 julia> g_computer = GComputation(x, y, t, temporal=false)
 julia> estimate_causal_effect!(g_computer)
-julia> counterfactualconsistency(g_computer)
+julia> counterfactual_consistency(g_computer)
 2.7653668647301795
 ```
 """
-function counterfactualconsistency(m::Union{CausalEstimator, Metalearner}; 
+function counterfactual_consistency(m::Union{CausalEstimator, Metalearner}; 
     num_treatments::Int=5)
     treatment_covariates, treatment_outcomes = m.X[m.T .== 1, :], m.Y[m.T .== 1]
-    fake_treat = bestsplits(treatment_outcomes, num_treatments)
+    fake_treat = best_splits(treatment_outcomes, num_treatments)
     β_real = treatment_covariates\treatment_outcomes
     β_fake = Real.(reduce(hcat, (treatment_covariates, fake_treat))\treatment_outcomes)
     ŷ_real = treatment_covariates*β_real
@@ -445,7 +445,7 @@ function positivity(m::Union{DoubleMachineLearning, XLearner})
 end
 
 function positivity(m::Union{GComputation, SLearner, TLearner})
-    num_neurons = bestsize(m.X, m.T, m.validation_metric, m.task, m.activation, 
+    num_neurons = best_size(m.X, m.T, m.validation_metric, m.task, m.activation, 
         m.min_neurons, m.max_neurons, m.regularized, m.folds, false,  m.iterations, 
         m.approximator_neurons)
 
@@ -464,14 +464,14 @@ function positivity(m::Union{GComputation, SLearner, TLearner})
 end
 
 """
-    sumsofsquares(data, num_classes)
+    sums_of_squares(data, num_classes)
 
 Calculate the minimum sum of squares for each data point and class for the Jenks breaks 
     algorithm.
 
 Examples
 ```julia-repl
-julia> sumsofsquares([1, 2, 3, 4, 5], 2)
+julia> sums_of_squares([1, 2, 3, 4, 5], 2)
 5×2 Matrix{Real}:
  0.0       0.0
  0.25      0.25
@@ -480,7 +480,7 @@ julia> sumsofsquares([1, 2, 3, 4, 5], 2)
  2.0       1.75
 ```
 """
-function sumsofsquares(data::Vector{<:Real}, num_classes::Int=5)
+function sums_of_squares(data::Vector{<:Real}, num_classes::Int=5)
     n = length(data)
     sums_of_squares = zeros(Float64, n, num_classes)
     
@@ -501,7 +501,7 @@ function sumsofsquares(data::Vector{<:Real}, num_classes::Int=5)
 end
 
 """
-    classpointers(data, num_classes, sums_of_sqs)
+    class_pointers(data, num_classes, sums_of_sqs)
 
 Compute class pointers that minimize the sum of squares for Jenks breaks.
 
@@ -514,7 +514,7 @@ julia> sums_squares = sums_of_sqs::Matrix{Float64}
  0.666667  0.666667
  1.25      1.16667
  2.0       1.75
-julia> classpointers([1, 2, 3, 4, 5], 2, sums_squares)
+julia> class_pointers([1, 2, 3, 4, 5], 2, sums_squares)
 5×2 Matrix{Int64}:
  1  0
  1  1
@@ -523,7 +523,7 @@ julia> classpointers([1, 2, 3, 4, 5], 2, sums_squares)
  1  1
 ```
 """
-function classpointers(data::Vector{<:Real}, num_classes::Int, sums_of_sqs::Matrix{Float64})
+function class_pointers(data::Vector{<:Real}, num_classes::Int, sums_of_sqs::Matrix{Float64})
     n = length(data)
     class_pointers = Matrix{Int}(undef, n, num_classes)
 
@@ -558,7 +558,7 @@ julia> data = [1, 2, 3, 4, 5]
  3
  4
  5
-julia> ptr = classpointers([1, 2, 3, 4, 5], 2, sumsofsquares([1, 2, 3, 4, 5], 2))
+julia> ptr = class_pointers([1, 2, 3, 4, 5], 2, sums_of_squares([1, 2, 3, 4, 5], 2))
 5×2 Matrix{Int64}:
  1  28
  1   1
@@ -613,7 +613,7 @@ function variance(data::Vector{<:Real})
 end
 
 """
-    bestsplits(data, num_classes)
+    best_splits(data, num_classes)
 
 Find the best number of splits for Jenks breaks.
 
@@ -623,7 +623,7 @@ This function finds the best number of splits by finding the number of splits th
 
 Examples
 ```julia-repl
-julia> bestsplits(collect(1:10), 5)
+julia> best_splits(collect(1:10), 5)
 10-element Vector{Int64}:
  1
  3
@@ -633,9 +633,9 @@ julia> bestsplits(collect(1:10), 5)
  4
 ```
 """
-function bestsplits(data::Vector{<:Real}, num_classes::Int)
-    candidate_classes = [faketreatments(data, i) for i in 2:num_classes]
-    grouped_candidate_breaks = [groupbyclass(data, class) for class in candidate_classes]
+function best_splits(data::Vector{<:Real}, num_classes::Int)
+    candidate_classes = [fake_treatments(data, i) for i in 2:num_classes]
+    grouped_candidate_breaks = [group_by_class(data, class) for class in candidate_classes]
     gvfs = [gvf(breaks) for breaks in grouped_candidate_breaks]
 
     # Find the set of splits with the largest decrease in slope
@@ -647,21 +647,21 @@ function bestsplits(data::Vector{<:Real}, num_classes::Int)
 end
 
 """
-    groupbyclass(data, classes)
+    group_by_class(data, classes)
 
 Group data points into vectors such that data points assigned to the same class are in the 
 same vector.
 
 Examples
 ```julia-repl
-julia> groupbyclass([1, 2, 3, 4, 5], [1, 1, 1, 2, 3])
+julia> group_by_class([1, 2, 3, 4, 5], [1, 1, 1, 2, 3])
 3-element Vector{Vector{Real}}:
  [1, 2, 3]
  [4]
  [5]
 ```
 """
-function groupbyclass(data::Vector{<:Real}, classes::Vector{<:Real})
+function group_by_class(data::Vector{<:Real}, classes::Vector{<:Real})
     # Create a dictionary to store elements by class
     class_dict = Dict{Int, Vector{Real}}()
     
@@ -679,37 +679,37 @@ function groupbyclass(data::Vector{<:Real}, classes::Vector{<:Real})
 end
 
 """
-    jenksbreaks(data, num_classes)
+    jenks_breaks(data, num_classes)
 
 Generate Jenks breaks for a vector of real numbers.
 
 Examples
 ```julia-repl
-julia> jenksbreaks([1, 2, 3, 4, 5], 3)
+julia> jenks_breaks([1, 2, 3, 4, 5], 3)
 3-element Vector{Int64}:
  1
  3
  4
 ```
 """
-function jenksbreaks(data::Vector{<:Real}, num_classes::Int)
+function jenks_breaks(data::Vector{<:Real}, num_classes::Int)
     sorted_data = sort(data)                 # The data needs to be sorted for this to work
-    sums_of_squares = sumsofsquares(sorted_data, num_classes)
-    class_pointers = classpointers(sorted_data, num_classes, sums_of_squares)
-    breaks = backtrack_to_find_breaks(sorted_data, class_pointers)
+    sums_squares = sums_of_squares(sorted_data, num_classes)
+    cls_pointers = class_pointers(sorted_data, num_classes, sums_squares)
+    breaks = backtrack_to_find_breaks(sorted_data, cls_pointers)
     
     return breaks
 end
 
 """
-    faketreatments(data, num_classes)
+    fake_treatments(data, num_classes)
 
 Generate fake treatment statuses corresponding to the classes assigned by the Jenks breaks 
 algorithm.
 
 Examples
 ```julia-repl
-julia> faketreatments([1, 2, 3, 4, 5], 4)
+julia> fake_treatments([1, 2, 3, 4, 5], 4)
 5-element Vector{Int64}:
  1
  2
@@ -718,8 +718,8 @@ julia> faketreatments([1, 2, 3, 4, 5], 4)
  4
 ```
 """
-function faketreatments(data::Vector{<:Real}, num_classes::Int)
-    breaks = jenksbreaks(data, num_classes)
+function fake_treatments(data::Vector{<:Real}, num_classes::Int)
+    breaks = jenks_breaks(data, num_classes)
 
     # Finds the class of a single data point
     function find_class(number)

@@ -165,7 +165,7 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  ```
  """
 function fit!(model::ExtremeLearner)
-    setweightsbiases(model)
+    set_weights_biases(model)
 
     model.__tol = sqrt(eps(real(float(one(eltype(model.H))))))  # For numerical stability
 
@@ -195,11 +195,11 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
  ```
  """
 function fit!(model::RegularizedExtremeLearner)
-    setweightsbiases(model)
+    set_weights_biases(model)
     
     model.__tol = sqrt(eps(real(float(one(eltype(model.H))))))
 
-    I, k = ones(Float64, size(model.H, 2), size(model.H, 2)), ridgeconstant(model)   # L2
+    I, k = ones(Float64, size(model.H, 2), size(model.H, 2)), ridge_constant(model)   # L2
 
     model.β = @fastmath (pinv((transpose(model.H) * model.H) + ((1.0/k) * I), 
         rtol=model.__tol) * (transpose(model.H) * model.Y))
@@ -260,14 +260,14 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  [9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978]
  ```
  """
-function predictcounterfactual!(model::ExtremeLearningMachine, X::Array)
+function predict_counterfactual!(model::ExtremeLearningMachine, X::Array)
     model.counterfactual, model.__estimated = predict(model, X), true
     
     return model.counterfactual
 end
 
 """
-    placebotest(model)
+    placebo_test(model)
 
 Conduct a placebo test.
 
@@ -287,20 +287,20 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
  -2.4741301876094655, 40.642730531608635, -11.058942121275233]
  julia> predictcounterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
  [9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978]
- julia> placebotest(m1)
+ julia> placebo_test(m1)
  ([9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978],
  [0.5, 0.4, 0.3, 0.2])
  ```
  """
-function placebotest(model::ExtremeLearningMachine)
-    m = "Use predictcounterfactual to estimate a counterfactual before calling placebotest"
+function placebo_test(model::ExtremeLearningMachine)
+    m = "Use predict_counterfactual! to estimate a counterfactual before using placebo_test"
     if !model.__estimated
         throw(ErrorException(m))
     end
     return predict(model, model.X), model.counterfactual
 end
 
-function ridgeconstant(model::RegularizedExtremeLearner)
+function ridge_constant(model::RegularizedExtremeLearner)
     β0 = @fastmath pinv(model.H) * model.Y
     σ̃  = @fastmath ((transpose(model.Y .- (model.H * β0)) * (model.Y .- (model.H * β0))) / 
         (model.features - size(model.H)[2]))
@@ -308,7 +308,7 @@ function ridgeconstant(model::RegularizedExtremeLearner)
     return @fastmath first((model.H[2]*σ̃)/(transpose(β0)*transpose(model.H)*model.H*β0))
 end
 
-function setweightsbiases(model::ExtremeLearningMachine)
+function set_weights_biases(model::ExtremeLearningMachine)
     model.weights = rand(Float64, model.features, model.hidden_neurons)
     model.bias = rand(Float64, 1, model.hidden_neurons)
 

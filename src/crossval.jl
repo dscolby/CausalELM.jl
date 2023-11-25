@@ -52,16 +52,16 @@ julia> recode([1.1, 1.51, 1.8])
 end
 
 """
-    generatefolds(X, Y, folds)
+    generate_folds(X, Y, folds)
 
 Creates folds for cross validation.
 
 Examples
 ```julia-repl
-julia> xfolds, y_folds = generatefolds(zeros(20, 2), zeros(20), 5)
+julia> xfolds, y_folds = generate_folds(zeros(20, 2), zeros(20), 5)
 ```
 """
-function generatefolds(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
+function generate_folds(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
     msg = """the number of folds must be less than the number of 
              observations and greater than or equal to iteration"""
     n = length(Y)
@@ -85,20 +85,20 @@ function generatefolds(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
 end
 
 """
-    validatefold(xtrain, ytrain, xtest, ytest, nodes, metric; activation, regularized)
+    validate_fold(xtrain, ytrain, xtest, ytest, nodes, metric; activation, regularized)
 
 Calculate a validation metric for a single fold in k-fold cross validation.
 
 Examples
 ```julia-repl
 julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
-julia> validatefold(x, y, 5, accuracy, 3)
+julia> validate_fold(x, y, 5, accuracy, 3)
 0.0
 ```
 """
-function validatefold(xtrain::Array{Float64}, ytrain::Array{Float64}, xtest::Array{Float64}, 
-    ytest::Array{Float64}, nodes::Integer, metric::Function; activation::Function=relu,  
-    regularized::Bool=true)
+function validate_fold(xtrain::Array{Float64}, ytrain::Array{Float64}, 
+    xtest::Array{Float64}, ytest::Array{Float64}, nodes::Integer, metric::Function; 
+    activation::Function=relu, regularized::Bool=true)
 
     if regularized
         network = RegularizedExtremeLearner(xtrain, ytrain, nodes, activation)
@@ -113,18 +113,18 @@ function validatefold(xtrain::Array{Float64}, ytrain::Array{Float64}, xtest::Arr
 end
 
 """
-    crossvalidate(X, Y, neurons, metric, activation, regularized, folds, temporal)
+    cross_validate(X, Y, neurons, metric, activation, regularized, folds, temporal)
 
 Calculate a validation metric for k folds using a single set of hyperparameters.
 
 Examples
 ```julia-repl
 julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
-julia> crossvalidate(x, y, 5, accuracy)
+julia> cross_validate(x, y, 5, accuracy)
 0.0257841765251021
 ```
 """
-function crossvalidate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer, 
+function cross_validate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer, 
     metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5, 
     temporal::Bool=false)
     mean_metric = 0.0
@@ -134,7 +134,7 @@ function crossvalidate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer,
         x_folds = [X[i:j, :] for (i, j) in zip(indices, indices[2:end] .- 1)]
         y_folds = [Y[i:j] for (i, j) in zip(indices, indices[2:end] .- 1)]
     else
-        x_folds, y_folds = generatefolds(X, Y, folds)
+        x_folds, y_folds = generate_folds(X, Y, folds)
     end
     
     @inbounds for fold in 1:folds
@@ -142,14 +142,14 @@ function crossvalidate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer,
         ytrain = reduce(vcat, [y_folds[f] for f in 1:folds if f != fold])
         xtest, ytest = x_folds[fold], y_folds[fold]
 
-        mean_metric += validatefold(xtrain, ytrain, xtest, ytest, neurons, metric, 
+        mean_metric += validate_fold(xtrain, ytrain, xtest, ytest, neurons, metric, 
             activation=activation, regularized=regularized)
     end
     return mean_metric/folds
 end
 
 """
-    bestsize(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, folds, 
+    best_size(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, folds, 
         temporal, iterations, approximator_neurons)
 
 Compute the best number of neurons for an Extreme Learning Machine.
@@ -163,11 +163,11 @@ size with the best predicted validation error or metric.
 
 Examples
 ```julia-repl
-julia> bestsize(rand(100, 5), rand(100), mse, "regression")
+julia> best_size(rand(100, 5), rand(100), mse, "regression")
 11
 ```
 """
-function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::String,
+function best_size(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::String,
     activation::Function=relu, min_neurons::Integer=1, max_neurons::Integer=100, 
     regularized::Bool=true, folds::Integer=5, temporal::Bool=false,
     iterations::Integer=Int(round(size(X, 1)/10)), 
@@ -177,7 +177,7 @@ function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::
         round.(Int, range(min_neurons, max_neurons, length=iterations))
    
     @inbounds for (i, n) in pairs(loops)
-        act[i] = crossvalidate(X, Y, round(Int, n), metric, activation, regularized, folds, 
+        act[i] = cross_validate(X, Y, round(Int, n), metric, activation, regularized, folds, 
             temporal)
     end
     
@@ -192,14 +192,14 @@ function bestsize(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::
 end
 
 """
-    shuffledata(X, Y, T)
+    shuffle_data(X, Y, T)
 
 Shuffles covariates, treatment vector, and outcome vector for cross validation.
 
 Examples
 ```julia-repl
 julia> x, y, t = rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> shuffledata(x, y, t)
+julia> shuffle_data(x, y, t)
 ([0.6124923085225416 0.2713900065807924 … 0.6094796972512194 0.6067966603192685; 
 0.7186612932571539 0.8047878363606299 … 0.9787878554455594 0.885819212905816; … ; 
 0.773543733306263 0.10880091279797399 … 0.10525512055751185 0.6303472234021711; 
@@ -212,7 +212,7 @@ julia> shuffledata(x, y, t)
 Float64[0, 0, 1, 1, 0, 1, 0, 0, 1, 0  …  0, 0, 1, 1, 1, 1, 0, 1, 0, 0])
 ```
 """
-function shuffledata(X::Array{Float64}, Y::Array{Float64}, T::Array{Float64})
+function shuffle_data(X::Array{Float64}, Y::Array{Float64}, T::Array{Float64})
         idx = randperm(size(X, 1))
         new_data = mapslices.(x->x[idx], [X, Y, T], dims=1)
         X, Y, T = new_data[1], new_data[2], Float64.(new_data[3])

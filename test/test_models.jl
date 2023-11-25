@@ -1,5 +1,5 @@
 using CausalELM.Models: ExtremeLearner, RegularizedExtremeLearner, fit!, predict,
-    predictcounterfactual!, placebotest
+    predict_counterfactual!, placebo_test
 using CausalELM.ActivationFunctions: σ
 using Test
 
@@ -16,14 +16,14 @@ x1test = rand(30, 5)
 m1 = ExtremeLearner(x, y, 10, σ)
 f1 = fit!(m1)
 predictions1 = predict(m1, x_test)
-predictcounterfactual!(m1, x_test)
-placebo1 = placebotest(m1)
+predict_counterfactual!(m1, x_test)
+placebo1 = placebo_test(m1)
 
 m2 = RegularizedExtremeLearner(x, y, 10, σ)
 f2 = fit!(m2)
 predictions2 = predict(m2, x_test)
-predictcounterfactual!(m2, x_test)
-placebo2 = placebotest(m2)
+predict_counterfactual!(m2, x_test)
+placebo2 = placebo_test(m2)
 
 m3 = ExtremeLearner(x1, y1, 10, σ)
 fit!(m3)
@@ -66,7 +66,7 @@ nofit = ExtremeLearner(x1, y1, 10, σ)
 
  @testset "Predict Before Fit" begin
     @test_throws ErrorException predict(nofit, x1test)
-    @test_throws ErrorException placebotest(nofit)
+    @test_throws ErrorException placebo_test(nofit)
  end
 
 
