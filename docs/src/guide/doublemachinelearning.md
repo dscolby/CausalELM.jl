@@ -27,7 +27,7 @@ dml = DoubleMachineLearning(X, Xₚ, Y, T)
 To estimate the causal effect, we call estimatecausaleffect! on the model above.
 ```julia
 # we could also estimate the ATT by passing quantity_of_interest="ATT"
-estimatecausaleffect!(dml)
+estimate_causal_effect!(dml)
 ```
 
 # Get a Summary

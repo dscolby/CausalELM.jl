@@ -26,7 +26,7 @@ g_computer = GComputation(X, Y, T)
 To estimate the causal effect, we pass the model above to estimatecausaleffect!.
 ```julia
 # Note that we could also estimate the ATT by setting quantity_of_interest="ATT"
-estimatecausaleffect!(g_computer)
+estimate_causal_effect!(g_computer)
 ```
 
 ## Step 3: Get a Summary

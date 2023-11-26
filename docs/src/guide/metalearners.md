@@ -27,9 +27,9 @@ x_learner = XLearner(X, Y, T)
 # Estimate the CATE
 We can estimate the CATE for all the models by passing them to estimatecausaleffect!.
 ```julia
-estimatecausaleffect!(s_learner)
-estimatecausaleffect!(t_learner)
-estimatecausaleffect!(x_learner)
+estimate_causal_effect!(s_learner)
+estimate_causal_effect!(t_learner)
+estimate_causal_effect!(x_learner)
 ```
 
 # Get a Summary
