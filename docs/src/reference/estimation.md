@@ -8,7 +8,7 @@ CausalELM.Estimators.CausalEstimator
 CausalELM.Estimators.InterruptedTimeSeries
 CausalELM.Estimators.GComputation
 CausalELM.Estimators.DoubleMachineLearning
-CausalELM.Estimators.estimatecausaleffect!
+CausalELM.Estimators.estimate_causal_effect!
 CausalELM.Estimators.first_stage!
 CausalELM.Estimators.ate!
 CausalELM.Estimators.predict_propensity_score

@@ -321,7 +321,7 @@ function quantities_of_interest(m::Union{CausalEstimator, Metalearner}, n::Integ
 end
 
 """
-    quantities_of_interest(model, nsplits)
+    quantities_of_interest(model, n)
 
 Generate a p-value and standard error through randomization inference
 
@@ -345,16 +345,16 @@ julia> quantities_of_interest(its, 10)
 (0.0, 0.07703275541001667)
 ```
 """
-function quantities_of_interest(model::InterruptedTimeSeries, nsplits::Integer=1000, 
+function quantities_of_interest(model::InterruptedTimeSeries, n::Integer=1000, 
     mean_effect::Bool=true)
-    local null_dist = generate_null_distribution(model, nsplits, mean_effect)
+    local null_dist = generate_null_distribution(model, n, mean_effect)
     local metric = ifelse(mean_effect, mean, sum)
     local effect = metric(model.Δ)
 
     extremes = length(null_dist[effect .< abs.(null_dist)])
-    pvalue = extremes/nsplits
+    pvalue = extremes/n
 
-    stderr = (sum([(effect .- x)^2 for x in null_dist])/(nsplits-1))/sqrt(nsplits)
+    stderr = (sum([(effect .- x)^2 for x in null_dist])/(n-1))/sqrt(n)
 
     return pvalue, stderr
 end

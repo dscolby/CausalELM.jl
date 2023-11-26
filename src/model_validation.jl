@@ -1,3 +1,8 @@
+"""
+Methods to test the sensitivity of interrupted time series estimators, G-computation, double 
+machine learning, S-learners, T-learners, and X-learners to violations of their modeling 
+assumptions.
+"""
 module ModelValidation
 
 using ..Estimators: InterruptedTimeSeries, estimate_causal_effect!, GComputation, 

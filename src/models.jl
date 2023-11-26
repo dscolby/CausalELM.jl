@@ -300,6 +300,24 @@ function placebo_test(model::ExtremeLearningMachine)
     return predict(model, model.X), model.counterfactual
 end
 
+"""
+    ridge_constant(model)
+
+Calculate the L2 penalty for a regularized extreme learning machine.
+
+For more information see: 
+    Li, Guoqiang, and Peifeng Niu. "An enhanced extreme learning machine based on ridge 
+    regression for regression." Neural Computing and Applications 22, no. 3 (2013): 
+    803-810.
+
+Examples
+```julia-repl
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+ Extreme Learning Machine with 10 hidden neurons
+ julia> ridge_constant(m1)
+ 0.26789338524662887
+ ```
+ """
 function ridge_constant(model::RegularizedExtremeLearner)
     β0 = @fastmath pinv(model.H) * model.Y
     σ̃  = @fastmath ((transpose(model.Y .- (model.H * β0)) * (model.Y .- (model.H * β0))) / 
@@ -308,6 +326,23 @@ function ridge_constant(model::RegularizedExtremeLearner)
     return @fastmath first((model.H[2]*σ̃)/(transpose(β0)*transpose(model.H)*model.H*β0))
 end
 
+"""
+    set_weights_biases(model)
+
+Calculate the weights and biases for an extreme learning machine or regularized extreme 
+learning machine.
+
+For details see;
+    Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
+    and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
+
+Examples
+```julia-repl
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+ Extreme Learning Machine with 10 hidden neurons
+ julia> set_weights_biases(m1)
+ ```
+ """
 function set_weights_biases(model::ExtremeLearningMachine)
     model.weights = rand(Float64, model.features, model.hidden_neurons)
     model.bias = rand(Float64, 1, model.hidden_neurons)

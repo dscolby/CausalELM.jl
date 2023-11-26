@@ -405,6 +405,19 @@ julia> estimatecausaleffect!(m1)
 """
 estimate_causal_effect!(m::Metalearner) = estimate_causal_effect!(m)
 
+"""
+stage1!(x)
+
+Estimate the first stage models for an X-learner.
+
+This method should not be called by the user.
+
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = XLearner(X, Y, T)
+julia> stage1!(m1)
+```
+"""
 function stage1!(x::XLearner)
     if x.regularized
         x.g = RegularizedExtremeLearner(x.X, x.T, x.num_neurons, x.activation)
@@ -423,9 +436,23 @@ function stage1!(x::XLearner)
     x.ps = predict(x.g, x.X)
 
     # Fit first stage outcome models
-    fit!(x.μ₀), fit!(x.μ₁)
+    fit!(x.μ₀); fit!(x.μ₁)
 end
 
+"""
+stage2!(x)
+
+Estimate the second stage models for an X-learner.
+
+This method should not be called by the user.
+
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = XLearner(X, Y, T)
+julia> stage1!(m1)
+julia> stage2!(m1)
+```
+"""
 function stage2!(x::XLearner)
     d = ifelse(x.T === 0, predict(x.μ₁, x.X .- x.Y), x.Y .- predict(x.μ₀, x.X))
 
