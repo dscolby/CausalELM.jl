@@ -13,9 +13,8 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://dscolby.github.io/CausalELM.jl",
         edit_link="main",
-        assets=[asset("https://fonts.googleapis.com/css?family=Montserrat|Source+Code+Pro&display=swap", class=:css), 
-            asset("assets/documenter-light.css", islocal=true),
-            asset("assets/style.css", islocal=true)],
+        footer = "© 2023 Darren Colby",
+        assets=[],
     ),
     pages=[
         "CausalELM" => "index.md",

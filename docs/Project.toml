@@ -1,4 +1,3 @@
 [deps]
 CausalELM = "26abab4e-b12e-45db-9809-c199ca6ddca8"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
