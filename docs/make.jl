@@ -1,11 +1,5 @@
 using CausalELM
 using Documenter
-using DocumenterTools: Themes
-
-Themes.compile(
-  joinpath(@__DIR__, "src/assets/light.scss"),
-  joinpath(@__DIR__, "src/assets/themes/documenter-light.css")
-)
 
 DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true)
 
@@ -20,7 +14,8 @@ makedocs(;
         canonical="https://dscolby.github.io/CausalELM.jl",
         edit_link="main",
         assets=[asset("https://fonts.googleapis.com/css?family=Montserrat|Source+Code+Pro&display=swap", class=:css), 
-            asset("assets/themes/documenter-light.css", islocal=true)],
+            asset("assets/documenter-light.css", islocal=true),
+            asset("assets/style.css", islocal=true)],
     ),
     pages=[
         "CausalELM" => "index.md",
