@@ -362,7 +362,7 @@ end
 
 Estimate the CATE using a metalearner.
 
-For an overview of meatlearning see:
+For an overview of metalearning see:
 
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
