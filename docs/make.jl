@@ -1,5 +1,13 @@
 using CausalELM
 using Documenter
+using DocumenterTools: Themes
+
+Themes.compile(
+  joinpath(@__DIR__, "src/assets/light.scss"),
+  joinpath(@__DIR__, "src/assets/themes/documenter-light.css")
+)
+Themes.compile(joinpath(@__DIR__, "src/assets/dark.scss"), joinpath(@__DIR__, 
+    "src/assets/themes/documenter-dark.css"))
 
 DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true)
 
