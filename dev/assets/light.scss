@@ -61,6 +61,7 @@ $documenter-sidebar-menu-active-background: $mainwhite;
 $documenter-sidebar-menu-active-color: $mainblack;
 $documenter-sidebar-menu-active-hover-background: lighten-color($documenter-sidebar-background, 5.2);
 $documenter-sidebar-menu-active-hover-color: $documenter-sidebar-menu-active-color;
+$documenter-sidebar-width: 1.0em;
 
 // this is the color the links get, and also when they are hovered
 $link: $secondcolor;
@@ -94,7 +95,7 @@ $input-focus-border-color: $mainwhite;
 
 // Include the original theme which will now use the updated variables.
 // This should be the last thing in the SCSS file.
-@import "documenter-light";
+@use "documenter-light";
 
 #documenter .docs-sidebar { // This makes sidebar have shadow at all displays
   border-right: none;
