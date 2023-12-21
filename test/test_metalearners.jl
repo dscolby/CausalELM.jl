@@ -39,8 +39,6 @@ estimate_causal_effect!(xlearner4)
         @test isa(slearner1.causal_effect, Array{Float64})
         @test isa(slearner2.β, Array)
         @test isa(slearner2.causal_effect, Array{Float64})
-        @test slearner1.risk_ratio isa Real
-        @test slearner2.risk_ratio isa Real
     end
 end
 
@@ -61,8 +59,6 @@ end
         @test typeof(tlearner2.μ₀) <: ExtremeLearningMachine
         @test typeof(tlearner2.μ₁) <: ExtremeLearningMachine
         @test isa(tlearner2.causal_effect, Array{Float64})
-        @test tlearner1.risk_ratio isa Real
-        @test tlearner2.risk_ratio isa Real
     end
 end
 
@@ -106,8 +102,6 @@ end
         @test xlearner3.causal_effect isa Array{Float64}
         @test typeof(xlearner3.μχ₀) <: ExtremeLearningMachine
         @test typeof(xlearner3.μχ₁) <: ExtremeLearningMachine
-        @test xlearner3.risk_ratio isa Real
-        @test xlearner4.risk_ratio isa Real
         @test xlearner3.fit = true
         @test xlearner4.fit = true
     end

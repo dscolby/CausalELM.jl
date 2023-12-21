@@ -1,13 +1,15 @@
 """Metalearners to estimate the conditional average treatment effect (CATE)."""
 module Metalearners
 
-using ..ActivationFunctions: relu
 using ..Metrics: mse
+using ..Utilities: mean
+using ..ActivationFunctions: relu
+using ..Estimators: DoubleMachineLearning
 using ..CrossValidation: best_size, shuffle_data
-using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
-    predict
+using ..Models: ExtremeLearningMachine, ExtremeLearner, fit!, predict, 
+    RegularizedExtremeLearner
 
-import CausalELM: estimate_causal_effect!, Discrete, Continuous, variable_type, mean
+import CausalELM: estimate_causal_effect!
 
 """Abstract type for metalearners"""
 abstract type Metalearner end
@@ -46,8 +48,6 @@ mutable struct SLearner <: Metalearner
     β::Array{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
-    """The risk ratio from the estimated model"""
-    risk_ratio::Real
     """Whether the causal effect has been estimated"""
     fit::Bool
 
@@ -80,9 +80,6 @@ julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
         end
-
-        # Shuffles the data for cross validation
-        X, Y, T = shuffle_data(Float64.(X), Float64.(Y), Float64.(T))
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -124,8 +121,6 @@ mutable struct TLearner <: Metalearner
     μ₁::ExtremeLearningMachine
     """Weights learned during training"""
     causal_effect::Array{Float64}
-    """The risk ratio from the estimated model"""
-    risk_ratio::Real
     """Whether the causal effect has been estimated"""
     fit::Bool
 
@@ -158,9 +153,6 @@ julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
         end
-
-        # Shuffles the data for cross validation
-        X, Y, T = shuffle_data(Float64.(X), Float64.(Y), Float64.(T))
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -210,8 +202,6 @@ mutable struct XLearner <: Metalearner
     ps::Array{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
-    """The risk ratio from the estimated model"""
-    risk_ratio::Real
     """Whether the causal effect has been estimated"""
     fit::Bool
 
@@ -245,9 +235,6 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
             throw(ArgumentError("task must be either regression or classification"))
         end
 
-        # Shuffles the data for cross validation
-        X, Y, T = shuffle_data(Float64.(X), Float64.(Y), Float64.(T))
-
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, 0)
@@ -277,15 +264,7 @@ function estimate_causal_effect!(s::SLearner)
 
     s.β = fit!(s.learner)
     predictionsₜ, predictionsᵪ = predict(s.learner, Xₜ), predict(s.learner, Xᵤ)
-    s.causal_effect = @fastmath predictionsₜ .- predictionsᵪ
-
-    # We use the risk ratio to calculate e-values in the exchangeability methods
-    if variable_type(vec(s.Y)) == Continuous
-        d = mean(vec(s.Y))/sqrt(var(vec(s.Y)))
-        s.risk_ratio = exp(0.91 * d)
-    else
-        s.risk_ratio = mean(vec(predictionsₜ)/mean(vec(predictionsᵪ)))
-    end
+    s.causal_effect = @fastmath vec(predictionsₜ .- predictionsᵪ)
 
     s.fit = true
     return s.causal_effect
@@ -313,15 +292,7 @@ function estimate_causal_effect!(t::TLearner)
 
     fit!(t.μ₀); fit!(t.μ₁)
     predictionsₜ, predictionsᵪ = predict(t.μ₁, t.X), predict(t.μ₀, t.X)
-    t.causal_effect = @fastmath predictionsₜ .- predictionsᵪ
-
-    # We use the risk ratio to calculate e-values in the exchangeability methods
-    if variable_type(vec(t.Y)) == Continuous
-        d = mean(vec(t.Y))/sqrt(var(vec(t.Y)))
-        t.risk_ratio = exp(0.91 * d)
-    else
-        t.risk_ratio = mean(vec(predictionsₜ)/mean(vec(predictionsᵪ)))
-    end
+    t.causal_effect = @fastmath vec(predictionsₜ .- predictionsᵪ)
 
     t.fit = true
     return t.causal_effect
@@ -339,19 +310,8 @@ function estimate_causal_effect!(x::XLearner)
     
     stage1!(x); stage2!(x)
 
-    x.causal_effect = @fastmath ((x.ps.*predict(x.μχ₀, x.X)) .+ 
-        ((1 .- x.ps).*predict(x.μχ₁, x.X)))
-
-    predictionsₜ = predict(x.μ₁, x.X[x.T .== 1, :])
-    predictionsᵪ = predict(x.μ₀, x.X[x.T .== 0, :])
-
-    # We use the risk ratio to calculate e-values in the exchangeability methods
-    if variable_type(vec(x.Y)) == Continuous
-        d = mean(vec(x.Y))/sqrt(var(vec(x.Y)))
-        x.risk_ratio = exp(0.91 * d)
-    else
-        x.risk_ratio = mean(vec(predictionsₜ)/mean(vec(predictionsᵪ)))
-    end
+    x.causal_effect = @fastmath vec(((x.ps.*predict(x.μχ₀, x.X)) .+ 
+        ((1 .- x.ps).*predict(x.μχ₁, x.X))))
 
     x.fit = true
     return x.causal_effect

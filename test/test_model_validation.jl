@@ -1,11 +1,11 @@
 using Test
+using CausalELM.Metalearners: SLearner, estimate_causal_effect!
+using CausalELM.ModelValidation: covariate_independence, sup_wald, omitted_predictor, 
+    validate, sums_of_squares, best_splits, p_val, fake_treatments, gvf, scdm, sdam, 
+    group_by_class, jenks_breaks, variance, backtrack_to_find_breaks, class_pointers, 
+    e_value, counterfactual_consistency, exchangeability, positivity
 using CausalELM.Estimators: InterruptedTimeSeries, GComputation, DoubleMachineLearning, 
     estimate_causal_effect!
-using CausalELM.Metalearners: SLearner, estimate_causal_effect!
-using CausalELM.ModelValidation: p_val, covariate_independence, omitted_predictor, sup_wald, 
-    validate, counterfactual_consistency, sums_of_squares, class_pointers, 
-    backtrack_to_find_breaks, jenks_breaks, fake_treatments, sdam, scdm, gvf, best_splits, 
-    group_by_class, variance, variable_type, e_value, exchangeability, positivity
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -33,7 +33,7 @@ count_g_computer = GComputation(x2, y2, t2, temporal=false)
 estimate_causal_effect!(count_g_computer)
 
 # Create double machine learning estimator
-dml = DoubleMachineLearning(x, x, y, t)
+dml = DoubleMachineLearning(x, y, t)
 estimate_causal_effect!(dml)
 
 # Initialize an S-learner
@@ -158,13 +158,13 @@ end
 
 @testset "E-values" begin
     @testset "Generating E-values" begin
-         @test e_value(binary_g_computer) isa Real
-         @test e_value(count_g_computer) isa Real
-         @test e_value(g_computer) isa Real
-         @test e_value(dml) isa Real
-         @test e_value(s_learner) isa Real
-         @test e_value(t_learner) isa Real
-         @test e_value(x_learner) isa Real
+        @test e_value(binary_g_computer) isa Real
+        @test e_value(count_g_computer) isa Real
+        @test e_value(g_computer) isa Real
+        @test e_value(dml) isa Real
+        @test e_value(s_learner) isa Real
+        @test e_value(t_learner) isa Real
+        @test e_value(x_learner) isa Real
     end
 end
 

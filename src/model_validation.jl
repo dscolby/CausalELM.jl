@@ -5,14 +5,32 @@ assumptions.
 """
 module ModelValidation
 
-using ..Estimators: InterruptedTimeSeries, estimate_causal_effect!, GComputation, 
-    CausalEstimator, predict, DoubleMachineLearning
 using ..Metrics: mse
 using ..CrossValidation: best_size
+using ..Utilities: mean, consecutive
 using ..Models: predict, fit!, ExtremeLearner, RegularizedExtremeLearner
-using ..Metalearners: Metalearner, XLearner, SLearner, TLearner
-import CausalELM: mean, consecutive, validate, exchangeability, e_value, Discrete,
-    Continuous, variable_type, var
+using ..Metalearners: Metalearner, XLearner, SLearner, TLearner, estimate_causal_effect!
+using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
+    estimate_causal_effect!
+
+abstract type Nonbinary end
+
+# Types to for dispatching risk_ratio
+struct Binary end
+struct Count <: Nonbinary end
+struct Continuous <: Nonbinary end
+
+# Also used for dispatching risk_ratio
+function var_type(x::Vector{<:Real})
+    x_set = Set(x)
+    if x_set == Set([0, 1]) || x_set == Set([0]) || x_set == Set([1])
+        return Binary()
+    elseif x_set == Set(round.(x_set))
+        return Count()
+    else
+        return Continuous()
+    end
+end
 
 """
     validate(its; n, low, high)
@@ -71,7 +89,7 @@ function validate(its::InterruptedTimeSeries; n::Int=1000, low::Float64=0.15,
 end
 
 """
-    validate(m; num_treatments)
+    validate(m; num_treatments, min, max)
 
 This method tests the counterfactual consistency, exchangeability, and positivity 
 assumptions required for causal inference. It should be noted that consistency and 
@@ -115,13 +133,14 @@ julia> validate(g_computer)
 2.7653668647301795
     ```
 """
-function validate(m::Union{CausalEstimator, Metalearner}; num_treatments::Int=5)
+function validate(m::Union{CausalEstimator, Metalearner}; num_treatments::Int=5, 
+    min::Float64=1.0e-6, max::Float64=1.0-min)
     if !m.fit
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
     return counterfactual_consistency(m, num_treatments=num_treatments), exchangeability(m), 
-        positivity(m)
+        positivity(m, min, max)
 end
 
 """
@@ -178,10 +197,10 @@ end
 See how an omitted predictor/variable could change the results of an interrupted time series 
 analysis.
 
-This method reestimates interrupted time series models with normal random variables and 
-uniform noise. If the included covariates are good predictors of the counterfactual outcome, 
-adding a random variable as a covariate should not have a large effect on the predicted 
-counterfactual outcomes and therefore the estimated average effect.
+This method reestimates interrupted time series models with uniform random variables. If the 
+included covariates are good predictors of the counterfactual outcome, adding a random 
+variable as a covariate should not have a large effect on the predicted counterfactual 
+outcomes and therefore the estimated average effect.
 
 For more information on using a Chow Test to test for structural breaks see:
     Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
@@ -412,24 +431,159 @@ julia> e_value(g_computer)
 ```
 """
 function e_value(model::Union{CausalEstimator, Metalearner})
-    if model.risk_ratio > 1
-        return model.risk_ratio + sqrt(model.risk_ratio*(model.risk_ratio-1))
+    rr = risk_ratio(model)
+    if rr > 1
+        return @fastmath rr + sqrt(rr*(rr-1))
     else
-        rr🥰 = 1/model.risk_ratio
-        return rr🥰 + sqrt(rr🥰*(rr🥰-1))
+        rr🥰 = @fastmath 1/rr
+        return @fastmath rr🥰 + sqrt(rr🥰*(rr🥰-1))
     end
 end
 
 """
-    positivity(model)
+    binarize(x, cutoff)
+ 
+Convert a vector of counts or a continuous vector to a binary vector.
+
+Examples
+```julia-repl
+julia> binarize([1, 2, 3], 2)
+3-element Vector{Int64}:
+ 0
+ 0
+ 1
+```
+"""
+function binarize(x::Vector{<:Real}, cutoff::Real)
+    if var_type(x) isa Binary
+        return x
+    else
+        x[x .<= cutoff] .= 0
+        x[x .> cutoff] .= 1
+    end
+    return x
+end
+
+"""
+    risk_ratio(model)
+ 
+Calculate the risk ratio for an estimated model.
+
+If the treatment variable is not binary and the outcome variable is not continuous then the 
+treatment variable will be binarized.
+
+For more information on how other quantities of interest are converted to risk ratios see:
+    VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+    introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
+
+Examples
+```julia-repl
+julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
+    Float64.([rand()<0.4 for i in 1:100])
+julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> risk_ratio(g_computer)
+2.5320694766985125
+```
+"""
+risk_ratio(mod::Union{CausalEstimator, Metalearner}) = risk_ratio(var_type(mod.T), mod)
+
+# First we dispatch based on whether the treatment variable is binary or not
+# If it is binary, we call the risk_ratio method based on the type of outcome variable
+risk_ratio(::Binary, mod) = risk_ratio(Binary(), var_type(mod.Y), mod)
+
+# If the treatment variable is not binary this method gets called
+function risk_ratio(::Nonbinary, mod)
+    # When the outcome variable is continuous, we can treat it the same as if the treatment
+    # variable was binary because we don't use the treatment to calculate the risk ratio
+    if var_type(mod.Y) isa Continuous
+        return risk_ratio(Binary(), Continuous(), mod)
+
+        # Otherwise, we convert the treatment variable to a binary variable and then 
+        # dispatch based on the type of outcome variable
+    else
+        original_T, binary_T = mod.t, binarize(mod.T, mean(mod.Y))
+        mod.T = binary_T
+        risk_ratio = risk_ratio(Binary(), mod)
+
+        # Reset to the original treatment variable
+        mod.T = original_T
+
+        return risk_ratio
+    end
+end
+
+# This approximates the risk ratio for a binary treatment with a binary outcome
+function risk_ratio(::Binary, ::Binary, mod)
+    Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
+    Xₜ, Xᵤ = reduce(hcat, (Xₜ, ones(size(Xₜ, 1)))), reduce(hcat, (Xᵤ, ones(size(Xᵤ, 1))))
+
+    # For algorithms that use one model to estimate the outcome
+    if hasfield(typeof(mod), :learner)
+        return @fastmath mean(predict(mod.learner, Xₜ))/mean(predict(mod.learner, Xᵤ))
+
+    # For models that use separate models for outcomes in the treatment and control group
+    elseif hasfield(typeof(mod), :μ₀)
+        Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
+        return @fastmath mean(predict(mod.μ₁, Xₜ))/mean(predict(mod.μ₀, Xᵤ))
+    else
+        if mod.regularized
+            learner = RegularizedExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y, 
+                mod.num_neurons, mod.activation)
+        else
+            learner = ExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, 
+                mod.activation)
+        end
+        fit!(learner)
+        return @fastmath mean(predict(learner, Xₜ))/mean(predict(learner, Xᵤ))
+    end
+end
+
+# This approximates the risk ratio with a binary treatment and count or categorical outcome
+function risk_ratio(::Binary, ::Count, mod)
+    Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
+    m, n = size(Xₜ, 1), size(Xᵤ, 1) # The number of obeservations in each group
+    Xₜ, Xᵤ = reduce(hcat, (Xₜ, ones(m))), reduce(hcat, (Xᵤ, ones(n)))
+
+    # For estimators with a single model of the outcome variable
+    if hasfield(typeof(mod), :learner)
+        return @fastmath (sum(predict(mod.learner, Xₜ))/m)/(sum(predict(mod.learner, Xᵤ))/n)
+
+    # For models that use separate models for outcomes in the treatment and control group
+    elseif hasfield(typeof(mod), :μ₀)
+        Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
+        return @fastmath mean(predict(mod.μ₁, Xₜ))/mean(predict(mod.μ₀, Xᵤ))
+    else
+        if mod.regularized
+            learner = RegularizedExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y, 
+                mod.num_neurons, mod.activation)
+        else
+            learner = ExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, 
+                mod.activation)
+        end
+        fit!(learner)
+        @fastmath (sum(predict(learner, Xₜ))/m)/(sum(predict(learner, Xᵤ))/n)
+    end
+end
+
+# This approximates the risk ratio when the outcome variable is continuous
+function risk_ratio(::Binary, ::Continuous, mod)
+    # We use the estimated effect if using DML because it uses linear regression
+    d = hasfield(mod, :coefficients) ? mod.causal_effect : mean(mod.Y)/sqrt(var(mod.Y))
+    return @fastmath exp(0.91 * d)
+end
+
+"""
+    positivity(model, min, max)
  
 Find likely violations of the positivity assumption.
 
 This method uses an extreme learning machine or regularized extreme learning machine to 
 estimate probabilities of treatment. The returned matrix, which may be empty, are the 
-covariates that have a zero probability of treatment or zero probability of being assigned 
-to the control group, whith their entry in the last column denoted as 0 or 1 respectively. 
-In other words, they likely violate the positivity assumption.
+covariates that have a (near) zero probability of treatment or near zero probability of 
+being assigned to the control group, whith their entry in the last column being their 
+estimated treatment probability. In other words, they likely violate the positivity 
+assumption.
 
 Examples
 ```julia-repl
@@ -441,15 +595,19 @@ julia> positivity(g_computer)
 0×5 Matrix{Float64}
 ```
 """
-positivity(model::Union{CausalEstimator, Metalearner}) = positivity(model)
+function positivity(model::Union{CausalEstimator, Metalearner}, min::Float64=1.0e-6, 
+    max::Float64=1-min)
+    positivity(model, min, max)
+end
 
-function positivity(m::Union{DoubleMachineLearning, XLearner})
+function positivity(m::XLearner, min::Float64, max::Float64)
     # Observations that have a zero probability of treatment or control assignment
-    return reduce(hcat, (m.X[m.ps .== 0 .|| m.ps .== 1, :], 
+    return reduce(hcat, (m.X[m.ps .<= min .|| m.ps .>= max, :], 
         m.ps[m.ps .== 0 .|| m.ps .== 1]))
 end
 
-function positivity(m::Union{GComputation, SLearner, TLearner})
+function positivity(m::Union{CausalEstimator, SLearner, TLearner}, min::Float64, 
+    max::Float64)
     num_neurons = best_size(m.X, m.T, m.validation_metric, m.task, m.activation, 
         m.min_neurons, m.max_neurons, m.regularized, m.folds, false,  m.iterations, 
         m.approximator_neurons)
@@ -464,8 +622,8 @@ function positivity(m::Union{GComputation, SLearner, TLearner})
     propensity_scores = predict(ps_mod, m.X)
 
     # Observations that have a zero probability of treatment or control assignment
-    return reduce(hcat, (m.X[propensity_scores .== 0 .|| propensity_scores .== 1, :], 
-        propensity_scores[propensity_scores .== 0 .|| propensity_scores .== 1]))
+    return reduce(hcat, (m.X[propensity_scores .<= min .|| propensity_scores .>= max, :], 
+        propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max]))
 end
 
 """

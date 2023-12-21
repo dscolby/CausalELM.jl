@@ -1,8 +1,8 @@
 """Methods for summarization and inference from estimators and metalearners."""
 module Inference
 
-using CausalELM: mean
 using Random: shuffle
+using ..Utilities: mean
 using ..Metalearners: Metalearner
 using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
     DoubleMachineLearning, estimate_causal_effect!
@@ -224,7 +224,7 @@ function generate_null_distribution(e::Union{CausalEstimator, Metalearner}, n::I
     
     # Generate random treatment assignments and estimate the causal effects
     for iter in 1:n 
-        m.T = float(rand(0:1, nobs))
+        m.T = float(rand(unique(m.T), nobs))
         estimate_causal_effect!(m)
         results[iter] = e isa Metalearner ? mean(m.causal_effect) : m.causal_effect
     end

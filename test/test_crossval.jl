@@ -1,12 +1,13 @@
 using CausalELM.Metrics: mse, accuracy
 using CausalELM.ActivationFunctions: gelu
 using Test
-using CausalELM.CrossValidation: recode, generate_folds, validate_fold, cross_validate, 
-    best_size, shuffle_data
+using CausalELM.CrossValidation: recode, generate_folds, generate_temporal_folds, 
+    validation_loss, cross_validate, best_size, shuffle_data
 
+x, y = shuffle_data(rand(100, 5), rand(100))
 xfolds, yfolds = generate_folds(zeros(20, 2), zeros(20), 5)
-xfolds_ts, yfolds_ts = generate_folds(float.(hcat([1:10;], 11:20)), [1.0:1.0:10.0;], 5)
-x, y, t = shuffle_data(rand(100, 5), rand(100), Float64.([rand()<0.4 for i in 1:100]))
+xfolds_ts, yfolds_ts = generate_temporal_folds(float.(hcat([1:10;], 11:20)), 
+    [1.0:1.0:10.0;], 5)
 
 @testset "Recode" begin
     @test recode([-0.7, 0.2, 1.1]) == [1, 2, 3]
@@ -27,8 +28,12 @@ end
     @test isa(yfolds, Array)
 
     # Time series or panel data
-    @test_throws ArgumentError generate_folds(zeros(5, 2), zeros(5), 6)
-    @test_throws ArgumentError generate_folds(zeros(5, 2), zeros(5), 5)
+    # Testing incorrect input
+    @test_throws ArgumentError generate_temporal_folds(zeros(5, 2), zeros(5), 6)
+    @test_throws ArgumentError generate_temporal_folds(zeros(5, 2), zeros(5), 5)
+    @test_throws ArgumentError generate_temporal_folds(zeros(10, 2), zeros(5), 6)
+    @test_throws ArgumentError generate_temporal_folds(zeros(10, 2), zeros(5), 5)
+
     @test size(xfolds_ts, 1) == 5
     @test size(xfolds_ts[1], 1) == 2
     @test size(xfolds_ts[2], 2) == 2
@@ -42,23 +47,23 @@ end
 @testset "Single cross validation iteration" begin
 
     # Regression: Not TS L2, TS L2
-    @test isa(validate_fold(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
-    @test isa(validate_fold(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
-    @test isa(validate_fold(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse, 
+    @test isa(validation_loss(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
+    @test isa(validation_loss(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse), Float64)
+    @test isa(validation_loss(rand(100, 5), rand(100), rand(20, 5), rand(20), 5, mse, 
         regularized=false), Float64)
-    @test isa(validate_fold(rand(100, 5), rand(100), rand(20, 5), rand(20), 5,  mse, 
+    @test isa(validation_loss(rand(100, 5), rand(100), rand(20, 5), rand(20), 5,  mse, 
         regularized=false, activation=gelu), Float64)
 
     # Classification: Not TS L2, TS L2
-    @test isa(validate_fold(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+    @test isa(validation_loss(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
         Float64.(rand(20) .> 0.5), 5, accuracy), Float64)
-    @test isa(validate_fold(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+    @test isa(validation_loss(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
         Float64.(rand(20) .> 0.5), 5, accuracy), Float64)
-    @test isa(validate_fold(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+    @test isa(validation_loss(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
         Float64.(rand(20) .> 0.5), 5, accuracy, regularized=false, activation=gelu), 
         Float64)
 
-    @test isa(validate_fold(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
+    @test isa(validation_loss(rand(100, 5), Float64.(rand(100) .> 0.5), rand(20, 5), 
         Float64.(rand(20) .> 0.5), 5, accuracy, regularized=false), Float64)
 end
 
@@ -85,6 +90,4 @@ end
     @test x isa Array{Float64}
     @test size(y, 1) === 100
     @test y isa Vector{Float64}
-    @test size(t, 1) === 100
-    @test t isa Vector{Float64}
 end

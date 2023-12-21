@@ -85,18 +85,43 @@ function generate_folds(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
 end
 
 """
-    validate_fold(xtrain, ytrain, xtest, ytest, nodes, metric; activation, regularized)
+    generate_folds(X, Y, folds)
+
+Creates rolling folds for cross validation of time series data.
+
+Examples
+```julia-repl
+julia> xfolds, y_folds = generate_temporal_folds(zeros(20, 2), zeros(20), 5, temporal=true)
+```
+"""
+function generate_temporal_folds(X::Array{<:Real}, Y::Array{<:Real}, folds::Int=5)
+    msg = """the number of folds must be less than the number of 
+             observations and greater than or equal to iteration"""
+    n = length(Y)
+    
+    # Make sure there aren't more folds than observations
+    if folds >= n throw(ArgumentError(msg)) end
+
+    # The indices are evely spaced and start at the top to make rolling splits for TS data
+    indices = Int.(floor.(collect(range(1, size(X, 1), folds+1))))
+    x_folds, y_folds = [X[1:i, :] for i in indices[2:end]], [Y[1:i] for i in indices[2:end]]
+
+    return x_folds, y_folds
+end
+
+"""
+    validation_loss(xtrain, ytrain, xtest, ytest, nodes, metric; activation, regularized)
 
 Calculate a validation metric for a single fold in k-fold cross validation.
 
 Examples
 ```julia-repl
 julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
-julia> validate_fold(x, y, 5, accuracy, 3)
+julia> validation_loss(x, y, 5, accuracy, 3)
 0.0
 ```
 """
-function validate_fold(xtrain::Array{Float64}, ytrain::Array{Float64}, 
+function validation_loss(xtrain::Array{Float64}, ytrain::Array{Float64}, 
     xtest::Array{Float64}, ytest::Array{Float64}, nodes::Integer, metric::Function; 
     activation::Function=relu, regularized::Bool=true)
 
@@ -127,22 +152,24 @@ julia> cross_validate(x, y, 5, accuracy)
 function cross_validate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer, 
     metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5, 
     temporal::Bool=false)
-    mean_metric = 0.0
 
-    if temporal
-        indices = reduce(vcat, (collect(1:5:size(X, 1)), size(X, 1)))
-        x_folds = [X[i:j, :] for (i, j) in zip(indices, indices[2:end] .- 1)]
-        y_folds = [Y[i:j] for (i, j) in zip(indices, indices[2:end] .- 1)]
-    else
-        x_folds, y_folds = generate_folds(X, Y, folds)
-    end
+    mean_metric = 0.0
+    xfs, yfs = temporal ? generate_temporal_folds(X, Y, folds) : generate_folds(X, Y, folds)
     
     @inbounds for fold in 1:folds
-        xtrain = reduce(vcat, [x_folds[f] for f in 1:folds if f != fold])
-        ytrain = reduce(vcat, [y_folds[f] for f in 1:folds if f != fold])
-        xtest, ytest = x_folds[fold], y_folds[fold]
+        if !temporal
+            xtr = reduce(vcat, [xfs[f] for f in 1:folds if f != fold])
+            ytr = reduce(vcat, [yfs[f] for f in 1:folds if f != fold])
+            xtst, ytst = xfs[fold], yfs[fold]
+        # The last fold can't be used to training since it will leave nothing to predict
+        elseif temporal && fold < folds
+            xtr, ytr = reduce(vcat, xfs[1:fold]), reduce(vcat, yfs[1:fold])
+            xtst, ytst = reduce(vcat, xfs[fold+1:end]), reduce(vcat, yfs[fold+1:end])
+        else
+            continue
+        end
 
-        mean_metric += validate_fold(xtrain, ytrain, xtest, ytest, neurons, metric, 
+        mean_metric += validation_loss(xtr, ytr, xtst, ytst, neurons, metric, 
             activation=activation, regularized=regularized)
     end
     return mean_metric/folds
@@ -150,7 +177,7 @@ end
 
 """
     best_size(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, folds, 
-        temporal, iterations, approximator_neurons)
+        temporal, iterations, elm_size)
 
 Compute the best number of neurons for an Extreme Learning Machine.
 
@@ -171,22 +198,23 @@ function best_size(X::Array{Float64}, Y::Array{Float64}, metric::Function, task:
     activation::Function=relu, min_neurons::Integer=1, max_neurons::Integer=100, 
     regularized::Bool=true, folds::Integer=5, temporal::Bool=false,
     iterations::Integer=Int(round(size(X, 1)/10)), 
-    approximator_neurons=Integer=Int(round(size(X, 1)/10)))
+    elm_size=Integer=Int(round(size(X, 1)/10)))
     
-    act, loops = Vector{Float64}(undef, iterations), 
+    loss, num_neurons = Vector{Float64}(undef, iterations), 
         round.(Int, range(min_neurons, max_neurons, length=iterations))
    
-    @inbounds for (i, n) in pairs(loops)
-        act[i] = cross_validate(X, Y, round(Int, n), metric, activation, regularized, folds, 
-            temporal)
+    # Use cross validation to calculate the validation loss for each number of neurons in 
+    # the interval of min_neurons to max_neurons spaced evenly in steps of iterations
+    @inbounds for (idx, potential_neurons) in pairs(num_neurons)
+        loss[idx] = cross_validate(X, Y, round(Int, potential_neurons), metric, activation, 
+            regularized, folds, temporal)
     end
     
-    # Approximates the error function using validation error from cross validation
-    approximator = ExtremeLearner(reshape(loops, :, 1), reshape(act, :, 1), 
-        approximator_neurons, relu)
-        
-    fit!(approximator)
-    pred_metrics = predict(approximator, Float64[min_neurons:max_neurons;])
+    # Use an extreme learning machine to learn a mapping from number of neurons to 
+    # validation error
+    mapper = ExtremeLearner(reshape(num_neurons, :, 1), reshape(loss, :, 1), elm_size, relu)
+    fit!(mapper)
+    pred_metrics = predict(mapper, Float64[min_neurons:max_neurons;])
 
     return ifelse(startswith(task, "c"), argmax([pred_metrics]), argmin([pred_metrics]))
 end
@@ -212,12 +240,12 @@ julia> shuffle_data(x, y, t)
 Float64[0, 0, 1, 1, 0, 1, 0, 0, 1, 0  …  0, 0, 1, 1, 1, 1, 0, 1, 0, 0])
 ```
 """
-function shuffle_data(X::Array{Float64}, Y::Array{Float64}, T::Array{Float64})
+function shuffle_data(X::Array{Float64}, Y::Array{Float64})
         idx = randperm(size(X, 1))
-        new_data = mapslices.(x->x[idx], [X, Y, T], dims=1)
-        X, Y, T = new_data[1], new_data[2], Float64.(new_data[3])
+        new_data = mapslices.(x->x[idx], [X, Y], dims=1)
+        X, Y = new_data
 
-        return X, vec(Y), vec(T)
+        return X, vec(Y)
 end
 
 end

@@ -4,14 +4,14 @@ machine learning using Extreme Learning machines.
    """
 module Estimators
 
-using ..ActivationFunctions: relu
-using CausalELM: mean
 using ..Metrics: mse
-using ..CrossValidation: best_size, shuffle_data
+using ..Utilities: mean, var
+using ..ActivationFunctions: relu
+using ..CrossValidation: best_size, shuffle_data, generate_folds
 using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
-    predict_counterfactual!, placebo_test, predict
+    predict_counterfactual!, predict
 
-import CausalELM: estimate_causal_effect!, variable_type, Discrete, Continuous
+import CausalELM: estimate_causal_effect!
 
 """Abstract type for GComputation and DoubleMachineLearning"""
 abstract type  CausalEstimator end
@@ -55,7 +55,6 @@ mutable struct InterruptedTimeSeries
     """
     Counterfactual predicted for the post-treatment period using wieghts learned in the 
     pre-treatment period
-
     """
     Ŷ::Array{Float64}
     """
@@ -108,7 +107,6 @@ julia> m4 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression", reg
     end
 end
 
-
 """Container for the results of G-Computation"""
 mutable struct GComputation <: CausalEstimator
     """Covariates"""
@@ -149,8 +147,6 @@ mutable struct GComputation <: CausalEstimator
     β::Array{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Float64
-    """The risk ratio for the estimated model"""
-    risk_ratio::Real
 
 """
 GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
@@ -188,11 +184,6 @@ julia> regularized=true)
             throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
         end
 
-        # If not panel or temporal data, randomly shuffle the indices for generating folds
-        if !temporal
-            X, Y, T = shuffle_data(Float64.(X), Float64.(Y), Float64.(T))
-        end
-
         new(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, 0, false)
@@ -203,8 +194,6 @@ end
 mutable struct DoubleMachineLearning <: CausalEstimator
     """Covariates"""
     X::Array{Float64}
-    """Propensity score covariates"""
-    Xₚ::Array{Float64}
     """Outomes variable"""
     Y::Array{Float64}
     """Treatment statuses"""
@@ -229,23 +218,21 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     iterations::Int64
     """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
     approximator_neurons::Int64
-    """Number of neurons in the ELM used for estimating the abnormal returns"""
+    """Number of neurons in the ELM used for estimating the causal effect"""
     num_neurons::Int64
-    """Propensity scores"""
-    ps::Array{Float64}
-    """Predicted outcomes for the control group"""
-    μ₀::Array{Float64}
-    """Predicted outcomes for the treatment group"""
-    μ₁::Array{Float64}
+    """Residuals from the outcome predictions"""
+    Ỹ::Array{Float64}
+    """Residuals from the treatment predictions"""
+    T̃::Array{Float64}
+    """The estimated coefficients for the partially linear regression"""
+    coefficients::Vector{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Float64
-    """The risk ratio for discrete outcomes"""
-    risk_ratio::Real
     """Whether the causal effect has been estimated"""
     fit::Bool
 
-    """
-DoubleMachineLearning(X, Xₚ, Y, T, task, quantity_of_interest, regularized, activation, 
+"""
+DoubleMachineLearning(X, Y, T, task, quantity_of_interest, regularized, activation, 
     validation_metric, min_neurons, max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a double machine learning estimator with cross fitting.
@@ -255,17 +242,17 @@ For more information see:
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
     structural parameters." (2018): C1-C68.
 
-Note that X, Xₚ, Y, and T must all contain floating point numbers.
+Note that X, Y, and T must all contain floating point numbers.
 
 Examples
 ```julia-repl
-julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 4), rand(100), [rand()<0.4 for i in 1:100]
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = DoubleMachineLearning(X, Xₚ, Y, T)
 julia> m2 = DoubleMachineLearning(X, Xₚ, Y, T; task="regression")
 julia> m3 = DoubleMachineLearning(X, Xₚ, Y, T; task="regression", quantity_of_interest="ATE)
 ```
 """
-    function DoubleMachineLearning(X, Xₚ, Y, T; task="regression", 
+    function DoubleMachineLearning(X, Y, T; task="regression", 
         quantity_of_interest="ATE", regularized=true, activation=relu, 
         validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X, 1)/10)), 
@@ -277,17 +264,9 @@ julia> m3 = DoubleMachineLearning(X, Xₚ, Y, T; task="regression", quantity_of_
             throw(ArgumentError("quantity_of_interest must be ATE, ITE, or ATT"))
         end
 
-        if size(X, 1) !== size(Xₚ, 1)
-            throw(ArgumentError("outcome and treatment covariates must have the same number 
-                of observations"))
-        end
-
-        # Shuffles the data for cross validation
-        X, Y, T = shuffle_data(Float64.(X), Float64.(Y), Float64.(T))
-
-        new(Float64.(X), Float64.(Xₚ), Float64.(Y), Float64.(T), task, quantity_of_interest, 
-            regularized, activation, validation_metric, min_neurons, max_neurons, folds, 
-            iterations, approximator_neurons, 0)
+        new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
+            activation, validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, 0)
     end
 end
 
@@ -355,9 +334,8 @@ function estimate_causal_effect!(g::GComputation)
         Xₜ, Xᵤ = hcat(g.X, g.T), hcat(g.X, zeros(size(g.Y, 1)))
     end
 
-    # We will not find the best number of neurons after we have already estimated the causal
-    # effect and are getting p-values, confidence intervals, or standard errors. We will use
-    # the same number that was found when calling this method.
+    # This makes sure we don't search for the best number of neurons after we have already 
+    # found it
     if g.num_neurons === 0
         g.num_neurons = best_size(Array(full_covariates), g.Y, g.validation_metric, g.task, 
             g.activation, g.min_neurons, g.max_neurons, g.regularized, g.folds, g.temporal, 
@@ -372,17 +350,9 @@ function estimate_causal_effect!(g::GComputation)
     end
 
     g.β = fit!(g.learner)
+    g.fit = true
     g.causal_effect = sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)
 
-    # We use the risk ratio to calculate e-values in the exchangeability methods
-    if variable_type(vec(g.Y)) == Continuous
-        d = mean(vec(g.Y))/sqrt(var(vec(g.Y)))
-        g.risk_ratio = exp(0.91 * d)
-    else
-        g.risk_ratio = mean(vec(predict(g.learner, Xₜ))/mean(vec(predict(g.learner, Xᵤ))))
-    end
-
-    g.fit = true
     return g.causal_effect
 end
 
@@ -404,12 +374,6 @@ julia> estimate_causal_effect!(m3)
 ```
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
-    propensity_scores = Array{Array{Float64, 1}}(undef, DML.folds)
-    treatment_predictions = Array{Array{Float64, 1}}(undef, DML.folds)
-    control_predictions = Array{Array{Float64, 1}}(undef, DML.folds)
-    fold_level_effects = Array{Float64}(undef, DML.folds)
-    X, Xₚ, Y, T = crossfitting_sets(DML)
-
     # Uses the same number of neurons for all phases of estimation
     if DML.num_neurons === 0
         DML.num_neurons = best_size(DML.X, DML.Y, DML.validation_metric, DML.task, 
@@ -417,218 +381,42 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
             false, DML.iterations, DML.approximator_neurons)
     end
 
-    for fold in 1:DML.folds 
+    predict_residuals!(DML)
 
-        # All the data from the folds used for training
-        X_train = reduce(vcat, X[1:end .!== fold])
-        Xₚ_train = reduce(vcat, Xₚ[1:end .!== fold])
-        Y_train = reduce(vcat, Y[1:end .!== fold])
-        T_train = reduce(vcat, T[1:end .!== fold])
-
-        # 0 and 1 subscripts denote treated and untreated units
-        x₀_train, x₁_train = X_train[T_train .== 0, :], X_train[T_train .== 1, :]
-        y₀_train, y₁_train = Y_train[T_train .== 0], Y_train[T_train .== 1]
-        X_test, Xₚ_test, T_test, Y_test = X[fold], Xₚ[fold], T[fold], Y[fold]
-
-        # Train on K-1 folds
-        ps_model, μ₀_model = first_stage!(DML, x₀_train, Xₚ_train, T_train, y₀_train)
-
-        # Predict on fold K
-        ps_pred = predict_propensity_score(ps_model, Xₚ_test)
-        treatment_model = ate!(DML, x₁_train, y₁_train)
-        treatment_pred = predict_treatment_outcomes(treatment_model, X_test)
-        control_pred = predict_control_outcomes(μ₀_model, X_test)
-        propensity_scores[fold], control_predictions[fold] = ps_pred, control_pred
-        treatment_predictions[fold] = treatment_pred
-
-        if DML.quantity_of_interest ∈ ("ATE", "ITE")
-            E₁ = @fastmath mean(vec(T_test.*(Y_test.-treatment_pred)
-                /(ps_pred.+treatment_pred)))
-            E₀ = @fastmath mean(vec(((1 .-T_test).*(Y_test.-control_pred))/((1 .-ps_pred)) 
-                .+control_pred))
-            fold_level_effects[fold] = E₁ - E₀
-    
-        else DML.quantity_of_interest === "ATT"
-            num = @fastmath ((1 .- T_test).*(Y_test .- control_pred))
-            fold_level_effects[fold] = @fastmath mean(vec(num/((1 .- ps_pred) .+ control_pred)))
-        end
-    end
-    DML.ps, DML.μ₀ = reduce(vcat, propensity_scores), reduce(vcat, control_predictions)
-
-    # No outcome model for the treatment prediction if estimating ATT
-    if DML.quantity_of_interest ∈ ("ATE", "ITE")
-        DML.μ₁ = reduce(vcat, treatment_predictions)
-    end
-
-    # We use the risk ratio to calculate e-values in the exchangeability methods
-    if variable_type(vec(DML.Y)) == Continuous
-        d = mean(vec(DML.Y))/sqrt(var(vec(DML.Y)))
-        DML.risk_ratio = exp(0.91 * d)
-    else
-        DML.risk_ratio = mean(mean.(treatment_predictions))/mean(mean.(control_predictions))
-    end
-
-    DML.causal_effect = mean(fold_level_effects)
+    # Estimate the final model with a column of ones for the intercept
+    DML.coefficients = reduce(hcat, (DML.T̃, ones(length(DML.T̃))))\DML.Ỹ
+    DML.causal_effect = DML.coefficients[1]
     DML.fit = true
+
     return DML.causal_effect
 end
 
-"""
-    first_stage!(DML, x₀, xₚ, T, y₀)
+function predict_residuals!(DML::DoubleMachineLearning)
+    X_T, Y = generate_folds(reduce(hcat, (DML.X, DML.T)), DML.Y, DML.folds)
+    X = [fold[:, 1:size(DML.X, 2)] for fold in X_T]
+    T = [fold[:, size(DML.X, 2)+1] for fold in X_T]
+    DML.Ỹ = Vector{Float64}(undef, length(DML.Y))
+    DML.T̃ = Vector{Float64}(undef, length(DML.T))
+    idx = 1  # Keeps track of what indices to start appending residuals
 
-Estimate the average treatment for the treated for a double machine learning estimator with 
-cross fitting.
+    for fold in 1:DML.folds
+        X_train, X_test = reduce(vcat, X[1:end .!== fold]), X[fold]
+        Y_train , Y_test= reduce(vcat, Y[1:end .!== fold]), Y[fold]
+        T_train, T_test = reduce(vcat, T[1:end .!== fold]), T[fold]
 
-Examples
-```julia-repl
-julia> X, Xₚ Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoubleMachineLearning(X, Xₚ, Y, T)
-julia> x₀, y₀ = m1.X[m1.T .== 0], m1.Y[m1.T .== 0]
-julia> first_stage!(m1, x₀, xₚ, T, y₀)
-(Regularized Extreme Learning Machine with 10 hidden neurons, 
-Regularized Extreme Learning Machine with 10 hidden neurons)
-```
-"""
-function first_stage!(DML::DoubleMachineLearning, x₀::Array{Float64}, xₚ::Array{Float64}, 
-    T::Array{Float64}, y₀::Array{Float64})
-    # Propensity score and separate outcome models
-    if DML.regularized
-        ps_model = RegularizedExtremeLearner(xₚ, T, DML.num_neurons, DML.activation)
-        μ₀_model = RegularizedExtremeLearner(x₀, y₀, DML.num_neurons, DML.activation)
-    else
-        ps_model = ExtremeLearner(xₚ, T, DML.num_neurons, DML.activation)
-        μ₀_model = ExtremeLearner(x₀, y₀, DML.num_neurons, DML.activation)
+        if DML.regularized
+            y = RegularizedExtremeLearner(X_train, Y_train, DML.num_neurons, DML.activation)
+            t = RegularizedExtremeLearner(X_train, T_train, DML.num_neurons, DML.activation)
+        else
+            y = ExtremeLearner(X_train, Y_train, DML.num_neurons, DML.activation)
+            t = ExtremeLearner(X_train, T_train, DML.num_neurons, DML.activation)
+        end
+
+        fit!(y); fit!(t)
+        DML.Ỹ[idx:(idx+length(Y_test))-1] = (predict(y, X_test)-Y_test)
+        DML.T̃[idx:(idx+length(T_test))-1] = (predict(t, X_test)-T_test)
+        idx += lastindex(Y_test)
     end
-
-    fit!(ps_model); fit!(μ₀_model)
-
-    return ps_model, μ₀_model
-end
-
-"""
-    ate!(DML, x₁, y₁)
-
-Estimate the average treatment effect for a double machine learning estimator with cross 
-fitting.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoubleMachineLearning(X, Y, T)
-julia> x₁, y₁ = m1.X[m1.T .== 1], m1.Y[m1.T .== 1]
-julia> ate!(m1, x₁, y₁)
-Regularized Extreme Learning Machine with 10 hidden neurons
-```
-"""
-function ate!(DML::DoubleMachineLearning, x₁::Array{Float64}, y₁::Array{Float64})
-    if DML.regularized
-        μ₁_model = RegularizedExtremeLearner(x₁, y₁, DML.num_neurons, DML.activation)
-    else
-        μ₁_model = ExtremeLearner(x₁, y₁, DML.num_neurons, DML.activation)
-    end
-
-    fit!(μ₁_model)
-
-    return μ₁_model
-end
-
-"""
-    predict_propensity_score(ps_model, x_pred)
-
-Predict the propensity score for an out of sample fold for the double machine learning 
-estimator.
-
-Examples
-```julia-repl
-julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> x_pred = rand(20, 5)
-julia> m1 = DoubleMachineLearning(X, Xₚ, Y, T)
-julia> ps_model, _ = first_stage!(m1, x₀, y₀)
-julia> predict_propensity_score(ps_model, x_pred)
-```
-"""
-function predict_propensity_score(ps_model::ExtremeLearningMachine, x_pred::Array{Float64})
-    return predict(ps_model, x_pred)
-end
-
-"""
-    predict_control_outcomes(control_model, x_pred)
-
-Predict the counterfactual control outcomes for an out of sample fold.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> x_pred = rand(20, 5)
-julia> m1 = DoubleMachineLearning(X, Y, T)
-julia> control_model, _ = first_stage!(m1, x₀, y₀)
-julia> predict_control_outcomes(control_model, x_pred)
-```
-"""
-function predict_control_outcomes(control_model::ExtremeLearningMachine, 
-    x_pred::Array{Float64})
-    return predict(control_model, x_pred)
-end
-
-"""
-    predict_treatment_outcomes(treatment_model, x_pred)
-
-Predict the counterfactual treatment outcomes for an out of sample fold.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> x_pred = rand(20, 5)
-julia> m1 = DoubleMachineLearning(X, Y, T)
-julia> treatment_model, _ = first_stage!(m1, x₀, y₀)
-julia> predict_treatment_outcomes(treatment_model, x_pred)
-```
-"""
-function predict_treatment_outcomes(treatment_model::ExtremeLearningMachine, 
-    x_pred::Array{Float64})
-    return predict(treatment_model, x_pred)
-end
-
-"""
-    crossfitting_sets(DML)
-
-Creates folds for cross fitting a double machine learning estimator.
-
-Examples
-```julia-repl
-julia> xfolds, y_folds = crossfiting_sets(DML)
-([[0.0 0.0; 0.0 0.0; 0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0; 0.0 0.0], 
-[0.0 0.0; 0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0; 0.0 0.0], [0.0 0.0; 0.0 0.0; … ; 
-0.0 0.0; 0.0 0.0]], [[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 
-0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0]])
-```
-"""
-function crossfitting_sets(DML::DoubleMachineLearning)
-    msg = """the number of folds must be less than the number of 
-             observations and greater than or equal to iteration"""
-    n = length(DML.Y)
-    
-    if DML.folds >= n throw(ArgumentError(msg)) end
-
-    # Vectors of arrays for each fold in the covariates, propensity score covariates, 
-    # outcome, and treatment
-    x_set = Array{Array{Float64, 2}}(undef, DML.folds)
-    xₚ_set = Array{Array{Float64, 2}}(undef, DML.folds)
-    y_set = Array{Array{Float64, 1}}(undef, DML.folds)
-    t_set = Array{Array{Float64, 1}}(undef, DML.folds)
-
-    # Indices to start and stop
-    stops = round.(Int, range(start=1, stop=n, length=DML.folds+1))
-
-    # Indices to use for making folds
-    indices = [s:e-(e < n)*1 for (s, e) in zip(stops[1:end-1], stops[2:end])]
-
-    for (i, idx) in pairs(indices)
-        x_set[i], xₚ_set[i] = DML.X[idx, :], DML.Xₚ[idx, :]
-        y_set[i], t_set[i] = DML.Y[idx], DML.T[idx]
-    end
-
-    return x_set, xₚ_set, y_set, t_set
 end
 
 """

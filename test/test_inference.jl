@@ -13,45 +13,54 @@ g_inference = generate_null_distribution(g_computer)
 p1, stderr1 = quantities_of_interest(g_computer)
 summary1 = summarize(g_computer)
 
-dm = DoubleMachineLearning(x, x, y, t)
+dm = DoubleMachineLearning(x, y, t)
 estimate_causal_effect!(dm)
 dm_inference = generate_null_distribution(dm)
 p2, stderr2 = quantities_of_interest(dm)
 summary2 = summarize(dm)
 
+# With a continuous treatment variable
+dm_continuous = DoubleMachineLearning(x, rand(1:4, 100), t)
+estimate_causal_effect!(dm_continuous)
+dm_continuous_inference = generate_null_distribution(dm_continuous)
+p3, stderr3 = quantities_of_interest(dm_continuous)
+summary3 = summarize(dm_continuous)
+
 x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
-summary3 = summarize(its, 10)
+summary4 = summarize(its, 10)
 
 # Null distributions for the mean and cummulative changes
 its_inference1 = generate_null_distribution(its, 10)
 its_inference2 = generate_null_distribution(its, 10, false)
-p3, stderr3 = quantities_of_interest(its, 10)
+p4, stderr4 = quantities_of_interest(its, 10)
 
 slearner = SLearner(x, y, t)
 estimate_causal_effect!(slearner)
 slearner_inference = generate_null_distribution(slearner)
-p4, stderr4 = quantities_of_interest(slearner)
-summary4 = summarize(slearner)
+p5, stderr5 = quantities_of_interest(slearner)
+summary5 = summarize(slearner)
 
 tlearner = TLearner(x, y, t)
 estimate_causal_effect!(tlearner)
 tlearner_inference = generate_null_distribution(tlearner)
-p5, stderr5 = quantities_of_interest(tlearner)
-summary5 = summarize(tlearner)
+p6, stderr6 = quantities_of_interest(tlearner)
+summary6 = summarize(tlearner)
 
 xlearner = XLearner(x, y, t)
 estimate_causal_effect!(xlearner)
 xlearner_inference = generate_null_distribution(xlearner)
-p6, stderr6 = quantities_of_interest(xlearner)
-summary6 = summarize(xlearner)
+p7, stderr7 = quantities_of_interest(xlearner)
+summary7 = summarize(xlearner)
 
 @testset "Generating Null Distributions" begin
     @test size(g_inference, 1) === 1000
     @test g_inference isa Array{Float64}
     @test size(dm_inference, 1) === 1000
     @test dm_inference isa Array{Float64}
+    @test size(dm_continuous_inference, 1) === 1000
+    @test dm_continuous_inference isa Array{Float64}
     @test size(its_inference1, 1) === 10
     @test its_inference1 isa Array{Float64}
     @test size(its_inference2, 1) === 10
@@ -77,6 +86,8 @@ end
     @test stderr5 > 0
     @test 1 >= p6 >= 0
     @test stderr6 > 0
+    @test 1 >= p7 >= 0
+    @test stderr7 > 0
 end
 
 @testset "Full Summaries" begin
@@ -85,28 +96,33 @@ end
         @test !isnothing(v)
     end
 
-    # Doubly Robust Estimation
+    # Double Machine Learning
     for (k, v) in summary2
         @test !isnothing(v)
     end
 
-    # Event Study
+    # Double Machine Learning with continuous treatment
     for (k, v) in summary3
         @test !isnothing(v)
     end
 
-    # S-Learners
+    # Interrupted Time Series
     for (k, v) in summary4
         @test !isnothing(v)
     end
 
-    # T-Learners
+    # S-Learners
     for (k, v) in summary5
         @test !isnothing(v)
     end
 
-    # X-Learners
+    # T-Learners
     for (k, v) in summary6
+        @test !isnothing(v)
+    end
+
+    # X-Learners
+    for (k, v) in summary7
         @test !isnothing(v)
     end
 end
