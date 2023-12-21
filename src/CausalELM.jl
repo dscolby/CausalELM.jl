@@ -22,7 +22,7 @@ function summarize end
 # So that it works with British spelling
 const summarise = summarize
 
-include("Utilities.jl")
+include("utilities.jl")
 include("activation.jl")
 include("models.jl")
 include("metrics.jl")
