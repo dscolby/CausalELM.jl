@@ -29,6 +29,20 @@ estimate_causal_effect!(dm)
 dm_noreg = DoubleMachineLearning(x, y, t, regularized=false)
 estimate_causal_effect!(dm_noreg)
 
+# Calling estimate_effect!
+dm_estimate_effect = DoubleMachineLearning(x, y, t)
+dm_estimate_effect.num_neurons = 5
+CausalELM.estimate_effect!(dm_estimate_effect, CausalELM.linear_estimator)
+
+# Test predicting residuals
+x_train, x_test = x[1:80, :], x[81:end, :]
+y_train, y_test = y[1:80], y[81:end]
+t_train, t_test = t[1:80], t[81:100]
+residual_predictor = DoubleMachineLearning(x, y, t)
+residual_predictor.num_neurons = 5
+residuals = CausalELM.predict_residuals(residual_predictor, x_train, x_test, y_train, 
+    y_test, t_train, t_test)
+
 @testset "Interrupted Time Series Estimation" begin
     @testset "Interrupted Time Series Structure" begin
         @test its.X₀ !== Nothing
@@ -91,6 +105,14 @@ end
         @test dm_noreg.T !== Nothing
     end
 
+    @testset "Double Machine Learning Estimation Helpers" begin
+        @test dm_estimate_effect.causal_effect isa Float64
+        @test CausalELM.linear_estimator(rand(100), [rand()<0.4 for i in 1:100]) isa Float64
+        @test residuals[1] isa Vector
+        @test residuals[2] isa Vector
+        @test residuals[3] == 20
+    end
+
     @testset "Double Machine Learning Post-estimation Structure" begin
         @test dm.causal_effect isa Float64
         @test dm_noreg.causal_effect isa Float64
@@ -103,7 +125,6 @@ end
 @testset "Summarization and Inference" begin
     @testset "Quanities of Interest Errors" begin
         @test_throws ArgumentError GComputation(x, y, t, quantity_of_interest="abc")
-        @test_throws ArgumentError DoubleMachineLearning(x, y, t, quantity_of_interest="xyz")
     end
 
     @testset "Task Errors" begin

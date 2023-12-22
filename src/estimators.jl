@@ -185,8 +185,6 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     T::Array{Float64}
     """Either regression or classification"""
     task::String
-    """Either ATE, ITT, or ATT"""
-    quantity_of_interest::String
     """Whether to use L2 regularization"""
     regularized::Bool
     """Activation function to apply to the outputs from each neuron"""
@@ -205,12 +203,6 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     approximator_neurons::Int64
     """Number of neurons in the ELM used for estimating the causal effect"""
     num_neurons::Int64
-    """Residuals from the outcome predictions"""
-    Ỹ::Array{Float64}
-    """Residuals from the treatment predictions"""
-    T̃::Array{Float64}
-    """The estimated coefficients for the partially linear regression"""
-    coefficients::Vector{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Float64
     """Whether the causal effect has been estimated"""
@@ -232,9 +224,8 @@ Note that X, Y, and T must all contain floating point numbers.
 Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoubleMachineLearning(X, Xₚ, Y, T)
-julia> m2 = DoubleMachineLearning(X, Xₚ, Y, T; task="regression")
-julia> m3 = DoubleMachineLearning(X, Xₚ, Y, T; task="regression", quantity_of_interest="ATE)
+julia> m1 = DoubleMachineLearning(X, Y, T)
+julia> m2 = DoubleMachineLearning(X, Y, T; task="regression")
 ```
 """
     function DoubleMachineLearning(X, Y, T; task="regression", 
@@ -245,13 +236,11 @@ julia> m3 = DoubleMachineLearning(X, Xₚ, Y, T; task="regression", quantity_of_
 
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
-        elseif quantity_of_interest ∉ ("ATE", "ITE", "ATT")
-            throw(ArgumentError("quantity_of_interest must be ATE, ITE, or ATT"))
         end
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
-            activation, validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, 0)
+        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, 
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, 0, 0)
     end
 end
 
@@ -352,8 +341,8 @@ models for the treatment and control groups.
 
 Examples
 ```julia-repl
-julia> X, Xₚ, Y, T =  rand(100, 5), rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m3 = DoubleMachineLearning(X, Xₚ, Y, T)
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m3 = DoubleMachineLearning(X, Y, T)
 julia> estimate_causal_effect!(m3)
 0.31067439
 ```
@@ -366,22 +355,32 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
             false, DML.iterations, DML.approximator_neurons)
     end
 
-    predict_residuals!(DML)
-
-    # Estimate the final model with a column of ones for the intercept
-    DML.coefficients = reduce(hcat, (DML.T̃, ones(length(DML.T̃))))\DML.Ỹ
-    DML.causal_effect = DML.coefficients[1]
+    estimate_effect!(DML, linear_estimator)
     DML.fit = true
 
     return DML.causal_effect
 end
 
-function predict_residuals!(DML::DoubleMachineLearning)
+"""
+    estimate_effect!(DML)
+
+Estimate a treatment effect using double machine learning.
+
+This method should not be called directly. One can supply arbitrary predictors with 
+different loss functions to different cuasal quantities. This is how we minimize the causal 
+loss function in an R-learner.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = DoubleMachineLearning(X, Y, T)
+julia> estimate_effect!(m1)
+0.31067439
+```
+"""
+function estimate_effect!(DML::DoubleMachineLearning, estimator::Function)
     X_T, Y = generate_folds(reduce(hcat, (DML.X, DML.T)), DML.Y, DML.folds)
-    X = [fold[:, 1:size(DML.X, 2)] for fold in X_T]
-    T = [fold[:, size(DML.X, 2)+1] for fold in X_T]
-    DML.Ỹ = Vector{Float64}(undef, length(DML.Y))
-    DML.T̃ = Vector{Float64}(undef, length(DML.T))
+    X, T = [fl[:, 1:size(DML.X, 2)] for fl in X_T], [fl[:, size(DML.X, 2)+1] for fl in X_T]
     idx = 1  # Keeps track of what indices to start appending residuals
 
     for fold in 1:DML.folds
@@ -389,19 +388,75 @@ function predict_residuals!(DML::DoubleMachineLearning)
         Y_train , Y_test= reduce(vcat, Y[1:end .!== fold]), Y[fold]
         T_train, T_test = reduce(vcat, T[1:end .!== fold]), T[fold]
 
-        if DML.regularized
-            y = RegularizedExtremeLearner(X_train, Y_train, DML.num_neurons, DML.activation)
-            t = RegularizedExtremeLearner(X_train, T_train, DML.num_neurons, DML.activation)
-        else
-            y = ExtremeLearner(X_train, Y_train, DML.num_neurons, DML.activation)
-            t = ExtremeLearner(X_train, T_train, DML.num_neurons, DML.activation)
-        end
+        Ỹ, T̃, i = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test)
 
-        fit!(y); fit!(t)
-        DML.Ỹ[idx:(idx+length(Y_test))-1] = (predict(y, X_test)-Y_test)
-        DML.T̃[idx:(idx+length(T_test))-1] = (predict(t, X_test)-T_test)
-        idx += lastindex(Y_test)
+        DML.causal_effect += estimator(T̃, Ỹ)
+        idx += i
     end
+    DML.causal_effect /= DML.folds
+end
+
+"""
+    linear_estimator(t, y)
+
+Simple estimator to estimate the coefficient of the outcome residuals regressed on the 
+treatment residuals for double machine learning.
+
+This method should not be called directly.
+
+Examples
+```julia-repl
+julia> T, Y =  rand(100), [rand()<0.4 for i in 1:100]
+julia> linear_estimator(T, Y)
+0.9472039832143198
+```
+"""
+function linear_estimator(t::Vector{<:Real}, y::Vector{<:Real})
+    return (reduce(hcat, (t, ones(length(t))))\y)[1]
+end
+
+"""
+    predict_residuals(DML, x_train, x_test, y_train, y_test, t_train, t_test)
+
+Predict treatment and outcome residuals for doubl machine learning.
+
+This method should not be called directly.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> x_train, x_test = X[1:80, :], X[81:end, :]
+julia> y_train, y_test = Y[1:80], Y[81:end]
+julia> t_train, t_test = T[1:80], T[81:100]
+julia> m1 = DoubleMachineLearning(X, Y, T)
+julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
+([0.6944714802199426, 0.6102318624294397, 0.9563033347529682, 0.3672928045676611, 
+0.798979284356504, 0.75463657953566, 0.2593076385796709, 0.02964653792661509, 
+0.8300787769289568, 0.06541839362513935, 0.8210482663602617, 0.18740366794105812, 
+0.6682105331259032, 0.29792071635654704, 0.5989347841849673, 0.648461419229496, 
+0.1743173089883865, 0.5714828789021472, 0.6095303243951894], [0.14931956185251938, 
+0.8566422696735215, 0.01480754659124739, 0.4536976276165088, 0.04525833030293913, 
+0.6551212472828767, 0.017278726777209763, 0.7741964986063957, 0.5007289194826018, 
+0.9708632727199884, 0.6257561584014957, 0.6771520489771624, 0.2602040355357872, 
+0.018736399220500966, 0.1743485146750896, 0.5449085472043922, 0.14016601301278353, 
+0.2217194742841072, 0.199372555924635], 20)
+```
+"""
+function predict_residuals(DML::DoubleMachineLearning, x_train::Array{<:Real}, 
+    x_test::Array{<:Real}, y_train::Vector{<:Real}, y_test::Vector{<:Real}, 
+    t_train::Vector{<:Real}, t_test::Vector{<:Real})
+    
+    if DML.regularized
+        y = RegularizedExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
+        t = RegularizedExtremeLearner(x_train, t_train, DML.num_neurons, DML.activation)
+    else
+        y = ExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
+        t = ExtremeLearner(x_train, t_train, DML.num_neurons, DML.activation)
+    end
+
+    fit!(y); fit!(t)
+    Ỹ, T̃ = (predict(y, x_test)-y_test), (predict(t, x_test)-t_test)
+    return Ỹ, T̃, lastindex(y_test)
 end
 
 """

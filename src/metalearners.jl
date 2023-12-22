@@ -228,6 +228,23 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
     end
 end
 
+mutable struct RLearner
+    DML::DoubleMachineLearning
+
+    function RLearner(X, Y, T; task="regression", regularized=true, activation=relu, 
+        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        iterations=Int(round(size(X, 1)/10)), 
+        approximator_neurons=Int(round(size(X, 1)/10)))
+
+        dml = DoubleMachineLearning(X, Y, T; task=task, quantity_of_interest="ATE", 
+        regularized=regularized, activation=activation, validation_metric=validation_metric, 
+        min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
+        iterations=iterations, approximator_neurons=approximator_neurons)
+
+        new(dml)
+    end
+end
+
 function estimate_causal_effect!(s::SLearner)
     full_covariates = hcat(s.X, s.T)
 

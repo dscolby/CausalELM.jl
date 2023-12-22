@@ -124,9 +124,8 @@ function summarize(dml::DoubleMachineLearning, n::Integer=1000)
 
     p, stderr = quantities_of_interest(dml, n)
 
-    values = [dml.task, dml.quantity_of_interest, dml.regularized, dml.activation,  
-        dml.validation_metric, dml.num_neurons, dml.approximator_neurons, dml.causal_effect, 
-        stderr, p]
+    values = [dml.task, "ATE", dml.regularized, dml.activation,  dml.validation_metric, 
+        dml.num_neurons, dml.approximator_neurons, dml.causal_effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value
