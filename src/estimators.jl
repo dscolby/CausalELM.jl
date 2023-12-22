@@ -1,18 +1,3 @@
-"""
-Estimate causal effects with interrupted time series analysis, G-computation, and double 
-machine learning using Extreme Learning machines.
-   """
-module Estimators
-
-using ..Metrics: mse
-using ..Utilities: mean, var
-using ..ActivationFunctions: relu
-using ..CrossValidation: best_size, shuffle_data, generate_folds
-using ..Models: ExtremeLearningMachine, ExtremeLearner, RegularizedExtremeLearner, fit!, 
-    predict_counterfactual!, predict
-
-import CausalELM: estimate_causal_effect!
-
 """Abstract type for GComputation and DoubleMachineLearning"""
 abstract type  CausalEstimator end
 
@@ -439,6 +424,4 @@ function moving_average(g::Vector{Float64})
         result[i] = mean(g[1:i])
     end
     return result
-end
-
 end

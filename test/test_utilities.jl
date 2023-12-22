@@ -1,5 +1,6 @@
 using Test
-using CausalELM.Utilities: mean, var, consecutive
+
+include("../src/utilities.jl")
 
 @testset "Moments" begin
     @test mean([1, 2, 3]) == 2

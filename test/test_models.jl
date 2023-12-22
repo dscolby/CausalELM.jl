@@ -1,7 +1,7 @@
-using CausalELM.Models: ExtremeLearner, RegularizedExtremeLearner, fit!, predict,
-    predict_counterfactual!, placebo_test
-using CausalELM.ActivationFunctions: σ
 using Test
+using CausalELM
+
+include("../src/models.jl")
 
 # Test classification functionality using a simple XOR test borrowed from 
 # ExtremeLearning.jl

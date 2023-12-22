@@ -1,17 +1,4 @@
-"""
-Methods to perform cross validation and find the optimum number of neurons.
-
-To reduce computation time, the number of neurons is optimized by using cross validation
-to estimate the validation error on a small subset of the range of possible numbers of 
-neurons. Then, an Extreme Learning Machine is trained to predict validation loss from 
-the given cross validation sets. Finally, the number of neurons is selected that has the 
-smallest predicted loss or the highest classification metric.
-"""
-module CrossValidation
-
-using ..ActivationFunctions: relu
 using Random: randperm
-using ..Models: ExtremeLearner, RegularizedExtremeLearner, fit!, predict
 
 """
     recode(ŷ)
@@ -246,6 +233,4 @@ function shuffle_data(X::Array{Float64}, Y::Array{Float64})
         X, Y = new_data
 
         return X, vec(Y)
-end
-
 end

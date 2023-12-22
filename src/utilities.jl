@@ -1,5 +1,3 @@
-module Utilities
-
 mean(x::Vector{<:Real}) = sum(x)/length(x)
 
 function var(x::Vector{<:Real})
@@ -10,5 +8,3 @@ end
 
 # Helpers to subtract or add consecutive elements in a vector
 consecutive(v::Vector{<:Real}) = [-(v[i+1], v[i]) for i = 1:length(v)-1]
-
-end

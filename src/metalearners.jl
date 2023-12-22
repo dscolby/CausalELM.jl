@@ -1,16 +1,3 @@
-"""Metalearners to estimate the conditional average treatment effect (CATE)."""
-module Metalearners
-
-using ..Metrics: mse
-using ..Utilities: mean
-using ..ActivationFunctions: relu
-using ..Estimators: DoubleMachineLearning
-using ..CrossValidation: best_size, shuffle_data
-using ..Models: ExtremeLearningMachine, ExtremeLearner, fit!, predict, 
-    RegularizedExtremeLearner
-
-import CausalELM: estimate_causal_effect!
-
 """Abstract type for metalearners"""
 abstract type Metalearner end
 
@@ -427,6 +414,4 @@ function stage2!(x::XLearner)
     end 
 
     fit!(x.μχ₀); fit!(x.μχ₁)
-end
-
 end

@@ -1,5 +1,5 @@
 using Test
-using CausalELM.Metrics: mse, mae, confusion_matrix, accuracy, precision, recall, F1
+using CausalELM
 
 length4, length5  = rand(4), rand(5)
 
@@ -16,9 +16,11 @@ end
 end
 
 @testset "Confusion Matrix" begin
-    @test confusion_matrix([1, 1, 1, 1, 0], [1, 1, 1, 1, 0]) == [1 0; 0 4]
-    @test confusion_matrix([1, 0, 1, 0], [0, 1, 0, 1]) == [0 2; 2 0]
-    @test confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2]) == [1 0 0; 0 4 0; 0 0 1]
+    @test CausalELM.confusion_matrix([1, 1, 1, 1, 0], [1, 1, 1, 1, 0]) == [1 0; 0 4]
+    @test CausalELM.confusion_matrix([1, 0, 1, 0], [0, 1, 0, 1]) == [0 2; 2 0]
+    @test CausalELM.confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2]) == [1 0 0; 
+                                                                                 0 4 0; 
+                                                                                 0 0 1]
 end
 
 @testset "Accuracy" begin

@@ -1,10 +1,4 @@
 """
-Metrics to evaluate the performance of an Extreme learning machine for regression
-and classification tasks.
-"""
-module Metrics
-
-"""
     mse(y, ŷ)
 
 Calculate the mean squared error
@@ -87,7 +81,7 @@ julia> precision([0, 1, 0, 0], [0, 1, 0, 0])
 1
 ```
 """
-function precision(y::Vector{Int64}, ŷ::Vector{Int64})
+function Base.precision(y::Vector{Int64}, ŷ::Vector{Int64})
     confmat = confusion_matrix(y, ŷ)
     n = length(Set(y))
 
@@ -195,6 +189,4 @@ function confusion_matrix(y::Vector{Int64}, ŷ::Vector{Int64})
         @inbounds @fastmath confmat[predicted, actual] += 1
     end
     return confmat
-end
-
 end

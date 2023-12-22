@@ -10,17 +10,14 @@ For more details on Extreme Learning Machines see:
     and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
 """
 module CausalELM
-
-export InterruptedTimeSeries, GComputation, DoubleMachineLearning 
+ 
+export validate
+export hard_tanh, elish, fourier
 export SLearner, TLearner, XLearner
 export estimate_causal_effect!, summarize
-
-# These will be overwritten by estimator and metalearner structs
-function estimate_causal_effect! end
-function summarize end
-
-# So that it works with British spelling
-const summarise = summarize
+export mse, mae, accuracy, precision, recall, F1
+export InterruptedTimeSeries, GComputation, DoubleMachineLearning
+export binary_step, σ, tanh, relu, leaky_relu, swish, softmax, softplus, gelu, gaussian
 
 include("utilities.jl")
 include("activation.jl")
@@ -31,5 +28,8 @@ include("estimators.jl")
 include("metalearners.jl")
 include("inference.jl")
 include("model_validation.jl")
+
+# So that it works with British spelling
+const summarise = summarize
 
 end

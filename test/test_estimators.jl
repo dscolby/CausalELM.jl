@@ -1,7 +1,7 @@
-using CausalELM.Estimators: InterruptedTimeSeries, GComputation, DoubleMachineLearning, 
-    estimate_causal_effect!, mean, moving_average
-using CausalELM.Models: ExtremeLearningMachine
 using Test
+using CausalELM
+
+include("../src/models.jl")
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:100, 100, 5)), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -113,8 +113,8 @@ end
     end
 
     @testset "Moving Averages" begin
-        @test moving_average(Float64[]) isa Array{Float64}
-        @test moving_average([1.0]) == [1.0]
-        @test moving_average([1.0, 2.0, 3.0]) == [1.0, 1.5, 2.0]
+        @test CausalELM.moving_average(Float64[]) isa Array{Float64}
+        @test CausalELM.moving_average([1.0]) == [1.0]
+        @test CausalELM.moving_average([1.0, 2.0, 3.0]) == [1.0, 1.5, 2.0]
     end
 end

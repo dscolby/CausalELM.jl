@@ -1,17 +1,3 @@
-"""
-Base models to perform extreme learning with and without L2 penalization.
-
-For details on Extreme learning machines see;
-    Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
-    and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
-
-For details on Extreme learning machines with an L2 penalty see:
-    Li, Guoqiang, and Peifeng Niu. "An enhanced extreme learning machine based on ridge 
-    regression for regression." Neural Computing and Applications 22, no. 3 (2013): 
-    803-810.
-"""
-module Models
-
 using LinearAlgebra: pinv
 
 """Abstract type that includes vanilla and L2 regularized Extreme Learning Machines"""
@@ -355,5 +341,3 @@ Base.show(io::IO, model::ExtremeLearner) = print(io,
 
 Base.show(io::IO, model::RegularizedExtremeLearner) = print(io, 
     "Regularized Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons")
-
-end

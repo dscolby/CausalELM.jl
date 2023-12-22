@@ -1,8 +1,7 @@
-using CausalELM.Metrics: mse, accuracy
-using CausalELM.ActivationFunctions: gelu
 using Test
-using CausalELM.CrossValidation: recode, generate_folds, generate_temporal_folds, 
-    validation_loss, cross_validate, best_size, shuffle_data
+using CausalELM
+
+include("../src/crossval.jl")
 
 x, y = shuffle_data(rand(100, 5), rand(100))
 xfolds, yfolds = generate_folds(zeros(20, 2), zeros(20), 5)

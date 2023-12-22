@@ -1,6 +1,3 @@
-"""Activation functions for Extreme Learning machines"""
-module ActivationFunctions
-
 """
     binary_step(x)
 
@@ -69,7 +66,7 @@ julia> tanh([1, 0])
 [0.7615941559557649, 0.0]
 ```
 """
-tanh(x::Array{Float64}) = @fastmath Base.tanh.(x)
+Base.tanh(x::Array{Float64}) = @fastmath Base.tanh.(x)
 
 """
     relu(x)
@@ -342,5 +339,3 @@ julia> fourier([-1, 1])
 ```
 """
 fourier(x::Array{Float64}) = fourier.(x)
-
-end

@@ -1,7 +1,7 @@
-using CausalELM.Metalearners: SLearner, TLearner, XLearner, estimate_causal_effect!, stage1!, 
-    stage2!
-using CausalELM.Models: ExtremeLearningMachine
 using Test
+using CausalELM
+
+include("../src/models.jl")
 
 x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 slearner1, slearner2 = SLearner(x, y, t), SLearner(x, y, t, regularized=true)
@@ -12,11 +12,11 @@ estimate_causal_effect!(tlearner1); estimate_causal_effect!(tlearner2)
 
 xlearner1 = XLearner(x, y, t)
 xlearner1.num_neurons = 5
-stage1!(xlearner1); stage2!(xlearner1)
+CausalELM.stage1!(xlearner1); CausalELM.stage2!(xlearner1)
 
 xlearner2 = XLearner(x, y, t, regularized=true)
 xlearner2.num_neurons = 5
-stage1!(xlearner2); stage2!(xlearner2)
+CausalELM.stage1!(xlearner2); CausalELM.stage2!(xlearner2)
 
 xlearner3 = XLearner(x, y, t)
 estimate_causal_effect!(xlearner3)
@@ -53,36 +53,36 @@ end
     end
 
     @testset "T-Learner Estimation" begin
-        @test typeof(tlearner1.μ₀) <: ExtremeLearningMachine
-        @test typeof(tlearner1.μ₁) <: ExtremeLearningMachine
+        @test typeof(tlearner1.μ₀) <: CausalELM.ExtremeLearningMachine
+        @test typeof(tlearner1.μ₁) <: CausalELM.ExtremeLearningMachine
         @test isa(tlearner1.causal_effect, Array{Float64})
-        @test typeof(tlearner2.μ₀) <: ExtremeLearningMachine
-        @test typeof(tlearner2.μ₁) <: ExtremeLearningMachine
+        @test typeof(tlearner2.μ₀) <: CausalELM.ExtremeLearningMachine
+        @test typeof(tlearner2.μ₁) <: CausalELM.ExtremeLearningMachine
         @test isa(tlearner2.causal_effect, Array{Float64})
     end
 end
 
 @testset "X-Learners" begin
     @testset "First Stage X-Learner" begin
-        @test typeof(xlearner1.g) <: ExtremeLearningMachine
-        @test typeof(xlearner1.μ₀) <: ExtremeLearningMachine
-        @test typeof(xlearner1.μ₁) <: ExtremeLearningMachine
+        @test typeof(xlearner1.g) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner1.μ₀) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner1.μ₁) <: CausalELM.ExtremeLearningMachine
         @test xlearner1.ps isa Array{Float64}
         @test xlearner1.μ₀.__fit === true
         @test xlearner1.μ₁.__fit === true
-        @test typeof(xlearner2.g) <: ExtremeLearningMachine
-        @test typeof(xlearner2.μ₀) <: ExtremeLearningMachine
-        @test typeof(xlearner2.μ₁) <: ExtremeLearningMachine
+        @test typeof(xlearner2.g) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner2.μ₀) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner2.μ₁) <: CausalELM.ExtremeLearningMachine
         @test xlearner2.ps isa Array{Float64}
         @test xlearner2.μ₀.__fit === true
         @test xlearner2.μ₁.__fit === true
     end
 
     @testset "Second Stage X-Learner" begin
-        @test typeof(xlearner1.μχ₀) <: ExtremeLearningMachine
-        @test typeof(xlearner1.μχ₁) <: ExtremeLearningMachine
-        @test typeof(xlearner2.μχ₀) <: ExtremeLearningMachine
-        @test typeof(xlearner2.μχ₁) <: ExtremeLearningMachine
+        @test typeof(xlearner1.μχ₀) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner1.μχ₁) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner2.μχ₀) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner2.μχ₁) <: CausalELM.ExtremeLearningMachine
     end
 
     @testset "X-Learner Structure" begin
@@ -95,13 +95,13 @@ end
     end
 
     @testset "X-Learner Estimation" begin
-        @test typeof(xlearner3.g) <: ExtremeLearningMachine
-        @test typeof(xlearner3.μ₀) <: ExtremeLearningMachine
-        @test typeof(xlearner3.μ₁) <: ExtremeLearningMachine
+        @test typeof(xlearner3.g) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner3.μ₀) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner3.μ₁) <: CausalELM.ExtremeLearningMachine
         @test xlearner3.ps isa Array{Float64}
         @test xlearner3.causal_effect isa Array{Float64}
-        @test typeof(xlearner3.μχ₀) <: ExtremeLearningMachine
-        @test typeof(xlearner3.μχ₁) <: ExtremeLearningMachine
+        @test typeof(xlearner3.μχ₀) <: CausalELM.ExtremeLearningMachine
+        @test typeof(xlearner3.μχ₁) <: CausalELM.ExtremeLearningMachine
         @test xlearner3.fit = true
         @test xlearner4.fit = true
     end

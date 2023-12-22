@@ -1,6 +1,5 @@
-using CausalELM.ActivationFunctions: binary_step, σ, tanh, relu, leaky_relu, swish, softmax,
-    softplus, gelu, gaussian, hard_tanh, elish, fourier
 using Test
+using CausalELM
 
 @testset "Binary Step Activation" begin
 

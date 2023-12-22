@@ -1,18 +1,3 @@
-"""
-Methods to test the sensitivity of interrupted time series estimators, G-computation, double 
-machine learning, S-learners, T-learners, and X-learners to violations of their modeling 
-assumptions.
-"""
-module ModelValidation
-
-using ..Metrics: mse
-using ..CrossValidation: best_size
-using ..Utilities: mean, consecutive
-using ..Models: predict, fit!, ExtremeLearner, RegularizedExtremeLearner
-using ..Metalearners: Metalearner, XLearner, SLearner, TLearner, estimate_causal_effect!
-using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
-    estimate_causal_effect!
-
 abstract type Nonbinary end
 
 # Types to for dispatching risk_ratio
@@ -946,6 +931,4 @@ julia> gvf([[4, 5], [9, 10]])
 """
 function gvf(x::Vector{Vector{T}}) where T <: Real
     return (sdam(collect(Iterators.flatten(x)))-scdm(x))/sdam(collect(Iterators.flatten(x)))
-end
-
 end

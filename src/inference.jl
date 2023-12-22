@@ -1,13 +1,4 @@
-"""Methods for summarization and inference from estimators and metalearners."""
-module Inference
-
 using Random: shuffle
-using ..Utilities: mean
-using ..Metalearners: Metalearner
-using ..Estimators: CausalEstimator, InterruptedTimeSeries, GComputation, 
-    DoubleMachineLearning, estimate_causal_effect!
-
-import CausalELM: summarize
 
 """
     summarize(its, mean_effect)
@@ -357,6 +348,4 @@ function quantities_of_interest(model::InterruptedTimeSeries, n::Integer=1000,
     stderr = (sum([(effect .- x)^2 for x in null_dist])/(n-1))/sqrt(n)
 
     return pvalue, stderr
-end
-
 end
