@@ -32,7 +32,7 @@ estimate_causal_effect!(dm_noreg)
 # Calling estimate_effect!
 dm_estimate_effect = DoubleMachineLearning(x, y, t)
 dm_estimate_effect.num_neurons = 5
-CausalELM.estimate_effect!(dm_estimate_effect, CausalELM.linear_estimator)
+CausalELM.estimate_effect!(dm_estimate_effect)
 
 # Test predicting residuals
 x_train, x_test = x[1:80, :], x[81:end, :]
@@ -42,6 +42,11 @@ residual_predictor = DoubleMachineLearning(x, y, t)
 residual_predictor.num_neurons = 5
 residuals = CausalELM.predict_residuals(residual_predictor, x_train, x_test, y_train, 
     y_test, t_train, t_test)
+
+# Estimating the CATE
+cate_estimator = DoubleMachineLearning(x, y, t)
+cate_estimator.num_neurons = 5
+cate_predictors = CausalELM.estimate_effect!(cate_estimator, true)
 
 @testset "Interrupted Time Series Estimation" begin
     @testset "Interrupted Time Series Structure" begin
@@ -107,10 +112,14 @@ end
 
     @testset "Double Machine Learning Estimation Helpers" begin
         @test dm_estimate_effect.causal_effect isa Float64
-        @test CausalELM.linear_estimator(rand(100), [rand()<0.4 for i in 1:100]) isa Float64
         @test residuals[1] isa Vector
         @test residuals[2] isa Vector
-        @test residuals[3] == 20
+    end
+
+    @testset "CATE Estimation" begin
+        @test cate_predictors isa Vector
+        @test length(cate_predictors) == length(cate_estimator.Y)
+        @test eltype(cate_predictors) == Float64
     end
 
     @testset "Double Machine Learning Post-estimation Structure" begin

@@ -229,9 +229,8 @@ julia> m2 = DoubleMachineLearning(X, Y, T; task="regression")
 ```
 """
     function DoubleMachineLearning(X, Y, T; task="regression", 
-        quantity_of_interest="ATE", regularized=true, activation=relu, 
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=Int(round(size(X, 1)/10)), 
+        regularized=true, activation=relu, validation_metric=mse, min_neurons=1, 
+        max_neurons=100, folds=5, iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
         if task ∉ ("regression", "classification")
@@ -355,20 +354,19 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
             false, DML.iterations, DML.approximator_neurons)
     end
 
-    estimate_effect!(DML, linear_estimator)
+    estimate_effect!(DML, false)
+    DML.causal_effect /= DML.folds
     DML.fit = true
 
     return DML.causal_effect
 end
 
 """
-    estimate_effect!(DML)
+    estimate_effect!(DML, cate)
 
 Estimate a treatment effect using double machine learning.
 
-This method should not be called directly. One can supply arbitrary predictors with 
-different loss functions to different cuasal quantities. This is how we minimize the causal 
-loss function in an R-learner.
+This method should not be called directly.
 
 Examples
 ```julia-repl
@@ -378,41 +376,29 @@ julia> estimate_effect!(m1)
 0.31067439
 ```
 """
-function estimate_effect!(DML::DoubleMachineLearning, estimator::Function)
+function estimate_effect!(DML::DoubleMachineLearning, cate::Bool=false)
     X_T, Y = generate_folds(reduce(hcat, (DML.X, DML.T)), DML.Y, DML.folds)
     X, T = [fl[:, 1:size(DML.X, 2)] for fl in X_T], [fl[:, size(DML.X, 2)+1] for fl in X_T]
-    idx = 1  # Keeps track of what indices to start appending residuals
+    predictors = cate ? Vector{RegularizedExtremeLearner}(undef, DML.folds) : Nothing
 
-    for fold in 1:DML.folds
-        X_train, X_test = reduce(vcat, X[1:end .!== fold]), X[fold]
-        Y_train , Y_test= reduce(vcat, Y[1:end .!== fold]), Y[fold]
-        T_train, T_test = reduce(vcat, T[1:end .!== fold]), T[fold]
+    # Cross fitting by training on the main folds and predicting residuals on the auxillary
+    for fld in 1:DML.folds
+        X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
+        Y_train , Y_test= reduce(vcat, Y[1:end .!== fld]), Y[fld]
+        T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
 
-        Ỹ, T̃, i = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test)
+        Ỹ, T̃ = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test)
+        DML.causal_effect += (reduce(hcat, (T̃, ones(length(T̃))))\Ỹ)[1]
 
-        DML.causal_effect += estimator(T̃, Ỹ)
-        idx += i
+        if cate  # Using the weight trick to get the non-parametric CATE for an R-learner
+            X[fld], Y[fld] = (T̃.^2) .* X_test, (T̃.^2) .* (Ỹ./T̃)
+            mod = RegularizedExtremeLearner(X[fld], Y[fld], DML.num_neurons, DML.activation)
+            fit!(mod)
+            predictors[fld] = mod
+        end
     end
-    DML.causal_effect /= DML.folds
-end
-
-"""
-    linear_estimator(t, y)
-
-Simple estimator to estimate the coefficient of the outcome residuals regressed on the 
-treatment residuals for double machine learning.
-
-This method should not be called directly.
-
-Examples
-```julia-repl
-julia> T, Y =  rand(100), [rand()<0.4 for i in 1:100]
-julia> linear_estimator(T, Y)
-0.9472039832143198
-```
-"""
-function linear_estimator(t::Vector{<:Real}, y::Vector{<:Real})
-    return (reduce(hcat, (t, ones(length(t))))\y)[1]
+    final_predictions = cate ? [predict(m, reduce(vcat, X)) for m in predictors] : Nothing
+    cate && return vec(mapslices(mean, reduce(hcat, final_predictions), dims=2))
 end
 
 """
@@ -439,7 +425,7 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 0.6551212472828767, 0.017278726777209763, 0.7741964986063957, 0.5007289194826018, 
 0.9708632727199884, 0.6257561584014957, 0.6771520489771624, 0.2602040355357872, 
 0.018736399220500966, 0.1743485146750896, 0.5449085472043922, 0.14016601301278353, 
-0.2217194742841072, 0.199372555924635], 20)
+0.2217194742841072, 0.199372555924635])
 ```
 """
 function predict_residuals(DML::DoubleMachineLearning, x_train::Array{<:Real}, 
@@ -456,7 +442,7 @@ function predict_residuals(DML::DoubleMachineLearning, x_train::Array{<:Real},
 
     fit!(y); fit!(t)
     Ỹ, T̃ = (predict(y, x_test)-y_test), (predict(t, x_test)-t_test)
-    return Ỹ, T̃, lastindex(y_test)
+    return Ỹ, T̃
 end
 
 """

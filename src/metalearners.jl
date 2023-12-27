@@ -228,20 +228,27 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
     end
 end
 
-mutable struct RLearner
-    DML::DoubleMachineLearning
+"""Container for the results of an R-learner"""
+mutable struct RLearner <: Metalearner
+    dml::DoubleMachineLearning
+    """The effect of exposure or treatment"""
+    causal_effect::Array{Float64}
+    """Whether the causal effect has been estimated"""
+    fit::Bool
 
-    function RLearner(X, Y, T; task="regression", regularized=true, activation=relu, 
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+    function RLearner(X, Y, T; task="regression", quantity_of_interest="CATE", 
+        activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
-        dml = DoubleMachineLearning(X, Y, T; task=task, quantity_of_interest="ATE", 
-        regularized=regularized, activation=activation, validation_metric=validation_metric, 
-        min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
-        iterations=iterations, approximator_neurons=approximator_neurons)
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        end
 
-        new(dml)
+        new(DoubleMachineLearning(X, Y, T; task=task, regularized=true, 
+            activation=activation, validation_metric=validation_metric, 
+            min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
+            iterations=iterations, approximator_neurons=approximator_neurons))
     end
 end
 
@@ -319,6 +326,20 @@ function estimate_causal_effect!(x::XLearner)
 
     x.fit = true
     return x.causal_effect
+end
+
+function estimate_causal_effect!(R::RLearner)
+    # Uses the same number of neurons for all phases of estimation
+    if R.dml.num_neurons === 0
+        R.dml.num_neurons = best_size(R.dml.X, R.dml.Y, R.dml.validation_metric, R.dml.task, 
+            R.dml.activation, R.dml.min_neurons, R.dml.max_neurons, R.dml.regularized, 
+            R.dml.folds, false, R.dml.iterations, R.dml.approximator_neurons)
+    end
+
+    R.causal_effect = estimate_effect!(R.dml, true)
+    R.fit = true
+
+    return R.causal_effect
 end
 
 """
@@ -431,4 +452,8 @@ function stage2!(x::XLearner)
     end 
 
     fit!(x.μχ₀); fit!(x.μχ₁)
+end
+
+function nonparametic_estimator(R::RLearner, t, y)
+    predictor = RegularizedExtremeLearner()
 end
