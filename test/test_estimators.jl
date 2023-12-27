@@ -63,13 +63,9 @@ cate_predictors = CausalELM.estimate_effect!(cate_estimator, true)
     end
 
     @testset "Interrupted Time Series Estimation" begin
-        @test isa(its.β, Array)
-        @test isa(its.Ŷ, Array)
         @test isa(its.Δ, Array)
 
         # Without autocorrelation
-        @test isa(its_no_ar.β, Array)
-        @test isa(its_no_ar.Ŷ, Array)
         @test isa(its_no_ar.Δ, Array)
     end
 end
@@ -88,7 +84,6 @@ end
     end
 
     @testset "G-Computation Estimation" begin
-        @test isa(g_computer.β, Array)
         @test isa(g_computer.causal_effect, Float64)
 
         # Check that the estimats for ATE and ATT are different

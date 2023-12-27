@@ -36,11 +36,11 @@ function summarize(its::InterruptedTimeSeries, n::Integer=1000, mean_effect::Boo
 
     summary_dict = Dict()
     nicenames = ["Task", "Regularized", "Activation Function", "Validation Metric", 
-        "Number of Neurons", "Number of Neurons in Approximator", "β", "Causal Effect", 
+        "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect", 
         "Standard Error", "p-value"]
 
     values = [its.task, its.regularized, its.activation, its.validation_metric, 
-        its.num_neurons, its.approximator_neurons, its.β, effect, stderr, p]
+        its.num_neurons, its.approximator_neurons, effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value

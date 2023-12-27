@@ -33,14 +33,8 @@ mutable struct SLearner <: Metalearner
     temporal::Bool
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
-    """Extreme Learning Machine used to estimate the causal effect"""
-    learner::ExtremeLearningMachine
-    """Weights learned during training"""
-    β::Array{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
-    """Whether the causal effect has been estimated"""
-    fit::Bool
 
 """
 SLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
@@ -110,14 +104,8 @@ mutable struct TLearner <: Metalearner
     temporal::Bool
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
-    """Extreme Learning Machine used to estimate the outcome E[Y|T=0, X]"""
-    μ₀::ExtremeLearningMachine
-    """Extreme Learning Machine used to estimate the outcome E[Y|T=1, X]"""
-    μ₁::ExtremeLearningMachine
     """Weights learned during training"""
     causal_effect::Array{Float64}
-    """Whether the causal effect has been estimated"""
-    fit::Bool
 
 """
 TLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
@@ -191,18 +179,10 @@ mutable struct XLearner <: Metalearner
     μ₀::ExtremeLearningMachine
     """Extreme Learning Machine used for the first stage of estimation"""
     μ₁::ExtremeLearningMachine
-    """Extreme Learning machine used for the second stage of estimation"""
-    μχ₀::ExtremeLearningMachine
-    """Extreme learning machine used for the second stage of estimation"""
-    μχ₁::ExtremeLearningMachine
-    """Extreme learning machine used to estimate the propensity score"""
-    g::ExtremeLearningMachine
     """Individual propensity scores"""
     ps::Array{Float64}
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
-    """Whether the causal effect has been estimated"""
-    fit::Bool
 
 """
 XLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
@@ -277,17 +257,16 @@ function estimate_causal_effect!(s::SLearner)
     end
 
     if s.regularized
-        s.learner = RegularizedExtremeLearner(full_covariates, s.Y, s.num_neurons, 
+        learner = RegularizedExtremeLearner(full_covariates, s.Y, s.num_neurons, 
             s.activation)
     else
-        s.learner = ExtremeLearner(full_covariates, s.Y, s.num_neurons, s.activation)
+        learner = ExtremeLearner(full_covariates, s.Y, s.num_neurons, s.activation)
     end
 
-    s.β = fit!(s.learner)
-    predictionsₜ, predictionsᵪ = predict(s.learner, Xₜ), predict(s.learner, Xᵤ)
+    fit!(learner)
+    predictionsₜ, predictionsᵪ = predict(learner, Xₜ), predict(learner, Xᵤ)
     s.causal_effect = @fastmath vec(predictionsₜ .- predictionsᵪ)
 
-    s.fit = true
     return s.causal_effect
 end
 
@@ -304,18 +283,17 @@ function estimate_causal_effect!(t::TLearner)
     end
 
     if t.regularized
-        t.μ₀, t.μ₁ = RegularizedExtremeLearner(x₀, y₀, t.num_neurons, t.activation), 
+        μ₀, μ₁ = RegularizedExtremeLearner(x₀, y₀, t.num_neurons, t.activation), 
             RegularizedExtremeLearner(x₁, y₁, t.num_neurons, t.activation)
     else
-        t.μ₀, t.μ₁ = ExtremeLearner(x₀, y₀, t.num_neurons, t.activation), 
+        μ₀, μ₁ = ExtremeLearner(x₀, y₀, t.num_neurons, t.activation), 
             ExtremeLearner(x₁, y₁, t.num_neurons, t.activation)
     end
 
-    fit!(t.μ₀); fit!(t.μ₁)
-    predictionsₜ, predictionsᵪ = predict(t.μ₁, t.X), predict(t.μ₀, t.X)
+    fit!(μ₀); fit!(μ₁)
+    predictionsₜ, predictionsᵪ = predict(μ₁, t.X), predict(μ₀, t.X)
     t.causal_effect = @fastmath vec(predictionsₜ .- predictionsᵪ)
 
-    t.fit = true
     return t.causal_effect
 end
 
@@ -329,12 +307,12 @@ function estimate_causal_effect!(x::XLearner)
             x.approximator_neurons)
     end
     
-    stage1!(x); stage2!(x)
+    stage1!(x)
+    μχ₀, μχ₁ = stage2!(x)
 
-    x.causal_effect = @fastmath vec(((x.ps.*predict(x.μχ₀, x.X)) .+ 
-        ((1 .- x.ps).*predict(x.μχ₁, x.X))))
+    x.causal_effect = @fastmath vec(((x.ps.*predict(μχ₀, x.X)) .+ 
+        ((1 .- x.ps).*predict(μχ₁, x.X))))
 
-    x.fit = true
     return x.causal_effect
 end
 
@@ -416,20 +394,20 @@ julia> stage1!(m1)
 """
 function stage1!(x::XLearner)
     if x.regularized
-        x.g = RegularizedExtremeLearner(x.X, x.T, x.num_neurons, x.activation)
+        g = RegularizedExtremeLearner(x.X, x.T, x.num_neurons, x.activation)
         x.μ₀ = RegularizedExtremeLearner(x.X[x.T .== 0,:], x.Y[x.T .== 0], x.num_neurons, 
             x.activation)
         x.μ₁ = RegularizedExtremeLearner(x.X[x.T .== 1,:], x.Y[x.T .== 1], x.num_neurons, 
             x.activation)
     else
-        x.g = ExtremeLearner(x.X, x.T, x.num_neurons, x.activation)
+        g = ExtremeLearner(x.X, x.T, x.num_neurons, x.activation)
         x.μ₀ = ExtremeLearner(x.X[x.T .== 0,:], x.Y[x.T .== 0], x.num_neurons, x.activation)
         x.μ₁ = ExtremeLearner(x.X[x.T .== 1,:], x.Y[x.T .== 1], x.num_neurons, x.activation)
     end
 
     # Get propensity scores
-    fit!(x.g)
-    x.ps = predict(x.g, x.X)
+    fit!(g)
+    x.ps = predict(g, x.X)
 
     # Fit first stage outcome models
     fit!(x.μ₀); fit!(x.μ₁)
@@ -447,20 +425,32 @@ julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = XLearner(X, Y, T)
 julia> stage1!(m1)
 julia> stage2!(m1)
+([0.6579129842054047, 0.7644471766429705, 0.5462780002052421, 0.3532457241687176, 
+0.5285202160177137, 0.6700637463326441, 0.7396669577462894, 0.19575273123932924, 
+0.19090472359968091, 0.816401557016116  …  0.18732867917588836, 0.014605992930188605, 
+0.8767780635957382, 0.7703598462892363, 0.304425208945448, 0.7424001864151887, 
+0.300635582310234, 0.7559907369824916, 0.8221711606659099, 0.17192370608856988], 
+[0.5428608390478198, 0.8612643542118226, 0.5107814429638895, 0.18978928137486417, 
+0.3075968091812413, 0.32970316141529354, 0.9008627764809055, 0.8658168542711414, 
+0.24633419551012337, 0.07459024070407072  …  0.5922447815994394, 0.1460543738442427, 
+0.8790479230019441, 0.03356517743258902, 0.648803884856812, 0.09028229529599152, 
+0.29810643643033863, 0.8755515354984005, 0.947588000142362, 0.29294343704001025])
 ```
 """
 function stage2!(x::XLearner)
     d = ifelse(x.T === 0, predict(x.μ₁, x.X .- x.Y), x.Y .- predict(x.μ₀, x.X))
 
     if x.regularized
-        x.μχ₀  = RegularizedExtremeLearner(x.X[x.T .== 0,:], d[x.T .== 0], x.num_neurons, 
+        μχ₀ = RegularizedExtremeLearner(x.X[x.T .== 0,:], d[x.T .== 0], x.num_neurons, 
             x.activation)
-        x.μχ₁ = RegularizedExtremeLearner(x.X[x.T .== 1,:], d[x.T .== 1], x.num_neurons, 
+        μχ₁ = RegularizedExtremeLearner(x.X[x.T .== 1,:], d[x.T .== 1], x.num_neurons, 
             x.activation)
     else
-        x.μχ₀  = ExtremeLearner(x.X[x.T .== 0,:], d[x.T .== 0], x.num_neurons, x.activation)
-        x.μχ₁ = ExtremeLearner(x.X[x.T .== 1,:], d[x.T .== 1], x.num_neurons, x.activation) 
+        μχ₀ = ExtremeLearner(x.X[x.T .== 0,:], d[x.T .== 0], x.num_neurons, x.activation)
+        μχ₁ = ExtremeLearner(x.X[x.T .== 1,:], d[x.T .== 1], x.num_neurons, x.activation) 
     end 
 
-    fit!(x.μχ₀); fit!(x.μχ₁)
+    fit!(μχ₀); fit!(μχ₁)
+
+    return μχ₀, μχ₁
 end

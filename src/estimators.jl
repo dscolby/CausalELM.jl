@@ -33,15 +33,6 @@ mutable struct InterruptedTimeSeries
     autoregression::Bool
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
-    """Extreme Learning Machine used to estimate the abnormal returns"""
-    learner::ExtremeLearningMachine
-    """Weights learned during training"""
-    β::Array{Float64}
-    """
-    Counterfactual predicted for the post-treatment period using wieghts learned in the 
-    pre-treatment period
-    """
-    Ŷ::Array{Float64}
     """
     The difference betwen the predicted counterfactual and the observed data at each 
     interval during the post-treatment period
@@ -126,10 +117,6 @@ mutable struct GComputation <: CausalEstimator
     num_neurons::Int64
     """The effect of exposure or treatment"""
     causal_effect::Float64
-    """Extreme Learning Machine used to estimate the causal effect"""
-    learner::ExtremeLearningMachine
-    """Weights learned during training"""
-    β::Array{Float64}
 
 """
 GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
@@ -267,14 +254,13 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     end
 
     if its.regularized
-        its.learner = RegularizedExtremeLearner(its.X₀, its.Y₀, its.num_neurons, 
-            its.activation)
+        learner = RegularizedExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
     else
         its.learner = ExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
     end
 
-    its.β, its.Ŷ = fit!(its.learner), predict_counterfactual!(its.learner, its.X₁)
-    its.Δ = its.Ŷ - its.Y₁
+    fit!(learner)
+    its.Δ = predict_counterfactual!(learner, its.X₁) - its.Y₁
 
     return its.Δ
 end
@@ -316,14 +302,14 @@ function estimate_causal_effect!(g::GComputation)
     end
 
     if g.regularized
-        g.learner = RegularizedExtremeLearner(full_covariates, g.Y, g.num_neurons, 
+        learner = RegularizedExtremeLearner(full_covariates, g.Y, g.num_neurons, 
             g.activation)
     else
-        g.learner = ExtremeLearner(full_covariates, g.Y, g.num_neurons, g.activation)
+        learner = ExtremeLearner(full_covariates, g.Y, g.num_neurons, g.activation)
     end
 
-    g.β = fit!(g.learner)
-    g.causal_effect = sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)
+    fit!(learner)
+    g.causal_effect = sum(predict(learner, Xₜ) - predict(learner, Xᵤ))/size(Xₜ, 1)
 
     return g.causal_effect
 end
