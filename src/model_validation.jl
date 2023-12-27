@@ -128,6 +128,11 @@ function validate(m::NonTimeSeriesEstimator; num_treatments::Int=5, min::Float64
         positivity(m, min, max)
 end
 
+function validate(R::RLearner; num_treatments::Int=5, min::Float64=1.0e-6, 
+    max::Float64=1.0-min)
+    return validate(R.dml, num_treatments=num_treatments, min=min, max=max)
+end
+
 """
     covariate_independence(its; n)
 

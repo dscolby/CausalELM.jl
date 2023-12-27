@@ -42,6 +42,10 @@ estimate_causal_effect!(t_learner)
 x_learner = XLearner(x, y, t)
 estimate_causal_effect!(x_learner)
 
+# Create an R-learner
+r_learner = RLearner(x, y, t)
+estimate_causal_effect!(r_learner)
+
 # Used to test helper functions for Jenks breaks
 sum_of_squares2 = CausalELM.sums_of_squares([1, 2, 3, 4, 5], 2)
 sum_of_squares3 = CausalELM.sums_of_squares([1, 2, 3, 4, 5], 3)
@@ -109,7 +113,6 @@ end
 
     @testset "All Three Assumptions" begin
         # All assumptions at once
-        @test_throws ErrorException validate(InterruptedTimeSeries(x₀, y₀, x₁, y₁))
         @test its_validation isa Tuple
         @test length(its_validation) === 3
     end
@@ -177,26 +180,25 @@ end
         @test CausalELM.counterfactual_consistency(g_computer) isa Real
     end
 
-    @testset "CausalELM.exchangeability" begin
+    @testset "Exchangeability" begin
         @test CausalELM.exchangeability(binary_g_computer) isa Real
         @test CausalELM.exchangeability(count_g_computer) isa Real
         @test CausalELM.exchangeability(g_computer) isa Real
     end
 
-    @testset "CausalELM.positivity" begin
+    @testset "Positivity" begin
         @test size(CausalELM.positivity(binary_g_computer), 2) == size(binary_g_computer.X, 
                                                                     2)+1
         @test size(CausalELM.positivity(count_g_computer), 2) == size(count_g_computer.X, 
                                                                     2)+1
         @test size(CausalELM.positivity(g_computer), 2) == size(g_computer.X, 2)+1
     end
-end
 
-@testset "All Assumptions for G-computation" begin
-    @test_throws ErrorException validate(GComputation(x, y, t))
-    @test length(validate(binary_g_computer)) == 3
-    @test length(validate(count_g_computer)) == 3
-    @test length(validate(g_computer)) == 3
+    @testset "All Assumptions for G-computation" begin
+        @test length(validate(binary_g_computer)) == 3
+        @test length(validate(count_g_computer)) == 3
+        @test length(validate(g_computer)) == 3
+    end
 end
 
 @testset "Double Machine Learning Assumptions" begin
@@ -207,16 +209,41 @@ end
 end
 
 @testset "Metalearner Assumptions" begin
-    @test CausalELM.counterfactual_consistency(s_learner) isa Real
-    @test CausalELM.exchangeability(s_learner) isa Real
-    @test size(CausalELM.positivity(s_learner), 2) == size(s_learner.X, 2)+1
-    @test CausalELM.counterfactual_consistency(t_learner) isa Real
-    @test CausalELM.exchangeability(t_learner) isa Real
-    @test size(CausalELM.positivity(t_learner), 2) == size(t_learner.X, 2)+1
-    @test CausalELM.counterfactual_consistency(x_learner) isa Real
-    @test CausalELM.exchangeability(x_learner) isa Real
-    @test size(CausalELM.positivity(x_learner), 2) == size(x_learner.X, 2)+1
-    @test length(validate(s_learner)) == 3
-    @test length(validate(t_learner)) == 3
-    @test length(validate(x_learner)) == 3
+    @testset "Counterfactual Consistency" begin
+        @test CausalELM.counterfactual_consistency(s_learner) isa Real
+        @test CausalELM.counterfactual_consistency(t_learner) isa Real
+        @test CausalELM.counterfactual_consistency(x_learner) isa Real
+    end
+
+    @testset "Exchangeability" begin
+        @test CausalELM.exchangeability(s_learner) isa Real
+        @test CausalELM.exchangeability(t_learner) isa Real
+        @test CausalELM.exchangeability(x_learner) isa Real
+    end
+
+    @testset "Positivity" begin
+        @test size(CausalELM.positivity(s_learner), 2) == size(s_learner.X, 2)+1
+        @test size(CausalELM.positivity(t_learner), 2) == size(t_learner.X, 2)+1
+        @test size(CausalELM.positivity(x_learner), 2) == size(x_learner.X, 2)+1
+    end
+
+    @testset "All three assumptions" begin
+        @test length(validate(s_learner)) == 3
+        @test length(validate(t_learner)) == 3
+        @test length(validate(x_learner)) == 3
+
+        # Only need this test because it it just passing the internal DML to the method that 
+        # was already tested
+        @test length(validate(r_learner)) == 3
+    end
+end
+
+@testset "Calling validate before estimate_causal_effect!" begin
+    @test_throws ErrorException validate(InterruptedTimeSeries(x₀, y₀, x₁, y₁))
+    @test_throws ErrorException validate(GComputation(x, y, t))
+    @test_throws ErrorException validate(DoubleMachineLearning(x, y, t))
+    @test_throws ErrorException validate(SLearner(x, y, t))
+    @test_throws ErrorException validate(TLearner(x, y, t))
+    @test_throws ErrorException validate(XLearner(x, y, t))
+    @test_throws ErrorException validate(RLearner(x, y, t))
 end
