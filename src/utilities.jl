@@ -1,3 +1,5 @@
+abstract type NonTimeSeriesEstimator end
+
 mean(x::Vector{<:Real}) = sum(x)/length(x)
 
 function var(x::Vector{<:Real})

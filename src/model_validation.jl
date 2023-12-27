@@ -118,8 +118,8 @@ julia> validate(g_computer)
 2.7653668647301795
     ```
 """
-function validate(m::Union{CausalEstimator, Metalearner}; num_treatments::Int=5, 
-    min::Float64=1.0e-6, max::Float64=1.0-min)
+function validate(m::NonTimeSeriesEstimator; num_treatments::Int=5, min::Float64=1.0e-6, 
+    max::Float64=1.0-min)
     if !m.fit
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
@@ -358,8 +358,7 @@ julia> counterfactual_consistency(g_computer)
 2.7653668647301795
 ```
 """
-function counterfactual_consistency(m::Union{CausalEstimator, Metalearner}; 
-    num_treatments::Int=5)
+function counterfactual_consistency(m::NonTimeSeriesEstimator; num_treatments::Int=5)
     treatment_covariates, treatment_outcomes = m.X[m.T .== 1, :], m.Y[m.T .== 1]
     fake_treat = best_splits(treatment_outcomes, num_treatments)
     β_real = treatment_covariates\treatment_outcomes
@@ -392,9 +391,7 @@ julia> e_value(g_computer)
 1.13729886008143832
 ```
 """
-function exchangeability(model::Union{CausalEstimator, Metalearner})
-    return e_value(model)
-end
+exchangeability(model::NonTimeSeriesEstimator) = e_value(model)
 
 """
     e_value(model)
@@ -415,7 +412,7 @@ julia> e_value(g_computer)
 2.2555405766985125
 ```
 """
-function e_value(model::Union{CausalEstimator, Metalearner})
+function e_value(model::NonTimeSeriesEstimator)
     rr = risk_ratio(model)
     if rr > 1
         return @fastmath rr + sqrt(rr*(rr-1))
@@ -471,7 +468,7 @@ julia> risk_ratio(g_computer)
 2.5320694766985125
 ```
 """
-risk_ratio(mod::Union{CausalEstimator, Metalearner}) = risk_ratio(var_type(mod.T), mod)
+risk_ratio(mod::NonTimeSeriesEstimator) = risk_ratio(var_type(mod.T), mod)
 
 # First we dispatch based on whether the treatment variable is binary or not
 # If it is binary, we call the risk_ratio method based on the type of outcome variable
@@ -580,8 +577,7 @@ julia> positivity(g_computer)
 0×5 Matrix{Float64}
 ```
 """
-function positivity(model::Union{CausalEstimator, Metalearner}, min::Float64=1.0e-6, 
-    max::Float64=1-min)
+function positivity(model::NonTimeSeriesEstimator, min::Float64=1.0e-6, max::Float64=1-min)
     positivity(model, min, max)
 end
 

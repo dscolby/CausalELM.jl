@@ -49,6 +49,7 @@ estimate_causal_effect!(xlearner)
 xlearner_inference = CausalELM.generate_null_distribution(xlearner)
 p7, stderr7 = CausalELM.quantities_of_interest(xlearner)
 summary7 = summarize(xlearner)
+summary8 = summarise(xlearner)
 
 @testset "Generating Null Distributions" begin
     @test size(g_inference, 1) === 1000
@@ -119,6 +120,11 @@ end
 
     # X-Learners
     for (k, v) in summary7
+        @test !isnothing(v)
+    end
+
+    # Testing the British spelling of summarise
+    for (k, v) in summary8
         @test !isnothing(v)
     end
 end

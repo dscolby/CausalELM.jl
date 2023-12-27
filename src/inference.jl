@@ -107,7 +107,7 @@ julia> summarise(m1)
 "p-value" => 0.0632454855}
 ```
 """
-function summarize(mod::Union{CausalEstimator, Metalearner}, n::Integer=1000)
+function summarize(mod::NonTimeSeriesEstimator, n::Integer=1000)
     summary_dict = Dict()
     nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
         "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
@@ -130,14 +130,14 @@ end
 summarize(R::RLearner, n::Integer=1000) = summarize(R.dml, n)
 
 """
-    generate_null_distribution(e, n)
+    generate_null_distribution(mod, n)
 
-Generate a null distribution for the treatment effect of G-computation, doubly robust 
-estimation, or metalearning.
+Generate a null distribution for the treatment effect of G-computation, double machine 
+learning, or metalearning.
 
 This method estimates the same model that is provided using random permutations of the 
 treatment assignment to generate a vector of estimated effects under different treatment
-regimes. When e is a metalearner the null statistic is the difference is the ATE.
+regimes. When mod is a metalearner the null statistic is the difference is the ATE.
 
 Note that lowering the number of iterations increases the probability of failing to reject
 the null hypothesis.
@@ -155,8 +155,8 @@ julia> generate_null_distribution(g_computer, 500)
 23.52056245175936, 24.739658523175912, 25.30523686137909, 28.07474553316176]
 ```
 """
-function generate_null_distribution(e::Union{CausalEstimator, Metalearner}, n::Integer=1000)
-    local m = deepcopy(e)
+function generate_null_distribution(mod::NonTimeSeriesEstimator, n::Integer=1000)
+    local m = deepcopy(mod)
     nobs = size(m.T, 1)
     results = Vector{Float64}(undef, n)
     
@@ -164,7 +164,7 @@ function generate_null_distribution(e::Union{CausalEstimator, Metalearner}, n::I
     for iter in 1:n 
         m.T = float(rand(unique(m.T), nobs))
         estimate_causal_effect!(m)
-        results[iter] = e isa Metalearner ? mean(m.causal_effect) : m.causal_effect
+        results[iter] = mod isa Metalearner ? mean(m.causal_effect) : m.causal_effect
     end
     return results
 end
@@ -223,7 +223,7 @@ function generate_null_distribution(its::InterruptedTimeSeries, n::Integer=1000,
 end
 
 """
-    quantities_of_interest(model, n)
+    quantities_of_interest(mod, n)
 
 Generate a p-value and standard error through randomization inference
 
@@ -246,9 +246,9 @@ julia> quantities_of_interest(g_computer, 1000)
 (0.114, 6.953133617011371)
 ```
 """
-function quantities_of_interest(m::Union{CausalEstimator, Metalearner}, n::Integer=1000)
-    local null_dist = generate_null_distribution(m, n)
-    local avg_effect = m isa Metalearner ? mean(m.causal_effect) : m.causal_effect
+function quantities_of_interest(mod::NonTimeSeriesEstimator, n::Integer=1000)
+    local null_dist = generate_null_distribution(mod, n)
+    local avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
 
     extremes = length(null_dist[abs(avg_effect) .< abs.(null_dist)])
     pvalue = extremes/n
@@ -259,7 +259,7 @@ function quantities_of_interest(m::Union{CausalEstimator, Metalearner}, n::Integ
 end
 
 """
-    quantities_of_interest(model, n)
+    quantities_of_interest(mod, n)
 
 Generate a p-value and standard error through randomization inference
 
@@ -283,11 +283,11 @@ julia> quantities_of_interest(its, 10)
 (0.0, 0.07703275541001667)
 ```
 """
-function quantities_of_interest(model::InterruptedTimeSeries, n::Integer=1000, 
+function quantities_of_interest(mod::InterruptedTimeSeries, n::Integer=1000, 
     mean_effect::Bool=true)
-    local null_dist = generate_null_distribution(model, n, mean_effect)
+    local null_dist = generate_null_distribution(mod, n, mean_effect)
     local metric = ifelse(mean_effect, mean, sum)
-    local effect = metric(model.Δ)
+    local effect = metric(mod.Δ)
 
     extremes = length(null_dist[effect .< abs.(null_dist)])
     pvalue = extremes/n
