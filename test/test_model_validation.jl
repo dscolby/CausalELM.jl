@@ -46,6 +46,9 @@ estimate_causal_effect!(x_learner)
 r_learner = RLearner(x, y, t)
 estimate_causal_effect!(r_learner)
 
+# Used to test ErrorException
+r_learner_no_effect = RLearner(x, y, t)
+
 # Used to test helper functions for Jenks breaks
 sum_of_squares2 = CausalELM.sums_of_squares([1, 2, 3, 4, 5], 2)
 sum_of_squares3 = CausalELM.sums_of_squares([1, 2, 3, 4, 5], 3)
@@ -245,5 +248,5 @@ end
     @test_throws ErrorException validate(SLearner(x, y, t))
     @test_throws ErrorException validate(TLearner(x, y, t))
     @test_throws ErrorException validate(XLearner(x, y, t))
-    @test_throws ErrorException validate(RLearner(x, y, t))
+    @test_throws ErrorException validate(r_learner_no_effect)
 end
