@@ -245,8 +245,6 @@ mutable struct RLearner <: Metalearner
     dml::DoubleMachineLearning
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
-    """Whether the causal effect has been estimated"""
-    fit::Bool
 
     function RLearner(X, Y, T; task="regression", quantity_of_interest="CATE", 
         activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
@@ -351,8 +349,6 @@ function estimate_causal_effect!(R::RLearner)
     # Just estimate the causal effect using the underlying DML and use the weight trick
     R.causal_effect = estimate_effect!(R.dml, true)
     R.dml.quantity_of_interest = "CATE"
-    R.dml.fit = true
-    R.fit = true
 
     return R.causal_effect
 end

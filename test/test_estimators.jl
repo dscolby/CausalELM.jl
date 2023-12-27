@@ -93,8 +93,6 @@ end
 
         # Check that the estimats for ATE and ATT are different
         @test g_computer.causal_effect !== gcomputer_att.causal_effect
-
-        @test g_computer.fit = true
     end
 end
 
@@ -125,9 +123,6 @@ end
     @testset "Double Machine Learning Post-estimation Structure" begin
         @test dm.causal_effect isa Float64
         @test dm_noreg.causal_effect isa Float64
-
-        # Testing the fit boolean
-        @test dm_noreg.fit = true
     end
 end
 

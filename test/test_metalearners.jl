@@ -113,7 +113,6 @@ end
 @testset "R-learning" begin
     @testset "R-learner Structure" begin
         @test rlearner.dml !== Nothing
-        @test rlearner.fit == true
     end
 
     @testset "R-learner estimation" begin

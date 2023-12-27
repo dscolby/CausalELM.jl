@@ -124,14 +124,12 @@ mutable struct GComputation <: CausalEstimator
     approximator_neurons::Int64
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
-    """Whether the causal effect has been estimated"""
-    fit::Bool
+    """The effect of exposure or treatment"""
+    causal_effect::Float64
     """Extreme Learning Machine used to estimate the causal effect"""
     learner::ExtremeLearningMachine
     """Weights learned during training"""
     β::Array{Float64}
-    """The effect of exposure or treatment"""
-    causal_effect::Float64
 
 """
 GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
@@ -171,7 +169,7 @@ julia> regularized=true)
 
         new(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, 0, false)
+            approximator_neurons, 0, NaN)
     end
 end
 
@@ -209,8 +207,6 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     num_neurons::Int64
     """The effect of exposure or treatment"""
     causal_effect::Float64
-    """Whether the causal effect has been estimated"""
-    fit::Bool
 
 """
 DoubleMachineLearning(X, Y, T, task, quantity_of_interest, regularized, activation, 
@@ -243,7 +239,7 @@ julia> m2 = DoubleMachineLearning(X, Y, T; task="regression")
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, "ATE", false, 0, 0)
+            approximator_neurons, "ATE", false, 0, NaN)
     end
 end
 
@@ -327,7 +323,6 @@ function estimate_causal_effect!(g::GComputation)
     end
 
     g.β = fit!(g.learner)
-    g.fit = true
     g.causal_effect = sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)
 
     return g.causal_effect
@@ -360,7 +355,6 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
 
     estimate_effect!(DML, false)
     DML.causal_effect /= DML.folds
-    DML.fit = true
 
     return DML.causal_effect
 end
@@ -384,6 +378,7 @@ function estimate_effect!(DML::DoubleMachineLearning, cate::Bool=false)
     X_T, Y = generate_folds(reduce(hcat, (DML.X, DML.T)), DML.Y, DML.folds)
     X, T = [fl[:, 1:size(DML.X, 2)] for fl in X_T], [fl[:, size(DML.X, 2)+1] for fl in X_T]
     predictors = cate ? Vector{RegularizedExtremeLearner}(undef, DML.folds) : Nothing
+    DML.causal_effect = 0
 
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
     for fld in 1:DML.folds

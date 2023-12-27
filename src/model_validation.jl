@@ -120,7 +120,7 @@ julia> validate(g_computer)
 """
 function validate(m::NonTimeSeriesEstimator; num_treatments::Int=5, min::Float64=1.0e-6, 
     max::Float64=1.0-min)
-    if !m.fit
+    if !isdefined(m, :causal_effect) || m.causal_effect === NaN
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
