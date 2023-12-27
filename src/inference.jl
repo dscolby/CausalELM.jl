@@ -26,7 +26,7 @@ julia> summarize(m1)
 """
 function summarize(its::InterruptedTimeSeries, n::Integer=1000, mean_effect::Bool=true)
     if !isdefined(its, :Δ)
-        throw(ErrorException("call estimatecausaleffect! before calling summarize"))
+        throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
 
 
@@ -50,9 +50,9 @@ function summarize(its::InterruptedTimeSeries, n::Integer=1000, mean_effect::Boo
 end
 
 """
-    summarize(g)
+    summarize(mod, n)
 
-Return a summary from a G-Computation estimator.
+Return a summary from a CausalEstimator or Metalearner.
 
 p-values and standard errors are estimated using approximate randomization inference.
 
@@ -72,41 +72,10 @@ julia> summarize(m1)
 "Number of Neurons in Approximator" => "10", "β" => "[0.3100468253]",
 "Causal Effect: 0.00589761, "Standard Error" => 5.12900734, "p-value" => 0.479011245} 
 ```
-"""
-function summarize(g::GComputation, n::Integer=1000)
-    summary_dict = Dict()
-    nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
-        "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
-        "Number of Neurons in Approximator", "β", "Causal Effect", "Standard Error", 
-        "p-value"]
-    
-    p, stderr = quantities_of_interest(g, n)
 
-    values = [g.task, g.quantity_of_interest, g.regularized, g.activation, g.temporal, 
-        g.validation_metric, g.num_neurons, g.approximator_neurons, g.β, g.causal_effect,
-        stderr, p]
-
-    for (nicename, value) in zip(nicenames, values)
-        summary_dict[nicename] = value
-    end
-
-    return summary_dict
-end
-
-"""
-    summarize(dml, n)
-
-Return a summary from a doubly robust estimator.
-
-p-values and standard errors are estimated using approximate randomization inference.
-
-For a primer on randomization inference see: 
-    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
-
-Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoubleMachineLearning(X, X, Y, T)
+julia> m1 = RLearner(X, Y, T)
 julia> estimate_causal_effect(m1)
 [0.5804032956]
 julia> summarize(m1)
@@ -115,32 +84,7 @@ julia> summarize(m1)
 "Number of Neurons in Approximator" => "10", "Causal Effect" = 0.5804032956, 
 "Standard Error" => 2.129400324, "p-value" => 0.0008342356}
 ```
-"""
-function summarize(dml::DoubleMachineLearning, n::Integer=1000)
-    summary_dict = Dict()
-    nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
-        "Validation Metric", "Number of Neurons", "Number of Neurons in Approximator", 
-        "Causal Effect", "Standard Error", "p-value"]
 
-    p, stderr = quantities_of_interest(dml, n)
-
-    values = [dml.task, "ATE", dml.regularized, dml.activation,  dml.validation_metric, 
-        dml.num_neurons, dml.approximator_neurons, dml.causal_effect, stderr, p]
-
-    for (nicename, value) in zip(nicenames, values)
-        summary_dict[nicename] = value
-    end
-
-    return summary_dict
-end
-
-
-"""
-    summarize(m, n)
-
-Return a summary from a metalearner.
-
-Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = SLearner(X, Y, T)
@@ -163,16 +107,18 @@ julia> summarise(m1)
 "p-value" => 0.0632454855}
 ```
 """
-function summarize(m::Metalearner, n::Integer=1000)
+function summarize(mod::Union{CausalEstimator, Metalearner}, n::Integer=1000)
     summary_dict = Dict()
-    nicenames = ["Task", "Regularized", "Activation Function",  "Validation Metric", 
-        "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect", 
-        "Standard Error", "p-value"]
+    nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
+        "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
+        "Number of Neurons in Approximator", "Causal Effect", "Standard Error", 
+        "p-value"]
+    
+    p, stderr = quantities_of_interest(mod, n)
 
-    p, stderr = quantities_of_interest(m, n)
-
-    values = [m.task, m.regularized, m.activation, m.validation_metric, m.num_neurons, 
-        m.approximator_neurons, m.causal_effect, stderr, p]
+    values = [mod.task, mod.quantity_of_interest, mod.regularized, mod.activation, 
+        mod.temporal, mod.validation_metric, mod.num_neurons, mod.approximator_neurons,
+        mod.causal_effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value
@@ -180,6 +126,8 @@ function summarize(m::Metalearner, n::Integer=1000)
 
     return summary_dict
 end
+
+summarize(R::RLearner, n::Integer=1000) = summarize(R.dml, n)
 
 """
     generate_null_distribution(e, n)

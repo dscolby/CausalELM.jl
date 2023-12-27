@@ -13,8 +13,8 @@ module CausalELM
  
 export validate
 export hard_tanh, elish, fourier
-export SLearner, TLearner, XLearner
 export estimate_causal_effect!, summarize
+export SLearner, TLearner, XLearner, RLearner
 export mse, mae, accuracy, precision, recall, F1
 export InterruptedTimeSeries, GComputation, DoubleMachineLearning
 export binary_step, σ, tanh, relu, leaky_relu, swish, softmax, softplus, gelu, gaussian

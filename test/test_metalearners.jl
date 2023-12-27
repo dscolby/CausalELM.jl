@@ -24,6 +24,9 @@ estimate_causal_effect!(xlearner3)
 xlearner4 = XLearner(x, y, t, regularized=true)
 estimate_causal_effect!(xlearner4)
 
+rlearner = RLearner(x, y, t)
+estimate_causal_effect!(rlearner)
+
 @testset "S-Learners" begin
     @testset "S-Learner Structure" begin
         @test slearner1.X !== Nothing
@@ -104,6 +107,19 @@ end
         @test typeof(xlearner3.μχ₁) <: CausalELM.ExtremeLearningMachine
         @test xlearner3.fit = true
         @test xlearner4.fit = true
+    end
+end
+
+@testset "R-learning" begin
+    @testset "R-learner Structure" begin
+        @test rlearner.dml !== Nothing
+        @test rlearner.fit == true
+    end
+
+    @testset "R-learner estimation" begin
+        @test rlearner.causal_effect isa Vector
+        @test length(rlearner.causal_effect) == length(y)
+        @test eltype(rlearner.causal_effect) == Float64
     end
 end
 

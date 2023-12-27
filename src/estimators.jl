@@ -201,6 +201,10 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     iterations::Int64
     """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
     approximator_neurons::Int64
+    """This will alsways be ATE unless using DML with the weight trick for R-learning"""
+    quantity_of_interest::String
+    """This will always be false and is just exists to be accessed by summzrize methods"""
+    temporal::Bool
     """Number of neurons in the ELM used for estimating the causal effect"""
     num_neurons::Int64
     """The effect of exposure or treatment"""
@@ -239,7 +243,7 @@ julia> m2 = DoubleMachineLearning(X, Y, T; task="regression")
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, 0, 0)
+            approximator_neurons, "ATE", false, 0, 0)
     end
 end
 
@@ -384,7 +388,7 @@ function estimate_effect!(DML::DoubleMachineLearning, cate::Bool=false)
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
     for fld in 1:DML.folds
         X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
-        Y_train , Y_test= reduce(vcat, Y[1:end .!== fld]), Y[fld]
+        Y_train, Y_test = reduce(vcat, Y[1:end .!== fld]), Y[fld]
         T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
 
         Ỹ, T̃ = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test)

@@ -27,6 +27,10 @@ mutable struct SLearner <: Metalearner
     iterations::Int64
     """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
     approximator_neurons::Int64
+    """This will always be set to CATE and is only used by summarized methods"""
+    quantity_of_interest::String
+    """This will always be set to false and is only accessed by summarize methods"""
+    temporal::Bool
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
     """Extreme Learning Machine used to estimate the causal effect"""
@@ -70,7 +74,7 @@ julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, 0)
+            approximator_neurons, "CATE", false, 0)
     end
 end
 
@@ -100,6 +104,10 @@ mutable struct TLearner <: Metalearner
     iterations::Int64
     """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
     approximator_neurons::Int64
+    """This will always be CATE and is used by summarize methods"""
+    quantity_of_interest::String
+    """This will always be set to false and is only accessed by summarize methods"""
+    temporal::Bool
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
     """Extreme Learning Machine used to estimate the outcome E[Y|T=0, X]"""
@@ -143,7 +151,7 @@ julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, 0)
+            approximator_neurons, "CATE", false, 0)
     end
 end
 
@@ -173,6 +181,10 @@ mutable struct XLearner <: Metalearner
     iterations::Int64
     """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
     approximator_neurons::Int64
+    """This will always be CATE and is used by summarize methods"""
+    quantity_of_interest::String
+    """This will always be set to false and is only accessed by summarize methods"""
+    temporal::Bool
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
     """Extreme Learning Machine used for the first stage of estimation"""
@@ -224,7 +236,7 @@ julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
 
         new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, 0)
+            approximator_neurons, "CATE", false, 0)
     end
 end
 
@@ -337,6 +349,7 @@ function estimate_causal_effect!(R::RLearner)
     end
 
     R.causal_effect = estimate_effect!(R.dml, true)
+    R.dml.quantity_of_interest = "CATE"
     R.fit = true
 
     return R.causal_effect
@@ -452,8 +465,4 @@ function stage2!(x::XLearner)
     end 
 
     fit!(x.μχ₀); fit!(x.μχ₁)
-end
-
-function nonparametic_estimator(R::RLearner, t, y)
-    predictor = RegularizedExtremeLearner()
 end
