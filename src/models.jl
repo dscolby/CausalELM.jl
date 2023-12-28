@@ -1,4 +1,4 @@
-using LinearAlgebra: pinv
+using LinearAlgebra: inv, pinv, I
 
 """Abstract type that includes vanilla and L2 regularized Extreme Learning Machines"""
 abstract type ExtremeLearningMachine end
@@ -21,15 +21,12 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     __estimated::Bool       # Whether a counterfactual has been predicted
     """Random weights used in the model"""
     weights::Array{Float64}
-    """Random bias used in the model"""
-    bias::Array{Float64}
     """Estimated coefficients"""
     β::Array{Float64}
     """Output from hidden neurons"""
     H::Array{Float64}
     """Predicted counterfactual data"""
     counterfactual::Array{Float64}
-    __tol::Float64
 
 """
     ExtremeLearner(X, Y, hidden_neurons, activation)
@@ -86,8 +83,6 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     __estimated::Bool       # Whether a counterfactual has been estimated
     """Random weights used in the model"""
     weights::Array{Float64}
-    """Random bias used in the model"""
-    bias::Array{Float64}
     """Estimated coefficients"""
     β::Array{Float64}
     """L2 penalty term"""
@@ -96,7 +91,6 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     H::Array{Float64}
     """Predicted counterfactual data"""
     counterfactual::Array{Float64}
-    __tol::Float64
     
 """
     RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
@@ -153,9 +147,7 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
 function fit!(model::ExtremeLearner)
     set_weights_biases(model)
 
-    model.__tol = sqrt(eps(real(float(one(eltype(model.H))))))  # For numerical stability
-
-    model.__fit, model.β = true, @fastmath pinv(model.H, rtol=model.__tol) * model.Y
+    model.__fit, model.β = true, @fastmath model.H\model.Y
 
     return model.β
 end
@@ -182,13 +174,11 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
  """
 function fit!(model::RegularizedExtremeLearner)
     set_weights_biases(model)
-    
-    model.__tol = sqrt(eps(real(float(one(eltype(model.H))))))
+    β0 = @fastmath pinv(model.H) * model.Y
 
-    I, k = ones(Float64, size(model.H, 2), size(model.H, 2)), ridge_constant(model)   # L2
+    Id, k = Matrix(I, size(model.H, 2), size(model.H, 2)), ridge_constant(model)   # L2
 
-    model.β = @fastmath (pinv((transpose(model.H) * model.H) + ((1.0/k) * I), 
-        rtol=model.__tol) * (transpose(model.H) * model.Y))
+    model.β = @fastmath (Id-k^2*inv(transpose(model.H)*model.H + k*Id)^2)*β0
 
     model.__fit = true  # Enables running predict
 
@@ -221,7 +211,7 @@ function predict(model::ExtremeLearningMachine, X::Array)
         throw(ErrorException("run fit! before calling predict"))
     end
 
-    return @fastmath model.activation(X * model.weights .+ model.bias) * model.β
+    return @fastmath model.activation(X * model.weights) * model.β
 end
 
 """
@@ -305,11 +295,10 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
  ```
  """
 function ridge_constant(model::RegularizedExtremeLearner)
-    β0 = @fastmath pinv(model.H) * model.Y
-    σ̃  = @fastmath ((transpose(model.Y .- (model.H * β0)) * (model.Y .- (model.H * β0))) / 
-        (model.features - size(model.H)[2]))
+    β0, L, N = @fastmath pinv(model.H) * model.Y, size(model.H)[2], model.features
+    σ̃ = @fastmath ((transpose(model.Y .- (model.H*β0))*(model.Y .- (model.H*β0)))/(N-L))
 
-    return @fastmath first((model.H[2]*σ̃)/(transpose(β0)*transpose(model.H)*model.H*β0))
+    return @fastmath first((L*σ̃)/(transpose(β0)*(transpose(model.H)*model.H)*β0))
 end
 
 """
@@ -330,10 +319,10 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
  ```
  """
 function set_weights_biases(model::ExtremeLearningMachine)
-    model.weights = rand(Float64, model.features, model.hidden_neurons)
-    model.bias = rand(Float64, 1, model.hidden_neurons)
+    model.weights = rand(model.features, model.hidden_neurons)
+    model.weights = reduce(hcat, (model.weights, repeat([rand()], size(model.weights, 1))))
 
-    model.H = @fastmath model.activation((model.X * model.weights) .+ model.bias)
+    model.H = @fastmath model.activation((model.X * model.weights))
 end
 
 Base.show(io::IO, model::ExtremeLearner) = print(io, 

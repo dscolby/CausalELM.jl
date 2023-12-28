@@ -35,9 +35,18 @@ predictions4 = predict(m4, x1test)
 
 nofit = ExtremeLearner(x1, y1, 10, σ)
 
+helper_elm = RegularizedExtremeLearner(x1, y1, 5, σ)
+set_weights_biases(helper_elm)
+k = ridge_constant(helper_elm)
+
  @testset "Model Fit" begin
-    @test length(m1.β) == 10
-    @test size(m1.weights) == (2, 10)
+    @test length(m1.β) == 11
+    @test size(m1.weights) == (2, 11)
+    @test size(helper_elm.H) == (20, 6)
+ end
+
+ @testset "Regularization" begin
+    @test k isa Float64
  end
 
  @testset "Model Predictions" begin

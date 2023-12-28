@@ -324,7 +324,7 @@ function estimate_causal_effect!(R::RLearner)
             R.dml.folds, false, R.dml.iterations, R.dml.approximator_neurons)
     end
 
-    # Just estimate the causal effect using the underlying DML and use the weight trick
+    # Just estimate the causal effect using the underlying DML and the weight trick
     R.causal_effect = estimate_effect!(R.dml, true)
     R.dml.quantity_of_interest = "CATE"
 
