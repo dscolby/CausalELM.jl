@@ -1,10 +1,9 @@
 name: CI
 on:
-  push:
+  [push, pull_request]
     branches:
       - main
     tags: '*'
-  pull_request:
 concurrency:
   # Skip intermediate builds: always.
   # Cancel intermediate builds: only if it is a pull request build.
@@ -38,6 +37,7 @@ jobs:
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
+      - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v4-beta
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
