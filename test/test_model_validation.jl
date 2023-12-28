@@ -30,6 +30,10 @@ estimate_causal_effect!(count_g_computer)
 dml = DoubleMachineLearning(x, y, t)
 estimate_causal_effect!(dml)
 
+# Create double machine learning estimator without regularization
+dml_noreg = DoubleMachineLearning(x, y, t, regularized=false)
+estimate_causal_effect!(dml_noreg)
+
 # Testing the risk ratio with a nonbinary treatment variable
 nonbinary_dml = DoubleMachineLearning(x, y, rand(1:3, 100))
 estimate_causal_effect!(nonbinary_dml)
@@ -41,6 +45,14 @@ estimate_causal_effect!(nonbinary_dml_y)
 # Initialize an S-learner
 s_learner = SLearner(x, y, t)
 estimate_causal_effect!(s_learner)
+
+# Initialize a binary S-learner
+s_learner_binary = SLearner(x, y1, t1)
+estimate_causal_effect!(s_learner_binary)
+
+# Initialize a binary T-learner
+t_learner_binary = TLearner(x, y1, t1)
+estimate_causal_effect!(t_learner_binary)
 
 # Initialize a T-learner
 t_learner = TLearner(x, y, t)
@@ -193,6 +205,7 @@ end
         @test CausalELM.e_value(count_g_computer) isa Real
         @test CausalELM.e_value(g_computer) isa Real
         @test CausalELM.e_value(dml) isa Real
+        @test CausalELM.e_value(dml_noreg) isa Real
         @test CausalELM.e_value(s_learner) isa Real
         @test CausalELM.e_value(t_learner) isa Real
         @test CausalELM.e_value(x_learner) isa Real
@@ -241,7 +254,9 @@ end
 
     @testset "Exchangeability" begin
         @test CausalELM.exchangeability(s_learner) isa Real
+        @test CausalELM.exchangeability(s_learner_binary) isa Real
         @test CausalELM.exchangeability(t_learner) isa Real
+        @test CausalELM.exchangeability(t_learner_binary) isa Real
         @test CausalELM.exchangeability(x_learner) isa Real
         @test CausalELM.exchangeability(nonbinary_dml) isa Real
         @test CausalELM.exchangeability(nonbinary_dml_y) isa Real

@@ -113,10 +113,12 @@ mutable struct GComputation <: CausalEstimator
     iterations::Int64
     """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
     approximator_neurons::Int64
-    """Number of neurons in the ELM used for estimating the abnormal returns"""
+    """Number of neurons in the ELM used for estimating the causal effect"""
     num_neurons::Int64
     """The effect of exposure or treatment"""
     causal_effect::Float64
+    """The model used to predict the outcomes"""
+    learner::ExtremeLearningMachine
 
 """
 GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
@@ -302,14 +304,14 @@ function estimate_causal_effect!(g::GComputation)
     end
 
     if g.regularized
-        learner = RegularizedExtremeLearner(full_covariates, g.Y, g.num_neurons, 
+        g.learner = RegularizedExtremeLearner(full_covariates, g.Y, g.num_neurons, 
             g.activation)
     else
-        learner = ExtremeLearner(full_covariates, g.Y, g.num_neurons, g.activation)
+        g.learner = ExtremeLearner(full_covariates, g.Y, g.num_neurons, g.activation)
     end
 
-    fit!(learner)
-    g.causal_effect = sum(predict(learner, Xₜ) - predict(learner, Xᵤ))/size(Xₜ, 1)
+    fit!(g.learner)
+    g.causal_effect = sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)
 
     return g.causal_effect
 end

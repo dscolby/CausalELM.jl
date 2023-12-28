@@ -35,6 +35,8 @@ mutable struct SLearner <: Metalearner
     num_neurons::Int64
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
+    """The model used to predict the outcomes"""
+    learner::ExtremeLearningMachine
 
 """
 SLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
@@ -106,6 +108,10 @@ mutable struct TLearner <: Metalearner
     num_neurons::Int64
     """Weights learned during training"""
     causal_effect::Array{Float64}
+    """Extreme Learning Machine used for the first stage of estimation"""
+    μ₀::ExtremeLearningMachine
+    """Extreme Learning Machine used for the first stage of estimation"""
+    μ₁::ExtremeLearningMachine
 
 """
 TLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
@@ -256,14 +262,14 @@ function estimate_causal_effect!(s::SLearner)
     end
 
     if s.regularized
-        learner = RegularizedExtremeLearner(full_covariates, s.Y, s.num_neurons, 
+        s.learner = RegularizedExtremeLearner(full_covariates, s.Y, s.num_neurons, 
             s.activation)
     else
-        learner = ExtremeLearner(full_covariates, s.Y, s.num_neurons, s.activation)
+        s.learner = ExtremeLearner(full_covariates, s.Y, s.num_neurons, s.activation)
     end
 
-    fit!(learner)
-    predictionsₜ, predictionsᵪ = predict(learner, Xₜ), predict(learner, Xᵤ)
+    fit!(s.learner)
+    predictionsₜ, predictionsᵪ = predict(s.learner, Xₜ), predict(s.learner, Xᵤ)
     s.causal_effect = @fastmath vec(predictionsₜ .- predictionsᵪ)
 
     return s.causal_effect
@@ -282,15 +288,15 @@ function estimate_causal_effect!(t::TLearner)
     end
 
     if t.regularized
-        μ₀, μ₁ = RegularizedExtremeLearner(x₀, y₀, t.num_neurons, t.activation), 
-            RegularizedExtremeLearner(x₁, y₁, t.num_neurons, t.activation)
+        t.μ₀ = RegularizedExtremeLearner(x₀, y₀, t.num_neurons, t.activation) 
+        t.μ₁ = RegularizedExtremeLearner(x₁, y₁, t.num_neurons, t.activation)
     else
-        μ₀, μ₁ = ExtremeLearner(x₀, y₀, t.num_neurons, t.activation), 
-            ExtremeLearner(x₁, y₁, t.num_neurons, t.activation)
+        t.μ₀ = ExtremeLearner(x₀, y₀, t.num_neurons, t.activation) 
+        t.μ₁ = ExtremeLearner(x₁, y₁, t.num_neurons, t.activation)
     end
 
-    fit!(μ₀); fit!(μ₁)
-    predictionsₜ, predictionsᵪ = predict(μ₁, t.X), predict(μ₀, t.X)
+    fit!(t.μ₀); fit!(t.μ₁)
+    predictionsₜ, predictionsᵪ = predict(t.μ₁, t.X), predict(t.μ₀, t.X)
     t.causal_effect = @fastmath vec(predictionsₜ .- predictionsᵪ)
 
     return t.causal_effect
