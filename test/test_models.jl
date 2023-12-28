@@ -19,7 +19,7 @@ predictions1 = predict(m1, x_test)
 predict_counterfactual!(m1, x_test)
 placebo1 = placebo_test(m1)
 
-m2 = RegularizedExtremeLearner(x, y, 10, σ)
+m2 = RegularizedExtremeLearner(x, y, 2, σ)
 f2 = fit!(m2)
 predictions2 = predict(m2, x_test)
 predict_counterfactual!(m2, x_test)
