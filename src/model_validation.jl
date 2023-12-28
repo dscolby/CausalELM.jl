@@ -489,14 +489,14 @@ function risk_ratio(::Nonbinary, mod)
         # Otherwise, we convert the treatment variable to a binary variable and then 
         # dispatch based on the type of outcome variable
     else
-        original_T, binary_T = mod.t, binarize(mod.T, mean(mod.Y))
+        original_T, binary_T = mod.T, binarize(mod.T, mean(mod.Y))
         mod.T = binary_T
-        risk_ratio = risk_ratio(Binary(), mod)
+        rr = risk_ratio(Binary(), mod)
 
         # Reset to the original treatment variable
         mod.T = original_T
 
-        return risk_ratio
+        return rr
     end
 end
 
@@ -555,8 +555,9 @@ end
 
 # This approximates the risk ratio when the outcome variable is continuous
 function risk_ratio(::Binary, ::Continuous, mod)
+    type = typeof(mod)
     # We use the estimated effect if using DML because it uses linear regression
-    d = hasfield(mod, :coefficients) ? mod.causal_effect : mean(mod.Y)/sqrt(var(mod.Y))
+    d = hasfield(type, :coefficients) ? mod.causal_effect : mean(mod.Y)/sqrt(var(mod.Y))
     return @fastmath exp(0.91 * d)
 end
 

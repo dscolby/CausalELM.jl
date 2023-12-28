@@ -30,6 +30,14 @@ estimate_causal_effect!(count_g_computer)
 dml = DoubleMachineLearning(x, y, t)
 estimate_causal_effect!(dml)
 
+# Testing the risk ratio with a nonbinary treatment variable
+nonbinary_dml = DoubleMachineLearning(x, y, rand(1:3, 100))
+estimate_causal_effect!(nonbinary_dml)
+
+# Testing the risk ratio with a nonbinary treatment variable and nonbinary outcome
+nonbinary_dml_y = DoubleMachineLearning(x, rand(100), rand(1:3, 100))
+estimate_causal_effect!(nonbinary_dml_y)
+
 # Initialize an S-learner
 s_learner = SLearner(x, y, t)
 estimate_causal_effect!(s_learner)
@@ -67,6 +75,19 @@ data = generate_synthetic_data()
 
 # Find the best number of breaks using the Jenks Natural Breaks algorithm
 num_breaks = length(unique(CausalELM.best_splits(data, 6)))
+
+@testset "Variable Types and Conversion" begin
+    @testset "Variable Types" begin
+        @test CausalELM.var_type([0, 1, 0, 1, 1]) isa CausalELM.Binary
+        @test CausalELM.var_type([1, 2, 3]) isa CausalELM.Count
+        @test CausalELM.var_type([1.1, 2.2, 3]) isa CausalELM.Continuous
+    end
+
+    @testset "Binarization" begin
+        @test CausalELM.binarize([1, 0], 2) == [1, 0]
+        @test CausalELM.binarize([1, 2, 3, 4], 2) == [0, 0, 1, 1]
+    end
+end
 
 @testset "p-values" begin
     @testset "p-value Argument Validation" begin
@@ -222,6 +243,8 @@ end
         @test CausalELM.exchangeability(s_learner) isa Real
         @test CausalELM.exchangeability(t_learner) isa Real
         @test CausalELM.exchangeability(x_learner) isa Real
+        @test CausalELM.exchangeability(nonbinary_dml) isa Real
+        @test CausalELM.exchangeability(nonbinary_dml_y) isa Real
     end
 
     @testset "Positivity" begin
