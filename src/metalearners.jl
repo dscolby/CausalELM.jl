@@ -244,7 +244,6 @@ end
 
 function estimate_causal_effect!(s::SLearner)
     full_covariates = hcat(s.X, s.T)
-
     Xₜ, Xᵤ= hcat(s.X, ones(size(s.T, 1))), hcat(s.X, zeros(size(s.T, 1)))
 
     # We will not find the best number of neurons after we have already estimated the causal

@@ -59,3 +59,7 @@ jobs:
             using CausalELM
             DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true)
             doctest(CausalELM)'
+- name: Upload coverage reports to codecov
+- uses: codecov/codecov-action@v3
+- env: 
+    CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
