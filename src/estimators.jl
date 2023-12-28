@@ -1,5 +1,5 @@
 """Abstract type for GComputation and DoubleMachineLearning"""
-abstract type  CausalEstimator <: NonTimeSeriesEstimator end
+abstract type  CausalEstimator end
 
 """Container for the results of an interrupted time series analysis"""
 mutable struct InterruptedTimeSeries

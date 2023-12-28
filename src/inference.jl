@@ -106,7 +106,7 @@ julia> summarise(m1)
 "p-value" => 0.0632454855}
 ```
 """
-function summarize(mod::NonTimeSeriesEstimator, n::Integer=1000)
+function summarize(mod, n::Integer=1000)
     if !isdefined(mod, :causal_effect) || mod.causal_effect === NaN
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
@@ -158,7 +158,7 @@ julia> generate_null_distribution(g_computer, 500)
 23.52056245175936, 24.739658523175912, 25.30523686137909, 28.07474553316176]
 ```
 """
-function generate_null_distribution(mod::NonTimeSeriesEstimator, n::Integer=1000)
+function generate_null_distribution(mod, n::Integer=1000)
     local m = deepcopy(mod)
     nobs = size(m.T, 1)
     results = Vector{Float64}(undef, n)
@@ -249,7 +249,7 @@ julia> quantities_of_interest(g_computer, 1000)
 (0.114, 6.953133617011371)
 ```
 """
-function quantities_of_interest(mod::NonTimeSeriesEstimator, n::Integer=1000)
+function quantities_of_interest(mod, n::Integer=1000)
     local null_dist = generate_null_distribution(mod, n)
     local avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
 

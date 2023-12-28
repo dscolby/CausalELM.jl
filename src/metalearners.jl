@@ -1,5 +1,5 @@
 """Abstract type for metalearners"""
-abstract type Metalearner <: NonTimeSeriesEstimator end
+abstract type Metalearner end
 
 """S-Learner for CATE estimation."""
 mutable struct SLearner <: Metalearner
