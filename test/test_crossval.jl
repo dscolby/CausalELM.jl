@@ -9,6 +9,7 @@ xfolds_ts, yfolds_ts = generate_temporal_folds(float.(hcat([1:10;], 11:20)),
     [1.0:1.0:10.0;], 5)
 
 @testset "Recode" begin
+    @test recode([1.0, 2.0, 3.0, 4.0]) == [1, 2, 3, 4]
     @test recode([-0.7, 0.2, 1.1]) == [1, 2, 3]
     @test recode([0.1, 0.2, 0.3]) == [1, 1, 1]
     @test recode([1.1, 1.51, 1.8]) == [1, 2, 2]

@@ -51,6 +51,10 @@ p7, stderr7 = CausalELM.quantities_of_interest(xlearner)
 summary7 = summarize(xlearner)
 summary8 = summarise(xlearner)
 
+rlearner = RLearner(x, y, t)
+estimate_causal_effect!(rlearner)
+summary9 = summarize(rlearner)
+
 @testset "Generating Null Distributions" begin
     @test size(g_inference, 1) === 1000
     @test g_inference isa Array{Float64}
@@ -127,6 +131,17 @@ end
     for (k, v) in summary8
         @test !isnothing(v)
     end
+
+    # R-Learners
+    for (k, v) in summary9
+        @test !isnothing(v)
+    end
+end
+
+@testset "Error Handling" begin
+    @test_throws ErrorException summarize(InterruptedTimeSeries(x₀, y₀, x₁, y₁), 10)
+    @test_throws ErrorException summarize(GComputation(x, y, t))
+    @test_throws ErrorException summarize(TLearner(x, y, t))
 end
 
 @test CausalELM.mean([1, 2, 3]) == 2

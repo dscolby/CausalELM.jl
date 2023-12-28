@@ -29,7 +29,6 @@ function summarize(its::InterruptedTimeSeries, n::Integer=1000, mean_effect::Boo
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
 
-
     effect = ifelse(mean_effect, mean(its.Δ), sum(its.Δ))
 
     p, stderr = quantities_of_interest(its, n, mean_effect)
@@ -108,6 +107,10 @@ julia> summarise(m1)
 ```
 """
 function summarize(mod::NonTimeSeriesEstimator, n::Integer=1000)
+    if !isdefined(mod, :causal_effect) || mod.causal_effect === NaN
+        throw(ErrorException("call estimate_causal_effect! before calling summarize"))
+    end
+
     summary_dict = Dict()
     nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
         "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 

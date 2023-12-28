@@ -11,12 +11,19 @@ estimate_causal_effect!(its)
 its_no_ar = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its_no_ar)
 
+# Testing without regularization
+its_noreg = InterruptedTimeSeries(x₀, y₀, x₁, y₁, regularized=false)
+estimate_causal_effect!(its_noreg)
+
 x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 1:100])
 g_computer = GComputation(x, y, t, temporal=false)
 estimate_causal_effect!(g_computer)
 
 gcomputer_att = GComputation(x, y, t, quantity_of_interest="ATT", temporal=false)
 estimate_causal_effect!(gcomputer_att)
+
+gcomputer_noreg = GComputation(x, y, t, regularized=false)
+estimate_causal_effect!(gcomputer_noreg)
 
 # Mak sure the data isn't shuffled
 g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), rand(10), 
@@ -67,6 +74,9 @@ cate_predictors = CausalELM.estimate_effect!(cate_estimator, true)
 
         # Without autocorrelation
         @test isa(its_no_ar.Δ, Array)
+
+        # Without regularization
+        @test isa(its_noreg.Δ, Array)
     end
 end
 
@@ -85,6 +95,9 @@ end
 
     @testset "G-Computation Estimation" begin
         @test isa(g_computer.causal_effect, Float64)
+
+        # Estimation without regularization
+        @test isa(gcomputer_noreg.causal_effect, Float64)
 
         # Check that the estimats for ATE and ATT are different
         @test g_computer.causal_effect !== gcomputer_att.causal_effect

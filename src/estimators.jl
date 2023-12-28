@@ -258,7 +258,7 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     if its.regularized
         learner = RegularizedExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
     else
-        its.learner = ExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
+        learner = ExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
     end
 
     fit!(learner)

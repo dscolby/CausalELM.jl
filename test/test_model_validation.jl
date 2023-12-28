@@ -42,6 +42,14 @@ estimate_causal_effect!(nonbinary_dml)
 nonbinary_dml_y = DoubleMachineLearning(x, rand(100), rand(1:3, 100))
 estimate_causal_effect!(nonbinary_dml_y)
 
+# Testing the risk ratio with a binary treatment variable and binary outcome
+binary_dml_y = DoubleMachineLearning(x, y1, t1)
+estimate_causal_effect!(binary_dml_y)
+
+# Testing the risk ratio with a binary treatment variable, binary outcome, and no L2
+binary_dml_y_noreg = DoubleMachineLearning(x, y1, t1)
+estimate_causal_effect!(binary_dml_y_noreg)
+
 # Initialize an S-learner
 s_learner = SLearner(x, y, t)
 estimate_causal_effect!(s_learner)
@@ -260,6 +268,8 @@ end
         @test CausalELM.exchangeability(x_learner) isa Real
         @test CausalELM.exchangeability(nonbinary_dml) isa Real
         @test CausalELM.exchangeability(nonbinary_dml_y) isa Real
+        @test CausalELM.exchangeability(binary_dml_y) isa Real
+        @test CausalELM.exchangeability(binary_dml_y_noreg) isa Real
     end
 
     @testset "Positivity" begin

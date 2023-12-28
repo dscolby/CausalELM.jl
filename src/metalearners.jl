@@ -237,10 +237,6 @@ mutable struct RLearner <: Metalearner
         iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
-
         new(DoubleMachineLearning(X, Y, T; task=task, regularized=true, 
             activation=activation, validation_metric=validation_metric, 
             min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
@@ -248,6 +244,29 @@ mutable struct RLearner <: Metalearner
     end
 end
 
+"""
+    estimate_causal_effect!(s)
+
+Estimate the CATE using an S-learner.
+
+For an overview of S-learning see:
+
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m4 = SLearner(X, Y, T)
+julia> estimate_causal_effect!(m4)
+[0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
+0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 0.20729633391630703, 
+0.20729633391630697, 0.20729633391630697  …  0.20729633391630703, 0.20729633391630697, 
+0.20729633391630692, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697, 
+0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697]
+```
+"""
 function estimate_causal_effect!(s::SLearner)
     full_covariates = hcat(s.X, s.T)
     Xₜ, Xᵤ= hcat(s.X, ones(size(s.T, 1))), hcat(s.X, zeros(size(s.T, 1)))
@@ -275,6 +294,29 @@ function estimate_causal_effect!(s::SLearner)
     return s.causal_effect
 end
 
+"""
+    estimate_causal_effect!(t)
+
+Estimate the CATE using an T-learner.
+
+For an overview of T-learning see:
+
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m5 = TLearner(X, Y, T)
+julia> estimatecausaleffect!(m5)
+[0.0493951571746305, 0.049395157174630444, 0.0493951571746305, 0.049395157174630444, 
+0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 
+0.049395157174630444, 0.04939515717463061  …  0.0493951571746305, 0.04939515717463039, 
+0.0493951571746305, 0.04939515717463039, 0.0493951571746305, 0.04939515717463039, 
+0.04939515717463039, 0.049395157174630444, 0.04939515717463039, 0.049395157174630444]
+```
+"""
 function estimate_causal_effect!(t::TLearner)
     x₀, x₁, y₀, y₁ = t.X[t.T .== 0,:], t.X[t.T .== 1,:], t.Y[t.T .== 0], t.Y[t.T .== 1]
 
@@ -302,6 +344,30 @@ function estimate_causal_effect!(t::TLearner)
     return t.causal_effect
 end
 
+"""
+estimate_causal_effect!(x)
+
+Estimate the CATE using an X-learner.
+
+For an overview of X-learning see:
+
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = XLearner(X, Y, T)
+julia> estimatecausaleffect!(m1)
+[-0.025012644892878473, -0.024634294305967294, -0.022144246680543364, -0.023983138957276127, 
+-0.024756239357838557, -0.019409519377053822, -0.02312807640357356, -0.016967113188439076, 
+-0.020188871831409317, -0.02546526148141366  …  -0.019811641136866287, 
+-0.020780821058711863, -0.013588359417922776, -0.020438648396328824, -0.016169487825519843, 
+-0.024031422484491572, -0.01884713946778991, -0.021163590874553318, -0.014607310062509895, 
+-0.022449034332142046]
+```
+"""
 function estimate_causal_effect!(x::XLearner)
     # We will not find the best number of neurons after we have already estimated the causal
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
@@ -321,6 +387,30 @@ function estimate_causal_effect!(x::XLearner)
     return x.causal_effect
 end
 
+"""
+estimate_causal_effect!(r)
+
+Estimate the CATE using an R-learner.
+
+For an overview of R-learning see:
+
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = RLearner(X, Y, T)
+julia> estimatecausaleffect!(m1)
+[-0.025012644892878473, -0.024634294305967294, -0.022144246680543364, -0.023983138957276127, 
+-0.024756239357838557, -0.019409519377053822, -0.02312807640357356, -0.016967113188439076, 
+-0.020188871831409317, -0.02546526148141366  …  -0.019811641136866287, 
+-0.020780821058711863, -0.013588359417922776, -0.020438648396328824, -0.016169487825519843, 
+-0.024031422484491572, -0.01884713946778991, -0.021163590874553318, -0.014607310062509895, 
+-0.022449034332142046]
+```
+"""
 function estimate_causal_effect!(R::RLearner)
     # Uses the same number of neurons for all phases of estimation
     if R.dml.num_neurons === 0
@@ -335,54 +425,6 @@ function estimate_causal_effect!(R::RLearner)
 
     return R.causal_effect
 end
-
-"""
-    estimate_causal_effect!(m)
-
-Estimate the CATE using a metalearner.
-
-For an overview of metalearning see:
-
-    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
-    national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-Examples
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m4 = SLearner(X, Y, T)
-julia> estimate_causal_effect!(m4)
-[0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
-0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 0.20729633391630703, 
-0.20729633391630697, 0.20729633391630697  …  0.20729633391630703, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697]
-```
-
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m5 = TLearner(X, Y, T)
-julia> estimatecausaleffect!(m5)
-[0.0493951571746305, 0.049395157174630444, 0.0493951571746305, 0.049395157174630444, 
-0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 
-0.049395157174630444, 0.04939515717463061  …  0.0493951571746305, 0.04939515717463039, 
-0.0493951571746305, 0.04939515717463039, 0.0493951571746305, 0.04939515717463039, 
-0.04939515717463039, 0.049395157174630444, 0.04939515717463039, 0.049395157174630444]
-```
-
-```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = XLearner(X, Y, T)
-julia> estimatecausaleffect!(m1)
-[-0.025012644892878473, -0.024634294305967294, -0.022144246680543364, -0.023983138957276127, 
--0.024756239357838557, -0.019409519377053822, -0.02312807640357356, -0.016967113188439076, 
--0.020188871831409317, -0.02546526148141366  …  -0.019811641136866287, 
--0.020780821058711863, -0.013588359417922776, -0.020438648396328824, -0.016169487825519843, 
--0.024031422484491572, -0.01884713946778991, -0.021163590874553318, -0.014607310062509895, 
--0.022449034332142046]
-```
-"""
-estimate_causal_effect!(m::Metalearner) = estimate_causal_effect!(m)
 
 """
 stage1!(x)
