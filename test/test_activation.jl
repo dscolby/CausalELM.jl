@@ -69,9 +69,10 @@ end
 end
 
 @testset "softmax Activation" begin
-    @test softmax(1.0) == 2.718281828459045
-    @test softmax(-1.0) == -0.3678794411714423
-    @test softmax([1.0, -1.0]) == [2.718281828459045, -0.3678794411714423]
+    @test softmax(1.0) == 1.0
+    @test softmax(-1.0) == 1.0
+    @test sum(softmax([1.0, -0.5])) == 1.0
+    @test sum(softmax([1.0, 0])) == 1.0
 end
 
 @testset "softplus Activation" begin

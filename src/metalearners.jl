@@ -260,20 +260,21 @@ Examples
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m4 = SLearner(X, Y, T)
 julia> estimate_causal_effect!(m4)
-[0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
-0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 0.20729633391630703, 
-0.20729633391630697, 0.20729633391630697  …  0.20729633391630703, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697]
+100-element Vector{Float64}
+ 0.20729633391630697
+ 0.20729633391630697
+ 0.20729633391630692
+ ⋮
+ 0.20729633391630697
+ 0.20729633391630697
+ 0.20729633391630697
 ```
 """
 function estimate_causal_effect!(s::SLearner)
     full_covariates = hcat(s.X, s.T)
     Xₜ, Xᵤ= hcat(s.X, ones(size(s.T, 1))), hcat(s.X, zeros(size(s.T, 1)))
 
-    # We will not find the best number of neurons after we have already estimated the causal
-    # effect and are getting p-values, confidence intervals, or standard errors. We will use
-    # the same number that was found when calling this method.
+    # Only search for the best number of neurons once and use the same number for inference
     if s.num_neurons === 0
         s.num_neurons = best_size(full_covariates, s.Y, s.validation_metric, s.task, 
             s.activation, s.min_neurons, s.max_neurons, s.regularized, s.folds, false,
@@ -309,20 +310,21 @@ Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m5 = TLearner(X, Y, T)
-julia> estimatecausaleffect!(m5)
-[0.0493951571746305, 0.049395157174630444, 0.0493951571746305, 0.049395157174630444, 
-0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 0.04939515717463039, 
-0.049395157174630444, 0.04939515717463061  …  0.0493951571746305, 0.04939515717463039, 
-0.0493951571746305, 0.04939515717463039, 0.0493951571746305, 0.04939515717463039, 
-0.04939515717463039, 0.049395157174630444, 0.04939515717463039, 0.049395157174630444]
+julia> estimate_causal_effect!(m5)
+100-element Vector{Float64}
+ 0.0493951571746305
+ 0.049395157174630444
+ 0.0493951571746305
+ ⋮ 
+ 0.049395157174630444
+ 0.04939515717463039
+ 0.049395157174630444
 ```
 """
 function estimate_causal_effect!(t::TLearner)
     x₀, x₁, y₀, y₁ = t.X[t.T .== 0,:], t.X[t.T .== 1,:], t.Y[t.T .== 0], t.Y[t.T .== 1]
 
-    # We will not find the best number of neurons after we have already estimated the causal
-    # effect and are getting p-values, confidence intervals, or standard errors. We will use
-    # the same number that was found when calling this method.
+    # Only search for the best number of neurons once and use the same number for inference
     if t.num_neurons === 0
         t.num_neurons = best_size(t.X, t.Y, t.validation_metric, t.task, t.activation, 
             t.min_neurons, t.max_neurons, t.regularized, t.folds, false, t.iterations, 
@@ -359,19 +361,18 @@ Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = XLearner(X, Y, T)
-julia> estimatecausaleffect!(m1)
-[-0.025012644892878473, -0.024634294305967294, -0.022144246680543364, -0.023983138957276127, 
--0.024756239357838557, -0.019409519377053822, -0.02312807640357356, -0.016967113188439076, 
--0.020188871831409317, -0.02546526148141366  …  -0.019811641136866287, 
--0.020780821058711863, -0.013588359417922776, -0.020438648396328824, -0.016169487825519843, 
--0.024031422484491572, -0.01884713946778991, -0.021163590874553318, -0.014607310062509895, 
--0.022449034332142046]
+julia> estimate_causal_effect!(m1)
+-0.025012644892878473
+-0.024634294305967294
+-0.022144246680543364
+⋮ 
+-0.021163590874553318
+-0.014607310062509895
+-0.022449034332142046
 ```
 """
 function estimate_causal_effect!(x::XLearner)
-    # We will not find the best number of neurons after we have already estimated the causal
-    # effect and are getting p-values, confidence intervals, or standard errors. We will use
-    # the same number that was found when calling this method.
+    # Only search for the best number of neurons once and use the same number for inference
     if x.num_neurons === 0
         x.num_neurons = best_size(x.X, x.Y, x.validation_metric, x.task, x.activation, 
             x.min_neurons, x.max_neurons, x.regularized, x.folds, false, x.iterations, 
@@ -402,13 +403,14 @@ Examples
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = RLearner(X, Y, T)
-julia> estimatecausaleffect!(m1)
-[-0.025012644892878473, -0.024634294305967294, -0.022144246680543364, -0.023983138957276127, 
--0.024756239357838557, -0.019409519377053822, -0.02312807640357356, -0.016967113188439076, 
--0.020188871831409317, -0.02546526148141366  …  -0.019811641136866287, 
--0.020780821058711863, -0.013588359417922776, -0.020438648396328824, -0.016169487825519843, 
--0.024031422484491572, -0.01884713946778991, -0.021163590874553318, -0.014607310062509895, 
--0.022449034332142046]
+julia> estimate_causal_effect!(m1)
+ -0.025012644892878473
+ -0.024634294305967294
+ -0.022144246680543364
+ ⋮
+ -0.021163590874553318
+ -0.014607310062509895 
+-0.022449034332142046
 ```
 """
 function estimate_causal_effect!(R::RLearner)
@@ -472,16 +474,14 @@ julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = XLearner(X, Y, T)
 julia> stage1!(m1)
 julia> stage2!(m1)
-([0.6579129842054047, 0.7644471766429705, 0.5462780002052421, 0.3532457241687176, 
-0.5285202160177137, 0.6700637463326441, 0.7396669577462894, 0.19575273123932924, 
-0.19090472359968091, 0.816401557016116  …  0.18732867917588836, 0.014605992930188605, 
-0.8767780635957382, 0.7703598462892363, 0.304425208945448, 0.7424001864151887, 
-0.300635582310234, 0.7559907369824916, 0.8221711606659099, 0.17192370608856988], 
-[0.5428608390478198, 0.8612643542118226, 0.5107814429638895, 0.18978928137486417, 
-0.3075968091812413, 0.32970316141529354, 0.9008627764809055, 0.8658168542711414, 
-0.24633419551012337, 0.07459024070407072  …  0.5922447815994394, 0.1460543738442427, 
-0.8790479230019441, 0.03356517743258902, 0.648803884856812, 0.09028229529599152, 
-0.29810643643033863, 0.8755515354984005, 0.947588000142362, 0.29294343704001025])
+100-element Vector{Float64}
+ 0.6579129842054047
+ 0.7644471766429705
+ 0.5462780002052421
+ ⋮
+ 0.8755515354984005
+ 0.947588000142362
+ 0.29294343704001025
 ```
 """
 function stage2!(x::XLearner)

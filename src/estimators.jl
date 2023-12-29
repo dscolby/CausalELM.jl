@@ -242,7 +242,7 @@ Examples
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimate_causal_effect!(m1)
-0.25714308
+ 0.25714308
 ```
 """
 function estimate_causal_effect!(its::InterruptedTimeSeries)
@@ -283,11 +283,11 @@ Examples
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m2 = GComputation(X, Y, T)
 julia> estimate_causal_effect!(m2)
-0.31067439
+ 0.31067439
 ```
 """
 function estimate_causal_effect!(g::GComputation)
-    full_covariates = hcat(g.X, g.T)
+    covariates = hcat(g.X, g.T)
 
     if g.quantity_of_interest ∈ ("ITT", "ATE")
         Xₜ, Xᵤ= hcat(g.X, ones(size(g.T, 1))), hcat(g.X, zeros(size(g.T, 1)))
@@ -295,24 +295,20 @@ function estimate_causal_effect!(g::GComputation)
         Xₜ, Xᵤ = hcat(g.X, g.T), hcat(g.X, zeros(size(g.Y, 1)))
     end
 
-    # This makes sure we don't search for the best number of neurons after we have already 
-    # found it
-    if g.num_neurons === 0
-        g.num_neurons = best_size(Array(full_covariates), g.Y, g.validation_metric, g.task, 
+    if g.num_neurons === 0  # Don't search for the best number of neurons multiple times
+        g.num_neurons = best_size(Array(covariates), g.Y, g.validation_metric, g.task, 
             g.activation, g.min_neurons, g.max_neurons, g.regularized, g.folds, g.temporal, 
             g.iterations, g.approximator_neurons)
     end
 
     if g.regularized
-        g.learner = RegularizedExtremeLearner(full_covariates, g.Y, g.num_neurons, 
-            g.activation)
+        g.learner = RegularizedExtremeLearner(covariates, g.Y, g.num_neurons, g.activation)
     else
-        g.learner = ExtremeLearner(full_covariates, g.Y, g.num_neurons, g.activation)
+        g.learner = ExtremeLearner(covariates, g.Y, g.num_neurons, g.activation)
     end
 
     fit!(g.learner)
     g.causal_effect = sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)
-
     return g.causal_effect
 end
 
@@ -330,7 +326,7 @@ Examples
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m3 = DoubleMachineLearning(X, Y, T)
 julia> estimate_causal_effect!(m3)
-0.31067439
+ 0.31067439
 ```
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
@@ -359,7 +355,7 @@ Examples
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = DoubleMachineLearning(X, Y, T)
 julia> estimate_effect!(m1)
-0.31067439
+ 0.31067439
 ```
 """
 function estimate_effect!(DML::DoubleMachineLearning, cate::Bool=false)
@@ -403,16 +399,14 @@ julia> y_train, y_test = Y[1:80], Y[81:end]
 julia> t_train, t_test = T[1:80], T[81:100]
 julia> m1 = DoubleMachineLearning(X, Y, T)
 julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
-([0.6944714802199426, 0.6102318624294397, 0.9563033347529682, 0.3672928045676611, 
-0.798979284356504, 0.75463657953566, 0.2593076385796709, 0.02964653792661509, 
-0.8300787769289568, 0.06541839362513935, 0.8210482663602617, 0.18740366794105812, 
-0.6682105331259032, 0.29792071635654704, 0.5989347841849673, 0.648461419229496, 
-0.1743173089883865, 0.5714828789021472, 0.6095303243951894], [0.14931956185251938, 
-0.8566422696735215, 0.01480754659124739, 0.4536976276165088, 0.04525833030293913, 
-0.6551212472828767, 0.017278726777209763, 0.7741964986063957, 0.5007289194826018, 
-0.9708632727199884, 0.6257561584014957, 0.6771520489771624, 0.2602040355357872, 
-0.018736399220500966, 0.1743485146750896, 0.5449085472043922, 0.14016601301278353, 
-0.2217194742841072, 0.199372555924635])
+100-element Vector{Float64}
+ 0.6944714802199426
+ 0.6102318624294397
+ 0.9563033347529682
+ ⋮
+ 0.14016601301278353, 
+ 0.2217194742841072
+ 0.199372555924635
 ```
 """
 function predict_residuals(DML::DoubleMachineLearning, x_train::Array{<:Real}, 
@@ -441,9 +435,9 @@ Examples
 ```julia-repl
 julia> moving_average([1, 2, 3])
 3-element Vector{Float64}
-1.0
-1.5
-2.0
+ 1.0
+ 1.5
+ 2.0
 ```
 """
 function moving_average(g::Vector{Float64})

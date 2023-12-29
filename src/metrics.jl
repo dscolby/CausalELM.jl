@@ -8,9 +8,9 @@ See also [`mae`](@ref).
 Examples
 ```julia-repl
 julia> mse([0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
-0
+ 0.0
 julia> mse([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
-4
+ 4.0
 ```
 """
 function mse(y::Vector{<:Real}, ŷ::Vector{<:Real}) 
@@ -31,9 +31,9 @@ See also [`mse`](@ref).
 Examples
 ```julia-repl
 julia> mae([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
-2
+ 2.0
 julia> mae([1.0, 1.0, 1.0], [2.0, 2.0, 2.0])
-1
+ 1.0
 ```
 """
 function mae(y::Vector{Float64}, ŷ::Vector{Float64}) 
@@ -52,9 +52,9 @@ Calculate the accuracy for a classification task
 Examples
 ```julia-repl
 julia> accuracy([1, 1, 1, 1], [0, 1, 1, 0])
-0.5
+ 0.5
 julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
-0.25
+ 0.25
 ```
 """
 function accuracy(y::Vector{Float64}, ŷ::Vector{Float64})
@@ -76,9 +76,9 @@ See also [`recall`](@ref).
 Examples
 ```julia-repl
 julia> precision([0, 1, 0, 0], [0, 1, 1, 0])
-0.5
+ 0.5
 julia> precision([0, 1, 0, 0], [0, 1, 0, 0])
-1
+ 1.0
 ```
 """
 function Base.precision(y::Vector{Int64}, ŷ::Vector{Int64})
@@ -114,9 +114,9 @@ See also [`precision`](@ref).
 Examples
 ```julia-repl
 julia> recall([1, 2, 1, 3, 0], [2, 2, 2, 3, 1])
-0.5
+ 0.5
 julia> recall([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
-1
+ 1.0
 ```
 """
 function recall(y::Vector{Int64}, ŷ::Vector{Int64})
@@ -148,9 +148,9 @@ Calculate the F1 score for a classification task
 Examples
 ```julia-repl
 julia> F1([1, 2, 1, 3, 0], [2, 2, 2, 3, 1])
-0.4
+ 0.4
 julia> F1([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
-0.47058823529411764
+ 0.47058823529411764
 ```
 """
 function F1(y::Vector{Int64}, ŷ::Vector{Int64})

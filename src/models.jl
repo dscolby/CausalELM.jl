@@ -50,16 +50,16 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  0.0 1.0
  0.0 0.0
  1.0 0.0
- julia> y = [0.0, 1.0, 0.0, 1.0]
+julia> y = [0.0, 1.0, 0.0, 1.0]
  4-element Vector{Int64}:
  0.0
  1.0
  0.0
  1.0
- julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden neurons
- ```
- """
+julia> m1 = ExtremeLearner(x, y, 10, σ)
+Extreme Learning Machine with 10 hidden neurons
+```
+"""
     function ExtremeLearner(X, Y, hidden_neurons, activation)
         new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end
@@ -110,16 +110,16 @@ julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
  0.0 1.0
  0.0 0.0
  1.0 0.0
- julia> y = [0.0, 1.0, 0.0, 1.0]
- 4-element Vector{Int64}:
+julia> y = [0.0, 1.0, 0.0, 1.0]
+4-element Vector{Int64}:
  0.0
  1.0
  0.0
  1.0
- julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
- Regularized Extreme Learning Machine with 10 hidden neurons
- ```
- """
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+Regularized Extreme Learning Machine with 10 hidden neurons
+```
+"""
     function RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
         new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end
@@ -139,11 +139,16 @@ Examples
 julia> m1 = ExtremeLearner(x, y, 10, σ)
  Extreme Learning Machine with 10 hidden neurons
  julia> f1 = fit!(m1)
- [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
- -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
- -2.4741301876094655, 40.642730531608635, -11.058942121275233]
- ```
- """
+ 10-element Vector{Float64}
+ -4.403356409043448
+ -5.577616954029608
+ -2.1732800642523595
+ ⋮
+ -2.4741301876094655
+ 40.642730531608635
+ -11.058942121275233
+```
+"""
 function fit!(model::ExtremeLearner)
     set_weights_biases(model)
 
@@ -165,13 +170,18 @@ For more details see:
 Examples
 ```julia-repl
 julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
- Regularized Extreme Learning Machine with 10 hidden neurons
- julia> f1 = fit!(m1)
- [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
- -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
- -2.4741301876094655, 40.642730531608635, -11.058942121275233]
- ```
- """
+Regularized Extreme Learning Machine with 10 hidden neurons
+julia> f1 = fit!(m1)
+10-element Vector{Float64}
+ -4.403356409043448
+ -5.577616954029608
+ -2.1732800642523595
+ ⋮
+ -2.4741301876094655
+ 40.642730531608635
+ -11.058942121275233
+```
+"""
 function fit!(model::RegularizedExtremeLearner)
     set_weights_biases(model)
     β0 = @fastmath pinv(model.H) * model.Y
@@ -197,15 +207,24 @@ For more details see:
 Examples
 ```julia-repl
 julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden neurons
- julia> f1 = fit(m1, sigmoid)
- [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
- -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
- -2.4741301876094655, 40.642730531608635, -11.058942121275233]
- julia> predict(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
- [9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978]
- ```
- """
+Extreme Learning Machine with 10 hidden neurons
+julia> f1 = fit(m1, sigmoid)
+10-element Vector{Float64}
+ -4.403356409043448
+ -5.577616954029608
+ -2.1732800642523595
+ ⋮
+ -2.4741301876094655
+ 40.642730531608635
+ -11.058942121275233
+julia> predict(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+4-element Vector{Float64}
+ 9.811656638113011e-16
+ 0.9999999999999962
+ -9.020553785284482e-17
+ 0.9999999999999978
+```
+"""
 function predict(model::ExtremeLearningMachine, X::Array) 
     if !model.__fit
         throw(ErrorException("run fit! before calling predict"))
@@ -229,13 +248,22 @@ Examples
 julia> m1 = ExtremeLearner(x, y, 10, σ)
  Extreme Learning Machine with 10 hidden neurons
  julia> f1 = fit(m1, sigmoid)
- [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
- -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
- -2.4741301876094655, 40.642730531608635, -11.058942121275233]
- julia> predictcounterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
- [9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978]
- ```
- """
+ 10-element Vector{Float64}
+ -4.403356409043448
+ -5.577616954029608
+ -2.1732800642523595
+ ⋮
+ -2.4741301876094655
+ 40.642730531608635
+ -11.058942121275233
+julia> predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+4-element Vector{Float64}
+ 9.811656638113011e-16
+ 0.9999999999999962
+ -9.020553785284482e-17
+ 0.9999999999999978
+```
+"""
 function predict_counterfactual!(model::ExtremeLearningMachine, X::Array)
     model.counterfactual, model.__estimated = predict(model, X), true
     
@@ -256,18 +284,27 @@ returns the predictions but does not test for statistical significance.
 Examples
 ```julia-repl
 julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden neurons
- julia> f1 = fit(m1, sigmoid)
- [-4.403356409043448, -5.577616954029608, -2.1732800642523595, 0.9669137012255704, 
- -3.6474913410560013, -4.206228346376102, -7.575391282978456, 4.528774205936467, 
- -2.4741301876094655, 40.642730531608635, -11.058942121275233]
- julia> predictcounterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
- [9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978]
+Extreme Learning Machine with 10 hidden neurons
+julia> f1 = fit(m1, sigmoid)
+10-element Vector{Float64}
+ -4.403356409043448
+ -5.577616954029608
+ -2.1732800642523595
+ ⋮
+ -2.4741301876094655
+ 40.642730531608635
+ -11.058942121275233
+julia> predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+4-element Vector{Float64}
+ 9.811656638113011e-16
+ 0.9999999999999962
+ -9.020553785284482e-17
+ 0.9999999999999978
  julia> placebo_test(m1)
  ([9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978],
  [0.5, 0.4, 0.3, 0.2])
- ```
- """
+```
+"""
 function placebo_test(model::ExtremeLearningMachine)
     m = "Use predict_counterfactual! to estimate a counterfactual before using placebo_test"
     if !model.__estimated
@@ -289,11 +326,11 @@ For more information see:
 Examples
 ```julia-repl
 julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden neurons
- julia> ridge_constant(m1)
+Extreme Learning Machine with 10 hidden neurons
+julia> ridge_constant(m1)
  0.26789338524662887
- ```
- """
+```
+"""
 function ridge_constant(model::RegularizedExtremeLearner)
     β0, L, N = @fastmath pinv(model.H) * model.Y, size(model.H)[2], model.features
     σ̃ = @fastmath ((transpose(model.Y .- (model.H*β0))*(model.Y .- (model.H*β0)))/(N-L))
@@ -314,10 +351,10 @@ For details see;
 Examples
 ```julia-repl
 julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden neurons
- julia> set_weights_biases(m1)
- ```
- """
+Extreme Learning Machine with 10 hidden neurons
+julia> set_weights_biases(m1)
+```
+"""
 function set_weights_biases(model::ExtremeLearningMachine)
     model.weights = rand(model.features, model.hidden_neurons)
     model.weights = reduce(hcat, (model.weights, repeat([rand()], size(model.weights, 1))))

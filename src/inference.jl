@@ -15,13 +15,14 @@ Examples
 ```julia-repl
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-julia> estimatetreatmenteffect!(m1)
-[0.25714308]
+julia> estimate_causal_effect!(m1)
+1-element Vector{Float64}
+ 0.25714308
 julia> summarize(m1)
-{"Task" => "Regression", "Regularized" => true, "Activation Function" => relu, 
-"Validation Metric" => "mse","Number of Neurons" => 2, 
-"Number of Neurons in Approximator" => 10, "β" => [0.25714308], 
-"Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
+ {"Task" => "Regression", "Regularized" => true, "Activation Function" => relu, 
+ "Validation Metric" => "mse","Number of Neurons" => 2, 
+ "Number of Neurons in Approximator" => 10, "β" => [0.25714308], 
+ "Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
 ```
 """
 function summarize(its::InterruptedTimeSeries, n::Integer=1000, mean_effect::Bool=true)
@@ -63,47 +64,50 @@ Examples
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = GComputation(X, Y, T)
 julia> estimate_causal_effect!(m1)
-[0.3100468253]
+ 0.3100468253
 julia> summarize(m1)
-{"Task" => "Regression", "Quantity of Interest" => "ATE", Regularized" => "true", 
-"Activation Function" => "relu", "Time Series/Panel Data" => "false", 
-"Validation Metric" => "mse","Number of Neurons" => "5", 
-"Number of Neurons in Approximator" => "10", "β" => "[0.3100468253]",
-"Causal Effect: 0.00589761, "Standard Error" => 5.12900734, "p-value" => 0.479011245} 
+ {"Task" => "Regression", "Quantity of Interest" => "ATE", Regularized" => "true", 
+ "Activation Function" => "relu", "Time Series/Panel Data" => "false", 
+ "Validation Metric" => "mse","Number of Neurons" => "5", 
+ "Number of Neurons in Approximator" => "10", "Causal Effect: 0.00589761, 
+ "Standard Error" => 5.12900734, "p-value" => 0.479011245} 
 ```
 
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = RLearner(X, Y, T)
 julia> estimate_causal_effect(m1)
-[0.5804032956]
+1-element Vector{Float64}
+ [0.5804032956]
 julia> summarize(m1)
-{"Task" => "Regression", "Quantity of Interest" => "ATE", Regularized" => "true", 
-"Activation Function" => "relu", "Validation Metric" => "mse", "Number of Neurons" => "5", 
-"Number of Neurons in Approximator" => "10", "Causal Effect" = 0.5804032956, 
-"Standard Error" => 2.129400324, "p-value" => 0.0008342356}
+ {"Task" => "Regression", "Quantity of Interest" => "ATE", Regularized" => "true", 
+ "Activation Function" => "relu", "Validation Metric" => "mse", "Number of Neurons" => "5", 
+ "Number of Neurons in Approximator" => "10", "Causal Effect" = 0.5804032956, 
+ "Standard Error" => 2.129400324, "p-value" => 0.0008342356}
 ```
 
 ```julia-repl
 julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = SLearner(X, Y, T)
 julia> estimate_causal_effect!(m1)
-[0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
-0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 0.20729633391630703, 
-0.20729633391630697, 0.20729633391630697  …  0.20729633391630703, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697]
+100-element Vector{Float64}
+ 0.20729633391630697
+ 0.20729633391630697
+ 0.20729633391630692
+ ⋮
+ 0.20729633391630697
+ 0.20729633391630697
+ 0.20729633391630697
 julia> summarise(m1)
-{"Task" => "Regression", Regularized" => "true", "Activation Function" => "relu", 
-"Validation Metric" => "mse", "Number of Neurons" => "5", 
-"Number of Neurons in Approximator" => "10", 
-"β" => "[0.3100468253]", "Causal Effect: [0.20729633391630697, 0.20729633391630697, 
-0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 
-0.20729633391630697, 0.20729633391630703, 0.20729633391630697, 0.20729633391630697  …  
-0.20729633391630703, 0.20729633391630697, 0.20729633391630692, 0.20729633391630703, 
-0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 
-0.20729633391630697, 0.20729633391630697], "Standard Error" => 5.3121435085, 
-"p-value" => 0.0632454855}
+ {"Task" => "Regression", Regularized" => "true", "Activation Function" => "relu", 
+ "Validation Metric" => "mse", "Number of Neurons" => "5", 
+ "Number of Neurons in Approximator" => "10", 
+ "Causal Effect: [0.20729633391630697, 0.20729633391630697, 0.20729633391630692, 
+ 0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 0.20729633391630697, 
+ 0.20729633391630703, 0.20729633391630697, 0.20729633391630697  …  0.20729633391630703, 
+ 0.20729633391630697, 0.20729633391630692, 0.20729633391630703, 0.20729633391630697, 
+ 0.20729633391630697, 0.20729633391630692, 0.20729633391630697, 0.20729633391630697, 
+ 0.20729633391630697], "Standard Error" => 5.3121435085, "p-value" => 0.0632454855}
 ```
 """
 function summarize(mod, n::Integer=1000)
@@ -151,11 +155,15 @@ julia> x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 julia> g_computer = GComputation(x, y, t)
 julia> estimate_causal_effect!(g_computer)
 julia> generate_null_distribution(g_computer, 500)
-[0.016297180690693656, 0.0635928694685571, 0.20004144093635673, 0.505893866040335, 
-0.5130594630907543, 0.5432486130493388, 0.6181727442724846, 0.61838399963459, 
-0.7038981488009489, 0.7043407710415689  …  21.909186142780246, 21.960498059428854, 
-21.988553083790023, 22.285403459215363, 22.613625375395973, 23.382102081355548, 
-23.52056245175936, 24.739658523175912, 25.30523686137909, 28.07474553316176]
+500-element Vector{Float64}
+500-element Vector{Float64}
+ 0.016297180690693656
+ 0.0635928694685571
+ 0.20004144093635673
+ ⋮
+ 24.739658523175912
+ 25.30523686137909
+ 28.07474553316176
 ```
 """
 function generate_null_distribution(mod, n::Integer=1000)
@@ -196,9 +204,14 @@ julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), ran
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causale_ffect!(its)
 julia> generate_null_distribution(its, 10)
-[-0.5012456678829079, -0.33790650529972194, -0.2534340182760628, -0.21030239864895905, 
--0.11672915615117885, -0.08149441936166794, -0.0685134758182695, -0.06217013151235991, 
--0.05905529159312335, -0.04927743270606937]
+10-element Vector{Float64}
+ -0.5012456678829079
+ -0.33790650529972194
+ -0.2534340182760628
+ ⋮
+ -0.06217013151235991 
+ -0.05905529159312335
+ -0.04927743270606937
 ```
 """
 function generate_null_distribution(its::InterruptedTimeSeries, n::Integer=1000, 
@@ -246,7 +259,7 @@ julia> x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 julia> g_computer = GComputation(x, y, t)
 julia> estimate_causal_effect!(g_computer)
 julia> quantities_of_interest(g_computer, 1000)
-(0.114, 6.953133617011371)
+ (0.114, 6.953133617011371)
 ```
 """
 function quantities_of_interest(mod, n::Integer=1000)
@@ -283,7 +296,7 @@ julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), ran
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)
 julia> quantities_of_interest(its, 10)
-(0.0, 0.07703275541001667)
+ (0.0, 0.07703275541001667)
 ```
 """
 function quantities_of_interest(mod::InterruptedTimeSeries, n::Integer=1000, 

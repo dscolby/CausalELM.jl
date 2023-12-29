@@ -115,7 +115,7 @@ julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)),
 julia> g_computer = GComputation(x, y, t, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> validate(g_computer)
-2.7653668647301795
+ 2.7653668647301795
     ```
 """
 function validate(m; num_treatments::Int=5, min::Float64=1.0e-6, max::Float64=1.0-min)
@@ -158,8 +158,8 @@ julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)
 julia> covariate_independence(its)
-Dict("Column 1 p-value" => 0.421, "Column 5 p-value" => 0.07, "Column 3 p-value" => 0.01, 
-"Column 2 p-value" => 0.713, "Column 4 p-value" => 0.043)
+ Dict("Column 1 p-value" => 0.421, "Column 5 p-value" => 0.07, "Column 3 p-value" => 0.01, 
+ "Column 2 p-value" => 0.713, "Column 4 p-value" => 0.043)
 ```
 """
 function covariate_independence(its::InterruptedTimeSeries; n::Int=1000)
@@ -205,9 +205,9 @@ julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)
 julia> omitted_predictor(its)
-Dict("Mean Biased Effect/Original Effect" => -0.1943184744720332, "Median Biased 
-Effect/Original Effect" => -0.1881814122689084, "Minimum Biased Effect/Original Effect" => 
--0.2725194360603799, "Maximum Biased Effect/Original Effect" => -0.1419197976977072)
+ Dict("Mean Biased Effect/Original Effect" => -0.1943184744720332, "Median Biased 
+ Effect/Original Effect" => -0.1881814122689084, "Minimum Biased Effect/Original Effect" => 
+ -0.2725194360603799, "Maximum Biased Effect/Original Effect" => -0.1419197976977072)
 ```
 """
 function omitted_predictor(its::InterruptedTimeSeries; n::Int=1000)
@@ -263,8 +263,8 @@ julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)
 julia> sup_wald(its)
-Dict{String, Real}("Wald Statistic" => 58.16649796321913, "p-value" => 0.005, "Predicted 
-Break Point" => 39, "Hypothesized Break Point" => 100)
+ Dict{String, Real}("Wald Statistic" => 58.16649796321913, "p-value" => 0.005, "Predicted 
+ Break Point" => 39, "Hypothesized Break Point" => 100)
 ```
 """
 function sup_wald(its::InterruptedTimeSeries; low::Float64=0.15, high::Float64=0.85, 
@@ -280,9 +280,8 @@ function sup_wald(its::InterruptedTimeSeries; low::Float64=0.15, high::Float64=0
     for idx in low_idx:high_idx
         t = reduce(vcat, (zeros(idx), ones(size(x, 1)-idx)))
         new_x = reduce(hcat, (t, x, ones(size(x, 1))))
-        β = new_x\y
-        ŷ = new_x*β
-        se = sqrt(1/(size(x, 1)-2))*(sum(y .- ŷ)^2/sum(t .- mean(t))^2)
+        β, ŷ = @fastmath new_x\y, new_x*(new_x\y)
+        se = @fastmath sqrt(1/(size(x, 1)-2))*(sum(y .- ŷ)^2/sum(t .- mean(t))^2)
         wald_candidate = first(β)/se
 
         if wald_candidate > wald
@@ -304,9 +303,9 @@ Examples
 ```julia-repl
 julia> x, y, β = reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
 julia> p_val(x, y, β)
-0.98
+ 0.98
 julia> p_val(x, y, β; n=100, wald=true)
-0.08534054
+ 0.08534054
 ```
 """
 function p_val(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000, 
@@ -322,12 +321,11 @@ function p_val(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000,
         throw(ArgumentError("the second column in x should be an intercept with all 1s"))
     end
 
-    x_copy = deepcopy(x)
-    null = Vector{Float64}(undef, n)
+    x_copy, null = deepcopy(x), Vector{Float64}(undef, n)
 
     # Run OLS with random treatment vectors to generate a counterfactual distribution
-    for i in 1:n
-        x_copy[:, 1] = float(rand(0:1, size(x, 1)))  # Random treatment vector
+    @simd for i in 1:n
+        @inbounds x_copy[:, 1] = float(rand(0:1, size(x, 1)))  # Random treatment vector
         null[i] = first(x_copy\y)
     end
 
@@ -359,7 +357,7 @@ julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)),
 julia> g_computer = GComputation(x, y, t, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> counterfactual_consistency(g_computer)
-2.7653668647301795
+ 2.7653668647301795
 ```
 """
 function counterfactual_consistency(m; num_treatments::Int=5)
@@ -392,7 +390,7 @@ julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)),
 julia> g_computer = GComputation(x, y, t, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> e_value(g_computer)
-1.13729886008143832
+ 1.13729886008143832
 ```
 """
 exchangeability(model) = e_value(model)
@@ -413,7 +411,7 @@ julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)),
 julia> g_computer = GComputation(x, y, t, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> e_value(g_computer)
-2.2555405766985125
+ 2.2555405766985125
 ```
 """
 function e_value(model)
@@ -469,7 +467,7 @@ julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)),
 julia> g_computer = GComputation(x, y, t, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> risk_ratio(g_computer)
-2.5320694766985125
+ 2.5320694766985125
 ```
 """
 risk_ratio(mod) = risk_ratio(var_type(mod.T), mod)
@@ -638,7 +636,7 @@ function sums_of_squares(data::Vector{<:Real}, num_classes::Int=5)
         # Calculates the sums of squares for each potential class and break point
         else
             sums = Vector{Float64}(undef, i)
-            for j in 1:i
+            @simd for j in 1:i
                 @inbounds sums[j] = sums_of_squares[j, k-1] + (i-j+1) * variance(data[j:i])
             end
             @inbounds sums_of_squares[i, k] = minimum(sums)
@@ -680,7 +678,7 @@ function class_pointers(data::Vector{<:Real}, num_classes::Int, sums_of_sqs::Mat
     end
 
     # Update class pointers based on their sums of squares
-    for k in 2:num_classes
+    @simd for k in 2:num_classes
         for i in 2:n
             @inbounds map(1:i) do j
                 class_pointers[i, k] = argmin([sums_of_sqs[j, k-1]+class_pointers[j, k-1]])
@@ -723,17 +721,17 @@ function backtrack_to_find_breaks(data::Vector{<:Real}, class_pointers::Matrix{<
     breaks = Vector{eltype(data)}(undef, num_classes)
     current_class, current_break = num_classes, n
     
-    @inbounds for i in (n-1):-1:1
+    @simd for i in (n-1):-1:1
         if class_pointers[i, current_class] != current_break
-            current_break = class_pointers[i, current_class]
-            breaks[current_class] = data[i+1]
+            @inbounds current_break = class_pointers[i, current_class]
+            @inbounds breaks[current_class] = data[i+1]
             current_class -= 1
         end
     end
     
     # Assigns breaks at the smallest value in the data if a class doesn't have a break
-    @inbounds for j in current_class:-1:1
-        breaks[j] = data[1]
+    @simd for j in current_class:-1:1
+        @inbounds breaks[j] = data[1]
     end
 
     return breaks
