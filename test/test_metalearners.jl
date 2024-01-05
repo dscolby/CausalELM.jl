@@ -31,12 +31,8 @@ estimate_causal_effect!(rlearner)
 
 @testset "S-Learners" begin
     @testset "S-Learner Structure" begin
-        @test slearner1.X !== Nothing
-        @test slearner1.Y !== Nothing
-        @test slearner1.T !== Nothing
-        @test slearner2.X !== Nothing
-        @test slearner2.Y !== Nothing
-        @test slearner2.T !== Nothing
+        @test slearner1.g isa GComputation
+        @test slearner2.g isa GComputation
     end
 
     @testset "S-Learner Estimation" begin

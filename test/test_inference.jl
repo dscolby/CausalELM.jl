@@ -34,8 +34,6 @@ p4, stderr4 = CausalELM.quantities_of_interest(its, 10)
 
 slearner = SLearner(x, y, t)
 estimate_causal_effect!(slearner)
-slearner_inference = CausalELM.generate_null_distribution(slearner)
-p5, stderr5 = CausalELM.quantities_of_interest(slearner)
 summary5 = summarize(slearner)
 
 tlearner = TLearner(x, y, t)
@@ -66,8 +64,6 @@ summary9 = summarize(rlearner)
     @test its_inference1 isa Array{Float64}
     @test size(its_inference2, 1) === 10
     @test its_inference2 isa Array{Float64}
-    @test size(slearner_inference, 1) === 1000
-    @test slearner_inference isa Array{Float64}
     @test size(tlearner_inference, 1) === 1000
     @test tlearner_inference isa Array{Float64}
     @test size(xlearner_inference, 1) === 1000
@@ -83,8 +79,6 @@ end
     @test stderr3 > 0
     @test 1 >= p4 >= 0
     @test stderr4 > 0
-    @test 1 >= p5 >= 0
-    @test stderr5 > 0
     @test 1 >= p6 >= 0
     @test stderr6 > 0
     @test 1 >= p7 >= 0

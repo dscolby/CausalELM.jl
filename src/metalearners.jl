@@ -3,40 +3,8 @@ abstract type Metalearner end
 
 """S-Learner for CATE estimation."""
 mutable struct SLearner <: Metalearner
-    """Covariates"""
-    X::Array{Float64}
-    """Outomes variable"""
-    Y::Array{Float64}
-    """Treatment statuses"""
-    T::Array{Float64}
-    """Either regression or classification"""
-    task::String
-    """Whether to use L2 regularization"""
-    regularized::Bool
-    """Activation function to apply to the outputs from each neuron"""
-    activation::Function
-    """Validation metric to use when tuning the number of neurons"""
-    validation_metric::Function
-    """Minimum number of neurons to test in the hidden layer"""
-    min_neurons::Int64
-    """Maximum number of neurons to test in the hidden layer"""
-    max_neurons::Int64
-    """Number of cross validation folds"""
-    folds::Int64
-    """Number of iterations to perform cross validation"""
-    iterations::Int64
-    """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
-    approximator_neurons::Int64
-    """This will always be set to CATE and is only used by summarized methods"""
-    quantity_of_interest::String
-    """This will always be set to false and is only accessed by summarize methods"""
-    temporal::Bool
-    """Number of neurons in the ELM used for estimating the abnormal returns"""
-    num_neurons::Int64
-    """The effect of exposure or treatment"""
+    g::GComputation
     causal_effect::Array{Float64}
-    """The model used to predict the outcomes"""
-    learner::ExtremeLearningMachine
 
 """
 SLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
@@ -59,18 +27,16 @@ julia> m2 = SLearner(X, Y, T; task="regression")
 julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
 ```
 """
-    function SLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
+    function SLearner(X, Y, T; task="regression", regularized=true, activation=relu, 
         validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
-
-        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, "CATE", false, 0)
+        new(GComputation(X, Y, T, task=task, quantity_of_interest="ATE", 
+            regularized=regularized, activation=activation, temporal=false, 
+            validation_metric=validation_metric, min_neurons=min_neurons, 
+            max_neurons=max_neurons, folds=folds, iterations=iterations, 
+            approximator_neurons=approximator_neurons))
     end
 end
 
@@ -271,26 +237,9 @@ julia> estimate_causal_effect!(m4)
 ```
 """
 function estimate_causal_effect!(s::SLearner)
-    full_covariates = hcat(s.X, s.T)
-    Xₜ, Xᵤ= hcat(s.X, ones(size(s.T, 1))), hcat(s.X, zeros(size(s.T, 1)))
-
-    # Only search for the best number of neurons once and use the same number for inference
-    if s.num_neurons === 0
-        s.num_neurons = best_size(full_covariates, s.Y, s.validation_metric, s.task, 
-            s.activation, s.min_neurons, s.max_neurons, s.regularized, s.folds, false,
-            s.iterations, s.approximator_neurons)
-    end
-
-    if s.regularized
-        s.learner = RegularizedExtremeLearner(full_covariates, s.Y, s.num_neurons, 
-            s.activation)
-    else
-        s.learner = ExtremeLearner(full_covariates, s.Y, s.num_neurons, s.activation)
-    end
-
-    fit!(s.learner)
-    predictionsₜ, predictionsᵪ = predict(s.learner, Xₜ), predict(s.learner, Xᵤ)
-    s.causal_effect = @fastmath vec(predictionsₜ .- predictionsᵪ)
+    estimate_causal_effect!(s.g)
+    Xₜ, Xᵤ= hcat(s.g.X, ones(size(s.g.T, 1))), hcat(s.g.X, zeros(size(s.g.T, 1)))
+    s.causal_effect = vec(predict(s.g.learner, Xₜ) - predict(s.g.learner, Xᵤ))
 
     return s.causal_effect
 end

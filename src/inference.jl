@@ -137,6 +137,8 @@ end
 
 summarize(R::RLearner, n::Integer=1000) = summarize(R.dml, n)
 
+summarize(S::SLearner, n::Integer=1000) = summarize(S.g, n)
+
 """
     generate_null_distribution(mod, n)
 

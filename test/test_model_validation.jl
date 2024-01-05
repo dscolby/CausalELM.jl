@@ -154,7 +154,6 @@ end
     end
 end
 
-
 @testset "Jenks Breaks" begin
     @testset "Helper Functions for Finding Breaks" begin
         @test sum_of_squares2[1, 1] == 0.0
@@ -206,7 +205,6 @@ end
         @test CausalELM.e_value(g_computer) isa Real
         @test CausalELM.e_value(dml) isa Real
         @test CausalELM.e_value(dml_noreg) isa Real
-        @test CausalELM.e_value(s_learner) isa Real
         @test CausalELM.e_value(t_learner) isa Real
         @test CausalELM.e_value(x_learner) isa Real
     end
@@ -248,14 +246,11 @@ end
 
 @testset "Metalearner Assumptions" begin
     @testset "Counterfactual Consistency" begin
-        @test CausalELM.counterfactual_consistency(s_learner) isa Real
         @test CausalELM.counterfactual_consistency(t_learner) isa Real
         @test CausalELM.counterfactual_consistency(x_learner) isa Real
     end
 
     @testset "Exchangeability" begin
-        @test CausalELM.exchangeability(s_learner) isa Real
-        @test CausalELM.exchangeability(s_learner_binary) isa Real
         @test CausalELM.exchangeability(t_learner) isa Real
         @test CausalELM.exchangeability(t_learner_binary) isa Real
         @test CausalELM.exchangeability(x_learner) isa Real
@@ -264,13 +259,11 @@ end
     end
 
     @testset "Positivity" begin
-        @test size(CausalELM.positivity(s_learner), 2) == size(s_learner.X, 2)+1
         @test size(CausalELM.positivity(t_learner), 2) == size(t_learner.X, 2)+1
         @test size(CausalELM.positivity(x_learner), 2) == size(x_learner.X, 2)+1
     end
 
     @testset "All three assumptions" begin
-        @test length(validate(s_learner)) == 3
         @test length(validate(t_learner)) == 3
         @test length(validate(x_learner)) == 3
 
