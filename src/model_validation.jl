@@ -585,7 +585,7 @@ positivity(model, min::Float64=1.0e-6, max::Float64=1-min) = positivity(model, m
 function positivity(mod::XLearner, min::Float64, max::Float64)
     # Observations that have a zero probability of treatment or control assignment
     return reduce(hcat, (mod.X[mod.ps .<= min .|| mod.ps .>= max, :], 
-        mod.ps[mod.ps .== 0 .|| mod.ps .== 1]))
+        mod.ps[mod.ps .<= min .|| mod.ps .>= max]))
 end
 
 function positivity(mod::DoubleMachineLearning, min::Float64, max::Float64)
