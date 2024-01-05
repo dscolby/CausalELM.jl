@@ -21,6 +21,7 @@ end
     @test CausalELM.confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2]) == [1 0 0; 
                                                                                  0 4 0; 
                                                                                  0 0 1]
+    @test size(CausalELM.confusion_matrix(rand(0:1, 5, 3), rand(0:1, 5, 3))) == (3, 3)
 end
 
 @testset "Accuracy" begin

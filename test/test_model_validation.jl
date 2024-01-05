@@ -229,6 +229,7 @@ end
         @test size(CausalELM.positivity(count_g_computer), 2) == size(count_g_computer.X, 
                                                                     2)+1
         @test size(CausalELM.positivity(g_computer), 2) == size(g_computer.X, 2)+1
+        @test size(CausalELM.positivity(dm_noreg), 2) == size(dm_noreg.X, 2)+1
     end
 
     @testset "All Assumptions for G-computation" begin
