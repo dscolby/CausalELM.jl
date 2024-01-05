@@ -1,44 +1,6 @@
 using Random: randperm
 
 """
-    recode(ŷ)
-
-Round predicted values to their predicted class for classification tasks.
-
-If the smallest predicted label is 0, all labels are shifted up 1; if the smallest 
-label is -1, all labels are shifted up 2. Also labels cannot be smaller than -1.
-
-Examples
-```julia-repl
-julia> recode([-0.7, 0.2, 1.1])
-3-element Vector{Float64}
-1
-2
-3
-julia> recode([0.1, 0.2, 0.3])
-3-element Vector{Float64}
-1
-1
-1
-julia> recode([1.1, 1.51, 1.8])
-3-element Vector{Float64}
-1
-2
-2
-```
-"""
-@inline function recode(ŷ::Array{Float64})
-    rounded = round.(ŷ)
-    if minimum(rounded) < 0
-        rounded .+= 2
-    elseif minimum(rounded) == 0
-        rounded .+= 1
-    else
-    end
-    return rounded
-end
-
-"""
     generate_folds(X, Y, folds)
 
 Creates folds for cross validation.
@@ -121,7 +83,7 @@ function validation_loss(xtrain::Array{Float64}, ytrain::Array{Float64},
     fit!(network)
     predictions = predict(network, xtest)
 
-    return metric(recode(ytest[1, :]), recode(predictions[1, :]))
+    return metric(ytest[1, :], predictions[1, :])
 end
 
 """

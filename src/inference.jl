@@ -39,7 +39,7 @@ function summarize(its::InterruptedTimeSeries, n::Integer=1000, mean_effect::Boo
         "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect", 
         "Standard Error", "p-value"]
 
-    values = [its.task, its.regularized, its.activation, its.validation_metric, 
+    values = ["Regression", its.regularized, its.activation, its.validation_metric, 
         its.num_neurons, its.approximator_neurons, effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
@@ -116,6 +116,7 @@ function summarize(mod, n::Integer=1000)
     end
 
     summary_dict = Dict()
+    task = typeof(mod) == DoubleMachineLearning ? "regression" : mod.task
     nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
         "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
         "Number of Neurons in Approximator", "Causal Effect", "Standard Error", 
@@ -123,9 +124,9 @@ function summarize(mod, n::Integer=1000)
     
     p, stderr = quantities_of_interest(mod, n)
 
-    values = [mod.task, mod.quantity_of_interest, mod.regularized, mod.activation, 
-        mod.temporal, mod.validation_metric, mod.num_neurons, mod.approximator_neurons,
-        mod.causal_effect, stderr, p]
+    values = [task, mod.quantity_of_interest, mod.regularized, mod.activation, mod.temporal, 
+        mod.validation_metric, mod.num_neurons, mod.approximator_neurons, mod.causal_effect, 
+        stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value

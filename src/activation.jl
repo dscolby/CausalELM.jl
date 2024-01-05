@@ -170,8 +170,6 @@ swish(x::Array{Float64}) = swish.(x)
 
 Apply the softmax activation function to a real number.
 
-For numbers that have large absolute values this function may become numerically unstable.
-
 # Examples
 ```julia-repl
 julia> softmax(1)
@@ -183,9 +181,7 @@ softmax(x::Float64) = @fastmath exp(x) / sum(exp(x))
 """
     softmax(x)
 
-Apply the softmax activation function to an array.
-
-For numbers that have large absolute values this function might be numerically unstable.
+Apply the softmax activation function to a vector.
 
 # Examples
 ```julia-repl
@@ -196,7 +192,32 @@ julia> softmax([1, 2, 3])
  0.6652409557748219
 ```
 """
-softmax(x::Array{Float64}) = @fastmath exp.(x)/sum(exp.(x))
+softmax(x::Vector{Float64}) = @fastmath exp.(x)/sum(exp.(x))
+
+"""
+    softmax(x)
+
+Apply the softmax activation function to the rows of an array.
+
+# Examples
+```julia-repl
+julia> x = rand(5, 3)
+5×3 Matrix{Float64}:
+ 0.482117  0.225359  0.615589
+ 0.255572  0.165051  0.427035
+ 0.387384  0.424856  0.369219
+ 0.175362  0.172561  0.111878
+ 0.508207  0.258347  0.591111
+julia> softmax(x)
+5×3 Matrix{Float64}:
+ 0.342895  0.265248  0.391857
+ 0.322529  0.294616  0.382855
+ 0.331106  0.343749  0.325146
+ 0.340635  0.339682  0.319682
+ 0.348998  0.271838  0.379164
+```
+"""
+softmax(x::Array{Float64}) = mapslices(softmax, x, dims=2)
 
 """
     softplus(x)

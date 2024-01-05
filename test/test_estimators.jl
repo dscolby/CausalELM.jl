@@ -140,9 +140,7 @@ end
     end
 
     @testset "Task Errors" begin
-        @test_throws ArgumentError InterruptedTimeSeries(x₀, y₀, x₁, y₁, task="abc")
         @test_throws ArgumentError GComputation(x, y, t, task="abc")
-        @test_throws ArgumentError DoubleMachineLearning(x, y, t, task="xyz")
     end
 
     @testset "Moving Averages" begin

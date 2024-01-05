@@ -11,8 +11,6 @@ mutable struct InterruptedTimeSeries
     X₁::Array{Float64}
     """Outcomes for the post-event period"""
     Y₁::Array{Float64}
-    """Either \"regression\" or \"classification\""""
-    task::String
     """Whether to use L2 regularization"""
     regularized::Bool
     """Activation function to apply to the outputs from each neuron"""
@@ -58,28 +56,21 @@ Examples
 ```julia-repl
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-julia> m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression")
-julia> m3 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression", regularized=true)
-julia> m4 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression", regularized=true, 
-           activation=relu)
+julia> m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
 ```
 """
-    function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task="regression", regularized=true, 
-        activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+    function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=true, activation=relu, 
+        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X₀, 1)/10)), 
         approximator_neurons=Int(round(size(X₀, 1)/10)), autoregression=true)
-
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
 
         # Add autoregressive term
         X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
         X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, moving_average(Y₁))), X₁)
 
-        new(X₀, Float64.(Y₀), X₁, Float64.(Y₁), task, regularized, activation, 
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, autoregression, 0)
+        new(X₀, Float64.(Y₀), X₁, Float64.(Y₁), regularized, activation, validation_metric, 
+            min_neurons, max_neurons, folds, iterations, approximator_neurons, 
+            autoregression, 0)
     end
 end
 
@@ -170,8 +161,8 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     Y::Array{Float64}
     """Treatment statuses"""
     T::Array{Float64}
-    """Either regression or classification"""
-    task::String
+    """True if the treatment variable is categorical and nonbinary"""
+    t_cat::Bool
     """Whether to use L2 regularization"""
     regularized::Bool
     """Activation function to apply to the outputs from each neuron"""
@@ -217,16 +208,12 @@ julia> m1 = DoubleMachineLearning(X, Y, T)
 julia> m2 = DoubleMachineLearning(X, Y, T; task="regression")
 ```
 """
-    function DoubleMachineLearning(X, Y, T; task="regression", 
-        regularized=true, activation=relu, validation_metric=mse, min_neurons=1, 
-        max_neurons=100, folds=5, iterations=Int(round(size(X, 1)/10)), 
+    function DoubleMachineLearning(X, Y, T; t_cat=false, regularized=true, 
+        activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        iterations=Int(round(size(X, 1)/10)), 
         approximator_neurons=Int(round(size(X, 1)/10)))
 
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
-
-        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation, 
+        new(Float64.(X), Float64.(Y), Float64.(T), t_cat, regularized, activation, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, "ATE", false, 0, NaN)
     end
@@ -250,7 +237,7 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
     if its.num_neurons === 0
-        its.num_neurons = best_size(its.X₀, its.Y₀, its.validation_metric, its.task, 
+        its.num_neurons = best_size(its.X₀, its.Y₀, its.validation_metric, "regression", 
             its.activation, its.min_neurons, its.max_neurons, its.regularized, its.folds, 
             true, its.iterations, its.approximator_neurons)
     end
@@ -308,7 +295,7 @@ function estimate_causal_effect!(g::GComputation)
     end
 
     fit!(g.learner)
-    g.causal_effect = sum(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ))/size(Xₜ, 1)
+    g.causal_effect = mean(vec(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ)))
     return g.causal_effect
 end
 
@@ -332,7 +319,7 @@ julia> estimate_causal_effect!(m3)
 function estimate_causal_effect!(DML::DoubleMachineLearning)
     # Uses the same number of neurons for all phases of estimation
     if DML.num_neurons === 0
-        DML.num_neurons = best_size(DML.X, DML.Y, DML.validation_metric, DML.task, 
+        DML.num_neurons = best_size(DML.X, DML.Y, DML.validation_metric, "regression", 
             DML.activation, DML.min_neurons, DML.max_neurons, DML.regularized, DML.folds, 
             false, DML.iterations, DML.approximator_neurons)
     end
@@ -412,18 +399,27 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 function predict_residuals(DML::DoubleMachineLearning, x_train::Array{<:Real}, 
     x_test::Array{<:Real}, y_train::Vector{<:Real}, y_test::Vector{<:Real}, 
     t_train::Vector{<:Real}, t_test::Vector{<:Real})
+    # One hot encode categorical variables for multiple treatments
+    t_train = DML.t_cat && var_type(DML.T) == Count() ? one_hot_encode(t_train) : t_train
+    activation = var_type(DML.T) == Binary() ? σ : DML.activation
     
     if DML.regularized
         y = RegularizedExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
-        t = RegularizedExtremeLearner(x_train, t_train, DML.num_neurons, DML.activation)
+        t = RegularizedExtremeLearner(x_train, t_train, DML.num_neurons, activation)
     else
         y = ExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
-        t = ExtremeLearner(x_train, t_train, DML.num_neurons, DML.activation)
+        t = ExtremeLearner(x_train, t_train, DML.num_neurons, activation)
     end
 
     fit!(y); fit!(t)
-    Ỹ, T̃ = (predict(y, x_test)-y_test), (predict(t, x_test)-t_test)
-    return Ỹ, T̃
+
+    if DML.t_cat  && var_type(DML.T) == Count() # Multiclass residual = 1-Pr(Majority Class)
+        T̃ = 1 .- vec(mapslices(maximum, softmax((predict(t, x_test))), dims=2))
+    else
+        T̃ = (t_test-predict(t, x_test))
+    end
+
+    return (y_test-predict(y, x_test)), T̃
 end
 
 """

@@ -8,13 +8,6 @@ xfolds, yfolds = generate_folds(zeros(20, 2), zeros(20), 5)
 xfolds_ts, yfolds_ts = generate_temporal_folds(float.(hcat([1:10;], 11:20)), 
     [1.0:1.0:10.0;], 5)
 
-@testset "Recode" begin
-    @test recode([1.0, 2.0, 3.0, 4.0]) == [1, 2, 3, 4]
-    @test recode([-0.7, 0.2, 1.1]) == [1, 2, 3]
-    @test recode([0.1, 0.2, 0.3]) == [1, 1, 1]
-    @test recode([1.1, 1.51, 1.8]) == [1, 2, 2]
-end
-
 @testset "Fold Generation" begin
     @test_throws ArgumentError generate_folds(zeros(5, 2), zeros(5), 6)
     @test_throws ArgumentError generate_folds(zeros(5, 2), zeros(5), 5)

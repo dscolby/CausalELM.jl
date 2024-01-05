@@ -57,12 +57,17 @@ julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
  0.25
 ```
 """
-function accuracy(y::Vector{Float64}, ŷ::Vector{Float64})
+function accuracy(y::Array{Float64}, ŷ::Array{Float64})
     if length(y) !== length(ŷ)
         throw(DimensionMismatch("y and ̂y must be the same length"))
     end
 
-    @fastmath differences = y .- ŷ
+    # Converting from one hot encoding to the original representation if y is multiclass
+    if !isa(y, Vector)
+        y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, c, dims=2))
+    end
+
+    @fastmath differences = y .- round.(ŷ)
     return @fastmath length(differences[differences .== 0]) / length(ŷ)
 end
 
@@ -81,7 +86,7 @@ julia> precision([0, 1, 0, 0], [0, 1, 0, 0])
  1.0
 ```
 """
-function Base.precision(y::Vector{Int64}, ŷ::Vector{Int64})
+function Base.precision(y::Array{Int64}, ŷ::Array{Int64})
     confmat = confusion_matrix(y, ŷ)
     n = length(Set(y))
 
@@ -119,7 +124,7 @@ julia> recall([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
  1.0
 ```
 """
-function recall(y::Vector{Int64}, ŷ::Vector{Int64})
+function recall(y::Array{Int64}, ŷ::Array{Int64})
     confmat, n = confusion_matrix(y, ŷ), length(Set(y))
 
     # Binary classification
@@ -153,7 +158,7 @@ julia> F1([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
  0.47058823529411764
 ```
 """
-function F1(y::Vector{Int64}, ŷ::Vector{Int64})
+function F1(y::Array{Int64}, ŷ::Array{Int64})
     prec, rec = precision(y, ŷ), recall(y, ŷ)
     return @fastmath 2(prec * rec) / (prec + rec)
 end
@@ -176,13 +181,19 @@ julia> confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2])
  0 0 1
 ```
 """
-function confusion_matrix(y::Vector{Int64}, ŷ::Vector{Int64})
+function confusion_matrix(y::Array{Int64}, ŷ::Array{Int64})
+    # Converting from one hot encoding to the original representation if y is multiclass
+    if !isa(y, Vector)
+        y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, c, dims=2))
+    end
+
     confmat = zeros(Int64, length(Set(y)), length(Set(y)))
 
     # Recode since Julia is a 1-index language
-    if minimum(y) == 0
-        @fastmath y .+= 1
-        @fastmath ŷ .+= 1
+    flor = minimum(vcat(y, ŷ))
+    if flor < 1
+        @fastmath y .+= (1 - flor)
+        @fastmath ŷ .+= (1 - flor)
     end
 
     for (predicted, actual) in zip(ŷ, y)

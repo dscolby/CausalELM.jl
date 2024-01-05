@@ -582,29 +582,50 @@ julia> positivity(g_computer)
 """
 positivity(model, min::Float64=1.0e-6, max::Float64=1-min) = positivity(model, min, max)
 
-function positivity(m::XLearner, min::Float64, max::Float64)
+function positivity(mod::XLearner, min::Float64, max::Float64)
     # Observations that have a zero probability of treatment or control assignment
-    return reduce(hcat, (m.X[m.ps .<= min .|| m.ps .>= max, :], 
-        m.ps[m.ps .== 0 .|| m.ps .== 1]))
+    return reduce(hcat, (mod.X[mod.ps .<= min .|| mod.ps .>= max, :], 
+        mod.ps[mod.ps .== 0 .|| mod.ps .== 1]))
 end
 
-function positivity(m::Union{CausalEstimator, SLearner, TLearner}, min::Float64, 
-    max::Float64)
-    num_neurons = best_size(m.X, m.T, m.validation_metric, m.task, m.activation, 
-        m.min_neurons, m.max_neurons, m.regularized, m.folds, false,  m.iterations, 
-        m.approximator_neurons)
+function positivity(mod::DoubleMachineLearning, min::Float64, max::Float64)
+    task = mod.t_cat || var_type(mod.T) == Binary() ? "classification" : "regression"
+    T = mod.t_cat ? one_hot_encode(mod.T) : mod.T
 
-    if m.regularized
-        ps_mod = RegularizedExtremeLearner(m.X, m.T, num_neurons, m.activation)
+    num_neurons = best_size(mod.X, T, mod.validation_metric, task, mod.activation, 
+        mod.min_neurons, mod.max_neurons, mod.regularized, mod.folds, false,  
+        mod.iterations, mod.approximator_neurons)
+
+    if mod.regularized
+        ps_mod = RegularizedExtremeLearner(mod.X, mod.T, num_neurons, mod.activation)
     else
-        ps_mod = ExtremeLearner(m.X, m.T, num_neurons, m.activation)
+        ps_mod = ExtremeLearner(mod.X, mod.T, num_neurons, mod.activation)
     end
 
     fit!(ps_mod)
-    propensity_scores = predict(ps_mod, m.X)
+    propensity_scores = predict(ps_mod, mod.X)
 
     # Observations that have a zero probability of treatment or control assignment
-    return reduce(hcat, (m.X[propensity_scores .<= min .|| propensity_scores .>= max, :], 
+    return reduce(hcat, (mod.X[propensity_scores .<= min .|| propensity_scores .>= max, :], 
+        propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max]))
+end
+
+function positivity(mod, min::Float64, max::Float64)
+    num_neurons = best_size(mod.X, mod.T, mod.validation_metric, mod.task, mod.activation, 
+        mod.min_neurons, mod.max_neurons, mod.regularized, mod.folds, false,  
+        mod.iterations, mod.approximator_neurons)
+
+    if mod.regularized
+        ps_mod = RegularizedExtremeLearner(mod.X, mod.T, num_neurons, mod.activation)
+    else
+        ps_mod = ExtremeLearner(mod.X, mod.T, num_neurons, mod.activation)
+    end
+
+    fit!(ps_mod)
+    propensity_scores = predict(ps_mod, mod.X)
+
+    # Observations that have a zero probability of treatment or control assignment
+    return reduce(hcat, (mod.X[propensity_scores .<= min .|| propensity_scores .>= max, :], 
         propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max]))
 end
 

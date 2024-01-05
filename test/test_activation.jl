@@ -73,6 +73,7 @@ end
     @test softmax(-1.0) == 1.0
     @test sum(softmax([1.0, -0.5])) == 1.0
     @test sum(softmax([1.0, 0])) == 1.0
+    @test vec(mapslices(sum, softmax(rand(3, 3)), dims=2)) ≈ [1, 1, 1]
 end
 
 @testset "softplus Activation" begin
