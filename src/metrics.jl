@@ -173,15 +173,15 @@ function confusion_matrix(y::Array{Int64}, ŷ::Array{Int64})
         y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, ŷ, dims=2))
     end
 
-    n = maximum([length(Set(y)), length(Set(y))])
-    confmat = zeros(Int64, n, n)
-
     # Recode since Julia is a 1-index language
     flor = minimum(vcat(y, ŷ))
     if flor < 1
         @fastmath y .+= (1 - flor)
         @fastmath ŷ .+= (1 - flor)
     end
+
+    n = maximum([length(Set(y)), length(Set(ŷ))])
+    confmat = zeros(Int64, n, n)
 
     for (predicted, actual) in zip(ŷ, y)
         @inbounds @fastmath confmat[predicted, actual] += 1
