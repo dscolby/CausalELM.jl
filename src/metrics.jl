@@ -180,7 +180,7 @@ function confusion_matrix(y::Array{Int64}, ŷ::Array{Int64})
         @fastmath ŷ .+= (1 - flor)
     end
 
-    n = maximum([length(Set(y)), length(Set(ŷ))])
+    n = maximum(reduce(vcat, (y, ŷ)))
     confmat = zeros(Int64, n, n)
 
     for (predicted, actual) in zip(ŷ, y)
