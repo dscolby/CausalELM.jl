@@ -507,19 +507,9 @@ function risk_ratio(::Binary, ::Binary, mod)
         return @fastmath mean(predict(mod.learner, Xₜ))/mean(predict(mod.learner, Xᵤ))
 
     # For models that use separate models for outcomes in the treatment and control group
-    elseif hasfield(typeof(mod), :μ₀)
+    else hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
         return @fastmath mean(predict(mod.μ₁, Xₜ))/mean(predict(mod.μ₀, Xᵤ))
-    else
-        if mod.regularized
-            learner = RegularizedExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y, 
-                mod.num_neurons, mod.activation)
-        else
-            learner = ExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, 
-                mod.activation)
-        end
-        fit!(learner)
-        return @fastmath mean(predict(learner, Xₜ))/mean(predict(learner, Xᵤ))
     end
 end
 

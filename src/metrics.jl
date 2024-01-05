@@ -1,3 +1,5 @@
+using LinearAlgebra: diag, replace!
+
 """
     mse(y, ŷ)
 
@@ -64,10 +66,10 @@ function accuracy(y::Array{Float64}, ŷ::Array{Float64})
 
     # Converting from one hot encoding to the original representation if y is multiclass
     if !isa(y, Vector)
-        y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, c, dims=2))
+        y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, ŷ, dims=2))
     end
 
-    @fastmath differences = y .- round.(ŷ)
+    @fastmath differences = y .- ŷ
     return @fastmath length(differences[differences .== 0]) / length(ŷ)
 end
 
@@ -88,24 +90,15 @@ julia> precision([0, 1, 0, 0], [0, 1, 0, 0])
 """
 function Base.precision(y::Array{Int64}, ŷ::Array{Int64})
     confmat = confusion_matrix(y, ŷ)
-    n = length(Set(y))
 
-    # Binary classification
     if size(confmat) == (2, 2)
-        tp = confmat[2, 2]
-        return @fastmath tp / sum(confmat[2, :])
-    
-    # Multiclass classification
+        confmat[1, 1] == 0 && 0.0
+        confmat[1, 2] == 0 && 1.0
+        return @fastmath confmat[1, 1]/sum(confmat[1, :])
     else
-        classwise_prec = Array{Float64, 1}(undef, n)
-
-        for idx in axes(confmat, 1)
-            tp, all_pos = confmat[idx, idx], @fastmath sum(confmat[idx, :])
-            single = ifelse(all_pos == 0, 0, @fastmath tp / all_pos)
-
-            classwise_prec[idx] = single
-        end
-        return @fastmath sum(classwise_prec) / n
+        intermediate = @fastmath diag(confmat)./vec(sum(confmat, dims=2))
+        replace!(intermediate, NaN=>0)
+        return mean(intermediate)
     end
 end
 
@@ -125,23 +118,16 @@ julia> recall([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
 ```
 """
 function recall(y::Array{Int64}, ŷ::Array{Int64})
-    confmat, n = confusion_matrix(y, ŷ), length(Set(y))
+    confmat = confusion_matrix(y, ŷ)
 
-    # Binary classification
     if size(confmat) == (2, 2)
-        tp = confmat[2, 2]
-        return @fastmath tp / sum(confmat[:, 2])
-    
-    # Multiclass classification
+        confmat[1, 1] == 0 && 0.0
+        confmat[2, 1] == 0 && 1.0
+        return @fastmath confmat[1, 1]/sum(confmat[:, 1])
     else
-        classwise_rec = Array{Float64, 1}(undef, n)
-
-        for idx in axes(confmat, 2)
-            tp, all_pos = confmat[idx, idx], @fastmath sum(confmat[:, idx])
-            single = ifelse(all_pos == 0, 0, @fastmath tp / all_pos)
-            classwise_rec[idx] = single
-        end
-        return @fastmath sum(classwise_rec) / n
+        intermediate = @fastmath diag(confmat)./vec(sum(confmat, dims=1))
+        replace!(intermediate, NaN=>0)
+        return mean(intermediate)
     end
 end
 
@@ -184,7 +170,7 @@ julia> confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2])
 function confusion_matrix(y::Array{Int64}, ŷ::Array{Int64})
     # Converting from one hot encoding to the original representation if y is multiclass
     if !isa(y, Vector)
-        y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, c, dims=2))
+        y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, ŷ, dims=2))
     end
 
     confmat = zeros(Int64, length(Set(y)), length(Set(y)))

@@ -32,6 +32,10 @@ g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), rand(10),
 dm = DoubleMachineLearning(x, y, t)
 estimate_causal_effect!(dm)
 
+# DML with a categorical treatment
+dm_cat = DoubleMachineLearning(x, y, rand(1:4, 100))
+estimate_causal_effect!(dm_cat)
+
 # No regularization
 dm_noreg = DoubleMachineLearning(x, y, t, regularized=false)
 estimate_causal_effect!(dm_noreg)
@@ -131,6 +135,7 @@ end
     @testset "Double Machine Learning Post-estimation Structure" begin
         @test dm.causal_effect isa Float64
         @test dm_noreg.causal_effect isa Float64
+        @test dm_cat.causal_effect isa Float64
     end
 end
 
