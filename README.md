@@ -30,11 +30,12 @@
 CausalELM enables estimation of causal effects in settings where a randomized control trial 
 would be impossible or infeasible. Estimation of the average treatment effect (ATE), intent
 to treat effect (ITE), and average treatment effect on the treated (ATT) can be estimated 
-via G-computation or double machine learning (DML) while temporal changes can be estimated 
-from an interrupted time series analysis. CausalELM also supports estimation of individual 
-treatment effects or conditional average treatment effects (CATE) via S-learning, 
-T-learning, and X-learning. The underlying machine learning model for all these estimators 
-is an extreme learning machine or L2 regularized extreme learning machine.
+via G-computation or double machine learning (DML) while the ATE or cumulative 
+treatment effect (CTE) can be estimated from an interrupted time series analysis. 
+CausalELM also supports estimation of individual treatment effects or conditional average 
+treatment effects (CATE) via S-learning, T-learning, X-learning, and R-learning. The 
+underlying machine learning model for all these estimators is an extreme learning machine or 
+L2 regularized extreme learning machine.
 </p>
 
 <h2>Extreme Learning Machines and Causal Inference</h2>
@@ -44,8 +45,8 @@ have the counterfactual, making conventional methods of statistical analysis inf
 However, it may still be possible to get an unbiased estimate of the causal effect (ATE, 
 ATE, or ITT) by predicting the counterfactual and comparing it to the observed outcomes. 
 This is the approach CausalELM takes to conduct interrupted time series analysis, 
-G-Computation, DML, and meatlearning via S-Learners, T-Learners, and X-Learners. In 
-interrupted time series analysis, we want to estimate the effect of some intervention on 
+G-Computation, DML, and meatlearning via S-Learners, T-Learners, X-Learners, and R-learners. 
+In interrupted time series analysis, we want to estimate the effect of some intervention on 
 the outcome of a single unit that we observe during multiple time periods. For example, we 
 might want to know how the announcement of a merger affected the price of Stock A. To do 
 this, we need to know what the price of stock A would have been if the merger had not been 
@@ -66,12 +67,12 @@ treatment mechanism has to be correctly specified to yield unbiased estimates. T
 implementation in CausalELM. also overcomes bias from regularization by employing cross 
 fitting. Furthermore, we might be more interested in how much an individual can benefit from 
 a treatment, as opposed to the average treatment effect. Depending on the characteristics of 
-our data, we can use metalearning methods such as S-Learning, T-Learning, or X-Learning to 
-do so. In all of these scenarios, how well we estimate the treatment effect depends on how 
-well we can predict the counterfactual. The most common approaches to getting accurate 
-predictions of the counterfactual are to use a super learner, which combines multiple 
-machine learning methods and requires extensive tuning, or tree-based methods, which also 
-have large hyperparameter spaces. In these cases hyperparameter tuning can be 
+our data, we can use metalearning methods such as S-Learning, T-Learning, X-Learning, or 
+R-Learning to do so. In all of these scenarios, how well we estimate the treatment effect 
+depends on how well we can predict the counterfactual. The most common approaches to getting 
+accurate predictions of the counterfactual are to use a super learner, which combines 
+multiple machine learning methods and requires extensive tuning, or tree-based methods, which 
+also have large hyperparameter spaces. In these cases hyperparameter tuning can be 
 computationally expensive and requires researchers to make arbitrary decisions about how 
 many and what models to use, how much regularization to apply, the depth of trees, 
 interaction effects, etc. On the other hands, ELMs are able to achieve good accuracy on a 
@@ -102,16 +103,15 @@ backpropagation to update their weights like conventional neural networks.
 
 <h2>Next Steps</h2>
 <p>
-The next version/s will focus on optimizing the codebase for maintainability and modularity. 
-More specifically, all functions will be generalized to accepts any real numbers, long 
-functions and methods will be broken up into smaller functions or methods, and design 
-patterns will be used where applicable.
+The focus of v0.5 will be on ensuring CausalELM's estimators accept a wider variety of 
+inputs, especially dataframes from DataFrames.jl. We may also implement doubly robust 
+estimation, but this may also be postponed until v0.6.
 </p>
 
 <h2>Disclaimer</h2>
 CausalELM is extensively tested and almost every function or method has multiple tests. That
-being said, CausalELM is still in the early stages of development and may have some bugs. 
-Also, expect breaking releases for now.
+being said, CausalELM is still in the early/ish stages of development and may have some 
+bugs. Also, expect breaking releases for now.
 
 <h2>Contributing</h2>
 <p>

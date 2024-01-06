@@ -6,13 +6,13 @@ are not duplicated, please follow the guidelines below.
 To report a bug, open an issue on the CausalELM.jl GitHub page. Please include all relevant 
 information, such as what methods were called, the operating system used, the verion/s of 
 CausalELM used, the verion/s of Julia used, any tracebacks or error codes, and any other 
-information that would be helpful for debugging.
+information that would be helpful for debugging. Also be sure to use the bug label.
 
 ## Requesting New Features
 Before requesting a new feature, please check the issues page on GitHub to make sure someone
 else did not already request the same feature. If this is not the case, then please open an
 issue that explains what function or method you would like to be added and how you believe 
-it should behave.
+it should behave. Also be sure to use the enhancement tag.
 
 ## Contributing Code
 Before submitting a pull request, please open an issue explaining what the proposed code is
