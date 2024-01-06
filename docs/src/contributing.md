@@ -34,12 +34,13 @@ issue/s. Please also ensure your code follows the guidelines below.
 
 *   Avoid using global variables and constants.
 
-*   Code should take advantage of Julia's macros for performance. Use @inbounds, @view, 
-    @fastmath, and @simd when possible.
+*   Code should take advantage of Julia's built in macros for performance. Use @inbounds, 
+    @view, @fastmath, and @simd when possible.
 
 *   When appending to an array in a loop, preallocate the array and update its values by 
     index.
 
-*   Avoid long functions and decompose them into smaller functions or methods.
+*   Avoid long functions and decompose them into smaller functions or methods. A general 
+    rule is that function definitions should fit within the screen of a laptop.
 
 *   Use self-explanatory names for variables, methods, structs, constants, and macros.

@@ -1,11 +1,9 @@
 # Double Machine Learning
-Doubly robust estimation estimates separate models for the treatment and outcome variables 
-and weights the outcome estimates by the treatment estimates. This allows one to model more 
-complex, nonlinear relationships between the treatment and outcome variables. Additonally, 
-double machine learning is doubly robust, which meants that only one of the models has to be 
-specified correctly to produce an unbiased estimate of the causal effect. This 
-implementation also uses cross fitting to avoid regularization bias. The main steps for 
-using doubly robust estimation in CausalELM are below.
+Double machine learning, also called debiased or orthogonalized machine learning, enables
+estimating causal effects when the dimensionality of the covariates is too high for linear 
+regression or the model does not assume a parametric form. In other words, when the 
+relathionship between the treatment or covariates and outcome is nonlinear and we do not 
+know the functional form. 
 
 For more information see:
     Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
@@ -13,12 +11,19 @@ For more information see:
     structural parameters." (2018): C1-C68.
 
 ## # Step 1: Initialize a Model
-The DoubleMachineLearning constructor takes four arguments, an array of covariates for the 
-outcome model, an array of covariates for the treatment model, a vector of outcomes, and a 
-vector of treatment statuses.
+The DoubleMachineLearning constructor takes at least three arguments, an array of 
+covariates, an outcome vector, and a vector of treatment statuses. You can also specify the 
+following options: whether the treatment vector is categorical ie not continuous and 
+containing more than two classes, whether to use L2 regularization, the activation function, 
+the validation metric to use when searching for the best number of neurons, the minimum and 
+maximum number of neurons to consider, the number of folds to use for cross validation, the 
+number of iterations to perform cross validation, and the number of neurons to use in the 
+ELM used to learn the function from number of neurons to validation loss. These arguments 
+are specified with the following keyword arguments: t_cat, regularized, activation, 
+validation_metric, min_neurons, max_neurons, folds, iterations, and approximator_neurons.
 ```julia
 # Create some data with a binary treatment
-X, Xₚ, Y, T =  rand(100, 5), rand(100, 4), rand(100), [rand()<0.4 for i in 1:100]
+X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 
 dml = DoubleMachineLearning(X, Xₚ, Y, T)
 ```

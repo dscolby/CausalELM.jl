@@ -1,8 +1,6 @@
 using CausalELM
 using Documenter
 
-DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true)
-
 makedocs(;
     modules=[CausalELM],
     warnonly=true,
@@ -13,28 +11,19 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://dscolby.github.io/CausalELM.jl",
         edit_link="main",
-        footer = "© 2023 Darren Colby",
+        footer = "© 2024 Darren Colby",
         assets=[],
     ),
     pages=[
         "CausalELM" => "index.md",
         "User Guide" => Any[
+            "Deciding Which Model to Use" => "guide/estimatorselection.md",
             "Interrupted Time Series Estimation" => "guide/its.md",
             "G-computation" => "guide/gcomputation.md",
             "Double Machine Learning" => "guide/doublemachinelearning.md",
             "Metalearners" => "guide/metalearners.md"
         ],
-        "API Reference" => Any[
-            "CausalELM" => "reference/api.md",
-            "Activation Functions" => "reference/activations.md",
-            "Cross Validation" => "reference/crossval.md",
-            "ATE/ATT/ITE Estimation" => "reference/estimation.md",
-            "CATE Estimation" => "reference/metalearners.md",
-            "Inference and Summarization" => "reference/inference.md",
-            "Model Validation" => "reference/validation.md",
-            "Validation Metrics" => "reference/metrics.md",
-            "Base Models" => "reference/base.md"
-        ],
+        "API" => "reference/api.md",
         "Contributing" => "contributing.md"
     ],
 )

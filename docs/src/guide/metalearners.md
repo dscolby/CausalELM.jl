@@ -4,17 +4,25 @@ which units lose by being exposed to a treatment. For example, a cash transfer p
 motivate some people to work harder and incentivize others to work less. Thus, we might want 
 to know how the cash transfer program affects individuals instead of it average affect on 
 the population. To do so, we can use metalearners. Depending on the scenario, we may want to 
-use an S-learner, a T-learner, or an X-learner. The basic steps to use all three 
-metalearners are below.
+use an S-learner, a T-learner, an X-learner, or an R-learner. The basic steps to use all 
+three metalearners are below. The difference between the metalearners is how they estimate 
+the CATE and what types of variables they can handle. In the case of S, T, and X learners, 
+they can only handle binary treatments. On the other hand, R-learners can handle binary, 
+categorical, count, or continuous treatments but only supports continuous outcomes.
 
-For a deeper dive on metalearners see:
+For a deeper dive on S-learning, T-learning, and R-learning see:
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
 
+To learn more about R-learning see:
+    Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
+    effects." Biometrika 108, no. 2 (2021): 299-319.
+
 # Initialize a Metalearner
-S-learners, T-learners, and X-learners all take three arguments: an array of covariates, a 
-vector of outcomes, and a vector of treatment statuses.
+S-learners, T-learners, and X-learners all take at least three arguments: an array of 
+covariates, a vector of outcomes, and a vector of treatment statuses.Additional options can 
+be specified for each type of metalearner using its keyword arguments.
 ```julia
 # Generate data to use
 X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
@@ -22,6 +30,7 @@ X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
 s_learner = SLearner(X, Y, T)
 t_learner = TLearner(X, Y, T)
 x_learner = XLearner(X, Y, T)
+r_learner = RLearner(X, Y, T)
 ```
 
 # Estimate the CATE
@@ -30,6 +39,7 @@ We can estimate the CATE for all the models by passing them to estimatecausaleff
 estimate_causal_effect!(s_learner)
 estimate_causal_effect!(t_learner)
 estimate_causal_effect!(x_learner)
+estimate_causal_effect!(r_learner)
 ```
 
 # Get a Summary
@@ -39,6 +49,7 @@ average treatment effect by passing the models to the summarize method.
 summarize(s_learner)
 summarize(t_learner)
 summarize(x_learner)
+summarize(r_learner)
 ```
 
 ## Step 4: Validate the Model
@@ -77,4 +88,5 @@ For more information on the E-value test see:
 validate(s_learner)
 validate(t_learner)
 validate(x_learner)
+validate(r_learner)
 ```

@@ -296,7 +296,7 @@ function estimate_causal_effect!(t::TLearner)
 end
 
 """
-estimate_causal_effect!(x)
+    estimate_causal_effect!(x)
 
 Estimate the CATE using an X-learner.
 
@@ -338,7 +338,7 @@ function estimate_causal_effect!(x::XLearner)
 end
 
 """
-estimate_causal_effect!(R)
+    estimate_causal_effect!(R)
 
 Estimate the CATE using an R-learner.
 

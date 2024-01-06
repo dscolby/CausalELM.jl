@@ -16,9 +16,16 @@ For a deeper dive see:
     journal of epidemiology 46, no. 1 (2017): 348-355.
 
 ## Step 1: Initialize an interrupted time series estimator
-The InterruptedTimeSeries method takes four agruments: an array of pre-event covariates, a 
-vector of pre-event outcomes, an array of post-event covariates, and a vector of post-event 
-outcomes.
+The InterruptedTimeSeries method takes at least four agruments: an array of pre-event 
+covariates, a vector of pre-event outcomes, an array of post-event covariates, and a vector 
+of post-event outcomes. You can also specify whether or not to use L2 regularization, which 
+activation function to use, the metric to use when using cross validation to find the best 
+number of neurons, the minimum number of neurons to consider, the maximum number of neurons 
+to consider, the number of folds to use during cross caidation, the number of neurons to use 
+in the ELM that learns a mapping from number of neurons to validation loss, and whether to 
+include a rolling average autoregressive term. These options can be specified using the 
+keyword arguments regularized, activation, validation_metric, min_neurons, max_neurons, 
+folds, iterations, approximator_neurons, and autoregression.
 ```julia
 # Generate some data to use
 X₀, Y₀, X₁, Y₁ =  rand(1000, 5), rand(1000), rand(100, 5), rand(100)
