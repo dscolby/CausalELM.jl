@@ -8,8 +8,8 @@ mutable struct SLearner <: Metalearner
     causal_effect::Array{Float64}
 
 """
-SLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
-    max_neurons, folds, iterations, approximator_neurons)
+    SLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
+        max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a S-Learner.
 
@@ -17,8 +17,6 @@ For an overview of S-Learners and other metalearners see:
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-Note that X, Y, and T must all contain floating point numbers.
 
 Examples
 ```julia-repl
@@ -81,8 +79,8 @@ mutable struct TLearner <: Metalearner
     μ₁::ExtremeLearningMachine
 
 """
-TLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
-    max_neurons, folds, iterations, approximator_neurons)
+    TLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
+        max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a T-Learner.
 
@@ -90,8 +88,6 @@ For an overview of T-Learners and other metalearners see:
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-Note that X, Y, and T must all be floating point numbers.
 
 Examples
 ```julia-repl
@@ -158,8 +154,8 @@ mutable struct XLearner <: Metalearner
     causal_effect::Array{Float64}
 
 """
-XLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
-    max_neurons, folds, iterations, approximator_neurons)
+    XLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
+        max_neurons, folds, iterations, approximator_neurons)
 
 Initialize an X-Learner.
 
@@ -167,8 +163,6 @@ For an overview of X-Learners and other metalearners see:
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-Note that X, Y, and T must all be floating point numbers.
 
 Examples
 ```julia-repl
@@ -199,6 +193,23 @@ mutable struct RLearner <: Metalearner
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
 
+"""
+    RLearner(X, Y, T; t_cat, quantity_of_interest, activation, validation_metric, 
+        min_neurons, max_neurons, folds, iterations, approximator_neurons)
+
+Initialize an R-Learner.
+
+For an explanation of R-Learner estimation see:
+    Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
+    effects." Biometrika 108, no. 2 (2021): 299-319.
+
+Examples
+```julia-repl
+julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = RLearner(X, Y, T)
+julia> m2 = RLearner(X, Y, T; t_cat=true)
+```
+"""
     function RLearner(X, Y, T; t_cat=false, quantity_of_interest="CATE", activation=relu, 
         validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=Int(round(size(X, 1)/10)), 

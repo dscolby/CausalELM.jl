@@ -112,8 +112,9 @@ mutable struct GComputation <: CausalEstimator
     learner::ExtremeLearningMachine
 
 """
-GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
-    validation_metric, min_neurons, max_neurons, folds, iterations, approximator_neurons)
+    GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
+        validation_metric, min_neurons, max_neurons, folds, iterations, 
+        approximator_neurons)
 
 Initialize a G-Computation estimator.
 
@@ -189,8 +190,9 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     causal_effect::Float64
 
 """
-DoubleMachineLearning(X, Y, T, task, quantity_of_interest, regularized, activation, 
-    validation_metric, min_neurons, max_neurons, folds, iterations, approximator_neurons)
+    DoubleMachineLearning(X, Y, T, task, quantity_of_interest, regularized, activation, 
+        validation_metric, min_neurons, max_neurons, folds, iterations, 
+        approximator_neurons)
 
 Initialize a double machine learning estimator with cross fitting.
 
