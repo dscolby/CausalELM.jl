@@ -117,3 +117,11 @@ CausalELM.placebo_test
 CausalELM.ridge_constant
 CausalELM.set_weights_biases
 ```
+
+## Utility Functions
+```@docs
+CausalELM.mean
+CausalELM.var
+CausalELM.consecutive
+CausalELM.one_hot_encode
+```
