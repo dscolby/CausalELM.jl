@@ -4,6 +4,7 @@ abstract type Metalearner end
 """S-Learner for CATE estimation."""
 mutable struct SLearner <: Metalearner
     g::GComputation
+    """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
 
 """
@@ -72,7 +73,7 @@ mutable struct TLearner <: Metalearner
     temporal::Bool
     """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
-    """Weights learned during training"""
+    """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
     """Extreme Learning Machine used for the first stage of estimation"""
     μ₀::ExtremeLearningMachine
@@ -216,7 +217,6 @@ end
 Estimate the CATE using an S-learner.
 
 For an overview of S-learning see:
-
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
@@ -250,7 +250,6 @@ end
 Estimate the CATE using an T-learner.
 
 For an overview of T-learning see:
-
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
@@ -301,7 +300,6 @@ end
 Estimate the CATE using an X-learner.
 
 For an overview of X-learning see:
-
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
@@ -343,10 +341,8 @@ end
 Estimate the CATE using an R-learner.
 
 For an overview of R-learning see:
-
-    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
-    national academy of sciences 116, no. 10 (2019): 4156-4165.
+    Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
+    effects." Biometrika 108, no. 2 (2021): 299-319.
 
 Examples
 ```julia-repl

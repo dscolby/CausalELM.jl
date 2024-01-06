@@ -1,6 +1,6 @@
 # Deciding Which Model to Use
 Which model you should use depends on what you are trying to model and the type of data you 
-have.The table below can serve as a useful reference when deciding which model to use for a 
+have. The table below can serve as a useful reference when deciding which model to use for a 
 given dataset and causal question.
 
 | Model                            | Struct                | Causal Estimands                 | Supported Treatment Types              | Supported Outcome Types   |
