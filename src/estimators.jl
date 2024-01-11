@@ -59,18 +59,18 @@ julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
 ```
 """
-    function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=true, activation=relu, 
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=Int(round(size(X₀, 1)/10)), 
-        approximator_neurons=Int(round(size(X₀, 1)/10)), autoregression=true)
+    function InterruptedTimeSeries(X₀::Array{<:Real}, Y₀::Array{<:Real}, X₁::Array{<:Real}, 
+        Y₁::Array{<:Real}; regularized=true, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X₀, 1)/10), 
+        approximator_neurons=round(size(X₀, 1)/10), autoregression=true)
 
         # Add autoregressive term
         X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
         X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, moving_average(Y₁))), X₁)
 
-        new(X₀, Float64.(Y₀), X₁, Float64.(Y₁), regularized, activation, validation_metric, 
-            min_neurons, max_neurons, folds, iterations, approximator_neurons, 
-            autoregression, 0)
+        new(X₀, Float64.(Y₀), Float64.(X₁), Float64.(Y₁), regularized, activation, 
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, autoregression, 0)
     end
 end
 
@@ -137,10 +137,10 @@ julia> m4 = GComputation(X, Y, T; task="regression", quantity_of_interest="ATE,
 julia> regularized=true)
 ```
 """
-    function GComputation(X, Y, T; task="regression", quantity_of_interest="ATE", 
-        regularized=true,activation=relu, temporal=true, validation_metric=mse, 
-        min_neurons=1, max_neurons=100, folds=5, iterations=Int(round(size(X, 1)/10)), 
-        approximator_neurons=Int(round(size(X, 1)/10)))
+    function GComputation(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+        task="regression", quantity_of_interest="ATE", regularized=true, activation=relu, 
+        temporal=true, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
@@ -148,9 +148,9 @@ julia> regularized=true)
             throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
         end
 
-        new(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, 0, NaN)
+        new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
+            activation, temporal, validation_metric, min_neurons, max_neurons, folds, 
+            iterations, approximator_neurons, 0, NaN)
     end
 end
 
@@ -210,10 +210,10 @@ julia> m1 = DoubleMachineLearning(X, Y, T)
 julia> m2 = DoubleMachineLearning(X, Y, T; task="regression")
 ```
 """
-    function DoubleMachineLearning(X, Y, T; t_cat=false, regularized=true, 
-        activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=Int(round(size(X, 1)/10)), 
-        approximator_neurons=Int(round(size(X, 1)/10)))
+    function DoubleMachineLearning(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+        t_cat=false, regularized=true, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
 
         new(Float64.(X), Float64.(Y), Float64.(T), t_cat, regularized, activation, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -347,7 +347,7 @@ julia> estimate_effect!(m1)
  0.31067439
 ```
 """
-function estimate_effect!(DML::DoubleMachineLearning, cate::Bool=false)
+function estimate_effect!(DML::DoubleMachineLearning, cate=false)
     X_T, Y = generate_folds(reduce(hcat, (DML.X, DML.T)), DML.Y, DML.folds)
     X, T = [fl[:, 1:size(DML.X, 2)] for fl in X_T], [fl[:, size(DML.X, 2)+1] for fl in X_T]
     predictors = cate ? Vector{RegularizedExtremeLearner}(undef, DML.folds) : Nothing
@@ -398,9 +398,8 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
  0.199372555924635
 ```
 """
-function predict_residuals(DML::DoubleMachineLearning, x_train::Array{<:Real}, 
-    x_test::Array{<:Real}, y_train::Vector{<:Real}, y_test::Vector{<:Real}, 
-    t_train::Vector{<:Real}, t_test::Vector{<:Real})
+function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train, y_test, 
+    t_train, t_test)
     # One hot encode categorical variables for multiple treatments
     t_train = DML.t_cat && var_type(DML.T) == Count() ? one_hot_encode(t_train) : t_train
     activation = var_type(DML.T) == Binary() ? σ : DML.activation
@@ -438,7 +437,7 @@ julia> moving_average([1, 2, 3])
  2.0
 ```
 """
-function moving_average(g::Vector{Float64})
+function moving_average(g)
     result = similar(g)
     for i = 1:length(g)
         result[i] = mean(g[1:i])

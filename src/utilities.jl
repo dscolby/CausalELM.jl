@@ -9,7 +9,7 @@ julia> mean([1, 2, 3, 4])
 2.5
 ```
 """
-mean(x::Vector{<:Real}) = sum(x)/size(x, 1)
+mean(x) = sum(x)/size(x, 1)
 
 """
     var(x)
@@ -22,11 +22,8 @@ julia> var([1, 2, 3, 4])
 1.6666666666666667
 ```
 """
-function var(x::Vector{<:Real})
-    x̄, n = mean(x), length(x)
+var(x) = sum((x .- mean(x)).^2)/(length(x)-1)
 
-    return sum((x .- x̄).^2)/(n-1)
-end
 
 """
     consecutive(x)
@@ -45,7 +42,7 @@ julia> consecutive([1, 2, 3, 4, 5])
  1
 ```
 """
-consecutive(v::Vector{<:Real}) = [-(v[i+1], v[i]) for i = 1:length(v)-1]
+consecutive(v) = [-(v[i+1], v[i]) for i = 1:length(v)-1]
 
 """
     one_hot_encode(x)
@@ -63,7 +60,7 @@ julia> one_hot_encode([1, 2, 3, 4, 5])
  0.0  0.0  0.0  0.0  1.0
 ```
 """
-function one_hot_encode(x::Vector{<:Real})
+function one_hot_encode(x)
     one_hot = permutedims(float(unique(x) .== reshape(x, (1, size(x, 1))))), (2, 1)
     return one_hot[1]
 end

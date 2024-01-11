@@ -225,7 +225,7 @@ julia> predict(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
  0.9999999999999978
 ```
 """
-function predict(model::ExtremeLearningMachine, X::Array) 
+function predict(model::ExtremeLearningMachine, X) 
     if !model.__fit
         throw(ErrorException("run fit! before calling predict"))
     end
@@ -264,7 +264,7 @@ julia> predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
  0.9999999999999978
 ```
 """
-function predict_counterfactual!(model::ExtremeLearningMachine, X::Array)
+function predict_counterfactual!(model::ExtremeLearningMachine, X)
     model.counterfactual, model.__estimated = predict(model, X), true
     
     return model.counterfactual

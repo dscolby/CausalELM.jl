@@ -1,6 +1,7 @@
 using Test
 using CausalELM
 
+using CausalELM: relu
 include("../src/crossval.jl")
 
 x, y = shuffle_data(rand(100, 5), rand(100))
@@ -63,19 +64,24 @@ end
 @testset "Cross validation" begin
 
     # Regression
-    @test isa(cross_validate(rand(100, 5), rand(100), 5, mse), Float64)
-    @test isa(cross_validate(rand(100, 5), rand(100), 5, mse), Float64)
+    @test isa(cross_validate(rand(100, 5), rand(100), 5, mse, relu, true, 5, false), 
+        Float64)
+    @test isa(cross_validate(rand(100, 5), rand(100), 5, mse, relu, false, 5, true), 
+        Float64)
 
     # Classification
-    @test isa(cross_validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy), Float64)
-    @test isa(cross_validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy), Float64)
+    @test isa(cross_validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy, 
+        relu, true, 5, false), Float64)
+    @test isa(cross_validate(rand(100, 5), Float64.(rand(100) .> 0.5), 5, accuracy, 
+        relu, false, 5, true), Float64)
 end
 
 @testset "Best network size" begin
     @test 100>= best_size(rand(100, 5), Float64.(rand(100) .> 0.5), accuracy, 
-        "classification") >= 1
+        "classification", relu, 1, 10, true, 5, false, 10, 2) >= 1
 
-    @test 100 >= best_size(rand(100, 5), rand(100), mse, "regression") >= 1
+    @test 100 >= best_size(rand(100, 5), rand(100), mse, "regression", relu, 1, 10, false, 
+        5, true, 10, 2) >= 1
 end
 
 @testset "Data Shuffling" begin

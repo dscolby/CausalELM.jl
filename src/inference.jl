@@ -25,7 +25,7 @@ julia> summarize(m1)
  "Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
 ```
 """
-function summarize(its::InterruptedTimeSeries, n::Integer=1000, mean_effect::Bool=true)
+function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
     if !isdefined(its, :Δ)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
@@ -110,7 +110,7 @@ julia> summarise(m1)
  0.20729633391630697], "Standard Error" => 5.3121435085, "p-value" => 0.0632454855}
 ```
 """
-function summarize(mod, n::Integer=1000)
+function summarize(mod, n=1000)
     if !isdefined(mod, :causal_effect) || mod.causal_effect === NaN
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
@@ -135,9 +135,9 @@ function summarize(mod, n::Integer=1000)
     return summary_dict
 end
 
-summarize(R::RLearner, n::Integer=1000) = summarize(R.dml, n)
+summarize(R::RLearner, n=1000) = summarize(R.dml, n)
 
-summarize(S::SLearner, n::Integer=1000) = summarize(S.g, n)
+summarize(S::SLearner, n=1000) = summarize(S.g, n)
 
 """
     generate_null_distribution(mod, n)
@@ -169,7 +169,7 @@ julia> generate_null_distribution(g_computer, 500)
  28.07474553316176
 ```
 """
-function generate_null_distribution(mod, n::Integer=1000)
+function generate_null_distribution(mod, n)
     local m = deepcopy(mod)
     nobs = size(m.T, 1)
     results = Vector{Float64}(undef, n)
@@ -217,8 +217,7 @@ julia> generate_null_distribution(its, 10)
  -0.04927743270606937
 ```
 """
-function generate_null_distribution(its::InterruptedTimeSeries, n::Integer=1000, 
-    mean_effect::Bool=true)
+function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
     local model = deepcopy(its)
     split_idx = size(model.Y₀, 1)
     results = Vector{Float64}(undef, n)
@@ -265,7 +264,7 @@ julia> quantities_of_interest(g_computer, 1000)
  (0.114, 6.953133617011371)
 ```
 """
-function quantities_of_interest(mod, n::Integer=1000)
+function quantities_of_interest(mod, n)
     local null_dist = generate_null_distribution(mod, n)
     local avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
 
@@ -302,8 +301,7 @@ julia> quantities_of_interest(its, 10)
  (0.0, 0.07703275541001667)
 ```
 """
-function quantities_of_interest(mod::InterruptedTimeSeries, n::Integer=1000, 
-    mean_effect::Bool=true)
+function quantities_of_interest(mod::InterruptedTimeSeries, n, mean_effect)
     local null_dist = generate_null_distribution(mod, n, mean_effect)
     local metric = ifelse(mean_effect, mean, sum)
     local effect = metric(mod.Δ)

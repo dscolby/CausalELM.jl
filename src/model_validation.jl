@@ -63,8 +63,7 @@ julia> validate(m1)
 "Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
 ```
 """
-function validate(its::InterruptedTimeSeries; n::Int=1000, low::Float64=0.15, 
-    high::Float64=0.85)
+function validate(its::InterruptedTimeSeries; n=1000, low=0.15, high=0.85)
     if !isdefined(its, :Δ)
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
@@ -118,7 +117,7 @@ julia> validate(g_computer)
  2.7653668647301795
     ```
 """
-function validate(m; num_treatments::Int=5, min::Float64=1.0e-6, max::Float64=1.0-min)
+function validate(m; num_treatments=5, min=1.0e-6, max=1.0-min)
     if !isdefined(m, :causal_effect) || m.causal_effect === NaN
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
@@ -127,13 +126,11 @@ function validate(m; num_treatments::Int=5, min::Float64=1.0e-6, max::Float64=1.
         positivity(m, min, max)
 end
 
-function validate(R::RLearner; num_treatments::Int=5, min::Float64=1.0e-6, 
-    max::Float64=1.0-min)
+function validate(R::RLearner; num_treatments=5, min=1.0e-6, max=1.0-min)
     return validate(R.dml, num_treatments=num_treatments, min=min, max=max)
 end
 
-function validate(S::SLearner; num_treatments::Int=5, min::Float64=1.0e-6, 
-    max::Float64=1.0-min)
+function validate(S::SLearner; num_treatments=5, min=1.0e-6, max=1.0-min)
     return validate(S.g, num_treatments=num_treatments, min=min, max=max)
 end
 
@@ -167,7 +164,7 @@ julia> covariate_independence(its)
  "Column 2 p-value" => 0.713, "Column 4 p-value" => 0.043)
 ```
 """
-function covariate_independence(its::InterruptedTimeSeries; n::Int=1000)
+function covariate_independence(its::InterruptedTimeSeries; n=1000)
     y₀ = reduce(hcat, (its.X₀[:, 1:end-1], zeros(size(its.X₀, 1))))
     y₁ = reduce(hcat, (its.X₁[:, 1:end-1], ones(size(its.X₁, 1))))
     all_vars = [reduce(vcat, (y₀, y₁)) ones(size(y₀, 1) + size(y₁, 1))]
@@ -215,7 +212,7 @@ julia> omitted_predictor(its)
  -0.2725194360603799, "Maximum Biased Effect/Original Effect" => -0.1419197976977072)
 ```
 """
-function omitted_predictor(its::InterruptedTimeSeries; n::Int=1000)
+function omitted_predictor(its::InterruptedTimeSeries; n=1000)
     if !isdefined(its, :Δ)
         throw(ErrorException("call estimatecausaleffect! before calling omittedvariable"))
     end
@@ -272,8 +269,7 @@ julia> sup_wald(its)
  Break Point" => 39, "Hypothesized Break Point" => 100)
 ```
 """
-function sup_wald(its::InterruptedTimeSeries; low::Float64=0.15, high::Float64=0.85, 
-    n::Int=1000)
+function sup_wald(its::InterruptedTimeSeries; low=0.15, high=0.85, n=1000)
     hypothesized_break, current_break, wald = size(its.X₀, 1), size(its.X₀, 1), 0.0
     high_idx, low_idx = Int(floor(high * size(its.X₀, 1))), Int(ceil(low * size(its.X₀, 1)))
     x, y = reduce(vcat, (its.X₀, its.X₁))[:, 1:end-1], reduce(vcat, (its.Y₀, its.Y₁))
@@ -313,8 +309,7 @@ julia> p_val(x, y, β; n=100, wald=true)
  0.08534054
 ```
 """
-function p_val(x::Array{Float64}, y::Array{Float64}, β::Float64; n::Int=1000, 
-    wald::Bool=false)
+function p_val(x, y, β; n=1000, wald=false)
     m2 = "the first column of x should be a treatment vector of 0s and 1s"
     if sort(union(x[:, 1], [0, 1])) != [0, 1]
         throw(ArgumentError(m2))
@@ -365,7 +360,7 @@ julia> counterfactual_consistency(g_computer)
  2.7653668647301795
 ```
 """
-function counterfactual_consistency(m; num_treatments::Int=5)
+function counterfactual_consistency(m; num_treatments=5)
     treatment_covariates, treatment_outcomes = m.X[m.T .== 1, :], m.Y[m.T .== 1]
     fake_treat = best_splits(treatment_outcomes, num_treatments)
     β_real = treatment_covariates\treatment_outcomes
@@ -443,7 +438,7 @@ julia> binarize([1, 2, 3], 2)
  1
 ```
 """
-function binarize(x::Vector{<:Real}, cutoff::Real)
+function binarize(x, cutoff)
     if var_type(x) isa Binary
         return x
     else
@@ -575,15 +570,15 @@ julia> positivity(g_computer)
 0×5 Matrix{Float64}
 ```
 """
-positivity(model, min::Float64=1.0e-6, max::Float64=1-min) = positivity(model, min, max)
+positivity(model, min=1.0e-6, max=1-min) = positivity(model, min, max)
 
-function positivity(mod::XLearner, min::Float64, max::Float64)
+function positivity(mod::XLearner, min=1.0e-6, max=1-min)
     # Observations that have a zero probability of treatment or control assignment
     return reduce(hcat, (mod.X[mod.ps .<= min .|| mod.ps .>= max, :], 
         mod.ps[mod.ps .<= min .|| mod.ps .>= max]))
 end
 
-function positivity(mod::DoubleMachineLearning, min::Float64, max::Float64)
+function positivity(mod::DoubleMachineLearning, min=1.0e-6, max=1-min)
     task = mod.t_cat || var_type(mod.T) == Binary() ? "classification" : "regression"
     T = mod.t_cat ? one_hot_encode(mod.T) : mod.T
 
@@ -605,7 +600,7 @@ function positivity(mod::DoubleMachineLearning, min::Float64, max::Float64)
         propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max]))
 end
 
-function positivity(mod, min::Float64, max::Float64)
+function positivity(mod, min=1.0e-6, max=1-min)
     num_neurons = best_size(mod.X, mod.T, mod.validation_metric, mod.task, mod.activation, 
         mod.min_neurons, mod.max_neurons, mod.regularized, mod.folds, false,  
         mod.iterations, mod.approximator_neurons)
@@ -641,7 +636,7 @@ julia> sums_of_squares([1, 2, 3, 4, 5], 2)
  2.0       1.75
 ```
 """
-function sums_of_squares(data::Vector{<:Real}, num_classes::Int=5)
+function sums_of_squares(data, num_classes=5)
     n = length(data)
     sums_of_squares = zeros(Float64, n, num_classes)
     
@@ -684,7 +679,7 @@ julia> class_pointers([1, 2, 3, 4, 5], 2, sums_squares)
  1  1
 ```
 """
-function class_pointers(data::Vector{<:Real}, num_classes::Int, sums_of_sqs::Matrix{Float64})
+function class_pointers(data, num_classes, sums_of_sqs)
     n = length(data)
     class_pointers = Matrix{Int}(undef, n, num_classes)
 
@@ -732,7 +727,7 @@ julia> backtrack_to_find_breaks([1, 2, 3, 4, 5], ptr)
  4
 ```
 """
-function backtrack_to_find_breaks(data::Vector{<:Real}, class_pointers::Matrix{<:Real})
+function backtrack_to_find_breaks(data, class_pointers)
     n, num_classes = size(class_pointers)
     breaks = Vector{eltype(data)}(undef, num_classes)
     current_class, current_break = num_classes, n
@@ -766,7 +761,7 @@ julia> variance([1, 2, 3, 4, 5])
 2.0
 ```
 """
-function variance(data::Vector{<:Real})
+function variance(data)
     mean_val = mean(data)
     sum_squares = sum((x - mean_val)^2 for x in data)
 
@@ -794,7 +789,7 @@ julia> best_splits(collect(1:10), 5)
  4
 ```
 """
-function best_splits(data::Vector{<:Real}, num_classes::Int)
+function best_splits(data, num_classes)
     candidate_classes = [fake_treatments(data, i) for i in 2:num_classes]
     grouped_candidate_breaks = [group_by_class(data, class) for class in candidate_classes]
     gvfs = [gvf(breaks) for breaks in grouped_candidate_breaks]
@@ -822,7 +817,7 @@ julia> group_by_class([1, 2, 3, 4, 5], [1, 1, 1, 2, 3])
  [5]
 ```
 """
-function group_by_class(data::Vector{<:Real}, classes::Vector{<:Real})
+function group_by_class(data, classes)
     # Create a dictionary to store elements by class
     class_dict = Dict{Int, Vector{Real}}()
     
@@ -853,7 +848,7 @@ julia> jenks_breaks([1, 2, 3, 4, 5], 3)
  4
 ```
 """
-function jenks_breaks(data::Vector{<:Real}, num_classes::Int)
+function jenks_breaks(data, num_classes)
     sorted_data = sort(data)                 # The data needs to be sorted for this to work
     sums_squares = sums_of_squares(sorted_data, num_classes)
     cls_pointers = class_pointers(sorted_data, num_classes, sums_squares)
@@ -879,7 +874,7 @@ julia> fake_treatments([1, 2, 3, 4, 5], 4)
  4
 ```
 """
-function fake_treatments(data::Vector{<:Real}, num_classes::Int)
+function fake_treatments(data, num_classes)
     breaks = jenks_breaks(data, num_classes)
 
     # Finds the class of a single data point

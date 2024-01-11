@@ -9,7 +9,7 @@ julia> binary_step(1)
  1.0
 ```
 """
-binary_step(x::Float64) = ifelse(x < 0, 0, 1)
+binary_step(x) = ifelse(x < 0, 0, 1)
 
 """
     binary_step(x)
@@ -41,7 +41,7 @@ julia> σ(1)
  0.7310585786300049
 ```
 """
-@inline function σ(x::Float64)
+@inline function σ(x)
     t = exp(-abs(x))
     ifelse(x ≥ 0, inv(1 + t), t / (1 + t))
 end
@@ -89,7 +89,7 @@ julia> relu(1)
  1.0
 ```
 """
-relu(x::Float64) = @fastmath ifelse(x < 0, zero(x), x)
+relu(x) = @fastmath ifelse(x < 0, zero(x), x)
 
 """
     relu(x)
@@ -118,7 +118,7 @@ julia> leaky_relu(1)
  1.0
 ```
 """
-leaky_relu(x::Float64) = @fastmath ifelse(x < 0, 0.01 * x, x)
+leaky_relu(x) = @fastmath ifelse(x < 0, 0.01 * x, x)
 
 """
     leaky_relu(x)
@@ -147,7 +147,7 @@ julia> swish(1)
  0.7310585786300049
 ```
 """
-swish(x::Float64) = x * σ(x)
+swish(x) = x * σ(x)
 
 """
     swish(x)
@@ -176,7 +176,7 @@ julia> softmax(1)
  2.718281828459045
 ```
 """
-softmax(x::Float64) = @fastmath exp(x) / sum(exp(x))
+softmax(x) = @fastmath exp(x) / sum(exp(x))
 
 """
     softmax(x)
@@ -230,7 +230,7 @@ julia> softplus(1)
  1.3132616875182228
 ```
 """
-softplus(x::Float64) = @fastmath log1p(exp(-abs(x))) + relu(x)
+softplus(x) = @fastmath log1p(exp(-abs(x))) + relu(x)
 
 """
     softplus(x)
@@ -258,7 +258,7 @@ julia> gelu(1)
  0.8411919906082768
 ```
 """
-gelu(x::Float64) = @fastmath (x * (1 + Base.tanh(sqrt(2 / π) * (x + (0.044715 * x^3))))) / 2
+gelu(x) = @fastmath (x * (1 + Base.tanh(sqrt(2 / π) * (x + (0.044715 * x^3))))) / 2
 
 """
     gelu(x)
@@ -287,7 +287,7 @@ julia> gaussian(1)
  0.11443511435028261
 ```
 """
-gaussian(x::Float64) = @fastmath exp(-abs2(x))
+gaussian(x) = @fastmath exp(-abs2(x))
 
 """
     gaussian(x)
@@ -315,7 +315,7 @@ julia> hard_tanh(-2)
  -1.0
 ```
 """
-@inline function hard_tanh(x::Float64) 
+@inline function hard_tanh(x) 
     if x < -1
         -1
     elseif -1 <= x <= 1
@@ -352,7 +352,7 @@ julia> elish(1)
  0.7310585786300049
 ```
 """
-elish(x::Float64) = ifelse(x >= 0, swish(x), @fastmath ((exp(x)-1)) * σ(x))
+elish(x) = ifelse(x >= 0, swish(x), @fastmath ((exp(x)-1)) * σ(x))
 
 """
     elish(x)
@@ -380,7 +380,7 @@ julia> fourier(1)
  0.8414709848078965
 ```
 """
-fourier(x::Float64) = @fastmath sin(x)
+fourier(x) = @fastmath sin(x)
 
 """
     fourrier(x)

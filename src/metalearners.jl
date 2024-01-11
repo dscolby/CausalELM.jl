@@ -26,10 +26,10 @@ julia> m2 = SLearner(X, Y, T; task="regression")
 julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
 ```
 """
-    function SLearner(X, Y, T; task="regression", regularized=true, activation=relu, 
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=Int(round(size(X, 1)/10)), 
-        approximator_neurons=Int(round(size(X, 1)/10)))
+    function SLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+        task="regression", regularized=true, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
 
         new(GComputation(X, Y, T, task=task, quantity_of_interest="ATE", 
             regularized=regularized, activation=activation, temporal=false, 
@@ -97,10 +97,10 @@ julia> m2 = TLearner(X, Y, T; task="regression")
 julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
 ```
 """
-    function TLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=Int(round(size(X, 1)/10)), 
-        approximator_neurons=Int(round(size(X, 1)/10)))
+    function TLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+        task="regression", regularized=false, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
 
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
@@ -172,10 +172,10 @@ julia> m2 = XLearner(X, Y, T; task="regression")
 julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
 ```
 """
-    function XLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=Int(round(size(X, 1)/10)), 
-        approximator_neurons=Int(round(size(X, 1)/10)))
+    function XLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+        task="regression", regularized=false, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
 
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
@@ -210,10 +210,9 @@ julia> m1 = RLearner(X, Y, T)
 julia> m2 = RLearner(X, Y, T; t_cat=true)
 ```
 """
-    function RLearner(X, Y, T; t_cat=false, quantity_of_interest="CATE", activation=relu, 
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=Int(round(size(X, 1)/10)), 
-        approximator_neurons=Int(round(size(X, 1)/10)))
+    function RLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; t_cat=false, 
+        activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
         new(DoubleMachineLearning(X, Y, T; t_cat=t_cat, regularized=true, 
             activation=activation, validation_metric=validation_metric, 
@@ -380,6 +379,8 @@ function estimate_causal_effect!(R::RLearner)
 
     # Just estimate the causal effect using the underlying DML and the weight trick
     R.causal_effect = estimate_effect!(R.dml, true)
+
+    # Makes sure the right quantitiy of interest is printed out if summarize is called
     R.dml.quantity_of_interest = "CATE"
 
     return R.causal_effect

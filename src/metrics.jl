@@ -15,7 +15,7 @@ julia> mse([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
  4.0
 ```
 """
-function mse(y::Vector{<:Real}, ŷ::Vector{<:Real}) 
+function mse(y, ŷ) 
     if length(y) !== length(ŷ)
         throw(DimensionMismatch("y and ̂y must be the same length"))
     end
@@ -38,7 +38,7 @@ julia> mae([1.0, 1.0, 1.0], [2.0, 2.0, 2.0])
  1.0
 ```
 """
-function mae(y::Vector{Float64}, ŷ::Vector{Float64}) 
+function mae(y, ŷ) 
     if length(y) !== length(ŷ)
         throw(DimensionMismatch("y and ̂y must be the same length"))
     end
@@ -59,7 +59,7 @@ julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
  0.25
 ```
 """
-function accuracy(y::Array{Float64}, ŷ::Array{Float64})
+function accuracy(y, ŷ)
     if length(y) !== length(ŷ)
         throw(DimensionMismatch("y and ̂y must be the same length"))
     end
@@ -117,7 +117,7 @@ julia> recall([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
  1.0
 ```
 """
-function recall(y::Array{Int64}, ŷ::Array{Int64})
+function recall(y, ŷ)
     confmat = confusion_matrix(y, ŷ)
 
     if size(confmat) == (2, 2)
@@ -144,7 +144,7 @@ julia> F1([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
  0.47058823529411764
 ```
 """
-function F1(y::Array{Int64}, ŷ::Array{Int64})
+function F1(y, ŷ)
     prec, rec = precision(y, ŷ), recall(y, ŷ)
     return @fastmath 2(prec * rec) / (prec + rec)
 end
@@ -167,7 +167,7 @@ julia> confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2])
  0 0 1
 ```
 """
-function confusion_matrix(y::Array{Int64}, ŷ::Array{Int64})
+function confusion_matrix(y, ŷ)
     # Converting from one hot encoding to the original representation if y is multiclass
     if !isa(y, Vector)
         y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, ŷ, dims=2))

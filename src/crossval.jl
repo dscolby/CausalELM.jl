@@ -10,7 +10,7 @@ Examples
 julia> xfolds, y_folds = generate_folds(zeros(20, 2), zeros(20), 5)
 ```
 """
-function generate_folds(X::Array{Float64}, Y::Array{Float64}, folds::Int64)
+function generate_folds(X, Y, folds)
     msg = """the number of folds must be less than the number of 
              observations and greater than or equal to iteration"""
     n = length(Y)
@@ -43,7 +43,7 @@ Examples
 julia> xfolds, y_folds = generate_temporal_folds(zeros(20, 2), zeros(20), 5, temporal=true)
 ```
 """
-function generate_temporal_folds(X::Array{<:Real}, Y::Array{<:Real}, folds::Int=5)
+function generate_temporal_folds(X, Y, folds=5)
     msg = """the number of folds must be less than the number of 
              observations and greater than or equal to iteration"""
     n = length(Y)
@@ -70,9 +70,8 @@ julia> validation_loss(x, y, 5, accuracy, 3)
 0.0
 ```
 """
-function validation_loss(xtrain::Array{Float64}, ytrain::Array{Float64}, 
-    xtest::Array{Float64}, ytest::Array{Float64}, nodes::Integer, metric::Function; 
-    activation::Function=relu, regularized::Bool=true)
+function validation_loss(xtrain, ytrain, xtest, ytest, nodes, metric; activation=relu, 
+    regularized=true)
 
     if regularized
         network = RegularizedExtremeLearner(xtrain, ytrain, nodes, activation)
@@ -98,9 +97,7 @@ julia> cross_validate(x, y, 5, accuracy)
 0.0257841765251021
 ```
 """
-function cross_validate(X::Array{Float64}, Y::Array{Float64}, neurons::Integer, 
-    metric::Function, activation::Function=relu, regularized::Bool=true, folds::Integer=5, 
-    temporal::Bool=false)
+function cross_validate(X, Y, neurons, metric, activation, regularized, folds, temporal)
 
     mean_metric = 0.0
     xfs, yfs = temporal ? generate_temporal_folds(X, Y, folds) : generate_folds(X, Y, folds)
@@ -143,11 +140,8 @@ julia> best_size(rand(100, 5), rand(100), mse, "regression")
 11
 ```
 """
-function best_size(X::Array{Float64}, Y::Array{Float64}, metric::Function, task::String,
-    activation::Function=relu, min_neurons::Integer=1, max_neurons::Integer=100, 
-    regularized::Bool=true, folds::Integer=5, temporal::Bool=false,
-    iterations::Integer=Int(round(size(X, 1)/10)), 
-    elm_size=Integer=Int(round(size(X, 1)/10)))
+function best_size(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, 
+    folds, temporal, iterations, elm_size)
     
     loss, num_neurons = Vector{Float64}(undef, iterations), 
         round.(Int, range(min_neurons, max_neurons, length=iterations))
@@ -189,10 +183,10 @@ julia> shuffle_data(x, y, t)
 Float64[0, 0, 1, 1, 0, 1, 0, 0, 1, 0  …  0, 0, 1, 1, 1, 1, 0, 1, 0, 0])
 ```
 """
-function shuffle_data(X::Array{Float64}, Y::Array{Float64})
+function shuffle_data(X, Y)
         idx = randperm(size(X, 1))
         new_data = mapslices.(x->x[idx], [X, Y], dims=1)
         X, Y = new_data
 
-        return X, vec(Y)
+        return Array(X), vec(Y)
 end
