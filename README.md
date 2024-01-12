@@ -1,7 +1,9 @@
 <div align="center">
-    <img src="https://github.com/dscolby/dscolby.github.io/blob/main/logo.png">
+    <img src="https://github.com/dscolby/dscolby.github.io/blob/main/logo.jpg">
 </div>
 <br>
+
+<h1>CausalELM</h1>
 
 <p align="center">
     <a href="https://github.com/dscolby/CausalELM.jl/actions">
