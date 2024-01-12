@@ -1,6 +1,18 @@
 <div align="center">
     <img src="https://github.com/dscolby/dscolby.github.io/blob/main/logo.jpg">
 </div>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    h1 {
+      text-decoration: none;
+    }
+  </style>
+  <title>Your Page Title</title>
+</head>
+
 <h1 align="center">CausalELM</h1>
 
 <p align="center">
