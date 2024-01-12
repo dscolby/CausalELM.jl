@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://github.com/dscolby/dscolby.github.io/blob/main/causalelm-high-resolution-logo-black-on-transparent-background.png">
+    <img src="https://github.com/dscolby/dscolby.github.io/blob/main/logo.png">
 </div>
 <br>
 
