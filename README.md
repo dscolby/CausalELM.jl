@@ -1,4 +1,4 @@
-<div align="center">
+<div align="left">
     <img src="https://github.com/dscolby/dscolby.github.io/blob/main/logo.jpg">
 </div>
 
