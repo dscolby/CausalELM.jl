@@ -1,8 +1,7 @@
 <div align="left">
     <img src="https://github.com/dscolby/dscolby.github.io/blob/main/logo.jpg">
 </div>
-
-<h1>CausalELM</h1>
+* CausalELM
 
 <p align="center">
     <a href="https://github.com/dscolby/CausalELM.jl/actions">
