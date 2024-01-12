@@ -4,7 +4,7 @@
 
 <h1 align="center" style="text-decoration:none;">CausalELM</h1>
 
-<p align="center">
+<p align="center" style="text-decoration:none;">
     <a href="https://github.com/dscolby/CausalELM.jl/actions">
         <img src="https://github.com/dscolby/CausalELM.jl/actions/workflows/CI.yml/badge.svg?branch=main"
             alt="Build Status">
