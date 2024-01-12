@@ -77,7 +77,7 @@ end
 end
 
 @testset "Best network size" begin
-    @test 100>= best_size(randn(100, 5), Float64.(rand(100) .> 0.7), accuracy, 
+    @test 100>= best_size(randn(100, 5) .* rand(100), Float64.(rand(100) .> 0.7), accuracy, 
         "classification", relu, 1, 10, true, 5, false, 10, 2) >= 1
 
     @test 100 >= best_size(rand(100, 5), rand(100), mse, "regression", relu, 1, 10, false, 
