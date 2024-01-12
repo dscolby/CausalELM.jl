@@ -2,7 +2,7 @@
     <img src="https://github.com/dscolby/dscolby.github.io/blob/main/logo.jpg">
 </div>
 
-<p align="center" style="font-size:48px;"><b>CausalELM</b></p>
+<p align="center"><span style="font-size:24px;"><b>CausalELM</b></span></p>
 
 <p align="center">
     <a href="https://github.com/dscolby/CausalELM.jl/actions">
