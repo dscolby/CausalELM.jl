@@ -25,7 +25,7 @@
              alt="Develmopmental Documentation">
     </a>
 </p>
-<h2>TL;DR</h2>
+<h2>Overview</h2>
 <p>
 CausalELM enables estimation of causal effects in settings where a randomized control trial 
 would be impossible or infeasible. Estimation of the average treatment effect (ATE), intent
@@ -35,7 +35,9 @@ treatment effect (CTE) can be estimated from an interrupted time series analysis
 CausalELM also supports estimation of individual treatment effects or conditional average 
 treatment effects (CATE) via S-learning, T-learning, X-learning, and R-learning. The 
 underlying machine learning model for all these estimators is an extreme learning machine or 
-L2 regularized extreme learning machine.
+L2 regularized extreme learning machine. Furthermore, once a model has been estimated, 
+CausalELM can summarize the model, including computing p-values via randomization inference, 
+and conduct sensitivity analysis. All of this can be done in foru lines of code.
 </p>
 
 <h2>Extreme Learning Machines and Causal Inference</h2>
@@ -84,21 +86,23 @@ backpropagation to update their weights like conventional neural networks.
 <h2>CausalELM Features</h2>
 <ul>
   <li>Simple interface enables estimating causal effects in only a few lines of code</li>
+  <li>Validate and test sensitivity of a model to possible violations of its assumption in one line of code</li>
+  <li>Estimation of p-values and standard errors via asymptotic randomization inference</li>
+  <li>Incorporates latest research from statistics, machine learning, econometrics, and biostatistics</li>
   <li>Analytically derived L2 penalty reduces cross validation time and multicollinearity</li>
   <li>Fast automatic cross validation works with longitudinal, panel, and time series data</li>
   <li>Includes 13 activation functions and allows user-defined activation functions</li>
   <li>Single interface for continous, binary, and categorical outcome variables</li>
-  <li>Estimation of p-values and standard errors via asymptotic randomization inference</li>
   <li>No dependencies outside of the Julia standard library</li>
 </ul>
 
 <h2>What's New?</h2>
 <ul>
-  <li>All functions and methods converted to snake case</li>
-  <li>Randomization inference for interrupted time series randomizes all indices</li>
-  <li>Implemented validate method to probe assumptions for all estimators and metalearners</li>
-  <li>Reimplemented cross validation for temporal data</li>
-  <li>Fixed issue related to recoding variables to calculate validation metrics for cross validation</li>
+  <li>Implemented R-Learning</li>
+  <li>Corrected estimating equations for double machine learning</li>
+  <li>Added support for multiclass prediction</li>
+  <li>Corrected calculation of the optimal L2 penalty for regularized extreme learning machines</li>
+  <li>Pub everything under one module</li>
 </ul>
 
 <h2>Next Steps</h2>
