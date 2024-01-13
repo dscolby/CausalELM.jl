@@ -24,7 +24,7 @@
              alt="Develmopmental Documentation">
     </a>
 </p>
-<h2>Overview</h2>
+
 <p>
 CausalELM enables estimation of causal effects in settings where a randomized control trial 
 would be impossible or infeasible. Estimation of the average treatment effect (ATE), intent
