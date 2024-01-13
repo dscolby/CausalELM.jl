@@ -6,7 +6,6 @@ makedocs(;
     warnonly=true,
     authors="Darren Colby <dscolby17@gmail.com> and contributors",
     repo="https://github.com/dscolby/CausalELM.jl/blob/{commit}{path}#{line}",
-    sitename="CausalELM",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://dscolby.github.io/CausalELM.jl",
@@ -15,7 +14,7 @@ makedocs(;
         assets=[],
     ),
     pages=[
-        "CausalELM" => "index.md",
+        "causalELM" => "index.md",
         "User Guide" => Any[
             "Deciding Which Model to Use" => "guide/estimatorselection.md",
             "Interrupted Time Series Estimation" => "guide/its.md",
