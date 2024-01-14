@@ -86,6 +86,12 @@ tests in one line of code.
 One can also specify the number of simulated confounders to generate to test the sensitivity 
 of the model to confounding and the minimum and maximum proportion of data to use in the 
 Wald supremum test by including the n, low, and high keyword arguments.
+
+!!! danger
+    Obtaining correct estimates is dependent on meeting the assumptions for interrupted time 
+    series estimation. If the assumptions are not met then any estimates may be biased and 
+    lead to incorrect conclusions.
+
 ```julia
 validate(its)
 ```

@@ -11,7 +11,7 @@ they can only handle binary treatments. On the other hand, R-learners can handle
 categorical, count, or continuous treatments but only supports continuous outcomes.
 
 !!! note
-    For a deeper dive on S-learning, T-learning, and R-learning see:
+    For a deeper dive on S-learning, T-learning, and X-learning see:
     
         Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
         estimating heterogeneous treatment effects using machine learning." Proceedings of the 
@@ -97,13 +97,23 @@ One can also specify the maxium number of possible treatments to consider for th
 consistency assumption and the minimum and maximu probabilities of treatment for the 
 positivity assumption with the num_treatments, min, and max keyword arguments.
 
-For a thorough review of casual inference assumptions see:
-    Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
-    Francis, 2024. 
+!!! note
+    For a thorough review of casual inference assumptions see:
 
-For more information on the E-value test see:
-    VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
-    introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
+        Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
+        Francis, 2024. 
+
+!!! note
+    For more information on the E-value test see:
+
+        VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+        introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
+
+!!! danger
+    Obtaining correct estimates is dependent on meeting the assumptions for interrupted time 
+    series estimation. If the assumptions are not met then any estimates may be biased and 
+    lead to incorrect conclusions.
+
 ```julia
 validate(s_learner)
 validate(t_learner)
