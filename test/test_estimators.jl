@@ -1,11 +1,17 @@
 using Test
 using CausalELM
+using DataFrames
 
 include("../src/models.jl")
 
 x₀, y₀, x₁, y₁ = Float64.(rand(1:100, 100, 5)), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
+
+# ITS with a DataFrame
+x₀_df, y₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)), DataFrame(y=rand(100))
+x₁_df, y₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)), DataFrame(y=rand(100))
+its_df = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 
 # No autoregressive term
 its_no_ar = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -19,6 +25,11 @@ x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 
 g_computer = GComputation(x, y, t, temporal=false)
 estimate_causal_effect!(g_computer)
 
+# G-computation with a DataFrame
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
+g_computer_df = GComputation(x_df, y_df, t_df)
+
 gcomputer_att = GComputation(x, y, t, quantity_of_interest="ATT", temporal=false)
 estimate_causal_effect!(gcomputer_att)
 
@@ -31,6 +42,9 @@ g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), rand(10),
 
 dm = DoubleMachineLearning(x, y, t)
 estimate_causal_effect!(dm)
+
+# With dataframes instead of arrays
+dm_df = DoubleMachineLearning(x_df, y_df, t_df)
 
 # DML with a categorical treatment
 dm_cat = DoubleMachineLearning(x, y, rand(1:4, 100))
@@ -71,6 +85,12 @@ cate_predictors = CausalELM.estimate_effect!(cate_estimator, true)
         @test its_no_ar.Y₀ !== Nothing
         @test its_no_ar.X₁ !== Nothing
         @test its_no_ar.Y₁ !== Nothing
+
+        # When initializing with a DataFrame
+        @test its_df.X₀ !== Nothing
+        @test its_df.Y₀ !== Nothing
+        @test its_df.X₁ !== Nothing
+        @test its_df.Y₁ !== Nothing
     end
 
     @testset "Interrupted Time Series Estimation" begin
@@ -95,6 +115,11 @@ end
         @test g_computer_ts.X[2, 1] === 2.0
         @test g_computer_ts.X[9, 2] === 19.0
         @test g_computer_ts.X[10, 2] === 20.0
+
+        # G-computation Initialized with a DataFrame
+        @test g_computer_df.X !== Nothing
+        @test g_computer_df.Y !== Nothing
+        @test g_computer_df.T !== Nothing
     end
 
     @testset "G-Computation Estimation" begin
@@ -118,6 +143,11 @@ end
         @test dm_noreg.X !== Nothing
         @test dm_noreg.Y !== Nothing
         @test dm_noreg.T !== Nothing
+
+        # Intialized with dataframes
+        @test dm_df.X !== Nothing
+        @test dm_df.Y !== Nothing
+        @test dm_df.T !== Nothing
     end
 
     @testset "Double Machine Learning Estimation Helpers" begin

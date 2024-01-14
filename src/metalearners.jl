@@ -24,12 +24,17 @@ julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = SLearner(X, Y, T)
 julia> m2 = SLearner(X, Y, T; task="regression")
 julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
+
+```julia-repl
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
+julia> m1 = SLearner(x_df, y_df, t_df)
+julia> estimate_causal_effect!(m1)
 ```
 """
-    function SLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
-        task="regression", regularized=true, activation=relu, validation_metric=mse, 
-        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
-        approximator_neurons=round(size(X, 1)/10))
+    function SLearner(X, Y, T; task="regression", regularized=true, activation=relu, 
+        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
         new(GComputation(X, Y, T, task=task, quantity_of_interest="ATE", 
             regularized=regularized, activation=activation, temporal=false, 
@@ -78,6 +83,21 @@ mutable struct TLearner <: Metalearner
     """Extreme Learning Machine used for the first stage of estimation"""
     μ₁::ExtremeLearningMachine
 
+    function TLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+        task="regression", regularized=false, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
+
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        end
+
+        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, "CATE", false, 0)
+    end
+end
+
 """
     TLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
         max_neurons, folds, iterations, approximator_neurons)
@@ -96,20 +116,24 @@ julia> m1 = TLearner(X, Y, T)
 julia> m2 = TLearner(X, Y, T; task="regression")
 julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
 ```
+```julia-repl
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
+julia> m1 = TLearner(x_df, y_df, t_df)
+julia> estimate_causal_effect!(m1)
+```
 """
-    function TLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
-        task="regression", regularized=false, activation=relu, validation_metric=mse, 
-        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
-        approximator_neurons=round(size(X, 1)/10))
+function TLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
+    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+    iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
+    # Convert to arrays
+    X, Y, T = Matrix{Float64}(X), Y[:, 1], T[:, 1]
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, "CATE", false, 0)
-    end
+    TLearner(X, Y, T; task=task, regularized=regularized, activation=activation, 
+        validation_metric=validation_metric, min_neurons=min_neurons, 
+        max_neurons=max_neurons, folds=folds, iterations=iterations, 
+        approximator_neurons=approximator_neurons)
 end
 
 """X-Learner for CATE estimation."""
@@ -153,6 +177,21 @@ mutable struct XLearner <: Metalearner
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
 
+    function XLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+        task="regression", regularized=false, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
+
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        end
+
+        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, "CATE", false, 0)
+    end
+end
+
 """
     XLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
         max_neurons, folds, iterations, approximator_neurons)
@@ -171,20 +210,24 @@ julia> m1 = XLearner(X, Y, T)
 julia> m2 = XLearner(X, Y, T; task="regression")
 julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
 ```
+```julia-repl
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
+julia> m1 = XLearner(x_df, y_df, t_df)
+julia> estimate_causal_effect!(m1)
+```
 """
-    function XLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
-        task="regression", regularized=false, activation=relu, validation_metric=mse, 
-        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
-        approximator_neurons=round(size(X, 1)/10))
+function XLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
+    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+    iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
+    # Convert to arrays
+    X, Y, T = Matrix{Float64}(X), Y[:, 1], T[:, 1]
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, "CATE", false, 0)
-    end
+    XLearner(X, Y, T; task=task, regularized=regularized, activation=activation, 
+        validation_metric=validation_metric, min_neurons=min_neurons, 
+        max_neurons=max_neurons, folds=folds, iterations=iterations, 
+        approximator_neurons=approximator_neurons)
 end
 
 """Container for the results of an R-learner"""
@@ -209,10 +252,16 @@ julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = RLearner(X, Y, T)
 julia> m2 = RLearner(X, Y, T; t_cat=true)
 ```
+```julia-repl
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
+julia> m1 = RLearner(x_df, y_df, t_df)
+julia> estimate_causal_effect!(m1)
+```
 """
-    function RLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; t_cat=false, 
-        activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+    function RLearner(X, Y, T; t_cat=false, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
 
         new(DoubleMachineLearning(X, Y, T; t_cat=t_cat, regularized=true, 
             activation=activation, validation_metric=validation_metric, 

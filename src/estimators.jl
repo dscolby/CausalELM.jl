@@ -38,6 +38,21 @@ mutable struct InterruptedTimeSeries
     """
     Δ::Array{Float64}
 
+    function InterruptedTimeSeries(X₀::Array{<:Real}, Y₀::Array{<:Real}, X₁::Array{<:Real}, 
+        Y₁::Array{<:Real}; regularized=true, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X₀, 1)/10), 
+        approximator_neurons=round(size(X₀, 1)/10), autoregression=true)
+
+        # Add autoregressive term
+        X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
+        X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, moving_average(Y₁))), X₁)
+
+        new(X₀, Float64.(Y₀), Float64.(X₁), Float64.(Y₁), regularized, activation, 
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, autoregression, 0)
+    end
+end
+
 """
     InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; task, regularized, activation, validation_metric, 
         min_neurons, max_neurons, folds, iterations, approximator_neurons)
@@ -58,20 +73,28 @@ julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
 ```
+```julia-repl
+julia> x₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100))
+julia> y₀_df = DataFrame(y=rand(100))
+julia> x₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)) 
+julia> y₁_df = DataFrame(y=rand(100))
+julia> m1 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
+julia> estimate_causal_effect!(m1)
+```
 """
-    function InterruptedTimeSeries(X₀::Array{<:Real}, Y₀::Array{<:Real}, X₁::Array{<:Real}, 
-        Y₁::Array{<:Real}; regularized=true, activation=relu, validation_metric=mse, 
-        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X₀, 1)/10), 
-        approximator_neurons=round(size(X₀, 1)/10), autoregression=true)
+function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=true, activation=relu, 
+    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+    iterations=round(size(X₀, 1)/10), approximator_neurons=round(size(X₀, 1)/10), 
+    autoregression=true)
 
-        # Add autoregressive term
-        X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
-        X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, moving_average(Y₁))), X₁)
+    # Convert to arrays
+    X₀, X₁, Y₀, Y₁ = Matrix{Float64}(X₀), Matrix{Float64}(X₁), Y₀[:, 1], Y₁[:, 1]
 
-        new(X₀, Float64.(Y₀), Float64.(X₁), Float64.(Y₁), regularized, activation, 
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, autoregression, 0)
-    end
+    InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=regularized, 
+        activation=activation, validation_metric=validation_metric, 
+        min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
+        iterations=iterations, approximator_neurons=approximator_neurons, 
+        autoregression=autoregression)
 end
 
 """Container for the results of G-Computation"""
@@ -111,6 +134,23 @@ mutable struct GComputation <: CausalEstimator
     """The model used to predict the outcomes"""
     learner::ExtremeLearningMachine
 
+    function GComputation(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+        task="regression", quantity_of_interest="ATE", regularized=true, activation=relu, 
+        temporal=true, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        elseif quantity_of_interest ∉ ("ATE", "ITT", "ATT")
+            throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
+        end
+
+        new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
+            activation, temporal, validation_metric, min_neurons, max_neurons, folds, 
+            iterations, approximator_neurons, 0, NaN)
+    end
+end
+
 """
     GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
         validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -136,22 +176,26 @@ julia> m3 = GComputation(X, Y, T; task="regression", quantity_of_interest="ATE)
 julia> m4 = GComputation(X, Y, T; task="regression", quantity_of_interest="ATE, 
 julia> regularized=true)
 ```
+```julia-repl
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
+m1 = GComputation(x_df, y_df, t_df)
+estimate_causal_effect!(m1)
+```
 """
-    function GComputation(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
-        task="regression", quantity_of_interest="ATE", regularized=true, activation=relu, 
-        temporal=true, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+function GComputation(X, Y, T; task="regression", quantity_of_interest="ATE", 
+    regularized=true, activation=relu, temporal=true, validation_metric=mse, min_neurons=1, 
+    max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+    approximator_neurons=round(size(X, 1)/10))
 
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        elseif quantity_of_interest ∉ ("ATE", "ITT", "ATT")
-            throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
-        end
+    # Convert to arrays
+    X, Y, T = Matrix{Float64}(X), Y[:, 1], T[:, 1]
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
-            activation, temporal, validation_metric, min_neurons, max_neurons, folds, 
-            iterations, approximator_neurons, 0, NaN)
-    end
+    GComputation(X, Y, T; task=task, quantity_of_interest=quantity_of_interest, 
+        regularized=regularized, activation=activation, temporal=temporal, 
+        validation_metric=validation_metric, min_neurons=min_neurons, 
+        max_neurons=max_neurons, folds=folds, iterations=iterations, 
+        approximator_neurons=approximator_neurons)
 end
 
 """Container for the results of a double machine learning estimator"""
@@ -189,6 +233,17 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     """The effect of exposure or treatment"""
     causal_effect::Float64
 
+    function DoubleMachineLearning(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+        t_cat=false, regularized=true, activation=relu, validation_metric=mse, 
+        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
+
+        new(Float64.(X), Float64.(Y), Float64.(T), t_cat, regularized, activation, 
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, "ATE", false, 0, NaN)
+    end
+end
+
 """
     DoubleMachineLearning(X, Y, T, task, quantity_of_interest, regularized, activation, 
         validation_metric, min_neurons, max_neurons, folds, iterations, 
@@ -209,16 +264,24 @@ julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = DoubleMachineLearning(X, Y, T)
 julia> m2 = DoubleMachineLearning(X, Y, T; task="regression")
 ```
+```julia-repl
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
+julia> m1 = DoubleMachineLearning(x_df, y_df, t_df)
+julia> estimate_causal_effect!(m1)
+```
 """
-    function DoubleMachineLearning(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
-        t_cat=false, regularized=true, activation=relu, validation_metric=mse, 
-        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
-        approximator_neurons=round(size(X, 1)/10))
+function DoubleMachineLearning(X, Y, T; t_cat=false, regularized=true, activation=relu, 
+    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+    iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
-        new(Float64.(X), Float64.(Y), Float64.(T), t_cat, regularized, activation, 
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, "ATE", false, 0, NaN)
-    end
+    # Convert to arrays
+    X, Y, T = Matrix{Float64}(X), Y[:, 1], T[:, 1]
+
+    DoubleMachineLearning(X, Y, T; t_cat=t_cat, regularized=regularized, 
+        activation=activation, validation_metric=validation_metric, min_neurons=min_neurons, 
+        max_neurons=max_neurons, folds=folds, iterations=iterations, 
+        approximator_neurons=approximator_neurons)
 end
 
 """

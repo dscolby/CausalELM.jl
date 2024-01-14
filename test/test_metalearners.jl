@@ -1,5 +1,6 @@
 using Test
 using CausalELM
+using DataFrames
 
 include("../src/models.jl")
 
@@ -7,8 +8,16 @@ x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
 slearner1, slearner2 = SLearner(x, y, t), SLearner(x, y, t, regularized=true)
 estimate_causal_effect!(slearner1); estimate_causal_effect!(slearner2)
 
+# S-learner initialized with DataFrames
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
+s_learner_df = SLearner(x_df, y_df, t_df)
+
 tlearner1, tlearner2 = TLearner(x, y, t), TLearner(x, y, t, regularized=true)
 estimate_causal_effect!(tlearner1); estimate_causal_effect!(tlearner2)
+
+# T-learner initialized with DataFrames
+t_learner_df = TLearner(x_df, y_df, t_df)
 
 xlearner1 = XLearner(x, y, t)
 xlearner1.num_neurons = 5
@@ -26,13 +35,20 @@ estimate_causal_effect!(xlearner3)
 xlearner4 = XLearner(x, y, t, regularized=true)
 estimate_causal_effect!(xlearner4)
 
+# Testing initialization with DataFrames
+x_learner_df = XLearner(x_df, y_df, t_df)
+
 rlearner = RLearner(x, y, t)
 estimate_causal_effect!(rlearner)
+
+# Testing initialization with DataFrames
+r_learner_df = RLearner(x_df, y_df, t_df)
 
 @testset "S-Learners" begin
     @testset "S-Learner Structure" begin
         @test slearner1.g isa GComputation
         @test slearner2.g isa GComputation
+        @test s_learner_df.g isa GComputation
     end
 
     @testset "S-Learner Estimation" begin
@@ -49,6 +65,9 @@ end
         @test tlearner2.X !== Nothing
         @test tlearner2.Y !== Nothing
         @test tlearner2.T !== Nothing
+        @test t_learner_df.X !== Nothing
+        @test t_learner_df.Y !== Nothing
+        @test t_learner_df.T !== Nothing
     end
 
     @testset "T-Learner Estimation" begin
@@ -85,6 +104,9 @@ end
         @test xlearner4.X !== Nothing
         @test xlearner4.Y !== Nothing
         @test xlearner4.T !== Nothing
+        @test x_learner_df.X !== Nothing
+        @test x_learner_df.Y !== Nothing
+        @test x_learner_df.T !== Nothing
     end
 
     @testset "X-Learner Estimation" begin
@@ -98,6 +120,7 @@ end
 @testset "R-learning" begin
     @testset "R-learner Structure" begin
         @test rlearner.dml !== Nothing
+        @test r_learner_df.dml !== Nothing
     end
 
     @testset "R-learner estimation" begin
