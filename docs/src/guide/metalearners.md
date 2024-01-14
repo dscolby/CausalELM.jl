@@ -10,12 +10,14 @@ the CATE and what types of variables they can handle. In the case of S, T, and X
 they can only handle binary treatments. On the other hand, R-learners can handle binary, 
 categorical, count, or continuous treatments but only supports continuous outcomes.
 
-!!! note For a deeper dive on S-learning, T-learning, and R-learning see:
+!!! note 
+For a deeper dive on S-learning, T-learning, and R-learning see:
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
 
-!!! note To learn more about R-learning see:
+!!! note 
+To learn more about R-learning see:
     Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
     effects." Biometrika 108, no. 2 (2021): 299-319.
 

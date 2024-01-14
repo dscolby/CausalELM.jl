@@ -5,7 +5,8 @@ regression or the model does not assume a parametric form. In other words, when 
 relathionship between the treatment or covariates and outcome is nonlinear and we do not 
 know the functional form. 
 
-!!! note For more information see:
+!!! note 
+For more information see:
     Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
     structural parameters." (2018): C1-C68.
