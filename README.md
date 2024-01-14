@@ -97,18 +97,18 @@ backpropagation to update their weights like conventional neural networks.
 
 <h2>What's New?</h2>
 <ul>
-  <li>Implemented R-Learning</li>
-  <li>Corrected estimating equations for double machine learning</li>
-  <li>Added support for multiclass prediction</li>
-  <li>Corrected calculation of the optimal L2 penalty for regularized extreme learning machines</li>
-  <li>Pub everything under one module</li>
+  <li>Added support for dataframes</li>
+  <li>Estimators can handle any array whose values are <:Real</li>
+  <li>Estimator constructors are now called with model(X, T, Y) instead of model(X, Y, T)</li>
+  <li>Improved documentation</li>
+  <li>causalELM has a new logo</li> 
 </ul>
 
 <h2>Next Steps</h2>
 <p>
-The focus of v0.5 will be on ensuring CausalELM's estimators accept a wider variety of 
-inputs, especially dataframes from DataFrames.jl. We may also implement doubly robust 
-estimation, but this may also be postponed until v0.6.
+The priority for v0.6 will be on implementing doubly robust estimation for the average 
+effect (ATE/ATT) as well as the CATE. We will also make minor improvements for speed, 
+maintainability, etc.
 </p>
 
 <h2>Disclaimer</h2>
