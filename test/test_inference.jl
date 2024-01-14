@@ -1,22 +1,22 @@
 using Test
 using CausalELM
 
-x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
+x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
 
-g_computer = GComputation(x, y, t)
+g_computer = GComputation(x, t, y)
 estimate_causal_effect!(g_computer)
 g_inference = CausalELM.generate_null_distribution(g_computer, 1000)
 p1, stderr1 = CausalELM.quantities_of_interest(g_computer, 1000)
 summary1 = summarize(g_computer)
 
-dm = DoubleMachineLearning(x, y, t)
+dm = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dm)
 dm_inference = CausalELM.generate_null_distribution(dm, 1000)
 p2, stderr2 = CausalELM.quantities_of_interest(dm, 1000)
 summary2 = summarize(dm)
 
 # With a continuous treatment variable
-dm_continuous = DoubleMachineLearning(x, rand(1:4, 100), t)
+dm_continuous = DoubleMachineLearning(x, t, rand(1:4, 100))
 estimate_causal_effect!(dm_continuous)
 dm_continuous_inference = CausalELM.generate_null_distribution(dm_continuous, 1000)
 p3, stderr3 = CausalELM.quantities_of_interest(dm_continuous, 1000)
@@ -32,24 +32,24 @@ its_inference1 = CausalELM.generate_null_distribution(its, 10, true)
 its_inference2 = CausalELM.generate_null_distribution(its, 10, false)
 p4, stderr4 = CausalELM.quantities_of_interest(its, 10, true)
 
-slearner = SLearner(x, y, t)
+slearner = SLearner(x, t, y)
 estimate_causal_effect!(slearner)
 summary5 = summarize(slearner)
 
-tlearner = TLearner(x, y, t)
+tlearner = TLearner(x, t, y)
 estimate_causal_effect!(tlearner)
 tlearner_inference = CausalELM.generate_null_distribution(tlearner, 1000)
 p6, stderr6 = CausalELM.quantities_of_interest(tlearner, 1000)
 summary6 = summarize(tlearner)
 
-xlearner = XLearner(x, y, t)
+xlearner = XLearner(x, t, y)
 estimate_causal_effect!(xlearner)
 xlearner_inference = CausalELM.generate_null_distribution(xlearner, 1000)
 p7, stderr7 = CausalELM.quantities_of_interest(xlearner, 1000)
 summary7 = summarize(xlearner)
 summary8 = summarise(xlearner)
 
-rlearner = RLearner(x, y, t)
+rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
 summary9 = summarize(rlearner)
 

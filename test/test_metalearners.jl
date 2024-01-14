@@ -4,45 +4,45 @@ using DataFrames
 
 include("../src/models.jl")
 
-x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
-slearner1, slearner2 = SLearner(x, y, t), SLearner(x, y, t, regularized=true)
+x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+slearner1, slearner2 = SLearner(x, t, y), SLearner(x, t, y, regularized=true)
 estimate_causal_effect!(slearner1); estimate_causal_effect!(slearner2)
 
 # S-learner initialized with DataFrames
 x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
-s_learner_df = SLearner(x_df, y_df, t_df)
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+s_learner_df = SLearner(x_df, t_df, y_df)
 
-tlearner1, tlearner2 = TLearner(x, y, t), TLearner(x, y, t, regularized=true)
+tlearner1, tlearner2 = TLearner(x, t, y), TLearner(x, t, y, regularized=true)
 estimate_causal_effect!(tlearner1); estimate_causal_effect!(tlearner2)
 
 # T-learner initialized with DataFrames
-t_learner_df = TLearner(x_df, y_df, t_df)
+t_learner_df = TLearner(x_df, t_df, y_df)
 
-xlearner1 = XLearner(x, y, t)
+xlearner1 = XLearner(x, t, y)
 xlearner1.num_neurons = 5
 CausalELM.stage1!(xlearner1)
 stage21 = CausalELM.stage2!(xlearner1)
 
-xlearner2 = XLearner(x, y, t, regularized=true)
+xlearner2 = XLearner(x, t, y, regularized=true)
 xlearner2.num_neurons = 5
 CausalELM.stage1!(xlearner2); CausalELM.stage2!(xlearner2)
 stage22 = CausalELM.stage2!(xlearner1)
 
-xlearner3 = XLearner(x, y, t)
+xlearner3 = XLearner(x, t, y)
 estimate_causal_effect!(xlearner3)
 
-xlearner4 = XLearner(x, y, t, regularized=true)
+xlearner4 = XLearner(x, t, y, regularized=true)
 estimate_causal_effect!(xlearner4)
 
 # Testing initialization with DataFrames
-x_learner_df = XLearner(x_df, y_df, t_df)
+x_learner_df = XLearner(x_df, y_df, y_df)
 
-rlearner = RLearner(x, y, t)
+rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
 
 # Testing initialization with DataFrames
-r_learner_df = RLearner(x_df, y_df, t_df)
+r_learner_df = RLearner(x_df, t_df, y_df)
 
 @testset "S-Learners" begin
     @testset "S-Learner Structure" begin
@@ -60,14 +60,14 @@ end
 @testset "T-Learners" begin
     @testset "T-Learner Structure" begin
         @test tlearner1.X !== Nothing
-        @test tlearner1.Y !== Nothing
         @test tlearner1.T !== Nothing
+        @test tlearner1.Y !== Nothing
         @test tlearner2.X !== Nothing
-        @test tlearner2.Y !== Nothing
         @test tlearner2.T !== Nothing
+        @test tlearner2.Y !== Nothing
         @test t_learner_df.X !== Nothing
-        @test t_learner_df.Y !== Nothing
         @test t_learner_df.T !== Nothing
+        @test t_learner_df.Y !== Nothing
     end
 
     @testset "T-Learner Estimation" begin
@@ -99,14 +99,14 @@ end
 
     @testset "X-Learner Structure" begin
         @test xlearner3.X !== Nothing
-        @test xlearner3.Y !== Nothing
         @test xlearner3.T !== Nothing
+        @test xlearner3.Y !== Nothing
         @test xlearner4.X !== Nothing
-        @test xlearner4.Y !== Nothing
         @test xlearner4.T !== Nothing
+        @test xlearner4.Y !== Nothing
         @test x_learner_df.X !== Nothing
-        @test x_learner_df.Y !== Nothing
         @test x_learner_df.T !== Nothing
+        @test x_learner_df.Y !== Nothing
     end
 
     @testset "X-Learner Estimation" begin
@@ -131,7 +131,7 @@ end
 end
 
 @testset "Task Errors" begin
-    @test_throws ArgumentError SLearner(x, y, t, task="abc")
-    @test_throws ArgumentError TLearner(x, y, t, task="def")
-    @test_throws ArgumentError XLearner(x, y, t, task="xyz")
+    @test_throws ArgumentError SLearner(x, t, y, task="abc")
+    @test_throws ArgumentError TLearner(x, t, y, task="def")
+    @test_throws ArgumentError XLearner(x, t, y, task="xyz")
 end

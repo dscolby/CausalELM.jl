@@ -9,65 +9,65 @@ wald_test = CausalELM.sup_wald(its)
 ovb = CausalELM.omitted_predictor(its)
 its_validation = validate(its)
 
-x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), Float64.([rand()<0.4 for i in 1:100])
-g_computer = GComputation(x, y, t, temporal=false)
+x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
+g_computer = GComputation(x, t, y, temporal=false)
 estimate_causal_effect!(g_computer)
 test_outcomes = g_computer.Y[g_computer.T .== 1]
 
 # Create binary GComputation to test E-values with a binary outcome
 x1, y1 = rand(100, 5), Float64.([rand()<0.4 for i in 1:100])
 t1 = Float64.([rand()<0.4 for i in 1:100])
-binary_g_computer = GComputation(x1, y1, t1, temporal=false)
+binary_g_computer = GComputation(x1, t1, y1, temporal=false)
 estimate_causal_effect!(binary_g_computer)
 
 # Create binary GComputation to test E-values with a count outcome
 x2, y2 = rand(100, 5), rand(1.0:5.0, 100)
 t2 = Float64.([rand()<0.4 for i in 1:100])
-count_g_computer = GComputation(x2, y2, t2, temporal=false)
+count_g_computer = GComputation(x2, t2, y2, temporal=false)
 estimate_causal_effect!(count_g_computer)
 
 # Create double machine learning estimator
-dml = DoubleMachineLearning(x, y, t)
+dml = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dml)
 
 # Create double machine learning estimator without regularization
-dml_noreg = DoubleMachineLearning(x, y, t, regularized=false)
+dml_noreg = DoubleMachineLearning(x, t, y, regularized=false)
 estimate_causal_effect!(dml_noreg)
 
 # Testing the risk ratio with a nonbinary treatment variable
-nonbinary_dml = DoubleMachineLearning(x, y, rand(1:3, 100))
+nonbinary_dml = DoubleMachineLearning(x, rand(1:3, 100), y)
 estimate_causal_effect!(nonbinary_dml)
 
 # Testing the risk ratio with a nonbinary treatment variable and nonbinary outcome
-nonbinary_dml_y = DoubleMachineLearning(x, rand(100), rand(1:3, 100))
+nonbinary_dml_y = DoubleMachineLearning(x, rand(1:3, 100), rand(100))
 estimate_causal_effect!(nonbinary_dml_y)
 
 # Initialize an S-learner
-s_learner = SLearner(x, y, t)
+s_learner = SLearner(x, t, y)
 estimate_causal_effect!(s_learner)
 
 # Initialize a binary S-learner
-s_learner_binary = SLearner(x, y1, t1)
+s_learner_binary = SLearner(x, t1, y1)
 estimate_causal_effect!(s_learner_binary)
 
 # Initialize a binary T-learner
-t_learner_binary = TLearner(x, y1, t1)
+t_learner_binary = TLearner(x, t1, y1)
 estimate_causal_effect!(t_learner_binary)
 
 # Initialize a T-learner
-t_learner = TLearner(x, y, t)
+t_learner = TLearner(x, t, y)
 estimate_causal_effect!(t_learner)
 
 # Initialize an X-learner
-x_learner = XLearner(x, y, t)
+x_learner = XLearner(x, t, y)
 estimate_causal_effect!(x_learner)
 
 # Create an R-learner
-r_learner = RLearner(x, y, t)
+r_learner = RLearner(x, t, y)
 estimate_causal_effect!(r_learner)
 
 # Used to test ErrorException
-r_learner_no_effect = RLearner(x, y, t)
+r_learner_no_effect = RLearner(x, t, y)
 
 # Used to test helper functions for Jenks breaks
 sum_of_squares2 = CausalELM.sums_of_squares([1, 2, 3, 4, 5], 2)
@@ -275,10 +275,10 @@ end
 
 @testset "Calling validate before estimate_causal_effect!" begin
     @test_throws ErrorException validate(InterruptedTimeSeries(x₀, y₀, x₁, y₁))
-    @test_throws ErrorException validate(GComputation(x, y, t))
-    @test_throws ErrorException validate(DoubleMachineLearning(x, y, t))
-    @test_throws ErrorException validate(SLearner(x, y, t))
-    @test_throws ErrorException validate(TLearner(x, y, t))
-    @test_throws ErrorException validate(XLearner(x, y, t))
+    @test_throws ErrorException validate(GComputation(x, t, y))
+    @test_throws ErrorException validate(DoubleMachineLearning(x, t, y))
+    @test_throws ErrorException validate(SLearner(x, t, y))
+    @test_throws ErrorException validate(TLearner(x, t, y))
+    @test_throws ErrorException validate(XLearner(x, t, y))
     @test_throws ErrorException validate(r_learner_no_effect)
 end

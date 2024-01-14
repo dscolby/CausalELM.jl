@@ -109,9 +109,9 @@ For more information on the E-value test see:
 
 Examples
 ```julia-repl
-julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
-    Float64.([rand()<0.4 for i in 1:100])
-julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), 
+            vec(rand(1:100, 100, 1)), 
+julia> g_computer = GComputation(x, t, y, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> validate(g_computer)
  2.7653668647301795
@@ -352,9 +352,9 @@ For a primer on G-computation and its assumptions see:
 
 Examples
 ```julia-repl
-julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
-    Float64.([rand()<0.4 for i in 1:100])
-julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
+            vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> counterfactual_consistency(g_computer)
  2.7653668647301795
@@ -385,9 +385,9 @@ For more information on the E-value test see:
 
 Examples
 ```julia-repl
-julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
-    Float64.([rand()<0.4 for i in 1:100])
-julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
+            vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> e_value(g_computer)
  1.13729886008143832
@@ -406,9 +406,9 @@ For more information on the E-value test see:
 
 Examples
 ```julia-repl
-julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
-    Float64.([rand()<0.4 for i in 1:100])
-julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
+            vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> e_value(g_computer)
  2.2555405766985125
@@ -462,9 +462,9 @@ For more information on how other quantities of interest are converted to risk r
 
 Examples
 ```julia-repl
-julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
-    Float64.([rand()<0.4 for i in 1:100])
-julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
+            vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> risk_ratio(g_computer)
  2.5320694766985125
@@ -562,9 +562,9 @@ assumption.
 
 Examples
 ```julia-repl
-julia> x, y, t = rand(100, 5), vec(rand(1:100, 100, 1)), 
-    Float64.([rand()<0.4 for i in 1:100])
-julia> g_computer = GComputation(x, y, t, temporal=false)
+julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
+            vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
 julia> estimate_causal_effect!(g_computer)
 julia> positivity(g_computer)
 0×5 Matrix{Float64}

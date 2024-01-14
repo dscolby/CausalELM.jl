@@ -8,7 +8,7 @@ mutable struct SLearner <: Metalearner
     causal_effect::Array{Float64}
 
 """
-    SLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
+    SLearner(X, T, Y, task, regularized, activation, validation_metric, min_neurons, 
         max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a S-Learner.
@@ -20,23 +20,23 @@ For an overview of S-Learners and other metalearners see:
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = SLearner(X, Y, T)
-julia> m2 = SLearner(X, Y, T; task="regression")
-julia> m3 = SLearner(X, Y, T; task="regression", regularized=true)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = SLearner(X, T, Y)
+julia> m2 = SLearner(X, T, Y; task="regression")
+julia> m3 = SLearner(X, T, Y; task="regression", regularized=true)
 
 ```julia-repl
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
-julia> m1 = SLearner(x_df, y_df, t_df)
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m1 = SLearner(x_df, t_df, y_df)
 julia> estimate_causal_effect!(m1)
 ```
 """
-    function SLearner(X, Y, T; task="regression", regularized=true, activation=relu, 
+    function SLearner(X, T, Y; task="regression", regularized=true, activation=relu, 
         validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
-        new(GComputation(X, Y, T, task=task, quantity_of_interest="ATE", 
+        new(GComputation(X, T, Y, task=task, quantity_of_interest="ATE", 
             regularized=regularized, activation=activation, temporal=false, 
             validation_metric=validation_metric, min_neurons=min_neurons, 
             max_neurons=max_neurons, folds=folds, iterations=iterations, 
@@ -48,10 +48,10 @@ end
 mutable struct TLearner <: Metalearner
     """Covariates"""
     X::Array{Float64}
-    """Outomes variable"""
-    Y::Array{Float64}
     """Treatment statuses"""
     T::Array{Float64}
+    """Outome variable"""
+    Y::Array{Float64}
     """Either regression or classification"""
     task::String
     """Whether to use L2 regularization"""
@@ -83,7 +83,7 @@ mutable struct TLearner <: Metalearner
     """Extreme Learning Machine used for the first stage of estimation"""
     μ₁::ExtremeLearningMachine
 
-    function TLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+    function TLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
         task="regression", regularized=false, activation=relu, validation_metric=mse, 
         min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
         approximator_neurons=round(size(X, 1)/10))
@@ -92,14 +92,14 @@ mutable struct TLearner <: Metalearner
             throw(ArgumentError("task must be either regression or classification"))
         end
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
+        new(Float64.(X), Float64.(T), Float64.(Y), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, "CATE", false, 0)
     end
 end
 
 """
-    TLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
+    TLearner(X, T, Y, task, regularized, activation, validation_metric, min_neurons, 
         max_neurons, folds, iterations, approximator_neurons)
 
 Initialize a T-Learner.
@@ -111,26 +111,26 @@ For an overview of T-Learners and other metalearners see:
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = TLearner(X, Y, T)
-julia> m2 = TLearner(X, Y, T; task="regression")
-julia> m3 = TLearner(X, Y, T; task="regression", regularized=true)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = TLearner(X, T, Y)
+julia> m2 = TLearner(X, T, Y; task="regression")
+julia> m3 = TLearner(X, T, Y; task="regression", regularized=true)
 ```
 ```julia-repl
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
-julia> m1 = TLearner(x_df, y_df, t_df)
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m1 = TLearner(x_df, t_df, y_df)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function TLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
+function TLearner(X, T, Y; task="regression", regularized=false, activation=relu, 
     validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
     iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
-    X, Y, T = Matrix{Float64}(X), Y[:, 1], T[:, 1]
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
-    TLearner(X, Y, T; task=task, regularized=regularized, activation=activation, 
+    TLearner(X, T, Y; task=task, regularized=regularized, activation=activation, 
         validation_metric=validation_metric, min_neurons=min_neurons, 
         max_neurons=max_neurons, folds=folds, iterations=iterations, 
         approximator_neurons=approximator_neurons)
@@ -140,10 +140,10 @@ end
 mutable struct XLearner <: Metalearner
     """Covariates"""
     X::Array{Float64}
-    """Outomes variable"""
-    Y::Array{Float64}
     """Treatment statuses"""
     T::Array{Float64}
+    """Outome variable"""
+    Y::Array{Float64}
     """Either regression or classification"""
     task::String
     """Whether to use L2 regularization"""
@@ -177,7 +177,7 @@ mutable struct XLearner <: Metalearner
     """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
 
-    function XLearner(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+    function XLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
         task="regression", regularized=false, activation=relu, validation_metric=mse, 
         min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
         approximator_neurons=round(size(X, 1)/10))
@@ -186,14 +186,14 @@ mutable struct XLearner <: Metalearner
             throw(ArgumentError("task must be either regression or classification"))
         end
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, regularized, activation,  
+        new(Float64.(X), Float64.(T), Float64.(Y), task, regularized, activation,  
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, "CATE", false, 0)
     end
 end
 
 """
-    XLearner(X, Y, T, task, regularized, activation, validation_metric, min_neurons, 
+    XLearner(X, T, Y, task, regularized, activation, validation_metric, min_neurons, 
         max_neurons, folds, iterations, approximator_neurons)
 
 Initialize an X-Learner.
@@ -205,26 +205,26 @@ For an overview of X-Learners and other metalearners see:
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = XLearner(X, Y, T)
-julia> m2 = XLearner(X, Y, T; task="regression")
-julia> m3 = XLearner(X, Y, T; task="regression", regularized=true)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = XLearner(X, T, Y)
+julia> m2 = XLearner(X, T, Y; task="regression")
+julia> m3 = XLearner(X, T, Y; task="regression", regularized=true)
 ```
 ```julia-repl
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
-julia> m1 = XLearner(x_df, y_df, t_df)
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m1 = XLearner(x_df, t_df, y_df)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function XLearner(X, Y, T; task="regression", regularized=false, activation=relu, 
+function XLearner(X, T, Y; task="regression", regularized=false, activation=relu, 
     validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
     iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
-    X, Y, T = Matrix{Float64}(X), Y[:, 1], T[:, 1]
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
-    XLearner(X, Y, T; task=task, regularized=regularized, activation=activation, 
+    XLearner(X, T, Y; task=task, regularized=regularized, activation=activation, 
         validation_metric=validation_metric, min_neurons=min_neurons, 
         max_neurons=max_neurons, folds=folds, iterations=iterations, 
         approximator_neurons=approximator_neurons)
@@ -237,7 +237,7 @@ mutable struct RLearner <: Metalearner
     causal_effect::Array{Float64}
 
 """
-    RLearner(X, Y, T; t_cat, quantity_of_interest, activation, validation_metric, 
+    RLearner(X, T, Y; t_cat, quantity_of_interest, activation, validation_metric, 
         min_neurons, max_neurons, folds, iterations, approximator_neurons)
 
 Initialize an R-Learner.
@@ -248,22 +248,22 @@ For an explanation of R-Learner estimation see:
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = RLearner(X, Y, T)
-julia> m2 = RLearner(X, Y, T; t_cat=true)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = RLearner(X, T, Y)
+julia> m2 = RLearner(X, T, Y; t_cat=true)
 ```
 ```julia-repl
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
-julia> m1 = RLearner(x_df, y_df, t_df)
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m1 = RLearner(x_df, t_df, y_df)
 julia> estimate_causal_effect!(m1)
 ```
 """
-    function RLearner(X, Y, T; t_cat=false, activation=relu, validation_metric=mse, 
+    function RLearner(X, T, Y; t_cat=false, activation=relu, validation_metric=mse, 
         min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
         approximator_neurons=round(size(X, 1)/10))
 
-        new(DoubleMachineLearning(X, Y, T; t_cat=t_cat, regularized=true, 
+        new(DoubleMachineLearning(X, T, Y; t_cat=t_cat, regularized=true, 
             activation=activation, validation_metric=validation_metric, 
             min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
             iterations=iterations, approximator_neurons=approximator_neurons))
@@ -282,8 +282,8 @@ For an overview of S-learning see:
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m4 = SLearner(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m4 = SLearner(X, T, Y)
 julia> estimate_causal_effect!(m4)
 100-element Vector{Float64}
  0.20729633391630697
@@ -315,8 +315,8 @@ For an overview of T-learning see:
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m5 = TLearner(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m5 = TLearner(X, T, Y)
 julia> estimate_causal_effect!(m5)
 100-element Vector{Float64}
  0.0493951571746305
@@ -365,8 +365,8 @@ For an overview of X-learning see:
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = XLearner(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = XLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
 -0.025012644892878473
 -0.024634294305967294
@@ -405,8 +405,8 @@ For an overview of R-learning see:
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = RLearner(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = RLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
  -0.025012644892878473
  -0.024634294305967294
@@ -443,8 +443,8 @@ Estimate the first stage models for an X-learner.
 This method should not be called by the user.
 
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = XLearner(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = XLearner(X, T, Y)
 julia> stage1!(m1)
 ```
 """
@@ -477,8 +477,8 @@ Estimate the second stage models for an X-learner.
 This method should not be called by the user.
 
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = XLearner(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = XLearner(X, T, Y)
 julia> stage1!(m1)
 julia> stage2!(m1)
 100-element Vector{Float64}

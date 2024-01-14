@@ -101,10 +101,10 @@ end
 mutable struct GComputation <: CausalEstimator
     """Covariates"""
     X::Array{Float64}
-    """Outomes variable"""
-    Y::Array{Float64}
     """Treatment statuses"""
     T::Array{Float64}
+    """Outomes variable"""
+    Y::Array{Float64}
     """Either regression or classification"""
     task::String
     """Either ATE, ITT, or ATT"""
@@ -134,7 +134,7 @@ mutable struct GComputation <: CausalEstimator
     """The model used to predict the outcomes"""
     learner::ExtremeLearningMachine
 
-    function GComputation(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+    function GComputation(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
         task="regression", quantity_of_interest="ATE", regularized=true, activation=relu, 
         temporal=true, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
@@ -145,14 +145,14 @@ mutable struct GComputation <: CausalEstimator
             throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
         end
 
-        new(Float64.(X), Float64.(Y), Float64.(T), task, quantity_of_interest, regularized, 
+        new(Float64.(X), Float64.(T), Float64.(Y), task, quantity_of_interest, regularized, 
             activation, temporal, validation_metric, min_neurons, max_neurons, folds, 
             iterations, approximator_neurons, 0, NaN)
     end
 end
 
 """
-    GComputation(X, Y, T, task, quantity_of_interest, regularized, activation, temporal, 
+    GComputation(X, T, Y, task, quantity_of_interest, regularized, activation, temporal, 
         validation_metric, min_neurons, max_neurons, folds, iterations, 
         approximator_neurons)
 
@@ -165,33 +165,31 @@ For a good overview of G-Computation see:
     estimator for causal inference with different covariates sets: a comparative simulation 
     study." Scientific reports 10, no. 1 (2020): 9219.
 
-Note that X, Y, and T must all be floating point numbers.
-
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = GComputation(X, Y, T)
-julia> m2 = GComputation(X, Y, T; task="regression")
-julia> m3 = GComputation(X, Y, T; task="regression", quantity_of_interest="ATE)
-julia> m4 = GComputation(X, Y, T; task="regression", quantity_of_interest="ATE, 
+julia> X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = GComputation(X, T, Y)
+julia> m2 = GComputation(X, T, Y; task="regression")
+julia> m3 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE)
+julia> m4 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE, 
 julia> regularized=true)
 ```
 ```julia-repl
 x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
-m1 = GComputation(x_df, y_df, t_df)
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
+m1 = GComputation(x_df, t_df, y_df)
 estimate_causal_effect!(m1)
 ```
 """
-function GComputation(X, Y, T; task="regression", quantity_of_interest="ATE", 
+function GComputation(X, T, Y; task="regression", quantity_of_interest="ATE", 
     regularized=true, activation=relu, temporal=true, validation_metric=mse, min_neurons=1, 
     max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
     approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
-    X, Y, T = Matrix{Float64}(X), Y[:, 1], T[:, 1]
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
-    GComputation(X, Y, T; task=task, quantity_of_interest=quantity_of_interest, 
+    GComputation(X, T, Y; task=task, quantity_of_interest=quantity_of_interest, 
         regularized=regularized, activation=activation, temporal=temporal, 
         validation_metric=validation_metric, min_neurons=min_neurons, 
         max_neurons=max_neurons, folds=folds, iterations=iterations, 
@@ -202,10 +200,10 @@ end
 mutable struct DoubleMachineLearning <: CausalEstimator
     """Covariates"""
     X::Array{Float64}
-    """Outomes variable"""
-    Y::Array{Float64}
     """Treatment statuses"""
     T::Array{Float64}
+    """Outomes variable"""
+    Y::Array{Float64}
     """True if the treatment variable is categorical and nonbinary"""
     t_cat::Bool
     """Whether to use L2 regularization"""
@@ -233,19 +231,19 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     """The effect of exposure or treatment"""
     causal_effect::Float64
 
-    function DoubleMachineLearning(X::Array{<:Real}, Y::Array{<:Real}, T::Array{<:Real}; 
+    function DoubleMachineLearning(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
         t_cat=false, regularized=true, activation=relu, validation_metric=mse, 
         min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
         approximator_neurons=round(size(X, 1)/10))
 
-        new(Float64.(X), Float64.(Y), Float64.(T), t_cat, regularized, activation, 
+        new(Float64.(X), Float64.(T), Float64.(Y), t_cat, regularized, activation, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, "ATE", false, 0, NaN)
     end
 end
 
 """
-    DoubleMachineLearning(X, Y, T, task, quantity_of_interest, regularized, activation, 
+    DoubleMachineLearning(X, T, Y, task, quantity_of_interest, regularized, activation, 
         validation_metric, min_neurons, max_neurons, folds, iterations, 
         approximator_neurons)
 
@@ -256,29 +254,27 @@ For more information see:
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
     structural parameters." (2018): C1-C68.
 
-Note that X, Y, and T must all contain floating point numbers.
-
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoubleMachineLearning(X, Y, T)
-julia> m2 = DoubleMachineLearning(X, Y, T; task="regression")
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> m2 = DoubleMachineLearning(X, T, Y; task="regression")
 ```
 ```julia-repl
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> y_df, t_df = DataFrame(y=rand(100)), DataFrame(t=rand(0:1, 100))
-julia> m1 = DoubleMachineLearning(x_df, y_df, t_df)
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m1 = DoubleMachineLearning(x_df, t_df, y_df)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function DoubleMachineLearning(X, Y, T; t_cat=false, regularized=true, activation=relu, 
+function DoubleMachineLearning(X, T, Y; t_cat=false, regularized=true, activation=relu, 
     validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
     iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
-    X, Y, T = Matrix{Float64}(X), Y[:, 1], T[:, 1]
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
-    DoubleMachineLearning(X, Y, T; t_cat=t_cat, regularized=regularized, 
+    DoubleMachineLearning(X, T, Y; t_cat=t_cat, regularized=regularized, 
         activation=activation, validation_metric=validation_metric, min_neurons=min_neurons, 
         max_neurons=max_neurons, folds=folds, iterations=iterations, 
         approximator_neurons=approximator_neurons)
@@ -332,8 +328,8 @@ as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0,
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m2 = GComputation(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m2 = GComputation(X, T, Y)
 julia> estimate_causal_effect!(m2)
  0.31067439
 ```
@@ -375,8 +371,8 @@ models for the treatment and control groups.
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m3 = DoubleMachineLearning(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m3 = DoubleMachineLearning(X, T, Y)
 julia> estimate_causal_effect!(m3)
  0.31067439
 ```
@@ -404,8 +400,8 @@ This method should not be called directly.
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = DoubleMachineLearning(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
 julia> estimate_effect!(m1)
  0.31067439
 ```
@@ -445,11 +441,11 @@ This method should not be called directly.
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> x_train, x_test = X[1:80, :], X[81:end, :]
 julia> y_train, y_test = Y[1:80], Y[81:end]
 julia> t_train, t_test = T[1:80], T[81:100]
-julia> m1 = DoubleMachineLearning(X, Y, T)
+julia> m1 = DoubleMachineLearning(X, T, Y)
 julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 100-element Vector{Float64}
  0.6944714802199426

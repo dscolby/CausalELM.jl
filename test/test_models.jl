@@ -85,3 +85,4 @@ k = ridge_constant(helper_elm)
     @test sprint(print, m1) === msg1 * string(m1.hidden_neurons) * " " * msg2
     @test sprint(print, m2) === msg3 * string(m2.hidden_neurons) * " " * msg2
  end
+ 

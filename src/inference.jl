@@ -61,8 +61,8 @@ For a primer on randomization inference see:
 
 Examples
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = GComputation(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = GComputation(X, T, Y)
 julia> estimate_causal_effect!(m1)
  0.3100468253
 julia> summarize(m1)
@@ -74,8 +74,8 @@ julia> summarize(m1)
 ```
 
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = RLearner(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = RLearner(X, T, Y)
 julia> estimate_causal_effect(m1)
 1-element Vector{Float64}
  [0.5804032956]
@@ -87,8 +87,8 @@ julia> summarize(m1)
 ```
 
 ```julia-repl
-julia> X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = SLearner(X, Y, T)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = SLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
 100-element Vector{Float64}
  0.20729633391630697
@@ -154,8 +154,8 @@ the null hypothesis.
 
 Examples
 ```julia-repl
-julia> x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
-julia> g_computer = GComputation(x, y, t)
+julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+julia> g_computer = GComputation(x, t, y)
 julia> estimate_causal_effect!(g_computer)
 julia> generate_null_distribution(g_computer, 500)
 500-element Vector{Float64}
@@ -257,8 +257,8 @@ For a primer on randomization inference see:
 
 Examples
 ```julia-repl
-julia> x, y, t = rand(100, 5), rand(1:100, 100, 1), [rand()<0.4 for i in 1:100]
-julia> g_computer = GComputation(x, y, t)
+julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+julia> g_computer = GComputation(x, t, y)
 julia> estimate_causal_effect!(g_computer)
 julia> quantities_of_interest(g_computer, 1000)
  (0.114, 6.953133617011371)
