@@ -5,13 +5,14 @@ given at multiple times whose status depends on the health of the patient at a g
 One way to get an unbiased estimate of the causal effect is to use G-computation. The basic 
 steps for using G-computation in CausalELM are below.
 
-!!! note 
-For a good overview of G-Computation see:
-    Chatton, Arthur, Florent Le Borgne, Clémence Leyrat, Florence Gillaizeau, Chloé 
-    Rousseau, Laetitia Barbin, David Laplaud, Maxime Léger, Bruno Giraudeau, and Yohann 
-    Foucher. "G-computation, propensity score-based methods, and targeted maximum likelihood 
-    estimator for causal inference with different covariates sets: a comparative simulation 
-    study." Scientific reports 10, no. 1 (2020): 9219.
+!!! Note 
+
+    For a good overview of G-Computation see:
+        Chatton, Arthur, Florent Le Borgne, Clémence Leyrat, Florence Gillaizeau, Chloé 
+        Rousseau, Laetitia Barbin, David Laplaud, Maxime Léger, Bruno Giraudeau, and Yohann 
+        Foucher. "G-computation, propensity score-based methods, and targeted maximum likelihood 
+        estimator for causal inference with different covariates sets: a comparative simulation 
+        study." Scientific reports 10, no. 1 (2020): 9219.
 
 ## Step 1: Initialize a Model
 The GComputation method takes at least three arguments: an array of covariates, a vector of 
