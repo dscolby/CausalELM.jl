@@ -12,12 +12,14 @@ categorical, count, or continuous treatments but only supports continuous outcom
 
 !!! note
     For a deeper dive on S-learning, T-learning, and R-learning see:
+    
         Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
         estimating heterogeneous treatment effects using machine learning." Proceedings of the 
         national academy of sciences 116, no. 10 (2019): 4156-4165.
 
 !!! note 
     To learn more about R-learning see:
+    
         Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
         effects." Biometrika 108, no. 2 (2021): 299-319.
 

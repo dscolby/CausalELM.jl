@@ -7,6 +7,7 @@ know the functional form.
 
 !!! note 
     For more information see:
+    
         Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
         Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
         structural parameters." (2018): C1-C68.

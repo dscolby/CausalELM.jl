@@ -7,6 +7,7 @@ steps for using G-computation in CausalELM are below.
 
 !!! note 
     For a good overview of G-Computation see:
+    
         Chatton, Arthur, Florent Le Borgne, Clémence Leyrat, Florence Gillaizeau, Chloé 
         Rousseau, Laetitia Barbin, David Laplaud, Maxime Léger, Bruno Giraudeau, and Yohann 
         Foucher. "G-computation, propensity score-based methods, and targeted maximum likelihood 
