@@ -21,11 +21,16 @@ To learn more about R-learning see:
 
 # Initialize a Metalearner
 S-learners, T-learners, and X-learners all take at least three arguments: an array of 
-covariates, a vector of outcomes, and a vector of treatment statuses.Additional options can 
+covariates, a vector of outcomes, and a vector of treatment statuses. Additional options can 
 be specified for each type of metalearner using its keyword arguments.
 ```julia
 # Generate data to use
 X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
+
+# We could also use DataFrames
+# using DataFrames
+# X = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
+# T, Y = DataFrame(t=[rand()<0.4 for i in 1:1000]), DataFrame(y=rand(1000))
 
 s_learner = SLearner(X, Y, T)
 t_learner = TLearner(X, Y, T)
@@ -34,7 +39,7 @@ r_learner = RLearner(X, Y, T)
 ```
 
 # Estimate the CATE
-We can estimate the CATE for all the models by passing them to estimatecausaleffect!.
+We can estimate the CATE for all the models by passing them to estimate_causal_effect!.
 ```julia
 estimate_causal_effect!(s_learner)
 estimate_causal_effect!(t_learner)
@@ -45,6 +50,14 @@ estimate_causal_effect!(r_learner)
 # Get a Summary
 We can get a summary of the models that includes p0values and standard errors for the 
 average treatment effect by passing the models to the summarize method.
+
+Calling the summarize methodd returns a dictionary with the estimator's task (regression or 
+classification), the quantity of interest being estimated (CATE), whether the model 
+uses an L2 penalty, the activation function used in the model's outcome predictors, whether 
+the data is temporal, the validation metric used for cross validation to find the best 
+number of neurons, the number of neurons used in the ELMs used by the estimator, the number 
+of neurons used in the ELM used to learn a mapping from number of neurons to validation 
+loss during cross validation, the causal effect, standard error, and p-value for the ATE.
 ```julia
 summarize(s_learner)
 summarize(t_learner)
@@ -76,6 +89,9 @@ estimating propensity scores. Rows in the matrix are levels of covariates that h
 probability of treatment. If the matrix is empty, none of the observations have an estimated 
 zero probability of treatment, which implies the positivity assumption is satisfied.
 
+One can also specify the maxium number of possible treatments to consider for the causal 
+consistency assumption and the minimum and maximu probabilities of treatment for the 
+positivity assumption with the num_treatments, min, and max keyword arguments.
 
 For a thorough review of casual inference assumptions see:
     Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 

@@ -37,19 +37,18 @@ prediction accuracy, generalization, ease of implementation, speed, and interpre
 *   Non-parametric randomization (permutation) inference-based p-values for all models
 
 ### What's New?
-*   Corrected calculation of L2 penalty
-*   Corrected estimation of ATE using double machine learning
-*   Added support for categorical treatments for double machine learning
-*   Implemented R-learner
-*   Fixed E-value calculation
-*   Simplified module structure and refactored code
+*   Added support for dataframes
+*   Estimators can handle any array whose values are <:Real
+*   Estimator constructors are now called with model(X, T, Y) instead of model(X, Y, T)
+*   Improved documentation
+*   causalELM has a new logo
 
 ### Comparison with Other Packages
 Other packages, mainly EconML, DoWhy, and CausalML, have similar funcitonality. Beides being 
 written in Julia rather than Python, the main differences between CausalELM and these 
 libraries are:
 
-*   CausalELM uses extreme learning machines rather than tree-based or deep learners
+*   CausalELM uses extreme learning machines instead of tree-based, linear, or deep learners
 *   CausalELM performs cross validation during training
 *   CausalELM performs inference via asymptotic randomization inference rather than 
     bootstrapping
@@ -58,6 +57,7 @@ libraries are:
 *   CausalELM creates train/test splits automatically
 *   CausalELM does not have external dependencies: all the functions it uses are in the 
     Julia standard library
+*   CausalELM is simpler to use but has less flexibility than the other libraries
 
 ### Installation
 CausalELM requires Julia version 1.7 or greater and can be installed from the REPL as shown 

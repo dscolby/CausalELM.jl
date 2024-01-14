@@ -17,7 +17,7 @@ makedocs(;
     ),
     pages=[
         "causalELM" => "index.md",
-        "User Guide" => Any[
+        "Getting Started" => Any[
             "Deciding Which Model to Use" => "guide/estimatorselection.md",
             "Interrupted Time Series Estimation" => "guide/its.md",
             "G-computation" => "guide/gcomputation.md",

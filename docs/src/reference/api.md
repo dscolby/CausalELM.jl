@@ -3,7 +3,7 @@ Most of the methods and structs here are private, not exported, should not be ca
 user, and are documented for the purpose of developing CausalELM or to facilitate 
 understanding of the implementation.
 
-## Structs
+## Types
 ```@docs
 InterruptedTimeSeries
 GComputation

@@ -14,20 +14,26 @@ For a good overview of G-Computation see:
 
 ## Step 1: Initialize a Model
 The GComputation method takes at least three arguments: an array of covariates, a vector of 
-outcomes, and a vector of treatment statuses. You can also specify the causal estimand, 
-whether to employ L2 regularization, which activation function to use, whether the data is 
-of a temporal nature, the metric to use when using cross validation to find the best 
-number of neurons, the minimum number of neurons to consider, the maximum number of neurons 
-to consider, the number of folds to use during cross caidation, and the number of neurons to 
-use in the ELM that learns a mapping from number of neurons to validation loss. These are 
-options are specified with the following keyword arguments: quantity_of_interest, 
-regularized, activation, temporal, validation_metric, min_neurons, max_neurons, folds, 
-iterations, and approximator_neurons.
+treatment statuses, and an outcome vector. 
+
+You can also specify the causal estimand, whether to employ L2 regularization, which 
+activation function to use, whether the data is of a temporal nature, the metric to use when 
+using cross validation to find the best number of neurons, the minimum number of neurons to 
+consider, the maximum number of neurons to consider, the number of folds to use during cross 
+caidation, and the number of neurons to use in the ELM that learns a mapping from number of 
+neurons to validation loss. These are options are specified with the following keyword 
+arguments: quantity_of_interest, regularized, activation, temporal, validation_metric, 
+min_neurons, max_neurons, folds, iterations, and approximator_neurons.
 ```julia
 # Create some data with a binary treatment
-X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
+X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)
 
-g_computer = GComputation(X, Y, T)
+# We could also use DataFrames
+# using DataFrames
+# X = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
+# T, Y = DataFrame(t=[rand()<0.4 for i in 1:1000]), DataFrame(y=rand(1000))
+
+g_computer = GComputation(X, T, Y)
 ```
 
 ## Step 2: Estimate the Causal Effect
@@ -40,6 +46,14 @@ estimate_causal_effect!(g_computer)
 ## Step 3: Get a Summary
 We get a summary of the model that includes a p-value and standard error estimated via 
 asymptotic randomization inference by passing our model to the summarize method.
+
+Calling the summarize methodd returns a dictionary with the estimator's task (regression or 
+classification), the quantity of interest being estimated (ATE or ATT), whether the model 
+uses an L2 penalty, the activation function used in the model's outcome predictors, whether 
+the data is temporal, the validation metric used for cross validation to find the best 
+number of neurons, the number of neurons used in the ELMs used by the estimator, the number 
+of neurons used in the ELM used to learn a mapping from number of neurons to validation 
+loss during cross validation, the causal effect, standard error, and p-value.
 ```julia
 summarize(g_computer)
 ```
@@ -67,6 +81,10 @@ the exchangeability assumption. Finally, this method tests the positivity assump
 estimating propensity scores. Rows in the matrix are levels of covariates that have a zero 
 probability of treatment. If the matrix is empty, none of the observations have an estimated 
 zero probability of treatment, which implies the positivity assumption is satisfied.
+
+One can also specify the maxium number of possible treatments to consider for the causal 
+consistency assumption and the minimum and maximu probabilities of treatment for the 
+positivity assumption with the num_treatments, min, and max keyword arguments.
 
 
 For a thorough review of casual inference assumptions see:

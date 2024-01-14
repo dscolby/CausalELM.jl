@@ -12,20 +12,27 @@ For more information see:
 
 ## # Step 1: Initialize a Model
 The DoubleMachineLearning constructor takes at least three arguments, an array of 
-covariates, an outcome vector, and a vector of treatment statuses. You can also specify the 
-following options: whether the treatment vector is categorical ie not continuous and 
-containing more than two classes, whether to use L2 regularization, the activation function, 
-the validation metric to use when searching for the best number of neurons, the minimum and 
-maximum number of neurons to consider, the number of folds to use for cross validation, the 
-number of iterations to perform cross validation, and the number of neurons to use in the 
-ELM used to learn the function from number of neurons to validation loss. These arguments 
-are specified with the following keyword arguments: t_cat, regularized, activation, 
-validation_metric, min_neurons, max_neurons, folds, iterations, and approximator_neurons.
+covariates, a treatment vector, and an outcome vector. 
+
+You can also specify the following options: whether the treatment vector is categorical ie 
+not continuous and containing more than two classes, whether to use L2 regularization, the 
+activation function, the validation metric to use when searching for the best number of 
+neurons, the minimum and maximum number of neurons to consider, the number of folds to use 
+for cross validation, the number of iterations to perform cross validation, and the number 
+of neurons to use in the ELM used to learn the function from number of neurons to validation 
+loss. These arguments are specified with the following keyword arguments: t_cat, 
+regularized, activation, validation_metric, min_neurons, max_neurons, folds, iterations, and 
+approximator_neurons.
 ```julia
 # Create some data with a binary treatment
-X, Y, T =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 
-dml = DoubleMachineLearning(X, Xₚ, Y, T)
+# We could also use DataFrames
+# using DataFrames
+# X = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100), x5=rand(100))
+# T, Y = DataFrame(t=[rand()<0.4 for i in 1:100]), DataFrame(y=rand(100))
+
+dml = DoubleMachineLearning(X, T, Y)
 ```
 
 ## Step 2: Estimate the Causal Effect
@@ -38,7 +45,19 @@ estimate_causal_effect!(dml)
 # Get a Summary
 We can get a summary that includes a p-value and standard error estimated via asymptotic 
 randomization inference by passing our model to the summarize method.
+
+Calling the summarize methodd returns a dictionary with the estimator's task (regression or 
+classification), the quantity of interest being estimated (ATE), whether the model uses an 
+L2 penalty (always true for DML), the activation function used in the model's outcome 
+predictors, whether the data is temporal (always false for DML), the validation metric used 
+for cross validation to find the best number of neurons, the number of neurons used in the 
+ELMs used by the estimator, the number of neurons used in the ELM used to learn a mapping 
+from number of neurons to validation loss during cross validation, the causal effect, 
+standard error, and p-value.
 ```julia
+# Can also use the British spelling
+# summarise(dml)
+
 summarize(dml)
 ```
 
@@ -63,8 +82,13 @@ confounder would need to have with the treatment and outcome variable to fully e
 the estimated effect. Thus, higher E-values imply the model is more robust to a violation of 
 the exchangeability assumption. Finally, this method tests the positivity assumption by 
 estimating propensity scores. Rows in the matrix are levels of covariates that have a zero 
-probability of treatment. If the matrix is empty, none of the observations have an estimated 
-zero probability of treatment, which implies the positivity assumption is satisfied.
+or near zero probability of treatment. If the matrix is empty, none of the observations have 
+an estimated zero probability of treatment, which implies the positivity assumption is 
+satisfied.
+
+One can also specify the maxium number of possible treatments to consider for the causal 
+consistency assumption and the minimum and maximu probabilities of treatment for the 
+positivity assumption with the num_treatments, min, and max keyword arguments.
 
 
 For a thorough review of casual inference assumptions see:
