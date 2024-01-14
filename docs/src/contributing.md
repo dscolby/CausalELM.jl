@@ -3,21 +3,20 @@ All contributions are welcome. To ensure contributions align with the existing c
 are not duplicated, please follow the guidelines below.
 
 ## Reporting a Bug
-To report a bug, open an issue on the CausalELM.jl GitHub page. Please include all relevant 
-information, such as what methods were called, the operating system used, the verion/s of 
-CausalELM used, the verion/s of Julia used, any tracebacks or error codes, and any other 
-information that would be helpful for debugging. Also be sure to use the bug label.
+To report a bug, open an issue on the CausalELM.jl GitHub [page](https://github.com/dscolby/CausalELM.jl/issues). Please include all relevant information, such as what methods were called, the operating system used, the 
+verion/s of causalELM used, the verion/s of Julia used, any tracebacks or error codes, and 
+any other information that would be helpful for debugging. Also be sure to use the bug label.
 
 ## Requesting New Features
-Before requesting a new feature, please check the issues page on GitHub to make sure someone
-else did not already request the same feature. If this is not the case, then please open an
-issue that explains what function or method you would like to be added and how you believe 
-it should behave. Also be sure to use the enhancement tag.
+Before requesting a new feature, please check the issues page on [GitHub](https://github.com/dscolby/CausalELM.jl/issues) to make sure someone else did not already request the same feature. If this is not the case, then please 
+open an issue that explains what function or method you would like to be added and how you 
+believe it should behave. Also be sure to use the enhancement tag.
 
 ## Contributing Code
 Before submitting a pull request, please open an issue explaining what the proposed code is
-and why you want to add it. When submitting a pull request, please reference the relevant
-issue/s. Please also ensure your code follows the guidelines below.
+and why you want to add it, if there is not already an issue that addresses your changes and 
+you are not fixing something very minor. When submitting a pull request, please reference 
+the relevant issue/s and ensure your code follows the guidelines below.
 
 *   All abstract types, structs, functions, methods, macros, and constants have docstrings 
     that follow the same format as the other docstrings. These functions should also be 

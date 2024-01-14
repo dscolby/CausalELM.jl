@@ -1,4 +1,4 @@
-# Deciding Which Model to Use
+# Deciding Which Estimator to Use
 Which model you should use depends on what you are trying to model and the type of data you 
 have. The table below can serve as a useful reference when deciding which model to use for a 
 given dataset and causal question.

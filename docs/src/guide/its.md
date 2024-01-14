@@ -10,7 +10,7 @@ differences between the predicted post-event counterfactual outcomes and the obs
 post-event outcomes, which can also be aggregated to mean or cumulative effects. 
 Estimating an interrupted time series design in CausalELM consists of three steps.
 
-For a deeper dive see:
+!!! note For a deeper dive see:
     Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
     regression for the evaluation of public health interventions: a tutorial." International 
     journal of epidemiology 46, no. 1 (2017): 348-355.

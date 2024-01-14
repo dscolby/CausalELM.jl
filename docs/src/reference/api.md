@@ -1,4 +1,4 @@
-# CausalELM
+# causalELM
 Most of the methods and structs here are private, not exported, should not be called by the 
 user, and are documented for the purpose of developing CausalELM or to facilitate 
 understanding of the implementation.

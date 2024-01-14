@@ -13,15 +13,15 @@ CurrentModule = CausalELM
 
 # Overview
 
-CausalELM enables Estimation of causal quantities of interest in research designs where a 
+causalELM enables Estimation of causal quantities of interest in research designs where a 
 counterfactual must be predicted and compared to the observed outcomes. More specifically, 
 CausalELM provides a simple API to execute interupted time series analysis, G-Computation, 
 and double machine learning as well as estimation of the CATE via S-Learning, T-Learning, 
-X-Learning, and R-learning. Once a causal model has beeen estimated, CausalELM's summarize 
+X-Learning, and R-learning. Once a causal model has beeen estimated, causalELM's summarize 
 method provides basic information about the model as well as a p-value and standard error 
 estimated with approximate randomization inference. One can then validate causal modeling 
 assumptions for any model with a single call to the validate method. In all of these 
-implementations, CausalELM predicts the counterfactuals using an Extreme Learning Machine 
+implementations, causalELM predicts the counterfactuals using an Extreme Learning Machine 
 that includes an L2 penalty by default. In this context, ELMs strike a good balance between 
 prediction accuracy, generalization, ease of implementation, speed, and interpretability. 
 
@@ -48,19 +48,19 @@ Other packages, mainly EconML, DoWhy, and CausalML, have similar funcitonality. 
 written in Julia rather than Python, the main differences between CausalELM and these 
 libraries are:
 
-*   CausalELM uses extreme learning machines instead of tree-based, linear, or deep learners
-*   CausalELM performs cross validation during training
-*   CausalELM performs inference via asymptotic randomization inference rather than 
+*   causalELM uses extreme learning machines instead of tree-based, linear, or deep learners
+*   causalELM performs cross validation during training
+*   causalELM performs inference via asymptotic randomization inference rather than 
     bootstrapping
-*   CausalELM does not require you to instantiate a model and pass it into a separate class 
+*   causalELM does not require you to instantiate a model and pass it into a separate class 
     or struct for training
-*   CausalELM creates train/test splits automatically
-*   CausalELM does not have external dependencies: all the functions it uses are in the 
+*   causalELM creates train/test splits automatically
+*   causalELM does not have external dependencies: all the functions it uses are in the 
     Julia standard library
-*   CausalELM is simpler to use but has less flexibility than the other libraries
+*   causalELM is simpler to use but has less flexibility than the other libraries
 
 ### Installation
-CausalELM requires Julia version 1.7 or greater and can be installed from the REPL as shown 
+causalELM requires Julia version 1.7 or greater and can be installed from the REPL as shown 
 below. 
 ```julia
 using Pkg 

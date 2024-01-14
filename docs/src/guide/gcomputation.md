@@ -5,7 +5,7 @@ given at multiple times whose status depends on the health of the patient at a g
 One way to get an unbiased estimate of the causal effect is to use G-computation. The basic 
 steps for using G-computation in CausalELM are below.
 
-For a good overview of G-Computation see:
+!!! note For a good overview of G-Computation see:
     Chatton, Arthur, Florent Le Borgne, Clémence Leyrat, Florence Gillaizeau, Chloé 
     Rousseau, Laetitia Barbin, David Laplaud, Maxime Léger, Bruno Giraudeau, and Yohann 
     Foucher. "G-computation, propensity score-based methods, and targeted maximum likelihood 
