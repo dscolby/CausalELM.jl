@@ -176,7 +176,14 @@ function generate_null_distribution(mod, n)
     
     # Generate random treatment assignments and estimate the causal effects
     for iter in 1:n 
-        m.T = float(rand(unique(m.T), nobs))
+
+        # Sample from a continuous distribution if the treatment is continuous
+        if var_type(mod.T) isa Continuous
+            m.T = (maximum(m.T)-minimum(m.T)).*rand(nobs).+minimum(m.T)
+        else
+            m.T = float(rand(unique(m.T), nobs))
+        end
+        
         estimate_causal_effect!(m)
         results[iter] = mod isa Metalearner ? mean(m.causal_effect) : m.causal_effect
     end
