@@ -245,7 +245,7 @@ know the functional form.
     structural parameters." (2018): C1-C68.
 
 
-## # Step 1: Initialize a Model
+## Step 1: Initialize a Model
 The DoubleMachineLearning constructor takes at least three arguments, an array of 
 covariates, a treatment vector, and an outcome vector. 
 
