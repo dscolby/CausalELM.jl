@@ -104,7 +104,6 @@ positivity assumption with the num_treatments, min, and max keyword arguments.
         Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
         Francis, 2024. 
 
-!!! note
     For more information on the E-value test see:
   
         VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 

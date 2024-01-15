@@ -48,10 +48,7 @@ its = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 ## Step 2: Estimate the Treatment Effect
 Estimating the treatment effect only requires one argument: an InterruptedTimeSeries struct.
 
-However, if we want to estimate the ATT instead of the ATE we can set the keyword argument 
-quantity_of_interest to "ATT".
 ```julia
-# We can also estimate the ATT by passing quantity_of_interest="ATT"
 estimate_causal_effect!(its)
 ```
 
