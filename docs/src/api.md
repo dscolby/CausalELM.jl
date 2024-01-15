@@ -16,7 +16,7 @@ CausalELM.Metalearner
 CausalELM.ExtremeLearningMachine
 CausalELM.ExtremeLearner
 CausalELM.RegularizedExtremeLearner
-Causal.Nonbinary
+CausalELM.Nonbinary
 CausalELM.Binary
 CausalELM.Count
 CausalELM.Continuous

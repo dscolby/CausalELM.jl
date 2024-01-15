@@ -1,53 +1,59 @@
 # Release Notes
-Below is a list of changes since causalELM was first released.
+These release notes adhere to the [keep a changelog](https://keepachangelog.com/en/1.0.0/) format. Below is a list of changes since causalELM was first released.
 
-## v0.5.0
+## Version [v0.5.1] - 2024-01-15
 ### Added
-    *   Constructors for estimators taht accept dataframes from DataFrames.jl
-### Changed
-    *   Estimators can handle any array whose values are <:Real
-    *   Estimator constructors are now called with model(X, T, Y) instead of model(X, Y, T)
-    *   Removed excess type constraints for many methods
-    *   Vectorized a few for loops
-    *   Increased test coverage
-
-## v0.4.0
-### Added
-    *   R-learning
-    *   Softmax function for arrays
-### Changed
-    *   Moved all types and methods under the main module
-    *   Decreased size of function definitions
-    *   SLearner has a G-computation field that does the heavy lifting for S-learning
-    *   Removed excess fields from estimator structs
+* More descriptive docstrings ([#21])
 ### Fixed
-    *   Changed the incorrect name of DoublyRobustEstimation struct to DoubleMachineLearning
-    *   Caclulation of risk ratios and E-values
-    *   Calculation of validation metrics for multiclass classification
-    *   Calculation of output weights for L2 regularized extreme learning machines
+* Permutation of continuous treatments draw from a continuous, instead of discrete uniform distribution
 
-## v0.3.0
+## Version [v0.5.0] - 2024-01-13
 ### Added
-    *   Splitting of temporal data for cross validation
-    *   Methods to validate/test senstivity to violations of identifying assumptions
+*   Constructors for estimators taht accept dataframes from DataFrames.jl ([#25])
 ### Changed
-    *   Converted all functions and methods to snake case
-    *   Randomization inference for interrupted time series randomizes all the indices
+*   Estimators can handle any array whose values are <:Real ([#23])
+*   Estimator constructors are now called with model(X, T, Y) instead of model(X, Y, T)
+*   Removed excess type constraints for many methods ([#23])
+*   Vectorized a few for loops
+*   Increased test coverage
+
+## Version [v0.4.0] - 2024-01-06
+### Added
+*   R-learning
+*   Softmax function for arrays
+### Changed
+*   Moved all types and methods under the main module
+*   Decreased size of function definitions ([#22])
+*   SLearner has a G-computation field that does the heavy lifting for S-learning
+*   Removed excess fields from estimator structs
 ### Fixed
-    *   Issue related to recoding variables to calculate validation metrics for cross validation
+*   Changed the incorrect name of DoublyRobustEstimation struct to DoubleMachineLearning
+*   Caclulation of risk ratios and E-values
+*   Calculation of validation metrics for multiclass classification
+*   Calculation of output weights for L2 regularized extreme learning machines
 
-## v0.2.1
+## Version [v0.3.0] - 2023-11-25
 ### Added
-    *   Cross fitting to the doubly robust estimator
-
-## v0.2.0
-### Added
-    *   Calculation of p-values and standard errors via randomization inference
+*   Splitting of temporal data for cross validation ([#18])
+*   Methods to validate/test senstivity to violations of identifying assumptions ([#16])
 ### Changed
-    *   Divided package into modules
+*   Converted all functions and methods to snake case ([#17])
+*   Randomization inference for interrupted time series randomizes all the indices ([#15])
+### Fixed
+*   Issue related to recoding variables to calculate validation metrics for cross validation
 
-## v0.1.0
+## Version [v0.2.1] - 2023-06-07
 ### Added
-    *   Event study, g-computation, and doubly robust estimators
-    *   S-learning, T-learning, and X-learning
-    *   Model summarization methods
+*   Cross fitting to the doubly robust estimator
+
+## Version [v0.2.0] - 2023-04-16
+### Added
+*   Calculation of p-values and standard errors via randomization inference
+### Changed
+*   Divided package into modules
+
+## Version [v0.1.0] - 2023-02-14
+### Added
+*   Event study, g-computation, and doubly robust estimators
+*   S-learning, T-learning, and X-learning
+*   Model summarization methods
