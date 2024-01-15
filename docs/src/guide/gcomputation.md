@@ -88,22 +88,24 @@ One can also specify the maxium number of possible treatments to consider for th
 consistency assumption and the minimum and maximu probabilities of treatment for the 
 positivity assumption with the num_treatments, min, and max keyword arguments.
 
-!!! note
-    For a thorough review of casual inference assumptions see:
-
-        Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
-        Francis, 2024. 
-
-!!! note
-    For more information on the E-value test see:
-    
-        VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
-        introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
-
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for G-computation. 
     If the assumptions are not met then any estimates may be biased and lead to incorrect 
     conclusions.
+
+For a thorough review of casual inference assumptions see:
+
+```
+Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
+Francis, 2024.
+``` 
+
+For more information on the E-value test see:
+    
+```
+VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
+```
 
 ```julia
 validate(g_computer)

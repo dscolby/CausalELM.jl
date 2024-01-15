@@ -25,7 +25,8 @@ makedocs(;
             "Metalearners" => "guide/metalearners.md"
         ],
         "API" => "reference/api.md",
-        "Contributing" => "contributing.md"
+        "Contributing" => "contributing.md",
+        "Release Notes" => "release_notes.md"
     ],
 )
 

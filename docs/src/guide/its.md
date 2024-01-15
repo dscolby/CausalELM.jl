@@ -10,12 +10,13 @@ differences between the predicted post-event counterfactual outcomes and the obs
 post-event outcomes, which can also be aggregated to mean or cumulative effects. 
 Estimating an interrupted time series design in CausalELM consists of three steps.
 
-!!! note 
-    For a deeper dive see:
+For a deeper dive see:
     
-        Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
-        regression for the evaluation of public health interventions: a tutorial." International 
-        journal of epidemiology 46, no. 1 (2017): 348-355.
+```
+Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
+regression for the evaluation of public health interventions: a tutorial." International 
+journal of epidemiology 46, no. 1 (2017): 348-355.
+```
 
 ## Step 1: Initialize an interrupted time series estimator
 The InterruptedTimeSeries method takes at least four agruments: an array of pre-event 
@@ -30,6 +31,7 @@ a mapping from number of neurons to validation loss, and whether to include a ro
 average autoregressive term. These options can be specified using the keyword arguments 
 regularized, activation, validation_metric, min_neurons, max_neurons, folds, iterations, 
 approximator_neurons, and autoregression.
+
 ```julia
 # Generate some data to use
 X₀, Y₀, X₁, Y₁ =  rand(1000, 5), rand(1000), rand(100, 5), rand(100)

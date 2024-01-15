@@ -13,10 +13,9 @@ open an issue that explains what function or method you would like to be added a
 believe it should behave. Also be sure to use the enhancement tag.
 
 ## Contributing Code
-Before submitting a pull request, please open an issue explaining what the proposed code is
-and why you want to add it, if there is not already an issue that addresses your changes and 
-you are not fixing something very minor. When submitting a pull request, please reference 
-the relevant issue/s and ensure your code follows the guidelines below.
+Before submitting a [pull request](https://github.com/dscolby/CausalELM.jl/pulls), please open an issue explaining what the proposed code is and why you want to add it, if there is not already an issue that addresses your 
+changes and you are not fixing something very minor. When submitting a pull request, please 
+reference the relevant issue/s and ensure your code follows the guidelines below.
 
 *   All abstract types, structs, functions, methods, macros, and constants have docstrings 
     that follow the same format as the other docstrings. These functions should also be 
@@ -43,3 +42,6 @@ the relevant issue/s and ensure your code follows the guidelines below.
     rule is that function definitions should fit within the screen of a laptop.
 
 *   Use self-explanatory names for variables, methods, structs, constants, and macros.
+
+## Updating or Fixing Documentation
+To propose a change to the documentation please submit a [pull request](https://github.com/dscolby/CausalELM.jl/pulls).
