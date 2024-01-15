@@ -4,7 +4,7 @@
 Calculate the mean of a vector.
 
 Examples
-```jldoctest
+```julia
 julia> mean([1, 2, 3, 4])
 2.5
 ```
@@ -17,7 +17,7 @@ mean(x) = sum(x)/size(x, 1)
 Calculate the (sample) mean of a vector.
 
 Examples
-```jldoctest
+```julia
 julia> var([1, 2, 3, 4])
 1.6666666666666667
 ```
@@ -33,7 +33,7 @@ Subtract consecutive elements in a vector.
 This function is only used to create a rolling average for interrupted time series analysis.
 
 Examples
-```jldoctest
+```julia
 julia> consecutive([1, 2, 3, 4, 5])
 4-element Vector{Int64}:
  1
@@ -50,7 +50,7 @@ consecutive(v) = [-(v[i+1], v[i]) for i = 1:length(v)-1]
 One hot encode a categorical vector for multiclass classification.
 
 Examples
-```jldoctest
+```julia
 julia> one_hot_encode([1, 2, 3, 4, 5])
 5×5 Matrix{Float64}:
  1.0  0.0  0.0  0.0  0.0
