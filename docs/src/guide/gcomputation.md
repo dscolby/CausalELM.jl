@@ -93,19 +93,17 @@ positivity assumption with the num_treatments, min, and max keyword arguments.
     If the assumptions are not met then any estimates may be biased and lead to incorrect 
     conclusions.
 
-For a thorough review of casual inference assumptions see:
+!!! note
+    For a thorough review of casual inference assumptions see:
 
-```
-Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
-Francis, 2024.
-``` 
+        Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
+        Francis, 2024. 
 
-For more information on the E-value test see:
+    For more information on the E-value test see:
     
-```
-VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
-introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
-```
+        VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+        introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
+
 
 ```julia
 validate(g_computer)

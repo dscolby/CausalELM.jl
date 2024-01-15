@@ -10,20 +10,18 @@ the CATE and what types of variables they can handle. In the case of S, T, and X
 they can only handle binary treatments. On the other hand, R-learners can handle binary, 
 categorical, count, or continuous treatments but only supports continuous outcomes.
 
-For a deeper dive on S-learning, T-learning, and X-learning see:
+!!! note
+    For a deeper dive on S-learning, T-learning, and X-learning see:
     
-```
-Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-estimating heterogeneous treatment effects using machine learning." Proceedings of the 
-national academy of sciences 116, no. 10 (2019): 4156-4165.
-```
+        Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+        estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+        national academy of sciences 116, no. 10 (2019): 4156-4165.
 
-To learn more about R-learning see:
 
-```    
-Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
-effects." Biometrika 108, no. 2 (2021): 299-319.
-```
+    To learn more about R-learning see:
+    
+        Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
+        effects." Biometrika 108, no. 2 (2021): 299-319.
 
 # Initialize a Metalearner
 S-learners, T-learners, and X-learners all take at least three arguments: an array of 
@@ -104,19 +102,16 @@ positivity assumption with the num_treatments, min, and max keyword arguments.
     series estimation. If the assumptions are not met then any estimates may be biased and 
     lead to incorrect conclusions.
 
-For a thorough review of casual inference assumptions see:
+!!! note
+    For a thorough review of casual inference assumptions see:
 
-```
-Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
-Francis, 2024. 
-```
+        Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
+        Francis, 2024. 
 
-For more information on the E-value test see:
+    For more information on the E-value test see:
 
-```
-VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
-introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
-```
+        VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+        introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
 ```julia
 validate(s_learner)

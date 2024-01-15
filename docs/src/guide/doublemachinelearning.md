@@ -5,13 +5,13 @@ regression or the model does not assume a parametric form. In other words, when 
 relathionship between the treatment or covariates and outcome is nonlinear and we do not 
 know the functional form. 
 
-For more information see:
+!!! note
+    For more information see:
 
-```
-Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
-Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
-structural parameters." (2018): C1-C68.
-```
+    Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
+    Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
+    structural parameters." (2018): C1-C68.
+
 
 ## # Step 1: Initialize a Model
 The DoubleMachineLearning constructor takes at least three arguments, an array of 
@@ -98,20 +98,18 @@ positivity assumption with the num_treatments, min, and max keyword arguments.
     learning. If the assumptions are not met then any estimates may be biased and lead to 
     incorrect conclusions.
 
+!!! note
+    For a thorough review of casual inference assumptions see:
 
-For a thorough review of casual inference assumptions see:
+        Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
+        Francis, 2024. 
 
-```
-Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
-Francis, 2024. 
-```
+!!! note
+    For more information on the E-value test see:
+  
+        VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
+        introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
-For more information on the E-value test see:
-
-```   
-VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
-introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
-```
 
 ```julia
 validate(g_computer)
