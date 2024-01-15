@@ -6,7 +6,7 @@ using Random: randperm
 Creates folds for cross validation.
 
 Examples
-```julia-repl
+```jldoctest
 julia> xfolds, y_folds = generate_folds(zeros(20, 2), zeros(20), 5)
 ```
 """
@@ -39,7 +39,7 @@ end
 Creates rolling folds for cross validation of time series data.
 
 Examples
-```julia-repl
+```jldoctest
 julia> xfolds, y_folds = generate_temporal_folds(zeros(20, 2), zeros(20), 5, temporal=true)
 ```
 """
@@ -76,7 +76,7 @@ Calculate a validation metric for a single fold in k-fold cross validation.
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
 julia> validation_loss(x, y, 5, accuracy, 3)
 0.0
@@ -115,7 +115,7 @@ end
 Calculate a validation metric for k folds using a single set of hyperparameters.
 
 Examples
-```julia-repl
+```jldoctest
 julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
 julia> cross_validate(x, y, 5, accuracy)
 0.0257841765251021
@@ -176,7 +176,7 @@ size with the best predicted validation error or metric.
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> best_size(rand(100, 5), rand(100), mse, "regression")
 11
 ```
@@ -209,7 +209,7 @@ end
 Shuffles covariates and outcome vector for cross validation.
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, y, t = rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> shuffle_data(x, y, t)
 ([0.6124923085225416 0.2713900065807924 … 0.6094796972512194 0.6067966603192685; 

@@ -43,7 +43,7 @@ For more details see:
 See also ['RegularizedExtremeLearner'](@ref).
 
 Examples
-```julia-repl
+```jldoctest
 julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 4×2 Matrix{Float64}:
  1.0  1.0
@@ -103,7 +103,7 @@ For more details see:
     803-810.
 
 Examples
-```julia-repl
+```jldoctest
 julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
 4×2 Matrix{Float64}:
  1.0  1.0
@@ -135,7 +135,7 @@ For more details see:
     and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
 
 Examples
-```julia-repl
+```jldoctest
 julia> m1 = ExtremeLearner(x, y, 10, σ)
  Extreme Learning Machine with 10 hidden neurons
  julia> f1 = fit!(m1)
@@ -168,7 +168,7 @@ For more details see:
     803-810.
 
 Examples
-```julia-repl
+```jldoctest
 julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
 Regularized Extreme Learning Machine with 10 hidden neurons
 julia> f1 = fit!(m1)
@@ -205,7 +205,7 @@ For more details see:
     Neurocomputing. 2006;70:489–501. https://doi.org/10.1016/j.neucom.2005.12.126
 
 Examples
-```julia-repl
+```jldoctest
 julia> m1 = ExtremeLearner(x, y, 10, σ)
 Extreme Learning Machine with 10 hidden neurons
 julia> f1 = fit(m1, sigmoid)
@@ -244,7 +244,7 @@ This should be run with the observed covariates. To use synthtic data for what-i
 See also [`predict`](@ref).
 
 Examples
-```julia-repl
+```jldoctest
 julia> m1 = ExtremeLearner(x, y, 10, σ)
  Extreme Learning Machine with 10 hidden neurons
  julia> f1 = fit(m1, sigmoid)
@@ -282,7 +282,7 @@ be flawed. Due to the multitude of significance tests for time series data, this
 returns the predictions but does not test for statistical significance.
 
 Examples
-```julia-repl
+```jldoctest
 julia> m1 = ExtremeLearner(x, y, 10, σ)
 Extreme Learning Machine with 10 hidden neurons
 julia> f1 = fit(m1, sigmoid)
@@ -324,7 +324,7 @@ For more information see:
     803-810.
 
 Examples
-```julia-repl
+```jldoctest
 julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
 Extreme Learning Machine with 10 hidden neurons
 julia> ridge_constant(m1)
@@ -349,7 +349,7 @@ For details see;
     and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
 
 Examples
-```julia-repl
+```jldoctest
 julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
 Extreme Learning Machine with 10 hidden neurons
 julia> set_weights_biases(m1)

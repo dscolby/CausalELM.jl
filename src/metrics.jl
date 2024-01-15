@@ -8,7 +8,7 @@ Calculate the mean squared error
 See also [`mae`](@ref).
 
 Examples
-```julia-repl
+```jldoctest
 julia> mse([0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
  0.0
 julia> mse([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
@@ -31,7 +31,7 @@ Calculate the mean absolute error
 See also [`mse`](@ref).
 
 Examples
-```julia-repl
+```jldoctest
 julia> mae([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
  2.0
 julia> mae([1.0, 1.0, 1.0], [2.0, 2.0, 2.0])
@@ -52,7 +52,7 @@ end
 Calculate the accuracy for a classification task
 
 Examples
-```julia-repl
+```jldoctest
 julia> accuracy([1, 1, 1, 1], [0, 1, 1, 0])
  0.5
 julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
@@ -81,7 +81,7 @@ Calculate the precision for a classification task
 See also [`recall`](@ref).
 
 Examples
-```julia-repl
+```jldoctest
 julia> precision([0, 1, 0, 0], [0, 1, 1, 0])
  0.5
 julia> precision([0, 1, 0, 0], [0, 1, 0, 0])
@@ -110,7 +110,7 @@ Calculate the recall for a classification task
 See also [`precision`](@ref).
 
 Examples
-```julia-repl
+```jldoctest
 julia> recall([1, 2, 1, 3, 0], [2, 2, 2, 3, 1])
  0.5
 julia> recall([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
@@ -137,7 +137,7 @@ end
 Calculate the F1 score for a classification task
 
 Examples
-```julia-repl
+```jldoctest
 julia> F1([1, 2, 1, 3, 0], [2, 2, 2, 3, 1])
  0.4
 julia> F1([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
@@ -155,7 +155,7 @@ end
 Generate a confusion matrix
 
 Examples
-```julia-repl
+```jldoctest
 julia> confusion_matrix([1, 1, 1, 1, 0], [1, 1, 1, 1, 0])
 2×2 Matrix{Int64}:
  1  0

@@ -12,7 +12,7 @@ For a primer on randomization inference see:
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
 Examples
-```julia-repl
+```jldoctest
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimate_causal_effect!(m1)
@@ -60,7 +60,7 @@ For a primer on randomization inference see:
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = GComputation(X, T, Y)
 julia> estimate_causal_effect!(m1)
@@ -73,7 +73,7 @@ julia> summarize(m1)
  "Standard Error" => 5.12900734, "p-value" => 0.479011245} 
 ```
 
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = RLearner(X, T, Y)
 julia> estimate_causal_effect(m1)
@@ -86,7 +86,7 @@ julia> summarize(m1)
  "Standard Error" => 2.129400324, "p-value" => 0.0008342356}
 ```
 
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = SLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
@@ -153,7 +153,7 @@ Note that lowering the number of iterations increases the probability of failing
 the null hypothesis.
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
 julia> g_computer = GComputation(x, t, y)
 julia> estimate_causal_effect!(g_computer)
@@ -209,7 +209,7 @@ For a primer on randomization inference see:
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
 Examples
-```julia-repl
+```jldoctest
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causale_ffect!(its)
@@ -263,7 +263,7 @@ For a primer on randomization inference see:
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
 julia> g_computer = GComputation(x, t, y)
 julia> estimate_causal_effect!(g_computer)
@@ -300,7 +300,7 @@ For a primer on randomization inference see:
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
 Examples
-```julia-repl
+```jldoctest
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)

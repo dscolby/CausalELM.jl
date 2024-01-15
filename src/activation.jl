@@ -4,7 +4,7 @@
 Apply the binary step activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> binary_step(1)
  1.0
 ```
@@ -17,7 +17,7 @@ binary_step(x) = ifelse(x < 0, 0, 1)
 Apply the binary step activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> binary_step([-1000, 100, 1, 0, -0.001, -3])
 6-element Vector{Float64}
  0.0 
@@ -36,7 +36,7 @@ binary_step(x::Array{Float64}) = binary_step.(x)
 Apply the sigmoid activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> σ(1)
  0.7310585786300049
 ```
@@ -52,7 +52,7 @@ end
 Apply the sigmoid activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> σ([1, 0])
 2-element Vector{Float64}
  0.7310585786300049
@@ -69,7 +69,7 @@ Apply the tanh activation function to an array.
 This is just a vectorized version of Base.tanh
 
 # Examples
-```julia-repl
+```jldoctest
 julia> tanh([1, 0])
 2-element Vector{Float64}
  0.7615941559557649 
@@ -84,7 +84,7 @@ Base.tanh(x::Array{Float64}) = @fastmath Base.tanh.(x)
 Apply the ReLU activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> relu(1)
  1.0
 ```
@@ -97,7 +97,7 @@ relu(x) = @fastmath ifelse(x < 0, zero(x), x)
 Apply the ReLU activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> relu([1, 0, -1])
 3-element Vector{Float64}
  1.0 
@@ -113,7 +113,7 @@ relu(x::Array{Float64}) = relu.(x)
 Apply the leaky ReLU activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> leaky_relu(1)
  1.0
 ```
@@ -126,7 +126,7 @@ leaky_relu(x) = @fastmath ifelse(x < 0, 0.01 * x, x)
 Apply the leaky ReLU activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> leaky_relu([-0.01, 0, 1])
 3-element Vector{Float64}
  1.0 
@@ -142,7 +142,7 @@ leaky_relu(x::Array{Float64}) = leaky_relu.(x)
 Apply the swish activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> swish(1)
  0.7310585786300049
 ```
@@ -155,7 +155,7 @@ swish(x) = x * σ(x)
 Apply the swish activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> swish([1, 0, -1])
 3-element Vector{Float64}
  0.7310585786300049 
@@ -171,7 +171,7 @@ swish(x::Array{Float64}) = swish.(x)
 Apply the softmax activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> softmax(1)
  2.718281828459045
 ```
@@ -184,7 +184,7 @@ softmax(x) = @fastmath exp(x) / sum(exp(x))
 Apply the softmax activation function to a vector.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> softmax([1, 2, 3])
 3-element Vector{Float64}:
  0.09003057317038046
@@ -200,7 +200,7 @@ softmax(x::Vector{Float64}) = @fastmath exp.(x)/sum(exp.(x))
 Apply the softmax activation function to the rows of an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> x = rand(5, 3)
 5×3 Matrix{Float64}:
  0.482117  0.225359  0.615589
@@ -225,7 +225,7 @@ softmax(x::Array{Float64}) = mapslices(softmax, x, dims=2)
 Apply the softplus activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> softplus(1)
  1.3132616875182228
 ```
@@ -238,7 +238,7 @@ softplus(x) = @fastmath log1p(exp(-abs(x))) + relu(x)
 Apply the softplus activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> softplus([1, -1])
 2-element Vector{Float64}
  1.3132616875182228 
@@ -253,7 +253,7 @@ softplus(x::Array{Float64}) = softplus.(x)
 Apply the GeLU activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> gelu(1)
  0.8411919906082768
 ```
@@ -266,7 +266,7 @@ gelu(x) = @fastmath (x * (1 + Base.tanh(sqrt(2 / π) * (x + (0.044715 * x^3)))))
 Apply the GeLU activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> gelu([-1, 0, 1])
 3-element Vector{Float64}
  -0.15880800939172324 
@@ -282,7 +282,7 @@ gelu(x::Array{Float64}) = gelu.(x)
 Apply the gaussian activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> gaussian(1)
  0.11443511435028261
 ```
@@ -295,7 +295,7 @@ gaussian(x) = @fastmath exp(-abs2(x))
 Apply the gaussian activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> gaussian([1, -1])
 2-element Vector{Float64}
  0.36787944117144233 
@@ -310,7 +310,7 @@ gaussian(x::Array{Float64}) = gaussian.(x)
 Apply the hard_tanh activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> hard_tanh(-2)
  -1.0
 ```
@@ -331,7 +331,7 @@ end
 Apply the hard_tanh activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> hard_tanh([-2, 0, 2])
 3-element Vector{Float64}
  -1.0 
@@ -347,7 +347,7 @@ hard_tanh(x::Array{Float64}) = hard_tanh.(x)
 Apply the ELiSH activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> elish(1)
  0.7310585786300049
 ```
@@ -360,7 +360,7 @@ elish(x) = ifelse(x >= 0, swish(x), @fastmath ((exp(x)-1)) * σ(x))
 Apply the ELiSH activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> elish([-1, 1])
 2-element Vector{Float64}
  -0.17000340156854793 
@@ -375,7 +375,7 @@ elish(x::Array{Float64}) = elish.(x)
 Apply the Fourier activation function to a real number.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> fourier(1)
  0.8414709848078965
 ```
@@ -388,7 +388,7 @@ fourier(x) = @fastmath sin(x)
 Apply the Fourier activation function to an array.
 
 # Examples
-```julia-repl
+```jldoctest
 julia> fourier([-1, 1])
 2-element Vector{Float64}
  -0.8414709848078965 

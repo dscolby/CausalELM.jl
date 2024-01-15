@@ -36,7 +36,7 @@ For an overview of S-Learners and other metalearners see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = SLearner(X, T, Y)
 julia> m2 = SLearner(X, T, Y; task="regression")
@@ -142,7 +142,7 @@ For an overview of T-Learners and other metalearners see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = TLearner(X, T, Y)
 julia> m2 = TLearner(X, T, Y; task="regression")
@@ -251,7 +251,7 @@ For an overview of X-Learners and other metalearners see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = XLearner(X, T, Y)
 julia> m2 = XLearner(X, T, Y; task="regression")
@@ -310,7 +310,7 @@ For an explanation of R-Learner estimation see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = RLearner(X, T, Y)
 julia> m2 = RLearner(X, T, Y; t_cat=true)
@@ -342,7 +342,7 @@ For an overview of S-learning see:
     national academy of sciences 116, no. 10 (2019): 4156-4165.
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m4 = SLearner(X, T, Y)
 julia> estimate_causal_effect!(m4)
@@ -375,7 +375,7 @@ For an overview of T-learning see:
     national academy of sciences 116, no. 10 (2019): 4156-4165.
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m5 = TLearner(X, T, Y)
 julia> estimate_causal_effect!(m5)
@@ -425,7 +425,7 @@ For an overview of X-learning see:
     national academy of sciences 116, no. 10 (2019): 4156-4165.
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = XLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
@@ -465,7 +465,7 @@ For an overview of R-learning see:
     effects." Biometrika 108, no. 2 (2021): 299-319.
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = RLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
@@ -503,7 +503,7 @@ Estimate the first stage models for an X-learner.
 
 This method should not be called by the user.
 
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = XLearner(X, T, Y)
 julia> stage1!(m1)
@@ -537,7 +537,7 @@ Estimate the second stage models for an X-learner.
 
 This method should not be called by the user.
 
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = XLearner(X, T, Y)
 julia> stage1!(m1)

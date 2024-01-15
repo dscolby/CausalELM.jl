@@ -16,7 +16,7 @@ struct Continuous <: Nonbinary end
 Determine the type of variable held by a vector.
 
 Examples
-```julia-repl
+```jldoctest
 julia> var_type([1, 2, 3, 2, 3, 1, 1, 3, 2])
 Binary
 ```
@@ -76,7 +76,7 @@ For a primer on randomization inference see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimate_causal_effect!(m1)
@@ -142,7 +142,7 @@ For more information on the E-value test see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), 
             vec(rand(1:100, 100, 1)), 
 julia> g_computer = GComputation(x, t, y, temporal=false)
@@ -195,7 +195,7 @@ For a primer on randomization inference see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
            randn(10))
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -248,7 +248,7 @@ For a primer on randomization inference see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
            randn(10))
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -316,7 +316,7 @@ For a primer on randomization inference see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
            randn(10))
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
@@ -366,7 +366,7 @@ on the slope of a covariate using randomization inference.
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, y, β = reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
 julia> p_val(x, y, β)
  0.98
@@ -423,7 +423,7 @@ For a primer on G-computation and its assumptions see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
             vec(rand(1:100, 100, 1)))
 julia> g_computer = GComputation(x, t, y, temporal=false)
@@ -456,7 +456,7 @@ For more information on the E-value test see:
     introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
             vec(rand(1:100, 100, 1)))
 julia> g_computer = GComputation(x, t, y, temporal=false)
@@ -477,7 +477,7 @@ For more information on the E-value test see:
     introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
             vec(rand(1:100, 100, 1)))
 julia> g_computer = GComputation(x, t, y, temporal=false)
@@ -502,7 +502,7 @@ end
 Convert a vector of counts or a continuous vector to a binary vector.
 
 Examples
-```julia-repl
+```jldoctest
 julia> binarize([1, 2, 3], 2)
 3-element Vector{Int64}:
  0
@@ -533,7 +533,7 @@ For more information on how other quantities of interest are converted to risk r
     introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
             vec(rand(1:100, 100, 1)))
 julia> g_computer = GComputation(x, t, y, temporal=false)
@@ -640,7 +640,7 @@ assumption.
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
             vec(rand(1:100, 100, 1)))
 julia> g_computer = GComputation(x, t, y, temporal=false)
@@ -707,7 +707,7 @@ Calculate the minimum sum of squares for each data point and class for the Jenks
 This should not be called by the user.
 
 Examples
-```julia-repl
+```jldoctest
 julia> sums_of_squares([1, 2, 3, 4, 5], 2)
 5×2 Matrix{Real}:
  0.0       0.0
@@ -745,7 +745,7 @@ Compute class pointers that minimize the sum of squares for Jenks breaks.
 This should not be callled by the user.
 
 Examples
-```julia-repl
+```jldoctest
 julia> sums_squares = sums_of_sqs::Matrix{Float64}
 5×2 Matrix{Float64}:
  0.0       0.0
@@ -790,7 +790,7 @@ Determine break points from class assignments.
 This should not be called by the user.
 
 Examples
-```julia-repl
+```jldoctest
 julia> data = [1, 2, 3, 4, 5]
 [1, 2, 3, 4, 5]
 5-element Vector{Int64}:
@@ -841,7 +841,7 @@ Calculate the variance of some numbers.
 Note this function does not use Besel's correction.
 
 Examples
-```julia-repl
+```jldoctest
 julia> variance([1, 2, 3, 4, 5])
 2.0
 ```
@@ -865,7 +865,7 @@ This function finds the best number of splits by finding the number of splits th
 This should nto be called by the user.
 
 Examples
-```julia-repl
+```jldoctest
 julia> best_splits(collect(1:10), 5)
 10-element Vector{Int64}:
  1
@@ -898,7 +898,7 @@ same vector.
 This should nto be called by the user.
 
 Examples
-```julia-repl
+```jldoctest
 julia> group_by_class([1, 2, 3, 4, 5], [1, 1, 1, 2, 3])
 3-element Vector{Vector{Real}}:
  [1, 2, 3]
@@ -929,7 +929,7 @@ end
 Generate Jenks breaks for a vector of real numbers.
 
 Examples
-```julia-repl
+```jldoctest
 julia> jenks_breaks([1, 2, 3, 4, 5], 3)
 3-element Vector{Int64}:
  1
@@ -953,7 +953,7 @@ Generate fake treatment statuses corresponding to the classes assigned by the Je
 algorithm.
 
 Examples
-```julia-repl
+```jldoctest
 julia> fake_treatments([1, 2, 3, 4, 5], 4)
 5-element Vector{Int64}:
  1
@@ -991,7 +991,7 @@ end
 Calculate the sum of squared deviations for array mean for a set of sub arrays.
 
 Examples
-```julia-repl
+```jldoctest
 julia> sdam([5, 4, 9, 10]) 
 26.0
 ```
@@ -1008,7 +1008,7 @@ end
 Calculate the sum of squared deviations for class means for a set of sub arrays.
 
 Examples
-```julia-repl
+```jldoctest
 julia> scdm([[4], [5, 9, 10]]) 
 14.0
 ```
@@ -1021,7 +1021,7 @@ scdm(x::Vector{Vector{T}}) where T <: Real = @fastmath sum(sdam.(x))
 Calculate the goodness of variance fit for a set of sub vectors.
 
 Examples
-```julia-repl
+```jldoctest
 julia> gvf([[4, 5], [9, 10]])
 0.96153846153
 ```

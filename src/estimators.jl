@@ -83,7 +83,7 @@ For a simple linear regression-based tutorial on interrupted time series analysi
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
@@ -197,7 +197,7 @@ For a good overview of G-Computation see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
 julia> m1 = GComputation(X, T, Y)
 julia> m2 = GComputation(X, T, Y; task="regression")
@@ -303,7 +303,7 @@ For more information see:
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = DoubleMachineLearning(X, T, Y)
 julia> m2 = DoubleMachineLearning(X, T, Y; task="regression")
@@ -332,7 +332,7 @@ end
 Estimate the effect of an event relative to a predicted counterfactual.
 
 Examples
-```julia-repl
+```jldoctest
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
 julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimate_causal_effect!(m1)
@@ -373,7 +373,7 @@ or a placebo in p different periods, the model would estimate the average treatm
 as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0, Xₚ].
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = GComputation(X, T, Y)
 julia> estimate_causal_effect!(m1)
@@ -416,7 +416,7 @@ also does not work as well with smaller datasets because it estimates separate o
 models for the treatment and control groups.
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = DoubleMachineLearning(X, T, Y)
 julia> estimate_causal_effect!(m1)
@@ -451,7 +451,7 @@ This method should not be called directly.
 ...
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = DoubleMachineLearning(X, T, Y)
 julia> estimate_effect!(m1)
@@ -492,7 +492,7 @@ Predict treatment and outcome residuals for doubl machine learning.
 This method should not be called directly.
 
 Examples
-```julia-repl
+```jldoctest
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> x_train, x_test = X[1:80, :], X[81:end, :]
 julia> y_train, y_test = Y[1:80], Y[81:end]
@@ -540,7 +540,7 @@ end
 Calculates a cumulative moving average.
 
 Examples
-```julia-repl
+```jldoctest
 julia> moving_average([1, 2, 3])
 3-element Vector{Float64}
  1.0
