@@ -1,11 +1,26 @@
+"""Abstract type used to dispatch risk_ratio on nonbinary treatments"""
 abstract type Nonbinary end
 
-# Types to for dispatching risk_ratio
+"""Type used to dispatch risk_ratio on binary treatments"""
 struct Binary end
+
+"""Type used to dispatch risk_ratio on count and categorical treatments"""
 struct Count <: Nonbinary end
+
+"""Type used to dispatch risk_ratio on continuous treatments"""
 struct Continuous <: Nonbinary end
 
-# Also used for dispatching risk_ratio
+"""
+    var_type(x)
+
+Determine the type of variable held by a vector.
+
+Examples
+```julia-repl
+julia> var_type([1, 2, 3, 2, 3, 1, 1, 3, 2])
+Binary
+```
+"""
 function var_type(x::Vector{<:Real})
     x_set = Set(x)
     if x_set == Set([0, 1]) || x_set == Set([0]) || x_set == Set([1])
@@ -18,7 +33,7 @@ function var_type(x::Vector{<:Real})
 end
 
 """
-    validate(its; n, low, high)
+    validate(its; <keyword arguments>)
 
 Test the validity of an estimated interrupted time series analysis.
 
@@ -50,6 +65,16 @@ across different bins is not much of an issue.
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
+...
+# Arguments
+- `its::InterruptedTimeSeries`: an interrupted time seiries estimator.
+- `n::Int`: the number of times to simulate a confounder.
+- `low::Float64`=0.15: the minimum proportion of data points to include before or after the 
+    tested break in the Wald supremum test.
+- `high::Float64=0.85`: the maximum proportion of data points to include before or after the 
+    tested break in the Wald supremum test.
+...
+
 Examples
 ```julia-repl
 julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
@@ -73,7 +98,7 @@ function validate(its::InterruptedTimeSeries; n=1000, low=0.15, high=0.85)
 end
 
 """
-    validate(m; num_treatments, min, max)
+    validate(m; <keyword arguments>)
 
 This method tests the counterfactual consistency, exchangeability, and positivity 
 assumptions required for causal inference. It should be noted that consistency and 
@@ -107,6 +132,15 @@ For more information on the E-value test see:
     VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
     introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
+...
+# Arguments
+- `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
+- `num_treatments=5::Int`: the maximum number of treatments to use when testing the 
+    plausability of the counterfactual consistency assumption.
+- `min::Float64`=1.0e-6: minimum probability of treatment for the positivity assumption.
+- `high::Float64=1-min`: the maximum probability of treatment for the positivity assumption.
+...
+
 Examples
 ```julia-repl
 julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), 
@@ -135,7 +169,7 @@ function validate(S::SLearner; num_treatments=5, min=1.0e-6, max=1.0-min)
 end
 
 """
-    covariate_independence(its; n)
+    covariate_independence(its; <keyword arguments>)
 
 Test for independence between covariates and the event or intervention.
 
@@ -152,6 +186,13 @@ For more information on using a Chow Test to test for structural breaks see:
 
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
+...
+# Arguments
+- `its::InterruptedTImeSeries`: an interrupted time seiries estimator.
+- `n::Int`: the number of permutations for assigning observations to the pre and 
+    post-treatment periods.
+...
 
 Examples
 ```julia-repl
@@ -183,7 +224,7 @@ function covariate_independence(its::InterruptedTimeSeries; n=1000)
 end
 
 """
-    omitted_predictor(its; n)
+    omitted_predictor(its; <keyword arguments>)
 
 See how an omitted predictor/variable could change the results of an interrupted time series 
 analysis.
@@ -199,6 +240,12 @@ For more information on using a Chow Test to test for structural breaks see:
 
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
+...
+# Arguments
+- `its::InterruptedTImeSeries`: an interrupted time seiries estimator.
+- `n::Int`: the number of times to simulate a confounder.
+...
 
 Examples
 ```julia-repl
@@ -239,7 +286,7 @@ function omitted_predictor(its::InterruptedTimeSeries; n=1000)
 end
 
 """
-    sup_wald(its; low, high, n)
+    sup_wald(its; <keyword arguments>)
 
 Check if the predicted structural break is the hypothesized structural break.
 
@@ -257,6 +304,16 @@ For more information on using a Chow Test to test for structural breaks see:
     
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
+...
+# Arguments
+- `its::InterruptedTimeSeries`: an interrupted time seiries estimator.
+- `n::Int`: the number of times to simulate a confounder.
+- `low::Float64`=0.15: the minimum proportion of data points to include before or after the 
+    tested break in the Wald supremum test.
+- `high::Float64=0.85`: the maximum proportion of data points to include before or after the 
+    tested break in the Wald supremum test.
+...
 
 Examples
 ```julia-repl
@@ -289,27 +346,35 @@ function sup_wald(its::InterruptedTimeSeries; low=0.15, high=0.85, n=1000)
             current_break, wald, best_x, best_β = idx, wald_candidate, new_x, best_β
         end
     end
-    p = p_val(best_x, y, best_β; n=n, wald=true)
+    p = p_val(best_x, y, best_β; n=n, two_sided=true)
     return Dict("Hypothesized Break Point" => hypothesized_break, 
         "Predicted Break Point" => current_break, "Wald Statistic" => wald, "p-value" => p)
 end
 
 """
-    p_val(x, y, β; n, wald)
+    p_val(x, y, β; <keyword arguments>)
 
 Estimate the p-value for the hypothesis that an event had a statistically significant effect 
 on the slope of a covariate using randomization inference.
+
+...
+# Arguments
+- `x::Array{<:Real}`: covariates.
+- `y::Array{<:Real}`: the outcome.
+- `β::Array{<:Real}`=0.15: the fitted weights.
+- `two_sided::Bool=false`: whether to conduct a one-sided hypothesis test.
+...
 
 Examples
 ```julia-repl
 julia> x, y, β = reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
 julia> p_val(x, y, β)
  0.98
-julia> p_val(x, y, β; n=100, wald=true)
+julia> p_val(x, y, β; n=100, two_sided=true)
  0.08534054
 ```
 """
-function p_val(x, y, β; n=1000, wald=false)
+function p_val(x, y, β; n=1000, two_sided=false)
     m2 = "the first column of x should be a treatment vector of 0s and 1s"
     if sort(union(x[:, 1], [0, 1])) != [0, 1]
         throw(ArgumentError(m2))
@@ -330,12 +395,12 @@ function p_val(x, y, β; n=1000, wald=false)
     end
 
     # Wald test is only one sided
-    p = ifelse(wald === true, length(null[β.<null])/n, length(null[abs(β).<abs.(null)])/n)
+    p = two_sided ? length(null[β.<null])/n : length(null[abs(β).<abs.(null)])/n
     return p
 end
 
 """
-    counterfactual_consistency(m; num_treatments)
+    counterfactual_consistency(m; <keyword arguments>)
 
 Examine the counterfactual consistency assumption. First, this function generates Jenks 
 breaks based on outcome values for the treatment group. Then, it replaces treatment statuses 
@@ -349,6 +414,13 @@ assumption or omitted variable bias.
 For a primer on G-computation and its assumptions see:
     Naimi, Ashley I., Stephen R. Cole, and Edward H. Kennedy. "An introduction to g 
     methods." International journal of epidemiology 46, no. 2 (2017): 756-762.
+
+...
+# Arguments
+- `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
+- `num_treatments=5::Int`: the maximum number of treatments to use when testing the 
+    plausability of the counterfactual consistency assumption.
+...
 
 Examples
 ```julia-repl
@@ -549,7 +621,7 @@ function risk_ratio(::Binary, ::Continuous, mod)
 end
 
 """
-    positivity(model, min, max)
+    positivity(model[,min][,max])
  
 Find likely violations of the positivity assumption.
 
@@ -559,6 +631,13 @@ covariates that have a (near) zero probability of treatment or near zero probabi
 being assigned to the control group, whith their entry in the last column being their 
 estimated treatment probability. In other words, they likely violate the positivity 
 assumption.
+
+...
+# Arguments
+- `model::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
+- `min::Float64`=1.0e-6: minimum probability of treatment for the positivity assumption.
+- `high::Float64=1-min`: the maximum probability of treatment for the positivity assumption.
+...
 
 Examples
 ```julia-repl
@@ -625,6 +704,8 @@ end
 Calculate the minimum sum of squares for each data point and class for the Jenks breaks 
     algorithm.
 
+This should not be called by the user.
+
 Examples
 ```julia-repl
 julia> sums_of_squares([1, 2, 3, 4, 5], 2)
@@ -660,6 +741,8 @@ end
     class_pointers(data, num_classes, sums_of_sqs)
 
 Compute class pointers that minimize the sum of squares for Jenks breaks.
+
+This should not be callled by the user.
 
 Examples
 ```julia-repl
@@ -703,6 +786,8 @@ end
     backtrack_to_find_breaks(data, num_classes, sums_of_sqs)
 
 Determine break points from class assignments.
+
+This should not be called by the user.
 
 Examples
 ```julia-repl
@@ -777,6 +862,8 @@ This function finds the best number of splits by finding the number of splits th
     in the greatest decrease in the slope of the line between itself and its GVF and the 
     next higher number of splits and its GVF. This is the same thing as the elbow method.
 
+This should nto be called by the user.
+
 Examples
 ```julia-repl
 julia> best_splits(collect(1:10), 5)
@@ -807,6 +894,8 @@ end
 
 Group data points into vectors such that data points assigned to the same class are in the 
 same vector.
+
+This should nto be called by the user.
 
 Examples
 ```julia-repl

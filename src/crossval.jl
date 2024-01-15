@@ -59,9 +59,21 @@ function generate_temporal_folds(X, Y, folds=5)
 end
 
 """
-    validation_loss(xtrain, ytrain, xtest, ytest, nodes, metric; activation, regularized)
+    validation_loss(xtrain, ytrain, xtest, ytest, nodes, metric; <keyword arguments>)
 
 Calculate a validation metric for a single fold in k-fold cross validation.
+
+...
+# Arguments
+- `xtrain::Any`: an array of features to train on.
+- `ytrain::Any`: an array of training labels.
+- `xtest::Any`: an array of features to test on.
+- `ytrain::Any`: an array of testing labels.
+- `nodes::Int`: the number of neurons in the extreme learning machine.
+- `metric::Function`: the validation metric to calculate.
+- `activation::Function=relu`: the activation function to use.
+- `regularized::Function=true`: whether to use L2 regularization.
+...
 
 Examples
 ```julia-repl
@@ -87,6 +99,18 @@ end
 
 """
     cross_validate(X, Y, neurons, metric, activation, regularized, folds, temporal)
+
+...
+# Arguments
+- `X::Array`: an array of features to train on.
+- `Y::Vector`: a vector of labels to train on.
+- `neurons::Int`: the number of neurons to use in the extreme learning machine.
+- `metric::Function`: the validation metric to calculate.
+- `activation::Function=relu`: the activation function to use.
+- `regularized::Function=true`: whether to use L2 regularization
+- `folds::Int`: the number of folds to use for cross validation.
+- `temporal::Function=true`: whether the data is of a time series or panel nature.
+...
 
 Calculate a validation metric for k folds using a single set of hyperparameters.
 
@@ -134,6 +158,23 @@ for every network size between min_neurons and max_neurons using the function
 approximation ability of an Extreme Learning Machine. Finally, it returns the network 
 size with the best predicted validation error or metric.
 
+...
+# Arguments
+- `X::Array`: an array of features to train on.
+- `Y::Vector`: a vector of labels to train on.
+- `metric::Function`: the validation metric to calculate.
+- `task::String`: either regression or classification.
+- `activation::Function=relu`: the activation function to use.
+- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
+- `regularized::Function=true`: whether to use L2 regularization
+- `folds::Int`: the number of folds to use for cross validation.
+- `temporal::Function=true`: whether the data is of a time series or panel nature.
+- `iterations::Int`: the number of iterations to perform cross validation between 
+    min_neurons and max_neurons.
+- `elm_size::Int`: the number of nuerons in the validation loss approximator network.
+...
+
 Examples
 ```julia-repl
 julia> best_size(rand(100, 5), rand(100), mse, "regression")
@@ -163,9 +204,9 @@ function best_size(X, Y, metric, task, activation, min_neurons, max_neurons, reg
 end
 
 """
-    shuffle_data(X, Y, T)
+    shuffle_data(X, Y)
 
-Shuffles covariates, treatment vector, and outcome vector for cross validation.
+Shuffles covariates and outcome vector for cross validation.
 
 Examples
 ```julia-repl

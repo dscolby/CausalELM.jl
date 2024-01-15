@@ -85,7 +85,7 @@ probability of treatment. If the matrix is empty, none of the observations have 
 zero probability of treatment, which implies the positivity assumption is satisfied.
 
 One can also specify the maxium number of possible treatments to consider for the causal 
-consistency assumption and the minimum and maximu probabilities of treatment for the 
+consistency assumption and the minimum and maximum probabilities of treatment for the 
 positivity assumption with the num_treatments, min, and max keyword arguments.
 
 !!! danger

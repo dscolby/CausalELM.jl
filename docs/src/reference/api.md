@@ -16,6 +16,10 @@ CausalELM.Metalearner
 CausalELM.ExtremeLearningMachine
 CausalELM.ExtremeLearner
 CausalELM.RegularizedExtremeLearner
+Causal.Nonbinary
+CausalELM.Binary
+CausalELM.Count
+CausalELM.Continuous
 ```
 
 ## Activation Functions
@@ -95,6 +99,7 @@ CausalELM.fake_treatments
 CausalELM.sdam
 CausalELM.scdm
 CausalELM.gvf
+CausalELM.var_type
 ```
 
 ## Validation Metrics

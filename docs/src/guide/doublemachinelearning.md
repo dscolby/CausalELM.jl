@@ -90,7 +90,7 @@ an estimated zero probability of treatment, which implies the positivity assumpt
 satisfied.
 
 One can also specify the maxium number of possible treatments to consider for the causal 
-consistency assumption and the minimum and maximu probabilities of treatment for the 
+consistency assumption and the minimum and maximum probabilities of treatment for the 
 positivity assumption with the num_treatments, min, and max keyword arguments.
 
 !!! danger
