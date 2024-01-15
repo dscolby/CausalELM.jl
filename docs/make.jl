@@ -17,7 +17,13 @@ makedocs(;
     ),
     pages=[
         "causalELM" => "index.md",
-        "Getting Started" => "getting_started.md",
+        "Getting Started" => [
+            "Deciding Which Estimator to Use" => "guide/estimatorselection.md",
+            "Interrupted Time Series Estimation" => "guide/its.md",
+            "G-computation" => "guide/gcomputation.md",
+            "Double Machine Learning" => "guide/doublemachinelearning.md",
+            "Metalearners" => "guide/metalearners.md"
+        ],
         "API" => "api.md",
         "Contributing" => "contributing.md",
         "Release Notes" => "release_notes.md"
