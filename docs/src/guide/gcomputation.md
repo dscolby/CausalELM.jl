@@ -24,8 +24,8 @@ using cross validation to find the best number of neurons, the minimum number of
 consider, the maximum number of neurons to consider, the number of folds to use during cross 
 caidation, and the number of neurons to use in the ELM that learns a mapping from number of 
 neurons to validation loss. These are options are specified with the following keyword 
-arguments: quantity_of_interest, regularized, activation, temporal, validation_metric, 
-min_neurons, max_neurons, folds, iterations, and approximator_neurons.
+arguments: quantity\_of\_interest, regularized, activation, temporal, validation\_metric, 
+min\_neurons, max\_neurons, folds, iterations, and approximator\_neurons.
 ```julia
 # Create some data with a binary treatment
 X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)
@@ -49,7 +49,7 @@ estimate_causal_effect!(g_computer)
 We get a summary of the model that includes a p-value and standard error estimated via 
 asymptotic randomization inference by passing our model to the summarize method.
 
-Calling the summarize methodd returns a dictionary with the estimator's task (regression or 
+Calling the summarize method returns a dictionary with the estimator's task (regression or 
 classification), the quantity of interest being estimated (ATE or ATT), whether the model 
 uses an L2 penalty, the activation function used in the model's outcome predictors, whether 
 the data is temporal, the validation metric used for cross validation to find the best 
@@ -86,7 +86,7 @@ zero probability of treatment, which implies the positivity assumption is satisf
 
 One can also specify the maxium number of possible treatments to consider for the causal 
 consistency assumption and the minimum and maximum probabilities of treatment for the 
-positivity assumption with the num_treatments, min, and max keyword arguments.
+positivity assumption with the num\_treatments, min, and max keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for G-computation. 

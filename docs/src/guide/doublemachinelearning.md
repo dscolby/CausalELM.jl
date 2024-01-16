@@ -23,9 +23,9 @@ activation function, the validation metric to use when searching for the best nu
 neurons, the minimum and maximum number of neurons to consider, the number of folds to use 
 for cross validation, the number of iterations to perform cross validation, and the number 
 of neurons to use in the ELM used to learn the function from number of neurons to validation 
-loss. These arguments are specified with the following keyword arguments: t_cat, 
-regularized, activation, validation_metric, min_neurons, max_neurons, folds, iterations, and 
-approximator_neurons.
+loss. These arguments are specified with the following keyword arguments: t\_cat, 
+regularized, activation, validation\_metric, min\_neurons, max\_neurons, folds, iterations, 
+and approximator\_neurons.
 ```julia
 # Create some data with a binary treatment
 X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
@@ -49,7 +49,7 @@ estimate_causal_effect!(dml)
 We can get a summary that includes a p-value and standard error estimated via asymptotic 
 randomization inference by passing our model to the summarize method.
 
-Calling the summarize methodd returns a dictionary with the estimator's task (regression or 
+Calling the summarize method returns a dictionary with the estimator's task (regression or 
 classification), the quantity of interest being estimated (ATE), whether the model uses an 
 L2 penalty (always true for DML), the activation function used in the model's outcome 
 predictors, whether the data is temporal (always false for DML), the validation metric used 
@@ -91,7 +91,7 @@ satisfied.
 
 One can also specify the maxium number of possible treatments to consider for the causal 
 consistency assumption and the minimum and maximum probabilities of treatment for the 
-positivity assumption with the num_treatments, min, and max keyword arguments.
+positivity assumption with the num\_treatments, min, and max keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for double machine 

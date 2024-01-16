@@ -29,8 +29,8 @@ minimum number of neurons to consider, the maximum number of neurons to consider
 of folds to use during cross caidation, the number of neurons to use in the ELM that learns 
 a mapping from number of neurons to validation loss, and whether to include a rolling 
 average autoregressive term. These options can be specified using the keyword arguments 
-regularized, activation, validation_metric, min_neurons, max_neurons, folds, iterations, 
-approximator_neurons, and autoregression.
+regularized, activation, validation_metric, min_neurons, max\_neurons, folds, iterations, 
+approximator\_neurons, and autoregression.
 
 ```julia
 # Generate some data to use
@@ -56,7 +56,7 @@ estimate_causal_effect!(its)
 We can get a summary of the model, including a p-value and statndard via asymptotic 
 randomization inference, by pasing the model to the summarize method.
 
-Calling the summarize methodd returns a dictionary with the estimator's task (always 
+Calling the summarize method returns a dictionary with the estimator's task (always 
 regression for interrupted time series analysis), whether the model uses an L2 penalty, 
 the activation function used in the model's outcome predictors, the validation metric used 
 for cross validation to find the best number of neurons, the number of neurons used in the 

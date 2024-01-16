@@ -95,7 +95,7 @@ zero probability of treatment, which implies the positivity assumption is satisf
 
 One can also specify the maxium number of possible treatments to consider for the causal 
 consistency assumption and the minimum and maximum probabilities of treatment for the 
-positivity assumption with the num_treatments, min, and max keyword arguments.
+positivity assumption with the num\_treatments, min, and max keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for interrupted time 
