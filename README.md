@@ -102,7 +102,8 @@ backpropagation to update their weights like conventional neural networks.
   <li>Estimator constructors are now called with model(X, T, Y) instead of model(X, Y, T)</li>
   <li>Eliminated unnecessary type constraints on many methods</li>
   <li>Improved documentation</li>
-  <li>causalELM has a new logo</li> 
+  <li>Permutation of continuous treatments draws from a continuous, instead of discrete uniform distribution
+  during randomization inference</li> 
 </ul>
 
 <h2>Next Steps</h2>

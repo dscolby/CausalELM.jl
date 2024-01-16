@@ -6,6 +6,7 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 * More descriptive docstrings [#21](https://github.com/dscolby/CausalELM.jl/issues/21)
 ### Fixed
 * Permutation of continuous treatments draws from a continuous, instead of discrete uniform distribution
+  during randomization inference
 
 ## Version [v0.5.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.5.0) - 2024-01-13
 ### Added
