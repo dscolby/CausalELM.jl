@@ -1,6 +1,8 @@
 using CausalELM
 using Documenter
 
+DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true)
+
 makedocs(;
     modules=[CausalELM],
     warnonly=true,

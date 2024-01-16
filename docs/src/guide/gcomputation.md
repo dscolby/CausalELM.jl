@@ -23,7 +23,7 @@ activation function to use, whether the data is of a temporal nature, the metric
 using cross validation to find the best number of neurons, the minimum number of neurons to 
 consider, the maximum number of neurons to consider, the number of folds to use during cross 
 caidation, and the number of neurons to use in the ELM that learns a mapping from number of 
-neurons to validation loss. These are options are specified with the following keyword 
+neurons to validation loss. These options are specified with the following keyword 
 arguments: quantity\_of\_interest, regularized, activation, temporal, validation\_metric, 
 min\_neurons, max\_neurons, folds, iterations, and approximator\_neurons.
 ```julia
