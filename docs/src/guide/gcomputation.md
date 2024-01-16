@@ -18,14 +18,15 @@ steps for using G-computation in CausalELM are below.
 The GComputation method takes at least three arguments: an array of covariates, a vector of 
 treatment statuses, and an outcome vector. 
 
-You can also specify the causal estimand, whether to employ L2 regularization, which 
-activation function to use, whether the data is of a temporal nature, the metric to use when 
-using cross validation to find the best number of neurons, the minimum number of neurons to 
-consider, the maximum number of neurons to consider, the number of folds to use during cross 
-caidation, and the number of neurons to use in the ELM that learns a mapping from number of 
-neurons to validation loss. These options are specified with the following keyword 
-arguments: quantity\_of\_interest, regularized, activation, temporal, validation\_metric, 
-min\_neurons, max\_neurons, folds, iterations, and approximator\_neurons.
+!!! tip
+    You can also specify the causal estimand, whether to employ L2 regularization, which 
+    activation function to use, whether the data is of a temporal nature, the metric to use when 
+    using cross validation to find the best number of neurons, the minimum number of neurons to 
+    consider, the maximum number of neurons to consider, the number of folds to use during cross 
+    caidation, and the number of neurons to use in the ELM that learns a mapping from number of 
+    neurons to validation loss. These options are specified with the following keyword 
+    arguments: quantity\_of\_interest, regularized, activation, temporal, validation\_metric, 
+    min\_neurons, max\_neurons, folds, iterations, and approximator\_neurons.
 ```julia
 # Create some data with a binary treatment
 X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)
@@ -84,9 +85,10 @@ estimating propensity scores. Rows in the matrix are levels of covariates that h
 probability of treatment. If the matrix is empty, none of the observations have an estimated 
 zero probability of treatment, which implies the positivity assumption is satisfied.
 
-One can also specify the maxium number of possible treatments to consider for the causal 
-consistency assumption and the minimum and maximum probabilities of treatment for the 
-positivity assumption with the num\_treatments, min, and max keyword arguments.
+!!! tip
+    One can also specify the maxium number of possible treatments to consider for the causal 
+    consistency assumption and the minimum and maximum probabilities of treatment for the 
+    positivity assumption with the num\_treatments, min, and max keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for G-computation. 

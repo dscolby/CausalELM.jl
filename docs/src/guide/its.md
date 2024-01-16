@@ -23,14 +23,15 @@ The InterruptedTimeSeries method takes at least four agruments: an array of pre-
 covariates, a vector of pre-event outcomes, an array of post-event covariates, and a vector 
 of post-event outcomes. 
 
-You can also specify whether or not to use L2 regularization, which activation function to 
-use, the metric to use when using cross validation to find the best number of neurons, the 
-minimum number of neurons to consider, the maximum number of neurons to consider, the number 
-of folds to use during cross caidation, the number of neurons to use in the ELM that learns 
-a mapping from number of neurons to validation loss, and whether to include a rolling 
-average autoregressive term. These options can be specified using the keyword arguments 
-regularized, activation, validation_metric, min_neurons, max\_neurons, folds, iterations, 
-approximator\_neurons, and autoregression.
+!!! tip
+    You can also specify whether or not to use L2 regularization, which activation function to 
+    use, the metric to use when using cross validation to find the best number of neurons, the 
+    minimum number of neurons to consider, the maximum number of neurons to consider, the number 
+    of folds to use during cross caidation, the number of neurons to use in the ELM that learns 
+    a mapping from number of neurons to validation loss, and whether to include a rolling 
+    average autoregressive term. These options can be specified using the keyword arguments 
+    regularized, activation, validation_metric, min_neurons, max\_neurons, folds, iterations, 
+    approximator\_neurons, and autoregression.
 
 ```julia
 # Generate some data to use
@@ -82,9 +83,10 @@ good predictors of the outcome. If this is the case, then adding irrelevant pred
 should not have much of a change on the results of the analysis. We can conduct all these 
 tests in one line of code.
 
-One can also specify the number of simulated confounders to generate to test the sensitivity 
-of the model to confounding and the minimum and maximum proportion of data to use in the 
-Wald supremum test by including the n, low, and high keyword arguments.
+!!! tip
+    One can also specify the number of simulated confounders to generate to test the sensitivity 
+    of the model to confounding and the minimum and maximum proportion of data to use in the 
+    Wald supremum test by including the n, low, and high keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for interrupted time 

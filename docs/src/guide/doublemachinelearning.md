@@ -17,15 +17,16 @@ know the functional form.
 The DoubleMachineLearning constructor takes at least three arguments, an array of 
 covariates, a treatment vector, and an outcome vector. 
 
-You can also specify the following options: whether the treatment vector is categorical ie 
-not continuous and containing more than two classes, whether to use L2 regularization, the 
-activation function, the validation metric to use when searching for the best number of 
-neurons, the minimum and maximum number of neurons to consider, the number of folds to use 
-for cross validation, the number of iterations to perform cross validation, and the number 
-of neurons to use in the ELM used to learn the function from number of neurons to validation 
-loss. These arguments are specified with the following keyword arguments: t\_cat, 
-regularized, activation, validation\_metric, min\_neurons, max\_neurons, folds, iterations, 
-and approximator\_neurons.
+!!! tip
+    You can also specify the following options: whether the treatment vector is categorical ie 
+    not continuous and containing more than two classes, whether to use L2 regularization, the 
+    activation function, the validation metric to use when searching for the best number of 
+    neurons, the minimum and maximum number of neurons to consider, the number of folds to use 
+    for cross validation, the number of iterations to perform cross validation, and the number 
+    of neurons to use in the ELM used to learn the function from number of neurons to validation 
+    loss. These arguments are specified with the following keyword arguments: t\_cat, 
+    regularized, activation, validation\_metric, min\_neurons, max\_neurons, folds, iterations, 
+    and approximator\_neurons.
 ```julia
 # Create some data with a binary treatment
 X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
@@ -89,9 +90,10 @@ or near zero probability of treatment. If the matrix is empty, none of the obser
 an estimated zero probability of treatment, which implies the positivity assumption is 
 satisfied.
 
-One can also specify the maxium number of possible treatments to consider for the causal 
-consistency assumption and the minimum and maximum probabilities of treatment for the 
-positivity assumption with the num\_treatments, min, and max keyword arguments.
+!!! tip
+    One can also specify the maxium number of possible treatments to consider for the causal 
+    consistency assumption and the minimum and maximum probabilities of treatment for the 
+    positivity assumption with the num\_treatments, min, and max keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for double machine 

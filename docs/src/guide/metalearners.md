@@ -25,8 +25,10 @@ categorical, count, or continuous treatments but only supports continuous outcom
 
 # Initialize a Metalearner
 S-learners, T-learners, and X-learners all take at least three arguments: an array of 
-covariates, a vector of outcomes, and a vector of treatment statuses. Additional options can 
-be specified for each type of metalearner using its keyword arguments.
+covariates, a vector of outcomes, and a vector of treatment statuses. 
+
+!!! tip
+    Additional options can be specified for each type of metalearner using its keyword arguments.
 ```julia
 # Generate data to use
 X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
@@ -93,9 +95,10 @@ estimating propensity scores. Rows in the matrix are levels of covariates that h
 probability of treatment. If the matrix is empty, none of the observations have an estimated 
 zero probability of treatment, which implies the positivity assumption is satisfied.
 
-One can also specify the maxium number of possible treatments to consider for the causal 
-consistency assumption and the minimum and maximum probabilities of treatment for the 
-positivity assumption with the num\_treatments, min, and max keyword arguments.
+!!! tip
+    One can also specify the maxium number of possible treatments to consider for the causal 
+    consistency assumption and the minimum and maximum probabilities of treatment for the 
+    positivity assumption with the num\_treatments, min, and max keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for interrupted time 
