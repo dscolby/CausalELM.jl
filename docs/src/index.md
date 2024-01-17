@@ -13,15 +13,15 @@ CurrentModule = CausalELM
 
 # Overview
 
-causalELM enables Estimation of causal quantities of interest in research designs where a 
+CausalELM enables Estimation of causal quantities of interest in research designs where a 
 counterfactual must be predicted and compared to the observed outcomes. More specifically, 
 CausalELM provides a simple API to execute interupted time series analysis, G-Computation, 
 and double machine learning as well as estimation of the CATE via S-Learning, T-Learning, 
-X-Learning, and R-learning. Once a causal model has beeen estimated, causalELM's summarize 
+X-Learning, and R-learning. Once a causal model has beeen estimated, CausalELM's summarize 
 method provides basic information about the model as well as a p-value and standard error 
 estimated with approximate randomization inference. One can then validate causal modeling 
 assumptions for any model with a single call to the validate method. In all of these 
-implementations, causalELM predicts the counterfactuals using an Extreme Learning Machine 
+implementations, CausalELM predicts the counterfactuals using an Extreme Learning Machine 
 that includes an L2 penalty by default. In this context, ELMs strike a good balance between 
 prediction accuracy, generalization, ease of implementation, speed, and interpretability. 
 
@@ -43,34 +43,34 @@ prediction accuracy, generalization, ease of implementation, speed, and interpre
 *   Estimators can handle any array whose values are <:Real
 *   Estimator constructors are now called with model(X, T, Y) instead of model(X, Y, T)
 *   Improved documentation
-*   causalELM has a new logo
+*   CausalELM has a new logo
 
-### What makes causalELM different?
+### What makes CausalELM different?
 Other packages, mainly EconML, DoWhy, CausalAI, and CausalML, have similar funcitonality. 
 Beides being written in Julia rather than Python, the main differences between CausalELM and 
 these libraries are:
-*   Simplicity is core to casualELM's design philosophy. causalELM only uses one type of
+*   Simplicity is core to casualELM's design philosophy. CausalELM only uses one type of
     machine learning model, extreme learning machines (with optional L2 regularization) and 
     does not require you to import any other packages or initialize machine learning models, 
-    pass machine learning structs to causalELM's estimators, convert dataframes or arrays to 
+    pass machine learning structs to CausalELM's estimators, convert dataframes or arrays to 
     a special type, or one hot encode categorical treatments. By trading a little bit of 
-    flexibility for a simple API, all of causalELM's functionality can be used with just 
+    flexibility for a simple API, all of CausalELM's functionality can be used with just 
     four lines of code.
-*   As part of this design principle, causalELM's estimators handle all of the work in 
+*   As part of this design principle, CausalELM's estimators handle all of the work in 
     finding the best number of neurons during estimation. They create folds or rolling 
     rolling for time series data and use an extreme learning machine interpolator to find 
     the best number of neurons.
-*   causalELM's validate method, which is specific to each estimator, allows you to validate 
+*   CausalELM's validate method, which is specific to each estimator, allows you to validate 
     or test the sentitivity of an estimator to possible violations of identifying assumptions.
 *   Unlike packages that do not allow you to estimate p-values and standard errors, use 
-    bootstrapping to estimate them, or use incorrect hypothesis tests, all of causalELM's 
+    bootstrapping to estimate them, or use incorrect hypothesis tests, all of CausalELM's 
     estimators provide p-values and standard errors generated via approximate randomization 
     inference. 
-*   causalELM strives to be lightweight while still being powerful and therefore does not 
+*   CausalELM strives to be lightweight while still being powerful and therefore does not 
     have external dependencies: all the functions it uses are in the Julia standard library.
 
 ### Installation
-causalELM requires Julia version 1.7 or greater and can be installed from the REPL as shown 
+CausalELM requires Julia version 1.7 or greater and can be installed from the REPL as shown 
 below. 
 ```julia
 using Pkg 

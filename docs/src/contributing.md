@@ -3,7 +3,7 @@ All contributions are welcome. To ensure contributions align with the existing c
 are not duplicated, please follow the guidelines below.
 
 ## Reporting a Bug
-To report a bug, open an issue on the CausalELM.jl GitHub [page](https://github.com/dscolby/CausalELM.jl/issues). Please include all relevant information, such as what methods were called, the operating system used, the 
+To report a bug, open an issue on the CausalELM GitHub [page](https://github.com/dscolby/CausalELM.jl/issues). Please include all relevant information, such as what methods were called, the operating system used, the 
 verion/s of causalELM used, the verion/s of Julia used, any tracebacks or error codes, and 
 any other information that would be helpful for debugging. Also be sure to use the bug label.
 

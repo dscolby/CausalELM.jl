@@ -1,5 +1,5 @@
 # Release Notes
-These release notes adhere to the [keep a changelog](https://keepachangelog.com/en/1.0.0/) format. Below is a list of changes since causalELM was first released.
+These release notes adhere to the [keep a changelog](https://keepachangelog.com/en/1.0.0/) format. Below is a list of changes since CausalELM was first released.
 
 ## Version [v0.5.1](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.5.1) - 2024-01-15
 ### Added
