@@ -8,7 +8,7 @@
             alt="Build Status">
     </a>
     <a href="https://app.codecov.io/gh/dscolby/CausalELM.jl/tree/main/src">
-        <img src="https://codecov.io/gh/dscolby/CausalELM.jl/branch/main/graph/badge.svg"
+        <img src="https://codecov.io/gh/dscolby/CausalELM.jl/graph/badge.svg"
          alt="Code Coverage">
     </a>
     <a href="https://opensource.org/licenses/MIT">
