@@ -192,7 +192,7 @@ julia> softmax([1, 2, 3])
  0.6652409557748219
 ```
 """
-softmax(x::Vector{Float64}) = @fastmath exp.(x)/sum(exp.(x))
+softmax(x::Vector{Float64}) = @fastmath exp.(x.-maximum(x))/sum(exp.(x.-maximum(x)))
 
 """
     softmax(x)
