@@ -30,7 +30,7 @@ of post-event outcomes.
     of folds to use during cross caidation, the number of neurons to use in the ELM that learns 
     a mapping from number of neurons to validation loss, and whether to include a rolling 
     average autoregressive term. These options can be specified using the keyword arguments 
-    regularized, activation, validation_metric, min_neurons, max\_neurons, folds, iterations, 
+    regularized, activation, validation\_metric, min\_neurons, max\_neurons, folds, iterations, 
     approximator\_neurons, and autoregression.
 
 ```julia
