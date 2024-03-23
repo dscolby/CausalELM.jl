@@ -36,7 +36,7 @@ estimate_causal_effect!(gcomputer_att)
 gcomputer_noreg = GComputation(x, t, y, regularized=false)
 estimate_causal_effect!(gcomputer_noreg)
 
-# Mak sure the data isn't shuffled
+# Make sure the data isn't shuffled
 g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), 
     Float64.([rand()<0.4 for i in 1:10]), rand(10))
 
@@ -49,6 +49,10 @@ dm_df = DoubleMachineLearning(x_df, t_df, y_df)
 # DML with a categorical treatment
 dm_cat = DoubleMachineLearning(x, rand(1:4, 100), y)
 estimate_causal_effect!(dm_cat)
+
+# DML with a categorical out
+dm_y_cat = DoubleMachineLearning(x, t, rand(1:4, 100))
+estimate_causal_effect!(dm_y_cat)
 
 # No regularization
 dm_noreg = DoubleMachineLearning(x, t, y, regularized=false)
@@ -166,6 +170,7 @@ end
         @test dm.causal_effect isa Float64
         @test dm_noreg.causal_effect isa Float64
         @test dm_cat.causal_effect isa Float64
+        @test dm_y_cat.causal_effect isa Float64
     end
 end
 

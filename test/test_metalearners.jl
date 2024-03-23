@@ -41,6 +41,14 @@ x_learner_df = XLearner(x_df, y_df, y_df)
 rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
 
+# R-learner with categorical treatment
+rlearner_t_cat = RLearner(x, rand(1:4, 100), y)
+estimate_causal_effect!(rlearner_t_cat)
+
+# R-learner with categorical outcome
+rlearner_y_cat = RLearner(x, t, rand(1:4, 100))
+estimate_causal_effect!(rlearner_y_cat)
+
 # Testing initialization with DataFrames
 r_learner_df = RLearner(x_df, t_df, y_df)
 
@@ -127,6 +135,8 @@ end
         @test rlearner.causal_effect isa Vector
         @test length(rlearner.causal_effect) == length(y)
         @test eltype(rlearner.causal_effect) == Float64
+        @test length(rlearner_t_cat.causal_effect) == length(y)
+        @test length(rlearner_y_cat.causal_effect) == length(y)
     end
 end
 

@@ -235,6 +235,8 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     Y::Array{Float64}
     """True if the treatment variable is categorical and nonbinary"""
     t_cat::Bool
+    """True if the outcome variable is categorical and nonbinary"""
+    y_cat::Bool
     """Whether to use L2 regularization"""
     regularized::Bool
     """Activation function to apply to the outputs from each neuron"""
@@ -261,11 +263,59 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     causal_effect::Float64
 
     function DoubleMachineLearning(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-        t_cat=false, regularized=true, activation=relu, validation_metric=mse, 
+        t_cat=false, y_cat=false, regularized=true, activation=relu, validation_metric=mse, 
         min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
         approximator_neurons=round(size(X, 1)/10))
 
-        new(Float64.(X), Float64.(T), Float64.(Y), t_cat, regularized, activation, 
+        new(Float64.(X), Float64.(T), Float64.(Y), t_cat, y_cat, regularized, activation, 
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, "ATE", false, 0, NaN)
+    end
+end
+
+"""Container for the results of a doubly robust estimator"""
+mutable struct DoublyRobustEstimation <: CausalEstimator
+    """Covariates"""
+    X::Array{Float64}
+    """Treatment statuses"""
+    T::Array{Float64}
+    """Outomes variable"""
+    Y::Array{Float64}
+    """True if the treatment variable is categorical and nonbinary"""
+    t_cat::Bool
+    """True if the outcome variable is categorical and nonbinary"""
+    y_cat::Bool
+    """Whether to use L2 regularization"""
+    regularized::Bool
+    """Activation function to apply to the outputs from each neuron"""
+    activation::Function
+    """Validation metric to use when tuning the number of neurons"""
+    validation_metric::Function
+    """Minimum number of neurons to test in the hidden layer"""
+    min_neurons::Int64
+    """Maximum number of neurons to test in the hidden layer"""
+    max_neurons::Int64
+    """Number of folds to use in cross validation and cross fitting"""
+    folds::Int64
+    """Number of iterations to perform cross validation"""
+    iterations::Int64
+    """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
+    approximator_neurons::Int64
+    """This will alsways be ATE unless using DML with the weight trick for R-learning"""
+    quantity_of_interest::String
+    """This will always be false and is just exists to be accessed by summzrize methods"""
+    temporal::Bool
+    """Number of neurons in the ELM used for estimating the causal effect"""
+    num_neurons::Int64
+    """The effect of exposure or treatment"""
+    causal_effect::Float64
+
+    function DoublyRobustEstimation(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
+        regularized=true, activation=relu, validation_metric=mse, min_neurons=1, 
+        max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
+
+        new(Float64.(X), Float64.(T), Float64.(Y), regularized, activation, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, "ATE", false, 0, NaN)
     end
@@ -279,7 +329,7 @@ Initialize a double machine learning estimator with cross fitting.
 For more information see:
     Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
-    structural parameters." (2018): C1-C68.
+    structural parameters." (2016): C1-C68.
 
 ...
 # Arguments
@@ -287,6 +337,7 @@ For more information see:
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
 - `t_cat::Bool=false`: whether the treatment is categorical.
+- `y_cat::Bool=false`: whether the outcome is categorical.
 - `task::String`: either regression or classification.
 - `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
     treatment effect.
@@ -313,14 +364,14 @@ julia> m3 = DoubleMachineLearning(x_df, t_df, y_df)
 julia> estimate_causal_effect!(m3)
 ```
 """
-function DoubleMachineLearning(X, T, Y; t_cat=false, regularized=true, activation=relu, 
-    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+function DoubleMachineLearning(X, T, Y; t_cat=false, y_cat=false, regularized=true, 
+    activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
     iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
-    DoubleMachineLearning(X, T, Y; t_cat=t_cat, regularized=regularized, 
+    DoubleMachineLearning(X, T, Y; t_cat=t_cat, y_cat=y_cat, regularized=regularized, 
         activation=activation, validation_metric=validation_metric, min_neurons=min_neurons, 
         max_neurons=max_neurons, folds=folds, iterations=iterations, 
         approximator_neurons=approximator_neurons)
@@ -340,7 +391,7 @@ julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(its::InterruptedTimeSeries)
-    # We will not find the best number of neurons after we have already estimated the causal
+    # We will not fcat the best number of neurons after we have already estimated the causal
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
     if its.num_neurons === 0
@@ -368,7 +419,7 @@ Estimate a causal effect of interest using G-Computation.
 
 If treatents are administered at multiple time periods, the effect will be estimated as the 
 average difference between the outcome of being treated in all periods and being treated in 
-no periods.For example, given that individuals 1, 2, ..., i ∈ I recieved either a treatment 
+no periods.For example, given that catividuals 1, 2, ..., i ∈ I recieved either a treatment 
 or a placebo in p different periods, the model would estimate the average treatment effect 
 as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0, Xₚ].
 
@@ -426,7 +477,8 @@ julia> estimate_causal_effect!(m1)
 function estimate_causal_effect!(DML::DoubleMachineLearning)
     # Uses the same number of neurons for all phases of estimation
     if DML.num_neurons === 0
-        DML.num_neurons = best_size(DML.X, DML.Y, DML.validation_metric, "regression", 
+        task = DML.y_cat ? "regression" : "classification"
+        DML.num_neurons = best_size(DML.X, DML.Y, DML.validation_metric, task, 
             DML.activation, DML.min_neurons, DML.max_neurons, DML.regularized, DML.folds, 
             false, DML.iterations, DML.approximator_neurons)
     end
@@ -435,6 +487,10 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
     DML.causal_effect /= DML.folds
 
     return DML.causal_effect
+end
+
+function estimate_causal_effect!(DRE::DoublyRobustEstimation)
+
 end
 
 """
@@ -511,9 +567,10 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 """
 function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train, y_test, 
     t_train, t_test)
-    # One hot encode categorical variables for multiple treatments
     t_train = DML.t_cat && var_type(DML.T) == Count() ? one_hot_encode(t_train) : t_train
+    y_train = DML.y_cat && var_type(DML.Y) == Count() ? one_hot_encode(y_train) : y_train
     activation = var_type(DML.T) == Binary() ? σ : DML.activation
+    res = [zeros(length(y_train)), zeros(length(t_train))]
     
     if DML.regularized
         y = RegularizedExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
@@ -522,16 +579,16 @@ function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train,
         y = ExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
         t = ExtremeLearner(x_train, t_train, DML.num_neurons, activation)
     end
-
     fit!(y); fit!(t)
 
-    if DML.t_cat  && var_type(DML.T) == Count() # Multiclass residual = 1-Pr(Majority Class)
-        T̃ = 1 .- vec(mapslices(maximum, softmax((predict(t, x_test))), dims=2))
-    else
-        T̃ = (t_test-predict(t, x_test))
+    for (idx, (cat, var, le)) in pairs([(DML.t_cat, DML.T, t), (DML.y_cat, DML.Y, y)])
+        if cat && var_type(var) == Count() # Multiclass residual = 1-Pr(Majority Class)
+            res[idx] = 1 .- vec(mapslices(maximum, softmax((predict(le, x_test))), dims=2))
+        else
+            res[idx] = le == t ? t_test-predict(le, x_test) : y_test-predict(le, x_test)
+        end
     end
-
-    return (y_test-predict(y, x_test)), T̃
+    return res
 end
 
 """

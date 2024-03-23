@@ -296,6 +296,7 @@ For an explanation of R-Learner estimation see:
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
 - `t_cat::Bool=false`: whether the treatment is categorical.
+- `y_cat::Bool=false`: whether the outcome is categorical.
 - `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
@@ -320,11 +321,11 @@ julia> m4 = RLearner(x_df, t_df, y_df)
 julia> estimate_causal_effect!(m4)
 ```
 """
-    function RLearner(X, T, Y; t_cat=false, activation=relu, validation_metric=mse, 
-        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
-        approximator_neurons=round(size(X, 1)/10))
+    function RLearner(X, T, Y; t_cat=false, y_cat=false, activation=relu, 
+        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+        iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
-        new(DoubleMachineLearning(X, T, Y; t_cat=t_cat, regularized=true, 
+        new(DoubleMachineLearning(X, T, Y; t_cat=t_cat, y_cat=y_cat, regularized=true, 
             activation=activation, validation_metric=validation_metric, 
             min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
             iterations=iterations, approximator_neurons=approximator_neurons))
