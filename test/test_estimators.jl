@@ -4,7 +4,7 @@ using DataFrames
 
 include("../src/models.jl")
 
-x₀, y₀, x₁, y₁ = Float64.(rand(1:100, 100, 5)), rand(100), rand(10, 5), rand(10)
+x₀, y₀, x₁, y₁ = Float64.(rand(1:200, 100, 5)), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
 
