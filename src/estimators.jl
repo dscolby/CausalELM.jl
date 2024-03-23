@@ -581,11 +581,12 @@ function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train,
     end
     fit!(y); fit!(t)
 
-    for (idx, (cat, var, le)) in pairs([(DML.t_cat, DML.T, t), (DML.y_cat, DML.Y, y)])
-        if cat && var_type(var) == Count() # Multiclass residual = 1-Pr(Majority Class)
-            res[idx] = 1 .- vec(mapslices(maximum, softmax((predict(le, x_test))), dims=2))
+    # Iterate over treatments and outcomes while considering categorical/continous variables
+    for (idx, (cat_ind, var, mod)) in pairs([(DML.t_cat, DML.T, t), (DML.y_cat, DML.Y, y)])
+        if cat_ind && var_type(var) == Count() # Multiclass residual = 1-Pr(Majority Class)
+            res[idx] = 1 .- vec(mapslices(maximum, softmax((predict(mod, x_test))), dims=2))
         else
-            res[idx] = le == t ? t_test-predict(le, x_test) : y_test-predict(le, x_test)
+            res[idx] = mod == t ? t_test-predict(t, x_test) : y_test-predict(y, x_test)
         end
     end
     return res
