@@ -43,5 +43,7 @@ reference the relevant issue/s and ensure your code follows the guidelines below
 
 *   Use self-explanatory names for variables, methods, structs, constants, and macros.
 
+*   Make generous use of whitespace.
+
 ## Updating or Fixing Documentation
 To propose a change to the documentation please submit a [pull request](https://github.com/dscolby/CausalELM.jl/pulls).
