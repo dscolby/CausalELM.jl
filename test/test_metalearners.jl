@@ -36,7 +36,7 @@ xlearner4 = XLearner(x, t, y, regularized=true)
 estimate_causal_effect!(xlearner4)
 
 # Testing initialization with DataFrames
-x_learner_df = XLearner(x_df, y_df, y_df)
+x_learner_df = XLearner(x_df, t_df, y_df)
 
 rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
@@ -51,6 +51,18 @@ estimate_causal_effect!(rlearner_y_cat)
 
 # Testing initialization with DataFrames
 r_learner_df = RLearner(x_df, t_df, y_df)
+
+# Doubly Robust Estimation
+dr_learner = DoublyRobustLearner(x, t, y)
+X_T, Y = generate_folds(reduce(hcat, (dr_learner.X, dr_learner.T)), dr_learner.Y, 3)
+X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T] 
+T = [fl[:, size(dr_learner.X, 2)+1] for fl in X_T]
+τ̂  = CausalELM.estimate_effect!(dr_learner, X, T, Y)
+estimate_causal_effect!(dr_learner)
+
+# Doubly robust estimation with DataFrames
+dr_learner_df = DoublyRobustLearner(x_df, t_df, y_df)
+estimate_causal_effect!(dr_learner_df)
 
 @testset "S-Learners" begin
     @testset "S-Learner Structure" begin
@@ -137,6 +149,31 @@ end
         @test eltype(rlearner.causal_effect) == Float64
         @test length(rlearner_t_cat.causal_effect) == length(y)
         @test length(rlearner_y_cat.causal_effect) == length(y)
+    end
+end
+
+@testset "Doubly Robust Learners" begin
+    @testset "Doubly Robust Learner Structure" begin
+        for field in fieldnames(typeof(dr_learner))
+           @test getfield(dr_learner, field) !== Nothing
+        end
+
+        for field in fieldnames(typeof(dr_learner_df))
+            @test getfield(dr_learner_df, field) !== Nothing
+         end
+    end
+
+    @testset "Calling estimate_effect!" begin
+        @test length(τ̂) === length(dr_learner.Y)
+    end
+
+    @testset "Doubly Robust Learner Estimation" begin
+        @test dr_learner.causal_effect isa Vector
+        @test length(dr_learner.causal_effect) === length(y)
+        @test eltype(dr_learner.causal_effect) == Float64
+        @test dr_learner_df.causal_effect isa Vector
+        @test length(dr_learner_df.causal_effect) === length(y)
+        @test eltype(dr_learner_df.causal_effect) == Float64
     end
 end
 

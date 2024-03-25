@@ -44,7 +44,6 @@ julia> m3 = SLearner(X, T, Y; task="regression", regularized=true)
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
 julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m4 = SLearner(x_df, t_df, y_df)
-julia> estimate_causal_effect!(m4)
 ```
 """
     function SLearner(X, T, Y; task="regression", regularized=true, activation=relu, 
@@ -150,7 +149,6 @@ julia> m3 = TLearner(X, T, Y; task="regression", regularized=true)
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
 julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m4 = TLearner(x_df, t_df, y_df)
-julia> estimate_causal_effect!(m4)
 ```
 """
 function TLearner(X, T, Y; task="regression", regularized=false, activation=relu, 
@@ -259,7 +257,6 @@ julia> m3 = XLearner(X, T, Y; task="regression", regularized=true)
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
 julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m4 = XLearner(x_df, t_df, y_df)
-julia> estimate_causal_effect!(m4)
 ```
 """
 function XLearner(X, T, Y; task="regression", regularized=false, activation=relu, 
@@ -318,7 +315,6 @@ julia> m2 = RLearner(X, T, Y; t_cat=true)
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
 julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m4 = RLearner(x_df, t_df, y_df)
-julia> estimate_causal_effect!(m4)
 ```
 """
     function RLearner(X, T, Y; t_cat=false, y_cat=false, activation=relu, 
@@ -330,6 +326,99 @@ julia> estimate_causal_effect!(m4)
             min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
             iterations=iterations, approximator_neurons=approximator_neurons))
     end
+end
+
+"""Container for the results of a doubly robust estimator"""
+mutable struct DoublyRobustLearner <: Metalearner
+    """Covariates"""
+    X::Array{Float64}
+    """Treatment statuses"""
+    T::Array{Float64}
+    """Outomes variable"""
+    Y::Array{Float64}
+    """Whether to use L2 regularization"""
+    regularized::Bool
+    """Activation function to apply to the outputs from each neuron"""
+    activation::Function
+    """Validation metric to use when tuning the number of neurons"""
+    validation_metric::Function
+    """Minimum number of neurons to test in the hidden layer"""
+    min_neurons::Int64
+    """Maximum number of neurons to test in the hidden layer"""
+    max_neurons::Int64
+    """Number of cross validation folds"""
+    folds::Int64
+    """Number of iterations to perform cross validation"""
+    iterations::Int64
+    """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
+    approximator_neurons::Int64
+    """This will alsways be ATE unless using DML with the weight trick for R-learning"""
+    quantity_of_interest::String
+    """This will always be false and is just exists to be accessed by summzrize methods"""
+    temporal::Bool
+    """Number of neurons in the ELM used for estimating the causal effect"""
+    num_neurons::Int64
+    """The CATE of exposure or treatment"""
+    causal_effect::Vector{Float64}
+
+    function DoublyRobustLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
+        regularized=true, activation=relu, validation_metric=mse, min_neurons=1, 
+        max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
+
+        new(Float64.(X), Float64.(T), Float64.(Y), regularized, activation, 
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, "CATE", false, 0, zeros(length(Y)))
+    end
+end
+
+"""
+    DoublyRobustLearner(X, T, Y; <keyword arguments>)
+
+Initialize a doubly robust CATE estimator.
+
+For an explanation of doubly robust cate estimation see:
+    Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
+    effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
+
+...
+# Arguments
+- `X::Any`: an array or DataFrame of covariates.
+- `T::Any`: an vector or DataFrame of treatment statuses.
+- `Y::Any`: an array or DataFrame of outcomes.
+- `regularized::Function=true`: whether to use L2 regularization
+- `activation::Function=relu`: the activation function to use.
+- `validation_metric::Function`: the validation metric to calculate during cross validation.
+- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
+- `folds::Int`: the number of folds to use for cross validation.
+- `iterations::Int`: the number of iterations to perform cross validation between 
+    min_neurons and max_neurons.
+- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+    network.
+...
+
+Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoublyRobustLearner(X, T, Y)
+julia> m2 = DoublyRobustLearnerLearner(X, T, Y; t_cat=true)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m4 = DoublyRobustLearner(x_df, t_df, y_df)
+```
+"""
+function DoublyRobustLearner(X, T, Y; regularized=true, activation=relu, 
+    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+    iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+
+    # Convert to arrays
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+
+    DoublyRobustLearner(X, T, Y; regularized=regularized, activation=activation, 
+        validation_metric=validation_metric, min_neurons=min_neurons, 
+        max_neurons=max_neurons, folds=folds, iterations=iterations, 
+        approximator_neurons=approximator_neurons)
 end
 
 """
@@ -495,6 +584,106 @@ function estimate_causal_effect!(R::RLearner)
     R.dml.quantity_of_interest = "CATE"
 
     return R.causal_effect
+end
+
+"""
+    estimate_causal_effect!(DRE)
+
+Estimate the CATE using a doubly robust learner.
+
+For details on how this method estimates the CATE see:
+    Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
+    effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
+
+Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoublyRobustLearner(X, T, Y)
+julia> estimate_causal_effect!(m1)
+ -0.025012644892878473
+ -0.024634294305967294
+ -0.022144246680543364
+ ⋮
+ -0.021163590874553318
+ -0.014607310062509895 
+-0.022449034332142046
+```
+"""
+function estimate_causal_effect!(DRE::DoublyRobustLearner)
+    X_T, Y = generate_folds(reduce(hcat, (DRE.X, DRE.T)), DRE.Y, 3)
+    X, T = [fl[:, 1:size(DRE.X, 2)] for fl in X_T], [fl[:, size(DRE.X, 2)+1] for fl in X_T]
+
+    # Uses the same number of neurons for all phases of estimation
+    if DRE.num_neurons === 0
+        DRE.num_neurons = best_size(DRE.X, DRE.Y, DRE.validation_metric, "regression", 
+            DRE.activation, DRE.min_neurons, DRE.max_neurons, DRE.regularized, DRE.folds, 
+            false, DRE.iterations, DRE.approximator_neurons)
+    end
+
+    # Rotating folds for cross fitting
+    for i in 1:3
+        DRE.causal_effect .+= estimate_effect!(DRE, X, T, Y)
+        X, T, Y = [X[3], X[1], X[2]], [T[3], T[1], T[2]], [Y[3], Y[1], Y[2]]
+    end
+
+    DRE.causal_effect ./= 3
+
+    return DRE.causal_effect
+end
+
+"""
+    estimate_effect!(DRE, X, T, Y)
+
+Estimate the CATE for a single cross fitting iteration via doubly robust estimation.
+
+This method should not be called directly.
+
+...
+# Arguments
+- `DRE::DoublyRobustLearner`: the DoubleMachineLearning struct to estimate the effect for.
+- `X`: a vector of three covariate folds.
+- `T`: a vector of three treatment folds.
+- `Y`: a vector of three outcome folds.
+...
+
+Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoublyRobustLearner(X, T, Y)
+julia> estimate_effect!(m1)
+ -0.025012644892878473
+ -0.024634294305967294
+ -0.022144246680543364
+ ⋮
+ -0.021163590874553318
+ -0.014607310062509895 
+ -0.022449034332142046
+```
+"""
+function estimate_effect!(DRE::DoublyRobustLearner, X, T, Y)
+    π_args = X[1], T[1], DRE.num_neurons, σ
+    μ_arg = X[2], Y[2], DRE.num_neurons, DRE.activation
+
+    # Propensity scores
+    π_e = DRE.regularized ? RegularizedExtremeLearner(π_args...) : ExtremeLearner(π_args...)
+    fit!(π_e)
+    π̂ = predict(π_e, DRE.X)
+
+    # Outcome predictions
+    μ₀_e = DRE.regularized ? RegularizedExtremeLearner(μ_arg...) : ExtremeLearner(μ_arg...)
+    μ₁_e = DRE.regularized ? RegularizedExtremeLearner(μ_arg...) : ExtremeLearner(μ_arg...)
+    fit!(μ₀_e); fit!(μ₁_e)
+    μ₀̂ , μ₁̂  = predict(μ₀_e, DRE.X), predict(μ₁_e, DRE.X)
+
+    # Pseudo outcomes
+    ϕ̂  = ((DRE.T.-π̂) ./ (π̂ .*(1 .-π̂))).*(DRE.Y .-DRE.T.*μ₁̂  .-(1 .-DRE.T).*μ₀̂) .+ μ₁̂  .-μ₀̂
+
+    # Final model
+    τ_arg = X[3], ϕ̂[length(Y[1])+length(Y[2])+1:end], DRE.num_neurons, DRE.activation
+    τ_est = DRE.regularized ? RegularizedExtremeLearner(τ_arg...) : ExtremeLearner(τ_arg...)
+    fit!(τ_est)
+
+    return predict(τ_est, DRE.X)
 end
 
 """

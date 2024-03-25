@@ -73,7 +73,7 @@ residuals = CausalELM.predict_residuals(residual_predictor, x_train, x_test, y_t
     y_test, t_train, t_test)
 
 # Estimating the CATE
-cate_estimator = DoubleMachineLearning(x, t, y)
+cate_estimator = DoubleMachineLearning(x, t, y, regularized=false)
 cate_estimator.num_neurons = 5
 cate_predictors = CausalELM.estimate_effect!(cate_estimator, true)
 

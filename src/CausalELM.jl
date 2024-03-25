@@ -16,10 +16,10 @@ export gelu, gaussian
 export hard_tanh, elish, fourier
 export binary_step, σ, tanh, relu
 export leaky_relu, swish, softmax, softplus
-export SLearner, TLearner, XLearner, RLearner
 export mse, mae, accuracy, precision, recall, F1
 export estimate_causal_effect!, summarize, summarise
 export InterruptedTimeSeries, GComputation, DoubleMachineLearning
+export SLearner, TLearner, XLearner, RLearner, DoublyRobustLearner
 
 include("utilities.jl")
 include("activation.jl")

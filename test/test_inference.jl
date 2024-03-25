@@ -53,6 +53,12 @@ rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
 summary9 = summarize(rlearner)
 
+dr_learner = DoublyRobustLearner(x, t, y)
+estimate_causal_effect!(dr_learner)
+dr_learner_inference = CausalELM.generate_null_distribution(dr_learner, 1000)
+p8, stderr8 = CausalELM.quantities_of_interest(dr_learner, 1000)
+summary10 = summarize(dr_learner)
+
 @testset "Generating Null Distributions" begin
     @test size(g_inference, 1) === 1000
     @test g_inference isa Array{Float64}
@@ -68,6 +74,8 @@ summary9 = summarize(rlearner)
     @test tlearner_inference isa Array{Float64}
     @test size(xlearner_inference, 1) === 1000
     @test xlearner_inference isa Array{Float64}
+    @test size(dr_learner_inference, 1) === 1000
+    @test dr_learner_inference isa Array{Float64}
 end
 
 @testset "P-values and Standard Errors" begin
@@ -83,6 +91,8 @@ end
     @test stderr6 > 0
     @test 1 >= p7 >= 0
     @test stderr7 > 0
+    @test 1 >= p8 >= 0
+    @test stderr8 > 0
 end
 
 @testset "Full Summaries" begin
@@ -128,6 +138,11 @@ end
 
     # R-Learners
     for (k, v) in summary9
+        @test !isnothing(v)
+    end
+
+    # Doubly robust learner
+    for (k, v) in summary10
         @test !isnothing(v)
     end
 end

@@ -273,54 +273,6 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     end
 end
 
-"""Container for the results of a doubly robust estimator"""
-mutable struct DoublyRobustEstimation <: CausalEstimator
-    """Covariates"""
-    X::Array{Float64}
-    """Treatment statuses"""
-    T::Array{Float64}
-    """Outomes variable"""
-    Y::Array{Float64}
-    """True if the treatment variable is categorical and nonbinary"""
-    t_cat::Bool
-    """True if the outcome variable is categorical and nonbinary"""
-    y_cat::Bool
-    """Whether to use L2 regularization"""
-    regularized::Bool
-    """Activation function to apply to the outputs from each neuron"""
-    activation::Function
-    """Validation metric to use when tuning the number of neurons"""
-    validation_metric::Function
-    """Minimum number of neurons to test in the hidden layer"""
-    min_neurons::Int64
-    """Maximum number of neurons to test in the hidden layer"""
-    max_neurons::Int64
-    """Number of folds to use in cross validation and cross fitting"""
-    folds::Int64
-    """Number of iterations to perform cross validation"""
-    iterations::Int64
-    """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
-    approximator_neurons::Int64
-    """This will alsways be ATE unless using DML with the weight trick for R-learning"""
-    quantity_of_interest::String
-    """This will always be false and is just exists to be accessed by summzrize methods"""
-    temporal::Bool
-    """Number of neurons in the ELM used for estimating the causal effect"""
-    num_neurons::Int64
-    """The effect of exposure or treatment"""
-    causal_effect::Float64
-
-    function DoublyRobustEstimation(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-        regularized=true, activation=relu, validation_metric=mse, min_neurons=1, 
-        max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
-        approximator_neurons=round(size(X, 1)/10))
-
-        new(Float64.(X), Float64.(T), Float64.(Y), regularized, activation, 
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, "ATE", false, 0, NaN)
-    end
-end
-
 """
     DoubleMachineLearning(X, T, Y; <keyword arguments>)
 
@@ -391,7 +343,7 @@ julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(its::InterruptedTimeSeries)
-    # We will not fcat the best number of neurons after we have already estimated the causal
+    # We will not find the best number of neurons after we have already estimated the causal
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
     if its.num_neurons === 0
@@ -489,10 +441,6 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
     return DML.causal_effect
 end
 
-function estimate_causal_effect!(DRE::DoublyRobustEstimation)
-
-end
-
 """
     estimate_effect!(DML, cate=false)
 
@@ -503,7 +451,7 @@ This method should not be called directly.
 ...
 # Arguments
 - `DML::DoubleMachineLearning`: the DoubleMachineLearning struct to estimate the effect for.
-- `cate::Bool=fales`: whether to estimate the cate.
+- `cate::Bool=false`: whether to estimate the cate.
 ...
 
 Examples

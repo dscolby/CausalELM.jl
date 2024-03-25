@@ -69,6 +69,10 @@ estimate_causal_effect!(r_learner)
 # Used to test ErrorException
 r_learner_no_effect = RLearner(x, t, y)
 
+# Doubly robust leaner for testing
+dr_learner = DoublyRobustLearner(x, t, y)
+estimate_causal_effect!(dr_learner)
+
 # Used to test helper functions for Jenks breaks
 sum_of_squares2 = CausalELM.sums_of_squares([1, 2, 3, 4, 5], 2)
 sum_of_squares3 = CausalELM.sums_of_squares([1, 2, 3, 4, 5], 3)
@@ -207,6 +211,7 @@ end
         @test CausalELM.e_value(dml_noreg) isa Real
         @test CausalELM.e_value(t_learner) isa Real
         @test CausalELM.e_value(x_learner) isa Real
+        @test CausalELM.e_value(dr_learner) isa Real
     end
 end
 
@@ -246,30 +251,39 @@ end
 
 @testset "Metalearner Assumptions" begin
     @testset "Counterfactual Consistency" begin
+        @test CausalELM.counterfactual_consistency(s_learner.g) isa Real
         @test CausalELM.counterfactual_consistency(t_learner) isa Real
         @test CausalELM.counterfactual_consistency(x_learner) isa Real
+        @test CausalELM.counterfactual_consistency(dr_learner) isa Real
     end
 
     @testset "Exchangeability" begin
+        @test CausalELM.exchangeability(s_learner.g) isa Real
         @test CausalELM.exchangeability(t_learner) isa Real
         @test CausalELM.exchangeability(t_learner_binary) isa Real
         @test CausalELM.exchangeability(x_learner) isa Real
         @test CausalELM.exchangeability(nonbinary_dml) isa Real
         @test CausalELM.exchangeability(nonbinary_dml_y) isa Real
+        @test CausalELM.exchangeability(dr_learner) isa Real
     end
 
     @testset "Positivity" begin
+        @test size(CausalELM.positivity(s_learner.g), 2) == size(s_learner.g.X, 2)+1
         @test size(CausalELM.positivity(t_learner), 2) == size(t_learner.X, 2)+1
         @test size(CausalELM.positivity(x_learner), 2) == size(x_learner.X, 2)+1
+        @test size(CausalELM.positivity(dr_learner), 2) == size(dr_learner.X, 2)+1
     end
 
     @testset "All three assumptions" begin
+        @test length(validate(s_learner)) == 3
         @test length(validate(t_learner)) == 3
         @test length(validate(x_learner)) == 3
 
         # Only need this test because it it just passing the internal DML to the method that 
         # was already tested
         @test length(validate(r_learner)) == 3
+
+        @test length(validate(dr_learner)) == 3
     end
 end
 
@@ -281,4 +295,5 @@ end
     @test_throws ErrorException validate(TLearner(x, t, y))
     @test_throws ErrorException validate(XLearner(x, t, y))
     @test_throws ErrorException validate(r_learner_no_effect)
+    @test_throws ErrorException validate(DoublyRobustLearner(x, t, y))
 end

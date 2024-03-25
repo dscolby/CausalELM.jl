@@ -24,7 +24,8 @@ makedocs(;
             "Interrupted Time Series Estimation" => "guide/its.md",
             "G-computation" => "guide/gcomputation.md",
             "Double Machine Learning" => "guide/doublemachinelearning.md",
-            "Metalearners" => "guide/metalearners.md"
+            "Metalearners" => "guide/metalearners.md",
+            "Doubly Robust Estimation" => "guide/doublyrobust.md"
         ],
         "API" => "api.md",
         "Contributing" => "contributing.md",

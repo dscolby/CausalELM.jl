@@ -12,3 +12,4 @@ given dataset and causal question.
 | T-learning                       | TLearner              | CATE                             | Binary                                 | Binary, Continuous        |
 | X-learning                       | XLearner              | CATE                             | Binary                                 | Binary, Continuous, Count |
 | R-learning                       | RLearner              | CATE                             | Binary, Count, Categorical, Continuous | Binary, Count, Categorical, Continuous |
+| Doubly Robust Estimation         | DoublyRobustLearner              | CATE                   | Binary | Continuous |

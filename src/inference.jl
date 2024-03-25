@@ -116,7 +116,8 @@ function summarize(mod, n=1000)
     end
 
     summary_dict = Dict()
-    task = typeof(mod) == DoubleMachineLearning ? "regression" : mod.task
+    double_estimators = (DoubleMachineLearning, DoublyRobustLearner)
+    task = typeof(mod) in double_estimators ? "regression" : mod.task
     nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
         "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
         "Number of Neurons in Approximator", "Causal Effect", "Standard Error", 
