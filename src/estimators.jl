@@ -92,7 +92,6 @@ julia> y₀_df = DataFrame(y=rand(100))
 julia> x₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)) 
 julia> y₁_df = DataFrame(y=rand(100))
 julia> m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
-julia> estimate_causal_effect!(m3)
 ```
 """
 function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=true, activation=relu, 
@@ -207,7 +206,6 @@ julia> regularized=true)
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
 julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
 julia> m5 = GComputation(x_df, t_df, y_df)
-julia> estimate_causal_effect!(m5)
 ```
 """
 function GComputation(X, T, Y; task="regression", quantity_of_interest="ATE", 
@@ -313,7 +311,6 @@ julia> m2 = DoubleMachineLearning(X, T, Y; task="regression")
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
 julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m3 = DoubleMachineLearning(x_df, t_df, y_df)
-julia> estimate_causal_effect!(m3)
 ```
 """
 function DoubleMachineLearning(X, T, Y; t_cat=false, y_cat=false, regularized=true, 
