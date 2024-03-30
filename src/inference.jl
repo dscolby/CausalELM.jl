@@ -36,11 +36,11 @@ function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
 
     summary_dict = Dict()
     nicenames = ["Task", "Regularized", "Activation Function", "Validation Metric", 
-        "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect", 
-        "Standard Error", "p-value"]
+                 "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect", 
+                 "Standard Error", "p-value"]
 
     values = ["Regression", its.regularized, its.activation, its.validation_metric, 
-        its.num_neurons, its.approximator_neurons, effect, stderr, p]
+              its.num_neurons, its.approximator_neurons, effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value
@@ -119,15 +119,15 @@ function summarize(mod, n=1000)
     double_estimators = (DoubleMachineLearning, DoublyRobustLearner)
     task = typeof(mod) in double_estimators ? "regression" : mod.task
     nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
-        "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
-        "Number of Neurons in Approximator", "Causal Effect", "Standard Error", 
-        "p-value"]
+                 "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
+                 "Number of Neurons in Approximator", "Causal Effect", "Standard Error", 
+                 "p-value"]
     
     p, stderr = quantities_of_interest(mod, n)
 
     values = [task, mod.quantity_of_interest, mod.regularized, mod.activation, mod.temporal, 
-        mod.validation_metric, mod.num_neurons, mod.approximator_neurons, mod.causal_effect, 
-        stderr, p]
+              mod.validation_metric, mod.num_neurons, mod.approximator_neurons, 
+              mod.causal_effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value

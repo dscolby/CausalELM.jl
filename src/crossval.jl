@@ -140,14 +140,14 @@ function cross_validate(X, Y, neurons, metric, activation, regularized, folds, t
         end
 
         mean_metric += validation_loss(xtr, ytr, xtst, ytst, neurons, metric, 
-            activation=activation, regularized=regularized)
+                                       activation=activation, regularized=regularized)
     end
     return mean_metric/folds
 end
 
 """
     best_size(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, folds, 
-        temporal, iterations, elm_size)
+              temporal, iterations, elm_size)
 
 Compute the best number of neurons for an Extreme Learning Machine.
 
@@ -182,16 +182,16 @@ julia> best_size(rand(100, 5), rand(100), mse, "regression")
 ```
 """
 function best_size(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, 
-    folds, temporal, iterations, elm_size)
+                   folds, temporal, iterations, elm_size)
     
-    loss, num_neurons = Vector{Float64}(undef, iterations), 
-        round.(Int, range(min_neurons, max_neurons, length=iterations))
+    loss = Vector{Float64}(undef, iterations) 
+    num_neurons = round.(Int, range(min_neurons, max_neurons, length=iterations))
    
     # Use cross validation to calculate the validation loss for each number of neurons in 
     # the interval of min_neurons to max_neurons spaced evenly in steps of iterations
     @inbounds for (idx, potential_neurons) in pairs(num_neurons)
         loss[idx] = cross_validate(X, Y, round(Int, potential_neurons), metric, activation, 
-            regularized, folds, temporal)
+                                   regularized, folds, temporal)
     end
     
     # Use an extreme learning machine to learn a mapping from number of neurons to 

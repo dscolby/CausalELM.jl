@@ -3,31 +3,6 @@ using LinearAlgebra: inv, pinv, I
 """Abstract type that includes vanilla and L2 regularized Extreme Learning Machines"""
 abstract type ExtremeLearningMachine end
 
-"""Struct to hold data for an Extreme Learning machine"""
-mutable struct ExtremeLearner <: ExtremeLearningMachine
-    """Training features"""
-    X::Array{Float64}
-    """Training outcome data, which may be continuous or discrete"""
-    Y::Array{Float64}
-    """Number of training samples"""
-    training_samples::Int64
-    """Number of features used in training"""
-    features::Int64
-    """Number of hidden neurons"""
-    hidden_neurons::Int64
-    """Activation function to be used"""
-    activation::Function
-    __fit::Bool             # Whether fit! has been called
-    __estimated::Bool       # Whether a counterfactual has been predicted
-    """Random weights used in the model"""
-    weights::Array{Float64}
-    """Estimated coefficients"""
-    β::Array{Float64}
-    """Output from hidden neurons"""
-    H::Array{Float64}
-    """Predicted counterfactual data"""
-    counterfactual::Array{Float64}
-
 """
     ExtremeLearner(X, Y, hidden_neurons, activation)
 
@@ -60,38 +35,25 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
 Extreme Learning Machine with 10 hidden neurons
 ```
 """
+mutable struct ExtremeLearner <: ExtremeLearningMachine
+    X::Array{Float64}
+    Y::Array{Float64}
+    training_samples::Int64
+    features::Int64
+    hidden_neurons::Int64
+    activation::Function
+    __fit::Bool             
+    __estimated::Bool       
+    weights::Array{Float64}
+    β::Array{Float64}
+    H::Array{Float64}
+    counterfactual::Array{Float64}
+
     function ExtremeLearner(X, Y, hidden_neurons, activation)
         new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end
 end
 
-"""Struct to hold data for a regularized Extreme Learning Machine"""
-mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
-    """Training Features"""
-    X::Array{Float64}
-    """Training outcome data, which may be continuous or discrete"""
-    Y::Array{Float64}
-    """Number of training samples"""
-    training_samples::Int64
-    """Number of features used in training"""
-    features::Int64
-    """Number of hidden neurons"""
-    hidden_neurons::Int64
-    """Activation function to be used"""
-    activation::Function
-    __fit::Bool             # Whether fit! has been called
-    __estimated::Bool       # Whether a counterfactual has been estimated
-    """Random weights used in the model"""
-    weights::Array{Float64}
-    """Estimated coefficients"""
-    β::Array{Float64}
-    """L2 penalty term"""
-    k::Float64
-    """Output from hidden nodes"""
-    H::Array{Float64}
-    """Predicted counterfactual data"""
-    counterfactual::Array{Float64}
-    
 """
     RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
 
@@ -120,6 +82,21 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
 Regularized Extreme Learning Machine with 10 hidden neurons
 ```
 """
+mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
+    X::Array{Float64}
+    Y::Array{Float64}
+    training_samples::Int64
+    features::Int64
+    hidden_neurons::Int64
+    activation::Function
+    __fit::Bool             
+    __estimated::Bool       
+    weights::Array{Float64}
+    β::Array{Float64}
+    k::Float64
+    H::Array{Float64}
+    counterfactual::Array{Float64}
+    
     function RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
         new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end

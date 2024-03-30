@@ -607,10 +607,10 @@ function risk_ratio(::Binary, ::Count, mod)
     else
         if mod.regularized
             learner = RegularizedExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y, 
-                mod.num_neurons, mod.activation)
+                                                mod.num_neurons, mod.activation)
         else
             learner = ExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, 
-                mod.activation)
+                                     mod.activation)
         end
         fit!(learner)
         @fastmath (sum(predict(learner, Xₜ))/m)/(sum(predict(learner, Xᵤ))/n)
@@ -659,7 +659,7 @@ positivity(model, min=1.0e-6, max=1-min) = positivity(model, min, max)
 function positivity(mod::XLearner, min=1.0e-6, max=1-min)
     # Observations that have a zero probability of treatment or control assignment
     return reduce(hcat, (mod.X[mod.ps .<= min .|| mod.ps .>= max, :], 
-        mod.ps[mod.ps .<= min .|| mod.ps .>= max]))
+                  mod.ps[mod.ps .<= min .|| mod.ps .>= max]))
 end
 
 function positivity(mod::DoubleMachineLearning, min=1.0e-6, max=1-min)
@@ -667,8 +667,8 @@ function positivity(mod::DoubleMachineLearning, min=1.0e-6, max=1-min)
     T = mod.t_cat ? one_hot_encode(mod.T) : mod.T
 
     num_neurons = best_size(mod.X, T, mod.validation_metric, task, mod.activation, 
-        mod.min_neurons, mod.max_neurons, mod.regularized, mod.folds, false,  
-        mod.iterations, mod.approximator_neurons)
+                            mod.min_neurons, mod.max_neurons, mod.regularized, mod.folds, 
+                            false,  mod.iterations, mod.approximator_neurons)
 
     if mod.regularized
         ps_mod = RegularizedExtremeLearner(mod.X, mod.T, num_neurons, mod.activation)
@@ -681,7 +681,8 @@ function positivity(mod::DoubleMachineLearning, min=1.0e-6, max=1-min)
 
     # Observations that have a zero probability of treatment or control assignment
     return reduce(hcat, (mod.X[propensity_scores .<= min .|| propensity_scores .>= max, :], 
-        propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max]))
+                  propensity_scores[propensity_scores .<= min .|| 
+                  propensity_scores .>= max]))
 end
 
 function positivity(mod, min=1.0e-6, max=1-min)
@@ -696,7 +697,8 @@ function positivity(mod, min=1.0e-6, max=1-min)
 
     # Observations that have a zero probability of treatment or control assignment
     return reduce(hcat, (mod.X[propensity_scores .<= min .|| propensity_scores .>= max, :], 
-        propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max]))
+                  propensity_scores[propensity_scores .<= min .|| 
+                  propensity_scores .>= max]))
 end
 
 """

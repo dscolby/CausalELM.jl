@@ -1,12 +1,6 @@
 """Abstract type for metalearners"""
 abstract type Metalearner end
 
-"""S-Learner for CATE estimation."""
-mutable struct SLearner <: Metalearner
-    g::GComputation
-    """The effect of exposure or treatment"""
-    causal_effect::Array{Float64}
-
 """
     SLearner(X, T, Y; <keyword arguments>)
 
@@ -46,69 +40,20 @@ julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m4 = SLearner(x_df, t_df, y_df)
 ```
 """
+mutable struct SLearner <: Metalearner
+    g::GComputation
+    causal_effect::Array{Float64}
+
     function SLearner(X, T, Y; task="regression", regularized=true, activation=relu, 
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+                      validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+                      iterations=round(size(X, 1)/10), 
+                      approximator_neurons=round(size(X, 1)/10))
 
         new(GComputation(X, T, Y, task=task, quantity_of_interest="ATE", 
-            regularized=regularized, activation=activation, temporal=false, 
-            validation_metric=validation_metric, min_neurons=min_neurons, 
-            max_neurons=max_neurons, folds=folds, iterations=iterations, 
-            approximator_neurons=approximator_neurons))
-    end
-end
-
-"""T-Learner for CATE estimation."""
-mutable struct TLearner <: Metalearner
-    """Covariates"""
-    X::Array{Float64}
-    """Treatment statuses"""
-    T::Array{Float64}
-    """Outome variable"""
-    Y::Array{Float64}
-    """Either regression or classification"""
-    task::String
-    """Whether to use L2 regularization"""
-    regularized::Bool
-    """Activation function to apply to the outputs from each neuron"""
-    activation::Function
-    """Validation metric to use when tuning the number of neurons"""
-    validation_metric::Function
-    """Minimum number of neurons to test in the hidden layer"""
-    min_neurons::Int64
-    """Maximum number of neurons to test in the hidden layer"""
-    max_neurons::Int64
-    """Number of cross validation folds"""
-    folds::Int64
-    """Number of iterations to perform cross validation"""
-    iterations::Int64
-    """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
-    approximator_neurons::Int64
-    """This will always be CATE and is used by summarize methods"""
-    quantity_of_interest::String
-    """This will always be set to false and is only accessed by summarize methods"""
-    temporal::Bool
-    """Number of neurons in the ELM used for estimating the abnormal returns"""
-    num_neurons::Int64
-    """The effect of exposure or treatment"""
-    causal_effect::Array{Float64}
-    """Extreme Learning Machine used for the first stage of estimation"""
-    μ₀::ExtremeLearningMachine
-    """Extreme Learning Machine used for the first stage of estimation"""
-    μ₁::ExtremeLearningMachine
-
-    function TLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-        task="regression", regularized=false, activation=relu, validation_metric=mse, 
-        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
-        approximator_neurons=round(size(X, 1)/10))
-
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
-
-        new(Float64.(X), Float64.(T), Float64.(Y), task, regularized, activation,  
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, "CATE", false, 0)
+                         regularized=regularized, activation=activation, temporal=false, 
+                         validation_metric=validation_metric, min_neurons=min_neurons, 
+                         max_neurons=max_neurons, folds=folds, iterations=iterations, 
+                         approximator_neurons=approximator_neurons))
     end
 end
 
@@ -151,64 +96,31 @@ julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m4 = TLearner(x_df, t_df, y_df)
 ```
 """
-function TLearner(X, T, Y; task="regression", regularized=false, activation=relu, 
-    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-    iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
-
-    # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
-
-    TLearner(X, T, Y; task=task, regularized=regularized, activation=activation, 
-        validation_metric=validation_metric, min_neurons=min_neurons, 
-        max_neurons=max_neurons, folds=folds, iterations=iterations, 
-        approximator_neurons=approximator_neurons)
-end
-
-"""X-Learner for CATE estimation."""
-mutable struct XLearner <: Metalearner
-    """Covariates"""
+mutable struct TLearner <: Metalearner
     X::Array{Float64}
-    """Treatment statuses"""
     T::Array{Float64}
-    """Outome variable"""
     Y::Array{Float64}
-    """Either regression or classification"""
     task::String
-    """Whether to use L2 regularization"""
     regularized::Bool
-    """Activation function to apply to the outputs from each neuron"""
     activation::Function
-    """Validation metric to use when tuning the number of neurons"""
     validation_metric::Function
-    """Minimum number of neurons to test in the hidden layer"""
     min_neurons::Int64
-    """Maximum number of neurons to test in the hidden layer"""
     max_neurons::Int64
-    """Number of cross validation folds"""
     folds::Int64
-    """Number of iterations to perform cross validation"""
     iterations::Int64
-    """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
     approximator_neurons::Int64
-    """This will always be CATE and is used by summarize methods"""
     quantity_of_interest::String
-    """This will always be set to false and is only accessed by summarize methods"""
     temporal::Bool
-    """Number of neurons in the ELM used for estimating the abnormal returns"""
     num_neurons::Int64
-    """Extreme Learning Machine used for the first stage of estimation"""
-    μ₀::ExtremeLearningMachine
-    """Extreme Learning Machine used for the first stage of estimation"""
-    μ₁::ExtremeLearningMachine
-    """Individual propensity scores"""
-    ps::Array{Float64}
-    """The effect of exposure or treatment"""
     causal_effect::Array{Float64}
+    μ₀::ExtremeLearningMachine
+    μ₁::ExtremeLearningMachine
 
-    function XLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-        task="regression", regularized=false, activation=relu, validation_metric=mse, 
-        min_neurons=1, max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
-        approximator_neurons=round(size(X, 1)/10))
+    function TLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
+                      task="regression", regularized=false, activation=relu, 
+                      validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+                      iterations=round(size(X, 1)/10), 
+                      approximator_neurons=round(size(X, 1)/10))
 
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
@@ -218,6 +130,19 @@ mutable struct XLearner <: Metalearner
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, "CATE", false, 0)
     end
+end
+
+function TLearner(X, T, Y; task="regression", regularized=false, activation=relu, 
+                  validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+                  iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+
+    # Convert to arrays
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+
+    TLearner(X, T, Y; task=task, regularized=regularized, activation=activation, 
+             validation_metric=validation_metric, min_neurons=min_neurons, 
+             max_neurons=max_neurons, folds=folds, iterations=iterations, 
+             approximator_neurons=approximator_neurons)
 end
 
 """
@@ -259,24 +184,56 @@ julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m4 = XLearner(x_df, t_df, y_df)
 ```
 """
+mutable struct XLearner <: Metalearner
+    X::Array{Float64}
+    T::Array{Float64}
+    Y::Array{Float64}
+    task::String
+    regularized::Bool
+    activation::Function
+    validation_metric::Function
+    min_neurons::Int64
+    max_neurons::Int64
+    folds::Int64
+    iterations::Int64
+    approximator_neurons::Int64
+    quantity_of_interest::String
+    temporal::Bool
+    num_neurons::Int64
+    μ₀::ExtremeLearningMachine
+    μ₁::ExtremeLearningMachine
+    ps::Array{Float64}
+    causal_effect::Array{Float64}
+
+    function XLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
+                      task="regression", regularized=false, activation=relu, 
+                      validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+                      iterations=round(size(X, 1)/10), 
+                      approximator_neurons=round(size(X, 1)/10))
+
+        if task ∉ ("regression", "classification")
+            throw(ArgumentError("task must be either regression or classification"))
+        end
+
+        new(Float64.(X), Float64.(T), Float64.(Y), task, regularized, activation,  
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, "CATE", false, 0)
+    end
+end
+
 function XLearner(X, T, Y; task="regression", regularized=false, activation=relu, 
-    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-    iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+                  validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+                  iterations=round(size(X, 1)/10), 
+                  approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
     XLearner(X, T, Y; task=task, regularized=regularized, activation=activation, 
-        validation_metric=validation_metric, min_neurons=min_neurons, 
-        max_neurons=max_neurons, folds=folds, iterations=iterations, 
-        approximator_neurons=approximator_neurons)
+             validation_metric=validation_metric, min_neurons=min_neurons, 
+             max_neurons=max_neurons, folds=folds, iterations=iterations, 
+             approximator_neurons=approximator_neurons)
 end
-
-"""Container for the results of an R-learner"""
-mutable struct RLearner <: Metalearner
-    dml::DoubleMachineLearning
-    """The effect of exposure or treatment"""
-    causal_effect::Array{Float64}
 
 """
     RLearner(X, T, Y; <keyword arguments>)
@@ -317,58 +274,20 @@ julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m4 = RLearner(x_df, t_df, y_df)
 ```
 """
+mutable struct RLearner <: Metalearner
+    dml::DoubleMachineLearning
+    causal_effect::Array{Float64}
+
     function RLearner(X, T, Y; t_cat=false, y_cat=false, activation=relu, 
         validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
         iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
         new(DoubleMachineLearning(X, T, Y; t_cat=t_cat, y_cat=y_cat, regularized=true, 
-            activation=activation, validation_metric=validation_metric, 
-            min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
-            iterations=iterations, approximator_neurons=approximator_neurons))
-    end
-end
-
-"""Container for the results of a doubly robust estimator"""
-mutable struct DoublyRobustLearner <: Metalearner
-    """Covariates"""
-    X::Array{Float64}
-    """Treatment statuses"""
-    T::Array{Float64}
-    """Outomes variable"""
-    Y::Array{Float64}
-    """Whether to use L2 regularization"""
-    regularized::Bool
-    """Activation function to apply to the outputs from each neuron"""
-    activation::Function
-    """Validation metric to use when tuning the number of neurons"""
-    validation_metric::Function
-    """Minimum number of neurons to test in the hidden layer"""
-    min_neurons::Int64
-    """Maximum number of neurons to test in the hidden layer"""
-    max_neurons::Int64
-    """Number of cross validation folds"""
-    folds::Int64
-    """Number of iterations to perform cross validation"""
-    iterations::Int64
-    """Number of neurons in the hidden layer of the approximator ELM for cross validation"""
-    approximator_neurons::Int64
-    """This will alsways be ATE unless using DML with the weight trick for R-learning"""
-    quantity_of_interest::String
-    """This will always be false and is just exists to be accessed by summzrize methods"""
-    temporal::Bool
-    """Number of neurons in the ELM used for estimating the causal effect"""
-    num_neurons::Int64
-    """The CATE of exposure or treatment"""
-    causal_effect::Vector{Float64}
-
-    function DoublyRobustLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-        regularized=true, activation=relu, validation_metric=mse, min_neurons=1, 
-        max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
-        approximator_neurons=round(size(X, 1)/10))
-
-        new(Float64.(X), Float64.(T), Float64.(Y), regularized, activation, 
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, "CATE", false, 0, zeros(length(Y)))
+                                  activation=activation, 
+                                  validation_metric=validation_metric, 
+                                  min_neurons=min_neurons, max_neurons=max_neurons, 
+                                  folds=folds, iterations=iterations, 
+                                  approximator_neurons=approximator_neurons))
     end
 end
 
@@ -408,17 +327,47 @@ julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m4 = DoublyRobustLearner(x_df, t_df, y_df)
 ```
 """
+mutable struct DoublyRobustLearner <: Metalearner
+    X::Array{Float64}
+    T::Array{Float64}
+    Y::Array{Float64}
+    regularized::Bool
+    activation::Function
+    validation_metric::Function
+    min_neurons::Int64
+    max_neurons::Int64
+    folds::Int64
+    iterations::Int64
+    approximator_neurons::Int64
+    quantity_of_interest::String
+    temporal::Bool
+    num_neurons::Int64
+    causal_effect::Vector{Float64}
+
+    function DoublyRobustLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
+                                 regularized=true, activation=relu, validation_metric=mse, 
+                                 min_neurons=1, max_neurons=100, folds=5, 
+                                 iterations=round(size(X, 1)/10), 
+                                 approximator_neurons=round(size(X, 1)/10))
+
+        new(Float64.(X), Float64.(T), Float64.(Y), regularized, activation, 
+            validation_metric, min_neurons, max_neurons, folds, iterations, 
+            approximator_neurons, "CATE", false, 0, zeros(length(Y)))
+    end
+end
+
 function DoublyRobustLearner(X, T, Y; regularized=true, activation=relu, 
-    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-    iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+                             validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+                             iterations=round(size(X, 1)/10), 
+                             approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
     DoublyRobustLearner(X, T, Y; regularized=regularized, activation=activation, 
-        validation_metric=validation_metric, min_neurons=min_neurons, 
-        max_neurons=max_neurons, folds=folds, iterations=iterations, 
-        approximator_neurons=approximator_neurons)
+                        validation_metric=validation_metric, min_neurons=min_neurons, 
+                        max_neurons=max_neurons, folds=folds, iterations=iterations, 
+                        approximator_neurons=approximator_neurons)
 end
 
 """
@@ -485,8 +434,8 @@ function estimate_causal_effect!(t::TLearner)
     # Only search for the best number of neurons once and use the same number for inference
     if t.num_neurons === 0
         t.num_neurons = best_size(t.X, t.Y, t.validation_metric, t.task, t.activation, 
-            t.min_neurons, t.max_neurons, t.regularized, t.folds, false, t.iterations, 
-            t.approximator_neurons)
+                                  t.min_neurons, t.max_neurons, t.regularized, t.folds, 
+                                  false, t.iterations, t.approximator_neurons)
     end
 
     if t.regularized
@@ -532,8 +481,8 @@ function estimate_causal_effect!(x::XLearner)
     # Only search for the best number of neurons once and use the same number for inference
     if x.num_neurons === 0
         x.num_neurons = best_size(x.X, x.Y, x.validation_metric, x.task, x.activation, 
-            x.min_neurons, x.max_neurons, x.regularized, x.folds, false, x.iterations, 
-            x.approximator_neurons)
+                                  x.min_neurons, x.max_neurons, x.regularized, x.folds, 
+                                  false, x.iterations, x.approximator_neurons)
     end
     
     stage1!(x)
@@ -572,9 +521,9 @@ function estimate_causal_effect!(R::RLearner)
     # Uses the same number of neurons for all phases of estimation
     if R.dml.num_neurons === 0
         R.dml.num_neurons = best_size(R.dml.X, R.dml.Y, R.dml.validation_metric, 
-            "regression", R.dml.activation, R.dml.min_neurons, R.dml.max_neurons, 
-            R.dml.regularized, R.dml.folds, false, R.dml.iterations, 
-            R.dml.approximator_neurons)
+                                      "regression", R.dml.activation, R.dml.min_neurons, 
+                                      R.dml.max_neurons, R.dml.regularized, R.dml.folds, 
+                                      false, R.dml.iterations, R.dml.approximator_neurons)
     end
 
     # Just estimate the causal effect using the underlying DML and the weight trick
@@ -616,8 +565,9 @@ function estimate_causal_effect!(DRE::DoublyRobustLearner)
     # Uses the same number of neurons for all phases of estimation
     if DRE.num_neurons === 0
         DRE.num_neurons = best_size(DRE.X, DRE.Y, DRE.validation_metric, "regression", 
-            DRE.activation, DRE.min_neurons, DRE.max_neurons, DRE.regularized, DRE.folds, 
-            false, DRE.iterations, DRE.approximator_neurons)
+                                    DRE.activation, DRE.min_neurons, DRE.max_neurons, 
+                                    DRE.regularized, DRE.folds, false, DRE.iterations, 
+                                    DRE.approximator_neurons)
     end
 
     # Rotating folds for cross fitting
@@ -703,9 +653,9 @@ function stage1!(x::XLearner)
     if x.regularized
         g = RegularizedExtremeLearner(x.X, x.T, x.num_neurons, x.activation)
         x.μ₀ = RegularizedExtremeLearner(x.X[x.T .== 0,:], x.Y[x.T .== 0], x.num_neurons, 
-            x.activation)
+                                         x.activation)
         x.μ₁ = RegularizedExtremeLearner(x.X[x.T .== 1,:], x.Y[x.T .== 1], x.num_neurons, 
-            x.activation)
+                                         x.activation)
     else
         g = ExtremeLearner(x.X, x.T, x.num_neurons, x.activation)
         x.μ₀ = ExtremeLearner(x.X[x.T .== 0,:], x.Y[x.T .== 0], x.num_neurons, x.activation)
