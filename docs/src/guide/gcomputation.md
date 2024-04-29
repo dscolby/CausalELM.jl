@@ -16,7 +16,8 @@ steps for using G-computation in CausalELM are below.
 
 ## Step 1: Initialize a Model
 The GComputation method takes at least three arguments: an array of covariates, a vector of 
-treatment statuses, and an outcome vector. 
+treatment statuses, and an outcome vector. It can support binary treatments and binary, 
+continuous, time to event, and count outcome variables.
 
 !!! tip
     You can also specify the causal estimand, whether to employ L2 regularization, which 
@@ -27,6 +28,14 @@ treatment statuses, and an outcome vector.
     neurons to validation loss. These options are specified with the following keyword 
     arguments: quantity\_of\_interest, regularized, activation, temporal, validation\_metric, 
     min\_neurons, max\_neurons, folds, iterations, and approximator\_neurons.
+
+!!! note
+    Internally, the outcome model is treated as a regression since extreme learning machines 
+    minimize the MSE. This means that predicted outcomes under treatment and control groups 
+    could fall outside [0, 1], although this is not likely in practice. To deal with this, 
+    predicted binary variables are automatically clipped to [0.0000001, 0.9999999]. This also 
+    means that count outcomes will be predicted as continuous variables.
+
 ```julia
 # Create some data with a binary treatment
 X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)

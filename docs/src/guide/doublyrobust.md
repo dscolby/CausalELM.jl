@@ -21,7 +21,16 @@ binary treatment and continuous outcome.
 
 # Initialize a Doubly Robust Learner
 S-learners, T-learners, and X-learners all take at least three arguments: an array of 
-covariates, a vector of outcomes, and a vector of treatment statuses. 
+covariates, a vector of outcomes, and a vector of treatment statuses. This estimator accepts 
+binary, treatments and binary, count, continuous, or time to event outcomes.
+
+!!! note
+    Internally, the outcome and treatment models are treated as a regression since extreme 
+    learning machines minimize the MSE. This means that predicted treatments and outcomes 
+    under treatment and control groups could fall outside [0, 1], although this is not likely 
+    in practice. To deal with this, predicted binary variables are automatically clipped to 
+    [0.0000001, 0.9999999].This also means that count outcomes will be predicted as continuous 
+    variables.
 
 !!! tip
     Additional options can be specified for each type of metalearner using its keyword arguments.

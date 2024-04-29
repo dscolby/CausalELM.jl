@@ -4,6 +4,7 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 ## Version [v0.6.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.6.0) - 2024-03-23
 ### Added
 *   Implemented doubly robust learner for CATE estimation [#31](https://github.com/dscolby/CausalELM.jl/issues/31)
+*   Provided better explanations of supported treatment and outcome variable types in the docs [#41](https://github.com/dscolby/CausalELM.jl/issues/41)
 ### Changed
 *   Removed the estimate_causal_effect! call in the model constructor docstrings [#35](https://github.com/dscolby/CausalELM.jl/issues/35)
 ### Fixed

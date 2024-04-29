@@ -23,14 +23,20 @@ categorical, count, or continuous treatments but only supports continuous outcom
         Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
         effects." Biometrika 108, no. 2 (2021): 299-319.
 
-!!! note
-    When estimating the CATE on discrete outcomes with an R-learner, it is theoretically 
-    possible for the estimated outcomes to fall outside the range of actual values in the 
-    dataset, similar to estimating a lienar probability model.
-
 # Initialize a Metalearner
-S-learners, T-learners, and X-learners all take at least three arguments: an array of 
-covariates, a vector of outcomes, and a vector of treatment statuses. 
+S-learners, T-learners, X-learners, and R-learners all take at least three arguments: an 
+array of covariates, a vector of outcomes, and a vector of treatment statuses. S, T, and 
+X-learners support binary treatment variables and binary, continuous, count, or time to event 
+outcomes. The R-learning estimator supports binary, continuous, or count treatment variables 
+and binary, continuous, count, or time to event outcomes.
+
+!!! note
+    Internally, the outcome and treatment models of the metalearners are treated as a regression 
+    since extreme learning machines minimize the MSE. This means that predicted treatments and 
+    outcomes under treatment and control groups could fall outside [0, 1], although this is not 
+    likely in practice. To deal with this, predicted binary variables are automatically clipped to 
+    [0.0000001, 0.9999999].This also means that count outcomes will be predicted as continuous 
+    variables.
 
 !!! tip
     Additional options can be specified for each type of metalearner using its keyword arguments.

@@ -11,17 +11,32 @@ post-event outcomes, which can also be aggregated to mean or cumulative effects.
 Estimating an interrupted time series design in CausalELM consists of three steps.
 
 !!! note
-    For a deeper dive see:
+    For a deeper dive on interrupted time series estimation see:
     
         Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
         regression for the evaluation of public health interventions: a tutorial." International 
         journal of epidemiology 46, no. 1 (2017): 348-355.
 
+!!! note
+    The flavor of interrupted time series implemented here is similar to the variant proposed 
+    in:
+
+        Brodersen, Kay H., Fabian Gallusser, Jim Koehler, Nicolas Remy, and Steven L. Scott. 
+        "Inferring causal impact using Bayesian structural time-series models." (2015): 247-274.
+
+    in that, although it is not Bayesian, it uses a nonparametric model of the pre-treatment 
+    period and uses that model to forecast the counterfactual in the post-treatment period, as 
+    opposed to the commonly used segment linear regression.
 
 ## Step 1: Initialize an interrupted time series estimator
 The InterruptedTimeSeries method takes at least four agruments: an array of pre-event 
 covariates, a vector of pre-event outcomes, an array of post-event covariates, and a vector 
-of post-event outcomes. 
+of post-event outcomes. The interrupted time series estimator assumes outcomes are either 
+continuous, count, or time to event variables.
+
+!!! note
+    Since extreme learning machines minimize the MSE, count outcomes will be predicted as 
+    continuous variables.
 
 !!! tip
     You can also specify whether or not to use L2 regularization, which activation function to 

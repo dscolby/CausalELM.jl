@@ -203,7 +203,7 @@ For more information see:
 
 ...
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
+- `X::Any`: an array or DataFrame of covariates to model the outcome.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
 - `task::String`: either regression or classification.

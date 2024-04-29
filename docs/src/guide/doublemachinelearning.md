@@ -13,15 +13,19 @@ models can take on any functional form but the final stage model is linear.
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
     structural parameters." (2018): C1-C68.
 
-!!! note
-    If estimating the CATE with a discrete outcome, the predicted values may fall outside 
-    the range of actual values in the data, similar to estimating a linear probability 
-    model.
-
 
 ## Step 1: Initialize a Model
 The DoubleMachineLearning constructor takes at least three arguments, an array of 
-covariates, a treatment vector, and an outcome vector. 
+covariates, a treatment vector, and an outcome vector. This estimator supports binary, count, 
+or continuous treatments and binary, count, continuous, or time to event outcomes.
+
+!!! note
+    Internally, the outcome and treatment models are treated as a regression since extreme 
+    learning machines minimize the MSE. This means that predicted treatments and outcomes 
+    under treatment and control groups could fall outside [0, 1], although this is not likely 
+    in practice. To deal with this, predicted binary variables are automatically clipped to 
+    [0.0000001, 0.9999999].This also means that count outcomes will be predicted as continuous 
+    variables.
 
 !!! tip
     You can also specify the following options: whether the treatment vector is categorical ie 
