@@ -278,12 +278,11 @@ mutable struct RLearner <: Metalearner
     dml::DoubleMachineLearning
     causal_effect::Array{Float64}
 
-    function RLearner(X, T, Y; t_cat=false, y_cat=false, activation=relu, 
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-        iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+    function RLearner(X, T, Y; activation=relu, validation_metric=mse, min_neurons=1, 
+        max_neurons=100, folds=5, iterations=round(size(X, 1)/10), 
+        approximator_neurons=round(size(X, 1)/10))
 
-        new(DoubleMachineLearning(X, T, Y; t_cat=t_cat, y_cat=y_cat, regularized=true, 
-                                  activation=activation, 
+        new(DoubleMachineLearning(X, T, Y; regularized=true, activation=activation, 
                                   validation_metric=validation_metric, 
                                   min_neurons=min_neurons, max_neurons=max_neurons, 
                                   folds=folds, iterations=iterations, 
@@ -398,7 +397,16 @@ julia> estimate_causal_effect!(m4)
 function estimate_causal_effect!(s::SLearner)
     estimate_causal_effect!(s.g)
     Xₜ, Xᵤ= hcat(s.g.X, ones(size(s.g.T, 1))), hcat(s.g.X, zeros(size(s.g.T, 1)))
-    s.causal_effect = vec(predict(s.g.learner, Xₜ) - predict(s.g.learner, Xᵤ))
+
+    # Clipping binary predictions to be ∈ [0, 1]
+    if s.g.task === "classification"
+        yₜ = clamp(predict(s.g.learner, Xₜ), 1e-7, 1-1e-7)
+        yᵤ = clamp(predict(s.g.learner, s.Xᵤ), 1e-7, 1-1e-7)
+    else
+        yₜ, yᵤ = predict(s.g.learner, Xₜ), predict(s.g.learner, Xᵤ)
+    end
+
+    s.causal_effect = yₜ - yᵤ
 
     return s.causal_effect
 end
@@ -430,6 +438,7 @@ julia> estimate_causal_effect!(m5)
 """
 function estimate_causal_effect!(t::TLearner)
     x₀, x₁, y₀, y₁ = t.X[t.T .== 0,:], t.X[t.T .== 1,:], t.Y[t.T .== 0], t.Y[t.T .== 1]
+    type = var_type(t.Y)
 
     # Only search for the best number of neurons once and use the same number for inference
     if t.num_neurons === 0
@@ -447,7 +456,8 @@ function estimate_causal_effect!(t::TLearner)
     end
 
     fit!(t.μ₀); fit!(t.μ₁)
-    predictionsₜ, predictionsᵪ = predict(t.μ₁, t.X), predict(t.μ₀, t.X)
+    predictionsₜ = clip_if_binary(predict(t.μ₁, t.X), type)
+    predictionsᵪ = clip_if_binary(predict(t.μ₀, t.X), type)
     t.causal_effect = @fastmath vec(predictionsₜ .- predictionsᵪ)
 
     return t.causal_effect
@@ -485,11 +495,12 @@ function estimate_causal_effect!(x::XLearner)
                                   false, x.iterations, x.approximator_neurons)
     end
     
+    type = var_type(x.Y)
     stage1!(x)
     μχ₀, μχ₁ = stage2!(x)
 
-    x.causal_effect = @fastmath vec(((x.ps.*predict(μχ₀, x.X)) .+ 
-        ((1 .- x.ps).*predict(μχ₁, x.X))))
+    x.causal_effect = @fastmath vec(((x.ps.*clip_if_binary(predict(μχ₀, x.X), type)) .+ 
+        ((1 .- x.ps).*clip_if_binary(predict(μχ₁, x.X), type))))
 
     return x.causal_effect
 end
@@ -613,17 +624,19 @@ julia> estimate_effect!(m1)
 function estimate_effect!(DRE::DoublyRobustLearner, X, T, Y)
     π_args = X[1], T[1], DRE.num_neurons, σ
     μ_arg = X[2], Y[2], DRE.num_neurons, DRE.activation
+    y_type = var_type(DRE.Y)
 
     # Propensity scores
     π_e = DRE.regularized ? RegularizedExtremeLearner(π_args...) : ExtremeLearner(π_args...)
     fit!(π_e)
-    π̂ = predict(π_e, DRE.X)
+    π̂ = clip_if_binary(predict(π_e, DRE.X), Binary())
 
     # Outcome predictions
     μ₀_e = DRE.regularized ? RegularizedExtremeLearner(μ_arg...) : ExtremeLearner(μ_arg...)
     μ₁_e = DRE.regularized ? RegularizedExtremeLearner(μ_arg...) : ExtremeLearner(μ_arg...)
     fit!(μ₀_e); fit!(μ₁_e)
-    μ₀̂ , μ₁̂  = predict(μ₀_e, DRE.X), predict(μ₁_e, DRE.X)
+    μ₀̂  = clip_if_binary(predict(μ₀_e, DRE.X), y_type)
+    μ₁̂  = clip_if_binary(predict(μ₁_e, DRE.X), y_type)
 
     # Pseudo outcomes
     ϕ̂  = ((DRE.T.-π̂) ./ (π̂ .*(1 .-π̂))).*(DRE.Y .-DRE.T.*μ₁̂  .-(1 .-DRE.T).*μ₀̂) .+ μ₁̂  .-μ₀̂
@@ -633,7 +646,7 @@ function estimate_effect!(DRE::DoublyRobustLearner, X, T, Y)
     τ_est = DRE.regularized ? RegularizedExtremeLearner(τ_arg...) : ExtremeLearner(τ_arg...)
     fit!(τ_est)
 
-    return predict(τ_est, DRE.X)
+    return clip_if_binary(predict(τ_est, DRE.X), var_type(DRE.Y))
 end
 
 """
@@ -664,7 +677,7 @@ function stage1!(x::XLearner)
 
     # Get propensity scores
     fit!(g)
-    x.ps = predict(g, x.X)
+    x.ps = clip_if_binary(predict(g, x.X), Binary())
 
     # Fit first stage outcome models
     fit!(x.μ₀); fit!(x.μ₁)
@@ -693,7 +706,9 @@ julia> stage2!(m1)
 ```
 """
 function stage2!(x::XLearner)
-    d = ifelse(x.T === 0, predict(x.μ₁, x.X .- x.Y), x.Y .- predict(x.μ₀, x.X))
+    m₁ = clip_if_binary(predict(x.μ₁, x.X .- x.Y), var_type(x.Y))
+    m₀ = clip_if_binary(predict(x.μ₀, x.X), var_type(x.Y))
+    d = ifelse(x.T === 0, m₁, x.Y .- m₀)
 
     if x.regularized
         μχ₀ = RegularizedExtremeLearner(x.X[x.T .== 0,:], d[x.T .== 0], x.num_neurons, 

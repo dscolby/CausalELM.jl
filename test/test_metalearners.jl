@@ -4,9 +4,13 @@ using DataFrames
 
 include("../src/models.jl")
 
-x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1))
 slearner1, slearner2 = SLearner(x, t, y), SLearner(x, t, y, regularized=true)
 estimate_causal_effect!(slearner1); estimate_causal_effect!(slearner2)
+
+# S-learner with a binary outcome
+s_learner_binary = SLearner(x, y, t)
+estimate_causal_effect!(s_learner_binary)
 
 # S-learner initialized with DataFrames
 x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
@@ -18,6 +22,10 @@ estimate_causal_effect!(tlearner1); estimate_causal_effect!(tlearner2)
 
 # T-learner initialized with DataFrames
 t_learner_df = TLearner(x_df, t_df, y_df)
+
+# Testing with a binary outcome
+t_learner_binary = TLearner(x, y, t)
+estimate_causal_effect!(t_learner_binary)
 
 xlearner1 = XLearner(x, t, y)
 xlearner1.num_neurons = 5
@@ -38,16 +46,12 @@ estimate_causal_effect!(xlearner4)
 # Testing initialization with DataFrames
 x_learner_df = XLearner(x_df, t_df, y_df)
 
+# Testing with binary outcome
+x_learner_binary = XLearner(x, y, t)
+estimate_causal_effect!(x_learner_binary)
+
 rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
-
-# R-learner with categorical treatment
-rlearner_t_cat = RLearner(x, rand(1:4, 100), y)
-estimate_causal_effect!(rlearner_t_cat)
-
-# R-learner with categorical outcome
-rlearner_y_cat = RLearner(x, t, rand(1:4, 100))
-estimate_causal_effect!(rlearner_y_cat)
 
 # Testing initialization with DataFrames
 r_learner_df = RLearner(x_df, t_df, y_df)
@@ -59,6 +63,10 @@ X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T]
 T = [fl[:, size(dr_learner.X, 2)+1] for fl in X_T]
 τ̂  = CausalELM.estimate_effect!(dr_learner, X, T, Y)
 estimate_causal_effect!(dr_learner)
+
+# Testing Doubly Robust Estimation with a binary outcome
+dr_learner_binary = DoublyRobustLearner(x, y, t)
+estimate_causal_effect!(dr_learner_binary)
 
 # Doubly robust estimation with DataFrames
 dr_learner_df = DoublyRobustLearner(x_df, t_df, y_df)
@@ -74,6 +82,7 @@ estimate_causal_effect!(dr_learner_df)
     @testset "S-Learner Estimation" begin
         @test isa(slearner1.causal_effect, Array{Float64})
         @test isa(slearner2.causal_effect, Array{Float64})
+        @test isa(s_learner_binary.causal_effect, Array{Float64})
     end
 end
 
@@ -93,6 +102,7 @@ end
     @testset "T-Learner Estimation" begin
         @test isa(tlearner1.causal_effect, Array{Float64})
         @test isa(tlearner2.causal_effect, Array{Float64})
+        @test isa(t_learner_binary.causal_effect, Array{Float64})
     end
 end
 
@@ -134,6 +144,7 @@ end
         @test typeof(xlearner3.μ₁) <: CausalELM.ExtremeLearningMachine
         @test xlearner3.ps isa Array{Float64}
         @test xlearner3.causal_effect isa Array{Float64}
+        @test x_learner_binary.causal_effect isa Array{Float64}
     end
 end
 
@@ -147,8 +158,6 @@ end
         @test rlearner.causal_effect isa Vector
         @test length(rlearner.causal_effect) == length(y)
         @test eltype(rlearner.causal_effect) == Float64
-        @test length(rlearner_t_cat.causal_effect) == length(y)
-        @test length(rlearner_y_cat.causal_effect) == length(y)
     end
 end
 
@@ -174,6 +183,9 @@ end
         @test dr_learner_df.causal_effect isa Vector
         @test length(dr_learner_df.causal_effect) === length(y)
         @test eltype(dr_learner_df.causal_effect) == Float64
+        @test dr_learner_binary.causal_effect isa Vector
+        @test length(dr_learner_binary.causal_effect) === length(y)
+        @test eltype(dr_learner_binary.causal_effect) == Float64
     end
 end
 

@@ -5,8 +5,8 @@ given dataset and causal question.
 
 | Model                            | Struct                | Causal Estimands                 | Supported Treatment Types              | Supported Outcome Types   |
 |----------------------------------|-----------------------|----------------------------------|----------------------------------------|---------------------------|
-| Interrupted Time Series Analysis | InterruptedTimeSeries | ATE, Cumulative Treatment Effect | Binary                                 | Binary, Continuous        |
-| G-computation                    | GComputation          | ATE, ATT, ITT                    | Binary                                 | Binary, Continuous, Time to Event        |
+| Interrupted Time Series Analysis | InterruptedTimeSeries | ATE, Cumulative Treatment Effect | Binary                                 | Continuous, Count, Time to Event        |
+| G-computation                    | GComputation          | ATE, ATT, ITT                    | Binary                                 | Binary, Count, Continuous, Time to Event        |
 | Double Machine Learning          | DoubleMachineLearning | ATE                              | Binary, Count, Categorical, Continuous | Binary, Count, Categorical, Continuous |
 | S-learning                       | SLearner              | CATE                             | Binary                                 | Binary, Continuous, Count |
 | T-learning                       | TLearner              | CATE                             | Binary                                 | Binary, Continuous        |

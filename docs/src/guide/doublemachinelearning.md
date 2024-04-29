@@ -1,9 +1,10 @@
 # Double Machine Learning
 Double machine learning, also called debiased or orthogonalized machine learning, enables
 estimating causal effects when the dimensionality of the covariates is too high for linear 
-regression or the model does not assume a parametric form. In other words, when the 
-relathionship between the treatment or covariates and outcome is nonlinear and we do not 
-know the functional form. 
+regression or the treatment or outcomes cannot be easily modeled parametrically. Double 
+machine learning estimates models of the treatment assignment and outcome and then combines 
+them in a final model. This is a semiparametric model in the sense that the first stage 
+models can take on any functional form but the final stage model is linear.
 
 !!! note
     For more information see:
@@ -11,6 +12,11 @@ know the functional form.
     Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
     structural parameters." (2018): C1-C68.
+
+!!! note
+    If estimating the CATE with a discrete outcome, the predicted values may fall outside 
+    the range of actual values in the data, similar to estimating a linear probability 
+    model.
 
 
 ## Step 1: Initialize a Model

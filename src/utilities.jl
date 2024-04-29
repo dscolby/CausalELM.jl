@@ -64,3 +64,22 @@ function one_hot_encode(x)
     one_hot = permutedims(float(unique(x) .== reshape(x, (1, size(x, 1))))), (2, 1)
     return one_hot[1]
 end
+
+"""
+    clip_if_binary(x, var)
+
+Constrain binary values between 1e-7 and 1 - 1e-7, otherwise return the original values.
+
+Examples
+```julia
+julia> clip_if_binary([1.2, -0.02], Binary())
+2-element Vector{Float64}:
+ 0.9999999
+ 1.0e-7
+julia> clip_if_binary([1.2, -0.02], Count())
+ 2-element Vector{Float64}:
+ 1.2
+ -0.02
+```
+"""
+clip_if_binary(x::Array{<:Real}, var) = var isa Binary ? clamp.(x, 1e-7, 1 - 1e-7) : x

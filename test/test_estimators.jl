@@ -25,6 +25,10 @@ x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 1
 g_computer = GComputation(x, t, y, temporal=false)
 estimate_causal_effect!(g_computer)
 
+# Testing with a binary outcome
+g_computer_binary_out = GComputation(x, y, t, temporal=false)
+estimate_causal_effect!(g_computer_binary_out)
+
 # G-computation with a DataFrame
 x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
 t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
@@ -43,16 +47,12 @@ g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)),
 dm = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dm)
 
+# Testing with a binary outcome
+dm_binary_out = DoubleMachineLearning(x, y, t)
+estimate_causal_effect!(dm_binary_out)
+
 # With dataframes instead of arrays
 dm_df = DoubleMachineLearning(x_df, t_df, y_df)
-
-# DML with a categorical treatment
-dm_cat = DoubleMachineLearning(x, rand(1:4, 100), y)
-estimate_causal_effect!(dm_cat)
-
-# DML with a categorical out
-dm_y_cat = DoubleMachineLearning(x, t, rand(1:4, 100))
-estimate_causal_effect!(dm_y_cat)
 
 # No regularization
 dm_noreg = DoubleMachineLearning(x, t, y, regularized=false)
@@ -132,6 +132,8 @@ end
         # Estimation without regularization
         @test isa(gcomputer_noreg.causal_effect, Float64)
 
+        @test isa(g_computer_binary_out.causal_effect, Float64)
+
         # Check that the estimats for ATE and ATT are different
         @test g_computer.causal_effect !== gcomputer_att.causal_effect
     end
@@ -168,9 +170,8 @@ end
 
     @testset "Double Machine Learning Post-estimation Structure" begin
         @test dm.causal_effect isa Float64
+        @test dm_binary_out.causal_effect isa Float64
         @test dm_noreg.causal_effect isa Float64
-        @test dm_cat.causal_effect isa Float64
-        @test dm_y_cat.causal_effect isa Float64
     end
 end
 

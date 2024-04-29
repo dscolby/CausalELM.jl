@@ -17,7 +17,6 @@ For a simple linear regression-based tutorial on interrupted time series analysi
 - `Y₁::Any`: an array or DataFrame of outcomes from the pre-treatment period.
 - `X₁::Any`: an array or DataFrame of covariates from the post-treatment period.
 - `Y₀::Any`: an array or DataFrame of outcomes from the post-treatment period.
-- `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
@@ -61,10 +60,9 @@ mutable struct InterruptedTimeSeries
     Δ::Array{Float64}
 
     function InterruptedTimeSeries(X₀::Array{<:Real}, Y₀::Array{<:Real}, X₁::Array{<:Real}, 
-                                   Y₁::Array{<:Real}; task="regression", regularized=true, 
-                                   activation=relu, validation_metric=mse, min_neurons=1, 
-                                   max_neurons=100, folds=5, 
-                                   iterations=round(size(X₀, 1)/10), 
+                                   Y₁::Array{<:Real}; regularized=true, activation=relu, 
+                                   validation_metric=mse, min_neurons=1, max_neurons=100, 
+                                   folds=5, iterations=round(size(X₀, 1)/10), 
                                    approximator_neurons=round(size(X₀, 1)/10), 
                                    autoregression=true)
 
@@ -72,8 +70,8 @@ mutable struct InterruptedTimeSeries
         X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
         X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, moving_average(Y₁))), X₁)
 
-        new(X₀, Float64.(Y₀), Float64.(X₁), Float64.(Y₁), task, regularized, activation, 
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
+        new(X₀, Float64.(Y₀), Float64.(X₁), Float64.(Y₁), "regression", regularized, 
+            activation, validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, autoregression, 0)
     end
 end
@@ -208,8 +206,6 @@ For more information see:
 - `X::Any`: an array or DataFrame of covariates.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
-- `t_cat::Bool=false`: whether the treatment is categorical.
-- `y_cat::Bool=false`: whether the outcome is categorical.
 - `task::String`: either regression or classification.
 - `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
     treatment effect.
@@ -239,8 +235,6 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     X::Array{Float64}
     T::Array{Float64}
     Y::Array{Float64}
-    t_cat::Bool
-    y_cat::Bool
     regularized::Bool
     activation::Function
     validation_metric::Function
@@ -255,29 +249,28 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     causal_effect::Float64
 
     function DoubleMachineLearning(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-                                   t_cat=false, y_cat=false, regularized=true, 
-                                   activation=relu, validation_metric=mse, min_neurons=1, 
-                                   max_neurons=100, folds=5, 
+                                   regularized=true, activation=relu, validation_metric=mse, 
+                                   min_neurons=1, max_neurons=100, folds=5, 
                                    iterations=round(size(X, 1)/10), 
                                    approximator_neurons=round(size(X, 1)/10))
 
-        new(Float64.(X), Float64.(T), Float64.(Y), t_cat, y_cat, regularized, activation, 
+        new(Float64.(X), Float64.(T), Float64.(Y), regularized, activation, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, "ATE", false, 0, NaN)
     end
 end
 
-function DoubleMachineLearning(X, T, Y; t_cat=false, y_cat=false, regularized=true, 
-    activation=relu, validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
+function DoubleMachineLearning(X, T, Y; regularized=true, activation=relu, 
+    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
     iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
-    DoubleMachineLearning(X, T, Y; t_cat=t_cat, y_cat=y_cat, regularized=regularized, 
-                          activation=activation, validation_metric=validation_metric, 
-                          min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
-                          iterations=iterations, approximator_neurons=approximator_neurons)
+    DoubleMachineLearning(X, T, Y; regularized=regularized, activation=activation, 
+                          validation_metric=validation_metric, min_neurons=min_neurons, 
+                          max_neurons=max_neurons, folds=folds, iterations=iterations, 
+                          approximator_neurons=approximator_neurons)
 end
 
 """
@@ -298,7 +291,7 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
     if its.num_neurons === 0
-        its.num_neurons = best_size(its.X₀, its.Y₀, its.validation_metric, its.task, 
+        its.num_neurons = best_size(its.X₀, its.Y₀, its.validation_metric, "regression", 
                                     its.activation, its.min_neurons, its.max_neurons, 
                                     its.regularized, its.folds, true, its.iterations, 
                                     its.approximator_neurons)
@@ -357,7 +350,9 @@ function estimate_causal_effect!(g::GComputation)
     end
 
     fit!(g.learner)
-    g.causal_effect = mean(vec(predict(g.learner, Xₜ) - predict(g.learner, Xᵤ)))
+    yₜ = 'c' ∈ g.task ? clamp.(predict(g.learner, Xₜ), 1e-7, 1-1e-7) : predict(g.learner, Xₜ)
+    yᵤ = 'c' ∈ g.task ? clamp.(predict(g.learner, Xᵤ), 1e-7, 1-1e-7) : predict(g.learner, Xᵤ)
+    g.causal_effect = mean(vec(yₜ) - vec(yᵤ))
     return g.causal_effect
 end
 
@@ -381,7 +376,7 @@ julia> estimate_causal_effect!(m1)
 function estimate_causal_effect!(DML::DoubleMachineLearning)
     # Uses the same number of neurons for all phases of estimation
     if DML.num_neurons === 0
-        task = DML.y_cat ? "regression" : "classification"
+        task = var_type(DML.Y) == Binary() ? "classification" : "regression"
         DML.num_neurons = best_size(DML.X, DML.Y, DML.validation_metric, task, 
                                     DML.activation, DML.min_neurons, DML.max_neurons, 
                                     DML.regularized, DML.folds, false, DML.iterations, 
@@ -468,10 +463,6 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 """
 function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train, y_test, 
     t_train, t_test)
-    t_train = DML.t_cat && var_type(DML.T) == Count() ? one_hot_encode(t_train) : t_train
-    y_train = DML.y_cat && var_type(DML.Y) == Count() ? one_hot_encode(y_train) : y_train
-    res = [zeros(length(y_train)), zeros(length(t_train))]
-    
     if DML.regularized
         y = RegularizedExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
         t = RegularizedExtremeLearner(x_train, t_train, DML.num_neurons, DML.activation)
@@ -479,18 +470,13 @@ function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train,
         y = ExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
         t = ExtremeLearner(x_train, t_train, DML.num_neurons, DML.activation)
     end
-    fit!(y); fit!(t)
 
-    # Iterate over treatments and outcomes while considering categorical/continous variables
-    for (idx, (cat_ind, var, mod)) in pairs([(DML.t_cat, DML.T, t), (DML.y_cat, DML.Y, y)])
-        if cat_ind && var_type(var) == Count() # Multiclass residual = 1-Pr(Majority Class)
-            res[idx] = 1 .- vec(mapslices(maximum, clamp((predict(mod, x_test)), 1e-5, 
-                1-1e-5), dims=2))
-        else
-            res[idx] = mod == t ? t_test-predict(t, x_test) : y_test-predict(y, x_test)
-        end
-    end
-    return res
+    fit!(y); fit!(t)
+    y_pred = clip_if_binary(predict(y, x_test), var_type(DML.Y))
+    t_pred = clip_if_binary(predict(t, x_test), var_type(DML.T))
+    ỹ, t̃ = y_test - y_pred, t_test - t_pred
+
+    return ỹ, t̃
 end
 
 """

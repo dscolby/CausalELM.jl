@@ -83,7 +83,7 @@ julia> validation_loss(x, y, 5, accuracy, 3)
 ```
 """
 function validation_loss(xtrain, ytrain, xtest, ytest, nodes, metric; activation=relu, 
-    regularized=true)
+                         regularized=true)
 
     if regularized
         network = RegularizedExtremeLearner(xtrain, ytrain, nodes, activation)
