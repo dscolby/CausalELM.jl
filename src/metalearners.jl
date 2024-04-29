@@ -396,12 +396,13 @@ julia> estimate_causal_effect!(m4)
 """
 function estimate_causal_effect!(s::SLearner)
     estimate_causal_effect!(s.g)
+    y_type = var_type(s.g.Y)
     Xₜ, Xᵤ= hcat(s.g.X, ones(size(s.g.T, 1))), hcat(s.g.X, zeros(size(s.g.T, 1)))
 
     # Clipping binary predictions to be ∈ [0, 1]
     if s.g.task === "classification"
-        yₜ = clamp(predict(s.g.learner, Xₜ), 1e-7, 1-1e-7)
-        yᵤ = clamp(predict(s.g.learner, s.Xᵤ), 1e-7, 1-1e-7)
+        yₜ = clip_if_binary(predict(s.g.learner, Xₜ), y_type)
+        yᵤ = clip_if_binary(predict(s.g.learner, s.Xᵤ), y_type)
     else
         yₜ, yᵤ = predict(s.g.learner, Xₜ), predict(s.g.learner, Xᵤ)
     end
