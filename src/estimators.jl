@@ -329,7 +329,7 @@ julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(g::GComputation)
-    covariates = hcat(g.X, g.T)
+    covariates, y = hcat(g.X, g.T), var_type(g.Y)
 
     if g.quantity_of_interest ∈ ("ITT", "ATE")
         Xₜ, Xᵤ= hcat(g.X, ones(size(g.T, 1))), hcat(g.X, zeros(size(g.T, 1)))
@@ -350,9 +350,8 @@ function estimate_causal_effect!(g::GComputation)
     end
 
     fit!(g.learner)
-    yₜ = 'c' ∈ g.task ? clamp.(predict(g.learner, Xₜ), 1e-7, 1-1e-7) : predict(g.learner, Xₜ)
-    yᵤ = 'c' ∈ g.task ? clamp.(predict(g.learner, Xᵤ), 1e-7, 1-1e-7) : predict(g.learner, Xᵤ)
-    g.causal_effect = mean(vec(yₜ) - vec(yᵤ))
+    ŷ = clip_if_binary(predict(g.learner, Xₜ), y), clip_if_binary(predict(g.learner, Xᵤ), y)
+    g.causal_effect = mean(vec(ŷ[1]) - vec(ŷ[2]))
     return g.causal_effect
 end
 
