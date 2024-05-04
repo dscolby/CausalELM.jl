@@ -5,10 +5,12 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 ### Added
 *   Implemented doubly robust learner for CATE estimation [#31](https://github.com/dscolby/CausalELM.jl/issues/31)
 *   Provided better explanations of supported treatment and outcome variable types in the docs [#41](https://github.com/dscolby/CausalELM.jl/issues/41)
+*   Added support for specifying confounders, W, separate from covariates of interest, X, for double machine 
+learning and doubly robust estimation [39](https://github.com/dscolby/CausalELM.jl/issues/39)
 ### Changed
 *   Removed the estimate_causal_effect! call in the model constructor docstrings [#35](https://github.com/dscolby/CausalELM.jl/issues/35)
 ### Fixed
-* Clipped probabilities between 0 and 1 for estimators that use predictions of binary variables [#36](https://github.com/dscolby/CausalELM.jl/issues/36)
+*   Clipped probabilities between 0 and 1 for estimators that use predictions of binary variables [#36](https://github.com/dscolby/CausalELM.jl/issues/36)
 
 ## Version [v0.5.1](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.5.1) - 2024-01-15
 ### Added

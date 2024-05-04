@@ -203,9 +203,10 @@ For more information see:
 
 ...
 # Arguments
-- `X::Any`: an array or DataFrame of covariates to model the outcome.
+- `X::Any`: an array or DataFrame of covariates of interest.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
+- `W::Any`: an array or dataframe of all possible confounders.
 - `task::String`: either regression or classification.
 - `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
     treatment effect.
@@ -235,6 +236,7 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     X::Array{Float64}
     T::Array{Float64}
     Y::Array{Float64}
+    W::Array{Float64}
     regularized::Bool
     activation::Function
     validation_metric::Function
@@ -249,25 +251,25 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     causal_effect::Float64
 
     function DoubleMachineLearning(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-                                   regularized=true, activation=relu, validation_metric=mse, 
-                                   min_neurons=1, max_neurons=100, folds=5, 
-                                   iterations=round(size(X, 1)/10), 
+                                   W=X, regularized=true, activation=relu, 
+                                   validation_metric=mse, min_neurons=1, max_neurons=100, 
+                                   folds=5, iterations=round(size(X, 1)/10), 
                                    approximator_neurons=round(size(X, 1)/10))
 
-        new(Float64.(X), Float64.(T), Float64.(Y), regularized, activation, 
+        new(Float64.(X), Float64.(T), Float64.(Y), Float64.(W), regularized, activation, 
             validation_metric, min_neurons, max_neurons, folds, iterations, 
             approximator_neurons, "ATE", false, 0, NaN)
     end
 end
 
-function DoubleMachineLearning(X, T, Y; regularized=true, activation=relu, 
+function DoubleMachineLearning(X, T, Y; W=X, regularized=true, activation=relu, 
     validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
     iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+    X, T, Y, W = Matrix{Float64}(X), T[:, 1], Y[:, 1], Matrix{Float64}(W)
 
-    DoubleMachineLearning(X, T, Y; regularized=regularized, activation=activation, 
+    DoubleMachineLearning(X, T, Y; W=W, regularized=regularized, activation=activation, 
                           validation_metric=validation_metric, min_neurons=min_neurons, 
                           max_neurons=max_neurons, folds=folds, iterations=iterations, 
                           approximator_neurons=approximator_neurons)
@@ -370,6 +372,10 @@ julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = DoubleMachineLearning(X, T, Y)
 julia> estimate_causal_effect!(m1)
  0.31067439
+julia> W = rand(100, 6)
+julia> m2 = DoubleMachineLearning(X, T, Y, W=W)
+julia> estimate_causal_effect!(m2)
+ 0.7628583414839659
 ```
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
@@ -410,8 +416,7 @@ julia> estimate_effect!(m1)
 ```
 """
 function estimate_effect!(DML::DoubleMachineLearning, cate=false)
-    X_T, Y = generate_folds(reduce(hcat, (DML.X, DML.T)), DML.Y, DML.folds)
-    X, T = [fl[:, 1:size(DML.X, 2)] for fl in X_T], [fl[:, size(DML.X, 2)+1] for fl in X_T]
+    X, T, W, Y = make_folds(DML)
     predictors = cate ? Vector{RegularizedExtremeLearner}(undef, DML.folds) : Nothing
     DML.causal_effect = 0
 
@@ -420,9 +425,11 @@ function estimate_effect!(DML::DoubleMachineLearning, cate=false)
         X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
         Y_train, Y_test = reduce(vcat, Y[1:end .!== fld]), Y[fld]
         T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
+        W_train, W_test = reduce(vcat, W[1:end .!== fld]), W[fld]
 
-        Ỹ, T̃ = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test)
-        DML.causal_effect += (reduce(hcat, (T̃, ones(length(T̃))))\Ỹ)[1]
+        Ỹ, T̃ = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test, 
+                                 W_train, W_test)
+        DML.causal_effect += (vec(sum(T̃ .* X_test, dims=2))\Ỹ)[1]
 
         if cate  # Using the weight trick to get the non-parametric CATE for an R-learner
             X[fld], Y[fld] = (T̃.^2) .* X_test, (T̃.^2) .* (Ỹ./T̃)
@@ -461,21 +468,54 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 ```
 """
 function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train, y_test, 
-    t_train, t_test)
+                           t_train, t_test, w_train, w_test)
+    V = x_train != w_train && x_test != w_test ? reduce(hcat, (x_train, w_train)) : x_train
+    V_test = V == x_train ? x_test : reduce(hcat, (x_test, w_test))
+
     if DML.regularized
-        y = RegularizedExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
-        t = RegularizedExtremeLearner(x_train, t_train, DML.num_neurons, DML.activation)
+        y = RegularizedExtremeLearner(V, y_train, DML.num_neurons, DML.activation)
+        t = RegularizedExtremeLearner(V, t_train, DML.num_neurons, DML.activation)
     else
-        y = ExtremeLearner(x_train, y_train, DML.num_neurons, DML.activation)
-        t = ExtremeLearner(x_train, t_train, DML.num_neurons, DML.activation)
+        y = ExtremeLearner(V, y_train, DML.num_neurons, DML.activation)
+        t = ExtremeLearner(V, t_train, DML.num_neurons, DML.activation)
     end
 
     fit!(y); fit!(t)
-    y_pred = clip_if_binary(predict(y, x_test), var_type(DML.Y))
-    t_pred = clip_if_binary(predict(t, x_test), var_type(DML.T))
+    y_pred = clip_if_binary(predict(y, V_test), var_type(DML.Y))
+    t_pred = clip_if_binary(predict(t, V_test), var_type(DML.T))
     ỹ, t̃ = y_test - y_pred, t_test - t_pred
 
     return ỹ, t̃
+end
+
+"""
+    make_folds(DML)
+
+Make folds for cross fitting for a double machine learning estimator.
+
+This method should not be called directly.
+
+...
+# Arguments
+- `DML::DoubleMachineLearning`: the DoubleMachineLearning struct to estimate the effect for.
+...
+
+Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> make_folds(m1)
+ ([[[0.8737507878554287 0.7398090999242162 … 0.45708199254415094 0.6850379444957528; 
+ … 0.08313470408726942 0.365598632217206]]])
+```
+"""
+function make_folds(D)
+    X_T_W, Y = generate_folds(reduce(hcat, (D.X, D.T, D.W)), D.Y, D.folds)
+    X = [fl[:, 1:size(D.X, 2)] for fl in X_T_W]
+    T = [fl[:, size(D.X, 2)+1] for fl in X_T_W]
+    W = [fl[:, size(D.X, 2)+2:end] for fl in X_T_W]
+
+    return X, T, W, Y
 end
 
 """

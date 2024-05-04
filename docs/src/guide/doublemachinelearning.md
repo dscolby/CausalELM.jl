@@ -17,7 +17,9 @@ models can take on any functional form but the final stage model is linear.
 ## Step 1: Initialize a Model
 The DoubleMachineLearning constructor takes at least three arguments, an array of 
 covariates, a treatment vector, and an outcome vector. This estimator supports binary, count, 
-or continuous treatments and binary, count, continuous, or time to event outcomes.
+or continuous treatments and binary, count, continuous, or time to event outcomes. You can 
+also specify confounders that you do not want to estimate the CATE for by passing a parameter 
+to the W argument. Otherwise, the model assumes all possible confounders are contained in X.
 
 !!! note
     Internally, the outcome and treatment models are treated as a regression since extreme 
@@ -39,14 +41,17 @@ or continuous treatments and binary, count, continuous, or time to event outcome
     and approximator\_neurons.
 ```julia
 # Create some data with a binary treatment
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+X, T, Y, W = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(100, 4)
 
 # We could also use DataFrames
 # using DataFrames
 # X = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100), x5=rand(100))
 # T, Y = DataFrame(t=[rand()<0.4 for i in 1:100]), DataFrame(y=rand(100))
+# W = DataFrame(w1=rand(100), w2=rand(100), w3=rand(100), w4=rand(100))
 
-dml = DoubleMachineLearning(X, T, Y)
+# W is optional and means there are confounders that you are not interested in estimating
+# the CATE for
+dml = DoubleMachineLearning(X, T, Y, W=W)
 ```
 
 ## Step 2: Estimate the Causal Effect

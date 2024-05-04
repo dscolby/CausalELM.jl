@@ -58,10 +58,17 @@ dm_df = DoubleMachineLearning(x_df, t_df, y_df)
 dm_noreg = DoubleMachineLearning(x, t, y, regularized=false)
 estimate_causal_effect!(dm_noreg)
 
+# Specifying W
+dm_w = DoubleMachineLearning(x, t, y, W=rand(100, 4))
+estimate_causal_effect!(dm_w)
+
 # Calling estimate_effect!
 dm_estimate_effect = DoubleMachineLearning(x, t, y)
 dm_estimate_effect.num_neurons = 5
 CausalELM.estimate_effect!(dm_estimate_effect)
+
+# Generating folds
+x_fold, t_fold, w_fold, y_fold = CausalELM.make_folds(dm)
 
 # Test predicting residuals
 x_train, x_test = x[1:80, :], x[81:end, :]
@@ -70,7 +77,7 @@ y_train, y_test = y[1:80], y[81:end]
 residual_predictor = DoubleMachineLearning(x, t, y)
 residual_predictor.num_neurons = 5
 residuals = CausalELM.predict_residuals(residual_predictor, x_train, x_test, y_train, 
-    y_test, t_train, t_test)
+                                        y_test, t_train, t_test, x_train, x_test)
 
 # Estimating the CATE
 cate_estimator = DoubleMachineLearning(x, t, y, regularized=false)
@@ -158,6 +165,11 @@ end
 
     @testset "Double Machine Learning Estimation Helpers" begin
         @test dm_estimate_effect.causal_effect isa Float64
+        @test size(x_fold[1], 2) == size(dm.X, 2)
+        @test size(w_fold[1], 2) == size(dm.W, 2)
+        @test y_fold isa Vector{Vector{Float64}}
+        @test t_fold isa Vector{Vector{Float64}}
+        @test length(t_fold) == dm.folds
         @test residuals[1] isa Vector
         @test residuals[2] isa Vector
     end
@@ -172,6 +184,7 @@ end
         @test dm.causal_effect isa Float64
         @test dm_binary_out.causal_effect isa Float64
         @test dm_noreg.causal_effect isa Float64
+        dm_w.causal_effect isa Float64
     end
 end
 

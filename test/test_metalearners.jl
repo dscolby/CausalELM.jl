@@ -4,7 +4,7 @@ using DataFrames
 
 include("../src/models.jl")
 
-x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1))
+x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
 slearner1, slearner2 = SLearner(x, t, y), SLearner(x, t, y, regularized=true)
 estimate_causal_effect!(slearner1); estimate_causal_effect!(slearner2)
 
@@ -53,16 +53,26 @@ estimate_causal_effect!(x_learner_binary)
 rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
 
+# Testing with a W arguments
+r_learner_w = RLearner(x, t, y, W=rand(100, 4))
+estimate_causal_effect!(r_learner_w)
+
 # Testing initialization with DataFrames
 r_learner_df = RLearner(x_df, t_df, y_df)
 
 # Doubly Robust Estimation
-dr_learner = DoublyRobustLearner(x, t, y)
-X_T, Y = generate_folds(reduce(hcat, (dr_learner.X, dr_learner.T)), dr_learner.Y, 3)
+dr_learner = DoublyRobustLearner(x, t, y, W=rand(100, 4))
+X_T, Y = generate_folds(reduce(hcat, (dr_learner.X, dr_learner.T, dr_learner.W)), 
+                               dr_learner.Y, 3)
 X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T] 
 T = [fl[:, size(dr_learner.X, 2)+1] for fl in X_T]
-τ̂  = CausalELM.estimate_effect!(dr_learner, X, T, Y)
+W = [fl[:, size(dr_learner.W, 2)+2:end] for fl in X_T]
+τ̂  = CausalELM.estimate_effect!(dr_learner, X, T, Y, reduce(hcat, (W, X)))
 estimate_causal_effect!(dr_learner)
+
+# Doubly Robust Estimation with no regularization
+dr_no_reg = DoublyRobustLearner(x, t, y, W=rand(100, 4), regularized=false)
+estimate_causal_effect!(dr_no_reg)
 
 # Testing Doubly Robust Estimation with a binary outcome
 dr_learner_binary = DoublyRobustLearner(x, y, t)
@@ -158,6 +168,9 @@ end
         @test rlearner.causal_effect isa Vector
         @test length(rlearner.causal_effect) == length(y)
         @test eltype(rlearner.causal_effect) == Float64
+        @test r_learner_w.causal_effect isa Vector
+        @test length(r_learner_w.causal_effect) == length(y)
+        @test eltype(r_learner_w.causal_effect) == Float64
     end
 end
 
@@ -186,6 +199,9 @@ end
         @test dr_learner_binary.causal_effect isa Vector
         @test length(dr_learner_binary.causal_effect) === length(y)
         @test eltype(dr_learner_binary.causal_effect) == Float64
+        @test dr_no_reg.causal_effect isa Vector
+        @test length(dr_no_reg.causal_effect) === length(y)
+        @test eltype(dr_no_reg.causal_effect) == Float64
     end
 end
 

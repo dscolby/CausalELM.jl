@@ -34,16 +34,20 @@ binary, treatments and binary, count, continuous, or time to event outcomes.
 
 !!! tip
     Additional options can be specified for each type of metalearner using its keyword arguments.
+
 ```julia
-# Generate data to use
-X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)
+# Create some data with a binary treatment
+X, T, Y, W = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(100, 4)
 
 # We could also use DataFrames
 # using DataFrames
-# X = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
-# T, Y = DataFrame(t=[rand()<0.4 for i in 1:1000]), DataFrame(y=rand(1000))
+# X = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100), x5=rand(100))
+# T, Y = DataFrame(t=[rand()<0.4 for i in 1:100]), DataFrame(y=rand(100))
+# W = DataFrame(w1=rand(100), w2=rand(100), w3=rand(100), w4=rand(100))
 
-dr_learner = DoublyRobustLearner(X, T, Y)
+# W is optional and means there are confounders that you are not interested in estimating
+# the CATE for
+dr_learner = DoublyRobustLearner(X, T, Y, W=W)
 ```
 
 # Estimate the CATE
