@@ -61,7 +61,7 @@ estimate_causal_effect!(r_learner_w)
 r_learner_df = RLearner(x_df, t_df, y_df)
 
 # Doubly Robust Estimation
-dr_learner = DoublyRobustLearner(x, t, y, W=rand(100, 4))
+dr_learner = DoublyRobustLearner(x, t, y, W=rand(100, 2))
 X_T, Y = generate_folds(reduce(hcat, (dr_learner.X, dr_learner.T, dr_learner.W)), 
                                dr_learner.Y, 3)
 X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T] 
@@ -71,7 +71,7 @@ W = [fl[:, size(dr_learner.W, 2)+2:end] for fl in X_T]
 estimate_causal_effect!(dr_learner)
 
 # Doubly Robust Estimation with no regularization
-dr_no_reg = DoublyRobustLearner(x, t, y, W=rand(100, 4), regularized=false)
+dr_no_reg = DoublyRobustLearner(x, t, y, W=rand(100, 2), regularized=false)
 estimate_causal_effect!(dr_no_reg)
 
 # Testing Doubly Robust Estimation with a binary outcome
