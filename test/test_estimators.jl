@@ -21,7 +21,7 @@ estimate_causal_effect!(its_no_ar)
 its_noreg = InterruptedTimeSeries(x₀, y₀, x₁, y₁, regularized=false)
 estimate_causal_effect!(its_noreg)
 
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
+x, t, y = rand(100, 2), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
 g_computer = GComputation(x, t, y, temporal=false)
 estimate_causal_effect!(g_computer)
 

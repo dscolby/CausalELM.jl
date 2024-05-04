@@ -54,7 +54,7 @@ rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
 
 # Testing with a W arguments
-r_learner_w = RLearner(x, t, y, W=rand(100, 4))
+r_learner_w = RLearner(x, t, y, W=rand(100, 2))
 estimate_causal_effect!(r_learner_w)
 
 # Testing initialization with DataFrames
