@@ -45,10 +45,12 @@ g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)),
     Float64.([rand()<0.4 for i in 1:10]), rand(10))
 
 dm = DoubleMachineLearning(x, t, y)
+dm.num_neurons = 2
 estimate_causal_effect!(dm)
 
 # Testing with a binary outcome
 dm_binary_out = DoubleMachineLearning(x, y, t)
+dm_binary_out.num_neurons = 2
 estimate_causal_effect!(dm_binary_out)
 
 # With dataframes instead of arrays
@@ -56,15 +58,17 @@ dm_df = DoubleMachineLearning(x_df, t_df, y_df)
 
 # No regularization
 dm_noreg = DoubleMachineLearning(x, t, y, regularized=false)
+dm_noreg.num_neurons = 2
 estimate_causal_effect!(dm_noreg)
 
 # Specifying W
 dm_w = DoubleMachineLearning(x, t, y, W=rand(100, 4))
+dm_w.num_neurons = 2
 estimate_causal_effect!(dm_w)
 
 # Calling estimate_effect!
 dm_estimate_effect = DoubleMachineLearning(x, t, y)
-dm_estimate_effect.num_neurons = 5
+dm_estimate_effect.num_neurons = 2
 CausalELM.estimate_effect!(dm_estimate_effect)
 
 # Generating folds
