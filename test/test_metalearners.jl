@@ -19,14 +19,14 @@ t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 
 s_learner_df = SLearner(x_df, t_df, y_df)
 
-tlearner1, tlearner2 = TLearner(x, t, y), TLearner(x, t, y, regularized=true)
+tlearner1, tlearner2 = TLearner(x, t, y), TLearner(x, t, y, regularized=false)
 estimate_causal_effect!(tlearner1); estimate_causal_effect!(tlearner2)
 
 # T-learner initialized with DataFrames
 t_learner_df = TLearner(x_df, t_df, y_df)
 
 # Testing with a binary outcome
-t_learner_binary = TLearner(x, y, t)
+t_learner_binary = TLearner(x, t, Float64.([rand()<0.8 for i in 1:100]))
 estimate_causal_effect!(t_learner_binary)
 
 xlearner1 = XLearner(x, t, y)
@@ -49,7 +49,7 @@ estimate_causal_effect!(xlearner4)
 x_learner_df = XLearner(x_df, t_df, y_df)
 
 # Testing with binary outcome
-x_learner_binary = XLearner(x, y, t)
+x_learner_binary = XLearner(x, t, Float64.([rand()<0.4 for i in 1:100]))
 estimate_causal_effect!(x_learner_binary)
 
 rlearner = RLearner(x, t, y)
@@ -65,7 +65,7 @@ r_learner_df = RLearner(x_df, t_df, y_df)
 # Doubly Robust Estimation
 dr_learner = DoublyRobustLearner(x, t, y, W=rand(100, 4))
 X_T, Y = generate_folds(reduce(hcat, (dr_learner.X, dr_learner.T, dr_learner.W)), 
-                               dr_learner.Y, 3)
+                               dr_learner.Y, 2)
 X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T] 
 T = [fl[:, size(dr_learner.X, 2)+1] for fl in X_T]
 W = [fl[:, size(dr_learner.W, 2)+2:end] for fl in X_T]
@@ -77,8 +77,9 @@ dr_no_reg = DoublyRobustLearner(x, t, y, W=rand(100, 4), regularized=false)
 estimate_causal_effect!(dr_no_reg)
 
 # Testing Doubly Robust Estimation with a binary outcome
-dr_learner_binary = DoublyRobustLearner(x, y, t)
+dr_learner_binary = DoublyRobustLearner(x, t, Float64.([rand()<0.8 for i in 1:100]))
 estimate_causal_effect!(dr_learner_binary)
+
 # Doubly robust estimation with DataFrames
 dr_learner_df = DoublyRobustLearner(x_df, t_df, y_df)
 estimate_causal_effect!(dr_learner_df)

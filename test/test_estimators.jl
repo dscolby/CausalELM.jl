@@ -181,7 +181,7 @@ end
         @test dm.causal_effect isa Float64
         @test dm_binary_out.causal_effect isa Float64
         @test dm_noreg.causal_effect isa Float64
-        dm_w.causal_effect isa Float64
+        @test dm_w.causal_effect isa Float64
     end
 end  
   

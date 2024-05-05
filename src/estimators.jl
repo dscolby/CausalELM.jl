@@ -263,8 +263,9 @@ mutable struct DoubleMachineLearning <: CausalEstimator
 end
 
 function DoubleMachineLearning(X, T, Y; W=X, regularized=true, activation=relu, 
-    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-    iterations=round(size(X, 1)/10), approximator_neurons=round(size(X, 1)/10))
+                               validation_metric=mse, min_neurons=1, max_neurons=100, 
+                               folds=5, iterations=round(size(X, 1)/10), 
+                               approximator_neurons=round(size(X, 1)/10))
 
     # Convert to arrays
     X, T, Y, W = Matrix{Float64}(X), T[:, 1], Y[:, 1], Matrix{Float64}(W)

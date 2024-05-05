@@ -129,8 +129,8 @@ julia> m1 = ExtremeLearner(x, y, 10, σ)
 function fit!(model::ExtremeLearner)
     set_weights_biases(model)
 
-    model.__fit, model.β = true, @fastmath model.H\model.Y
-
+    model.__fit = true
+    model.β = @fastmath pinv(model.H) * model.Y
     return model.β
 end
 
@@ -161,11 +161,10 @@ julia> f1 = fit!(m1)
 """
 function fit!(model::RegularizedExtremeLearner)
     set_weights_biases(model)
-    β0 = @fastmath pinv(model.H) * model.Y
+    k = ridge_constant(model)
+    Id = Matrix(I, size(model.H, 2), size(model.H, 2))
 
-    Id, k = Matrix(I, size(model.H, 2), size(model.H, 2)), ridge_constant(model)   # L2
-
-    model.β = @fastmath (Id-k^2*inv(transpose(model.H)*model.H + k*Id)^2)*β0
+    model.β = @fastmath inv(transpose(model.H)*model.H + k*Id)*transpose(model.H)*model.Y
 
     model.__fit = true  # Enables running predict
 
@@ -333,8 +332,9 @@ julia> set_weights_biases(m1)
 ```
 """
 function set_weights_biases(model::ExtremeLearningMachine)
-    model.weights = rand(model.features, model.hidden_neurons)
-    model.weights = reduce(hcat, (model.weights, repeat([rand()], size(model.weights, 1))))
+    a, b = -length(model.X), length(model.X)
+    model.weights = (b - a) * rand(model.features, model.hidden_neurons) .+ a
+    model.weights .+= (b - a) * rand(model.features) .+ a
 
     model.H = @fastmath model.activation((model.X * model.weights))
 end

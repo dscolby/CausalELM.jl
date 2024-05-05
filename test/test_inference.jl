@@ -1,7 +1,7 @@
 using Test
 using CausalELM
 
-x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], Float64.([rand()<0.4 for i in 1:100])
 
 g_computer = GComputation(x, t, y)
 estimate_causal_effect!(g_computer)

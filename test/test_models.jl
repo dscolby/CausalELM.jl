@@ -19,19 +19,15 @@ predictions1 = predict(m1, x_test)
 predict_counterfactual!(m1, x_test)
 placebo1 = placebo_test(m1)
 
-m2 = RegularizedExtremeLearner(x, y, 2, σ)
+m2 = RegularizedExtremeLearner(x1, y1, 10, σ)
 f2 = fit!(m2)
-predictions2 = predict(m2, x_test)
-predict_counterfactual!(m2, x_test)
+predictions2 = predict(m2, x1test)
+predict_counterfactual!(m2, x1test)
 placebo2 = placebo_test(m2)
 
 m3 = ExtremeLearner(x1, y1, 10, σ)
 fit!(m3)
 predictions3 = predict(m3, x1test)
-
-m4 = RegularizedExtremeLearner(x1, y1, 10, σ)
-fit!(m4)
-predictions4 = predict(m4, x1test)
 
 nofit = ExtremeLearner(x1, y1, 10, σ)
 
@@ -40,9 +36,9 @@ set_weights_biases(helper_elm)
 k = ridge_constant(helper_elm)
 
  @testset "Model Fit" begin
-    @test length(m1.β) == 11
-    @test size(m1.weights) == (2, 11)
-    @test size(helper_elm.H) == (20, 6)
+    @test length(m1.β) == 10
+    @test size(m1.weights) == (2, 10)
+    @test size(helper_elm.H) == (20, 5)
  end
 
  @testset "Regularization" begin
@@ -65,7 +61,6 @@ k = ridge_constant(helper_elm)
 
     # Ensure we can predict with a test set with more data points than the training set
     @test isa(predictions3, Array{Float64})
-    @test isa(predictions4, Array{Float64})
  end
 
  @testset "Placebo Test" begin
