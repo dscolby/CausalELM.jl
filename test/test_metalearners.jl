@@ -2,7 +2,11 @@ using Test
 using CausalELM
 using DataFrames
 
+import Random
+
 include("../src/models.jl")
+
+Random.seed!(42)
 
 # Make sure to avoid singular exceptions
 x = randn(50, 7)

@@ -3,7 +3,11 @@ using CausalELM
 using DataFrames
 using LinearAlgebra
 
+import Random
+
 include("../src/models.jl")
+
+Random.seed!(17)
 
 # Make sure to avoid singular exceptions
 x = randn(50, 7)
@@ -11,7 +15,7 @@ Q, R = qr(x)
 x, w = Q[:, 1:4], Q[:, 5:7]
 t, y = Float64.([rand()<0.8 for i in 1:50]), Q[:, 36]
 
-x₀, y₀, x₁, y₁ = Q[:, 1:5], rand(50), Q[1:10, 46:50], rand(10)
+x₀, y₀, x₁, y₁ = rand(100, 5), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
 
