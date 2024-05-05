@@ -1,16 +1,23 @@
 using Test
 using CausalELM
 using DataFrames
+using LinearAlgebra
 
 include("../src/models.jl")
 
-x₀, y₀, x₁, y₁ = Float64.(rand(1:200, 100, 5)), rand(100), rand(10, 5), rand(10)
+# Make sure to avoid singular exceptions
+x = randn(50, 7)
+Q, R = qr(x)
+x, w = Q[:, 1:4], Q[:, 5:7]
+t, y = Float64.([rand()<0.8 for i in 1:50]), Q[:, 36]
+
+x₀, y₀, x₁, y₁ = Q[:, 1:5], rand(50), Q[1:10, 46:50], rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
 
 # ITS with a DataFrame
-x₀_df, y₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)), DataFrame(y=rand(100))
-x₁_df, y₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)), DataFrame(y=rand(100))
+x₀_df, y₀_df = DataFrame(x1=x[:, 1], x2=x[:, 2], x3=x[:, 3]), DataFrame(y=rand(50))
+x₁_df, y₁_df = DataFrame(x1=Q[:, 50], x2=Q[:, 49], x3=Q[:, 48]), DataFrame(y=rand(50))
 its_df = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 
 # No autoregressive term
@@ -21,7 +28,6 @@ estimate_causal_effect!(its_no_ar)
 its_noreg = InterruptedTimeSeries(x₀, y₀, x₁, y₁, regularized=false)
 estimate_causal_effect!(its_noreg)
 
-x, t, y = rand(100, 2), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
 g_computer = GComputation(x, t, y, temporal=false)
 estimate_causal_effect!(g_computer)
 
@@ -30,8 +36,8 @@ g_computer_binary_out = GComputation(x, y, t, temporal=false)
 estimate_causal_effect!(g_computer_binary_out)
 
 # G-computation with a DataFrame
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+x_df = DataFrame(x1=randn(50), x2=randn(50), x3=randn(50), x4=randn(50))
+t_df, y_df = DataFrame(t=rand(0:1, 50)), DataFrame(y=rand(50))
 g_computer_df = GComputation(x_df, t_df, y_df)
 
 gcomputer_att = GComputation(x, t, y, quantity_of_interest="ATT", temporal=false)
@@ -45,12 +51,10 @@ g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)),
     Float64.([rand()<0.4 for i in 1:10]), rand(10))
 
 dm = DoubleMachineLearning(x, t, y)
-dm.num_neurons = 2
 estimate_causal_effect!(dm)
 
 # Testing with a binary outcome
 dm_binary_out = DoubleMachineLearning(x, y, t)
-dm_binary_out.num_neurons = 2
 estimate_causal_effect!(dm_binary_out)
 
 # With dataframes instead of arrays
@@ -58,28 +62,25 @@ dm_df = DoubleMachineLearning(x_df, t_df, y_df)
 
 # No regularization
 dm_noreg = DoubleMachineLearning(x, t, y, regularized=false)
-dm_noreg.num_neurons = 2
 estimate_causal_effect!(dm_noreg)
 
 # Specifying W
-dm_w = DoubleMachineLearning(x, t, y, W=rand(100, 4))
-dm_w.num_neurons = 2
+dm_w = DoubleMachineLearning(x, t, y, W=w)
 estimate_causal_effect!(dm_w)
 
 # Calling estimate_effect!
 dm_estimate_effect = DoubleMachineLearning(x, t, y)
-dm_estimate_effect.num_neurons = 2
 CausalELM.estimate_effect!(dm_estimate_effect)
 
 # Generating folds
 x_fold, t_fold, w_fold, y_fold = CausalELM.make_folds(dm)
 
 # Test predicting residuals
-x_train, x_test = x[1:80, :], x[81:end, :]
-t_train, t_test = t[1:80], t[81:100]
-y_train, y_test = y[1:80], y[81:end]
+x_train, x_test = x[1:15, :], x[26:end, :]
+t_train, t_test = t[1:15], t[26:50]
+y_train, y_test = y[1:15], y[26:end]
 residual_predictor = DoubleMachineLearning(x, t, y)
-residual_predictor.num_neurons = 5
+residual_predictor.num_neurons = 10
 residuals = CausalELM.predict_residuals(residual_predictor, x_train, x_test, y_train, 
                                         y_test, t_train, t_test, x_train, x_test)
 
