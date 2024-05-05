@@ -4,7 +4,7 @@ using CausalELM
 using CausalELM: relu
 include("../src/crossval.jl")
 
-x, y = shuffle_data(rand(100, 5), rand(100))
+x, y = shuffle_data(rand(100, 5), Float64.([rand()<0.4 for i in 1:100]))
 xfolds, yfolds = generate_folds(zeros(20, 2), zeros(20), 5)
 xfolds_ts, yfolds_ts = generate_temporal_folds(float.(hcat([1:10;], 11:20)), 
     [1.0:1.0:10.0;], 5)
