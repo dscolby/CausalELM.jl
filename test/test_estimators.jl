@@ -1,27 +1,16 @@
 using Test
 using CausalELM
 using DataFrames
-using LinearAlgebra
-
-import Random
 
 include("../src/models.jl")
 
-Random.seed!(17)
-
-# Make sure to avoid singular exceptions
-x = randn(50, 7)
-Q, R = qr(x)
-x, w = Q[:, 1:4], Q[:, 5:7]
-t, y = Float64.([rand()<0.8 for i in 1:50]), Q[:, 36]
-
-x₀, y₀, x₁, y₁ = rand(100, 5), rand(100), rand(10, 5), rand(10)
+x₀, y₀, x₁, y₁ = Float64.(rand(1:200, 100, 5)), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
 
 # ITS with a DataFrame
-x₀_df, y₀_df = DataFrame(x1=x[:, 1], x2=x[:, 2], x3=x[:, 3]), DataFrame(y=rand(50))
-x₁_df, y₁_df = DataFrame(x1=Q[:, 50], x2=Q[:, 49], x3=Q[:, 48]), DataFrame(y=rand(50))
+x₀_df, y₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)), DataFrame(y=rand(100))
+x₁_df, y₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)), DataFrame(y=rand(100))
 its_df = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 
 # No autoregressive term
@@ -32,6 +21,7 @@ estimate_causal_effect!(its_no_ar)
 its_noreg = InterruptedTimeSeries(x₀, y₀, x₁, y₁, regularized=false)
 estimate_causal_effect!(its_noreg)
 
+x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
 g_computer = GComputation(x, t, y, temporal=false)
 estimate_causal_effect!(g_computer)
 
@@ -40,13 +30,11 @@ g_computer_binary_out = GComputation(x, y, t, temporal=false)
 estimate_causal_effect!(g_computer_binary_out)
 
 # G-computation with a DataFrame
-x_df = DataFrame(x1=randn(50), x2=randn(50), x3=randn(50), x4=randn(50))
-t_df, y_df = DataFrame(t=rand(0:1, 50)), DataFrame(y=rand(50))
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 g_computer_df = GComputation(x_df, t_df, y_df)
-
 gcomputer_att = GComputation(x, t, y, quantity_of_interest="ATT", temporal=false)
 estimate_causal_effect!(gcomputer_att)
-
 gcomputer_noreg = GComputation(x, t, y, regularized=false)
 estimate_causal_effect!(gcomputer_noreg)
 
@@ -69,22 +57,23 @@ dm_noreg = DoubleMachineLearning(x, t, y, regularized=false)
 estimate_causal_effect!(dm_noreg)
 
 # Specifying W
-dm_w = DoubleMachineLearning(x, t, y, W=w)
+dm_w = DoubleMachineLearning(x, t, y, W=rand(100, 4))
 estimate_causal_effect!(dm_w)
 
 # Calling estimate_effect!
 dm_estimate_effect = DoubleMachineLearning(x, t, y)
+dm_estimate_effect.num_neurons = 5
 CausalELM.estimate_effect!(dm_estimate_effect)
 
 # Generating folds
 x_fold, t_fold, w_fold, y_fold = CausalELM.make_folds(dm)
 
 # Test predicting residuals
-x_train, x_test = x[1:15, :], x[26:end, :]
-t_train, t_test = t[1:15], t[26:50]
-y_train, y_test = y[1:15], y[26:end]
+x_train, x_test = x[1:80, :], x[81:end, :]
+t_train, t_test = t[1:80], t[81:100]
+y_train, y_test = y[1:80], y[81:end]
 residual_predictor = DoubleMachineLearning(x, t, y)
-residual_predictor.num_neurons = 10
+residual_predictor.num_neurons = 5
 residuals = CausalELM.predict_residuals(residual_predictor, x_train, x_test, y_train, 
                                         y_test, t_train, t_test, x_train, x_test)
 
@@ -147,7 +136,6 @@ end
 
         # Estimation without regularization
         @test isa(gcomputer_noreg.causal_effect, Float64)
-
         @test isa(g_computer_binary_out.causal_effect, Float64)
 
         # Check that the estimats for ATE and ATT are different
@@ -165,7 +153,7 @@ end
         @test dm_noreg.X !== Nothing
         @test dm_noreg.T !== Nothing
         @test dm_noreg.Y !== Nothing
-
+        
         # Intialized with dataframes
         @test dm_df.X !== Nothing
         @test dm_df.T !== Nothing
@@ -182,7 +170,7 @@ end
         @test residuals[1] isa Vector
         @test residuals[2] isa Vector
     end
-
+  
     @testset "CATE Estimation" begin
         @test cate_predictors isa Vector
         @test length(cate_predictors) == length(cate_estimator.Y)
@@ -195,8 +183,8 @@ end
         @test dm_noreg.causal_effect isa Float64
         dm_w.causal_effect isa Float64
     end
-end
-
+end  
+  
 @testset "Summarization and Inference" begin
     @testset "Quanities of Interest Errors" begin
         @test_throws ArgumentError GComputation(x, y, t, quantity_of_interest="abc")
@@ -205,7 +193,7 @@ end
     @testset "Task Errors" begin
         @test_throws ArgumentError GComputation(x, y, t, task="abc")
     end
-
+    
     @testset "Moving Averages" begin
         @test CausalELM.moving_average(Float64[]) isa Array{Float64}
         @test CausalELM.moving_average([1.0]) == [1.0]
