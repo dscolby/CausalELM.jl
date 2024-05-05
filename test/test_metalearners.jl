@@ -6,7 +6,7 @@ import Random
 
 include("../src/models.jl")
 
-Random.seed!(8095)
+Random.seed!(1)
 
 # Make sure to avoid singular exceptions
 x = randn(50, 7)
