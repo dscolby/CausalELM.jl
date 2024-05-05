@@ -23,7 +23,6 @@ t_df, y_df = DataFrame(t=rand(0:1, 50)), DataFrame(y=rand(50))
 s_learner_df = SLearner(x_df, t_df, y_df)
 
 tlearner1, tlearner2 = TLearner(x, t, y), TLearner(x, t, y, regularized=true)
-tlearner1.num_neurons, tlearner2.num_neurons = 2, 2
 estimate_causal_effect!(tlearner1); estimate_causal_effect!(tlearner2)
 
 # T-learner initialized with DataFrames
