@@ -7,6 +7,12 @@ them in a final model. This is a semiparametric model in the sense that the firs
 models can take on any functional form but the final stage model is linear.
 
 !!! note
+    If regularized is set to true then the ridge penalty will be estimated using generalized 
+    cross validation where the maximum number of iterations is 2 * folds for the successive 
+    halving procedure. However, if the penalty in on iteration is approximately the same as in 
+    the previous penalty, then the procedure will stop early.
+
+!!! note
     For more information see:
 
     Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 

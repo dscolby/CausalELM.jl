@@ -11,6 +11,12 @@ they can only handle binary treatments. On the other hand, R-learners can handle
 categorical, count, or continuous treatments but only supports continuous outcomes.
 
 !!! note
+    If regularized is set to true then the ridge penalty will be estimated using generalized 
+    cross validation where the maximum number of iterations is 2 * folds for the successive 
+    halving procedure. However, if the penalty in on iteration is approximately the same as in 
+    the previous penalty, then the procedure will stop early.
+
+!!! note
     For a deeper dive on S-learning, T-learning, and X-learning see:
     
         Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 

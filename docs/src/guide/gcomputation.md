@@ -5,6 +5,12 @@ given at multiple times whose status depends on the health of the patient at a g
 One way to get an unbiased estimate of the causal effect is to use G-computation. The basic 
 steps for using G-computation in CausalELM are below.
 
+!!! note
+    If regularized is set to true then the ridge penalty will be estimated using generalized 
+    cross validation where the maximum number of iterations is 2 * folds for the successive 
+    halving procedure. However, if the penalty in on iteration is approximately the same as in 
+    the previous penalty, then the procedure will stop early.
+
 !!! note 
     For a good overview of G-Computation see:
     

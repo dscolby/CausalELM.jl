@@ -1,4 +1,4 @@
-using LinearAlgebra: inv, pinv, I
+using LinearAlgebra: pinv, I, norm, tr
 
 """Abstract type that includes vanilla and L2 regularized Extreme Learning Machines"""
 abstract type ExtremeLearningMachine end
@@ -58,11 +58,6 @@ end
     RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
 
 Construct a RegularizedExtremeLearner for fitting and prediction.
-
-For more details see: 
-    Li, Guoqiang, and Peifeng Niu. "An enhanced extreme learning machine based on ridge 
-    regression for regression." Neural Computing and Applications 22, no. 3 (2013): 
-    803-810.
 
 Examples
 ```julia
@@ -164,7 +159,7 @@ function fit!(model::RegularizedExtremeLearner)
     k = ridge_constant(model)
     Id = Matrix(I, size(model.H, 2), size(model.H, 2))
 
-    model.β = @fastmath inv(transpose(model.H)*model.H + k*Id)*transpose(model.H)*model.Y
+    model.β = @fastmath pinv(transpose(model.H)*model.H + k*Id)*transpose(model.H)*model.Y
 
     model.__fit = true  # Enables running predict
 
@@ -290,14 +285,14 @@ function placebo_test(model::ExtremeLearningMachine)
 end
 
 """
-    ridge_constant(model)
+    ridge_constant(model, iterations)
 
-Calculate the L2 penalty for a regularized extreme learning machine.
+Calculate the L2 penalty for a regularized extreme learning machine using generalized cross 
+    validation with successive halving.
 
 For more information see: 
-    Li, Guoqiang, and Peifeng Niu. "An enhanced extreme learning machine based on ridge 
-    regression for regression." Neural Computing and Applications 22, no. 3 (2013): 
-    803-810.
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 Examples
 ```julia
@@ -305,13 +300,36 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
 Extreme Learning Machine with 10 hidden neurons
 julia> ridge_constant(m1)
  0.26789338524662887
+julia> ridge_constant(m1, iterations=20)
+ 0.0009765634990234375
 ```
 """
-function ridge_constant(model::RegularizedExtremeLearner)
-    β0, L, N = @fastmath pinv(model.H) * model.Y, size(model.H)[2], model.features
-    σ̃ = @fastmath ((transpose(model.Y .- (model.H*β0))*(model.Y .- (model.H*β0)))/(N-L))
+function ridge_constant(model::RegularizedExtremeLearner, iterations::Int=10)
+    S(λ, X, X̂, n) =  X * pinv(X̂ .+ (n * λ * Matrix(I, n, n))) * transpose(X)
+    set_weights_biases(model)
+    Ĥ = transpose(model.H) * model.H
 
-    return @fastmath first((L*σ̃)/(transpose(β0)*(transpose(model.H)*model.H)*β0))
+    function gcv(H, Y, λ)  # Estimates the generalized cross validation function for given λ
+        S̃, n = S(λ, H, Ĥ, size(H, 2)), size(H, 1)
+        return ((norm((ones(n) .- S̃) * Y)^2) / n) / ((tr(Matrix(I, n, n) .- S̃) / n)^2)
+    end
+
+    k₁, k₂, Λ = 1e-9, 1 - 1e-9, sum((1e-9, 1 - 1e-9)) / 2  # Initial window to search
+    for i in 1:iterations
+        gcv₁, gcv₂ = @fastmath gcv(model.H, model.Y, k₁), gcv(model.H, model.Y, k₂)
+
+        # Divide the search space in half
+        if gcv₁ < gcv₂
+            k₂ /= 2
+        elseif gcv₁ > gcv₂
+            k₁ *= 2
+        elseif gcv₁ ≈ gcv₂
+            return (k₁ + k₂) / 2  # Early stopping
+        end
+
+        Λ = (k₁ + k₂) / 2
+    end
+    return Λ
 end
 
 """

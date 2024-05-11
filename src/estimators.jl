@@ -6,11 +6,6 @@ abstract type  CausalEstimator end
 
 Initialize an interrupted time series estimator. 
 
-For a simple linear regression-based tutorial on interrupted time series analysis see:
-    Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
-    regression for the evaluation of public health interventions: a tutorial." International 
-    journal of epidemiology 46, no. 1 (2017): 348-355.
-
 ...
 # Arguments
 - `X₀::Any`: an array or DataFrame of covariates from the pre-treatment period.
@@ -22,12 +17,28 @@ For a simple linear regression-based tutorial on interrupted time series analysi
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
 - `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
 - `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of folds to use for cross validation.
+- `folds::Int`: the number of cross validation folds to find the best number of neurons.
 - `iterations::Int`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
 ...
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as in 
+the previous penalty, then the procedure will stop early.
+
+# References
+For a simple linear regression-based tutorial on interrupted time series analysis see:
+    Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
+    regression for the evaluation of public health interventions: a tutorial." International 
+    journal of epidemiology 46, no. 1 (2017): 348-355.
+
+For details and a derivation of the generalized cross validation estimator see:
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 Examples
 ```julia
@@ -97,13 +108,6 @@ end
 
 Initialize a G-Computation estimator.
 
-For a good overview of G-Computation see:
-    Chatton, Arthur, Florent Le Borgne, Clémence Leyrat, Florence Gillaizeau, Chloé 
-    Rousseau, Laetitia Barbin, David Laplaud, Maxime Léger, Bruno Giraudeau, and Yohann 
-    Foucher. "G-computation, propensity score-based methods, and targeted maximum likelihood 
-    estimator for causal inference with different covariates sets: a comparative simulation 
-    study." Scientific reports 10, no. 1 (2020): 9219.
-
 ...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates.
@@ -117,12 +121,31 @@ For a good overview of G-Computation see:
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
 - `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
 - `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of folds to use for cross validation.
+- `folds::Int`: the number of cross validation folds to find the best number of neurons.
 - `iterations::Int`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
 ...
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as in 
+the previous penalty, then the procedure will stop early.
+
+# References
+For a good overview of G-Computation see:
+    Chatton, Arthur, Florent Le Borgne, Clémence Leyrat, Florence Gillaizeau, Chloé 
+    Rousseau, Laetitia Barbin, David Laplaud, Maxime Léger, Bruno Giraudeau, and Yohann 
+    Foucher. "G-computation, propensity score-based methods, and targeted maximum likelihood 
+    estimator for causal inference with different covariates sets: a comparative simulation 
+    study." Scientific reports 10, no. 1 (2020): 9219.
+
+
+For details and a derivation of the generalized cross validation estimator see:
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 Examples
 ```julia
@@ -196,11 +219,6 @@ end
 
 Initialize a double machine learning estimator with cross fitting.
 
-For more information see:
-    Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
-    Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
-    structural parameters." (2016): C1-C68.
-
 ...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates of interest.
@@ -215,12 +233,29 @@ For more information see:
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
 - `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
 - `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of folds to use for cross validation.
+- `folds::Int`: the number of cross validation folds to find the best number of neurons.
 - `iterations::Int`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
 ...
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as in 
+the previous penalty, then the procedure will stop early.
+
+# References
+For more information see:
+    Chernozhukov, Victor, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian Hansen, 
+    Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
+    structural parameters." (2016): C1-C68.
+
+
+For details and a derivation of the generalized cross validation estimator see:
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 Examples
 ```julia
@@ -353,8 +388,9 @@ function estimate_causal_effect!(g::GComputation)
     end
 
     fit!(g.learner)
-    ŷ = clip_if_binary(predict(g.learner, Xₜ), y), clip_if_binary(predict(g.learner, Xᵤ), y)
-    g.causal_effect = mean(vec(ŷ[1]) - vec(ŷ[2]))
+    yₜ = clip_if_binary(predict(g.learner, Xₜ), y)
+    yᵤ = clip_if_binary(predict(g.learner, Xᵤ), y)
+    g.causal_effect = mean(vec(yₜ) - vec(yᵤ))
     return g.causal_effect
 end
 

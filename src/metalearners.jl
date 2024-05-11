@@ -6,11 +6,6 @@ abstract type Metalearner end
 
 Initialize a S-Learner.
 
-For an overview of S-Learners and other metalearners see:
-    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
-    national academy of sciences 116, no. 10 (2019): 4156-4165.
-
 ...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates.
@@ -22,12 +17,28 @@ For an overview of S-Learners and other metalearners see:
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
 - `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
 - `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of folds to use for cross validation.
+- `folds::Int`: the number of cross validation folds to find the best number of neurons.
 - `iterations::Int`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
 ...
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as in 
+the previous penalty, then the procedure will stop early.
+
+# References
+For an overview of S-Learners and other metalearners see:
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+For details and a derivation of the generalized cross validation estimator see:
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 Examples
 ```julia
@@ -62,11 +73,6 @@ end
 
 Initialize a T-Learner.
 
-For an overview of T-Learners and other metalearners see:
-    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
-    national academy of sciences 116, no. 10 (2019): 4156-4165.
-
 ...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates.
@@ -78,12 +84,28 @@ For an overview of T-Learners and other metalearners see:
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
 - `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
 - `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of folds to use for cross validation.
+- `folds::Int`: the number of cross validation folds to find the best number of neurons.
 - `iterations::Int`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
 ...
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as in 
+the previous penalty, then the procedure will stop early.
+
+# References
+For an overview of T-Learners and other metalearners see:
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+For details and a derivation of the generalized cross validation estimator see:
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 Examples
 ```julia
@@ -150,11 +172,6 @@ end
 
 Initialize an X-Learner.
 
-For an overview of X-Learners and other metalearners see:
-    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
-    national academy of sciences 116, no. 10 (2019): 4156-4165.
-
 ...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates.
@@ -166,12 +183,28 @@ For an overview of X-Learners and other metalearners see:
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
 - `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
 - `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of folds to use for cross validation.
+- `folds::Int`: the number of cross validation folds to find the best number of neurons.
 - `iterations::Int`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
 ...
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as in 
+the previous penalty, then the procedure will stop early.
+
+# References
+For an overview of X-Learners and other metalearners see:
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+For details and a derivation of the generalized cross validation estimator see:
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 Examples
 ```julia
@@ -240,10 +273,6 @@ end
 
 Initialize an R-Learner.
 
-For an explanation of R-Learner estimation see:
-    Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
-    effects." Biometrika 108, no. 2 (2021): 299-319.
-
 ...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates of interest.
@@ -256,12 +285,27 @@ For an explanation of R-Learner estimation see:
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
 - `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
 - `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of folds to use for cross validation.
+- `folds::Int`: the number of cross validation folds to find the best number of neurons.
 - `iterations::Int`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
 ...
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as in 
+the previous penalty, then the procedure will stop early.
+
+# References
+For an explanation of R-Learner estimation see:
+    Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
+    effects." Biometrika 108, no. 2 (2021): 299-319.
+    
+For details and a derivation of the generalized cross validation estimator see:
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 Examples
 ```julia
@@ -296,10 +340,6 @@ end
 
 Initialize a doubly robust CATE estimator.
 
-For an explanation of doubly robust cate estimation see:
-    Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
-    effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
-
 ...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates of interest.
@@ -311,12 +351,27 @@ For an explanation of doubly robust cate estimation see:
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
 - `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
 - `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of folds to use for cross validation.
+- `folds::Int`: the number of cross validation folds to find the best number of neurons.
 - `iterations::Int`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
 ...
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as in 
+the previous penalty, then the procedure will stop early.
+
+# References
+For an explanation of doubly robust cate estimation see:
+    Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
+    effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
+
+For details and a derivation of the generalized cross validation estimator see:
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 Examples
 ```julia

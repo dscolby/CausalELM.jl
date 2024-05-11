@@ -156,7 +156,7 @@ function validate(m; num_treatments=5, min=1.0e-6, max=1.0-min)
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
-    # The causal effect is initialized to zeros in dobuly robust estimation
+    # The causal effect is initialized to zeros in doubly robust estimation
     if isdefined(m, :causal_effect) && all(m.causal_effect .== 0)
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
