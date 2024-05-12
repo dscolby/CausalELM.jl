@@ -15,10 +15,9 @@ struct Continuous <: Nonbinary end
 
 Determine the type of variable held by a vector.
 
-Examples
+# Examples
 ```julia
-julia> var_type([1, 2, 3, 2, 3, 1, 1, 3, 2])
-Binary
+var_type([1, 2, 3, 2, 3, 1, 1, 3, 2])
 ```
 """
 function var_type(x::Array{<:Real})
@@ -33,10 +32,21 @@ function var_type(x::Array{<:Real})
 end
 
 """
-    validate(its; <keyword arguments>)
+    validate(its; kwargs...)
 
 Test the validity of an estimated interrupted time series analysis.
 
+# Arguments
+- `its::InterruptedTimeSeries`: an interrupted time seiries estimator.
+
+# Keywords
+- `n::Int`: the number of times to simulate a confounder.
+- `low::Float64`=0.15: the minimum proportion of data points to include before or after the 
+    tested break in the Wald supremum test.
+- `high::Float64=0.85`: the maximum proportion of data points to include before or after the 
+    tested break in the Wald supremum test.
+
+# Notes
 This method coducts a Chow Test, a Wald supremeum test, and tests the model's sensitivity to 
 confounders. The Chow Test tests for structural breaks in the covariates between the time 
 before and after the event. p-values represent the proportion of times the magnitude of the 
@@ -53,39 +63,25 @@ normal random variables with uniform noise as predictors. If the included covari
 good predictors of the counterfactual outcome, adding irrelevant predictors should not have 
 a large effect on the predicted counterfactual outcomes or the estimated effect.
 
+This method does not implement the second test in Baicker and Svoronos because the estimator 
+in this package models the relationship between covariates and the outcome and uses an 
+extreme learning machine instead of linear regression, so variance in the outcome across 
+different bins is not much of an issue.
+
+# References
 For more details on the assumptions and validity of interrupted time series designs, see:
     Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
     interrupted time series design. No. w26080. National Bureau of Economic Research, 2019.
 
-* Note that this method does not implement the second test in Baicker and Svoronos because 
-the estimator in this package models the relationship between covariates and the outcome and 
-uses an extreme learning machine instead of linear regression, so variance in the outcome 
-across different bins is not much of an issue.
-
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
-...
-# Arguments
-- `its::InterruptedTimeSeries`: an interrupted time seiries estimator.
-- `n::Int`: the number of times to simulate a confounder.
-- `low::Float64`=0.15: the minimum proportion of data points to include before or after the 
-    tested break in the Wald supremum test.
-- `high::Float64=0.85`: the maximum proportion of data points to include before or after the 
-    tested break in the Wald supremum test.
-...
-
-Examples
+# Examples
 ```julia
-julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-julia> estimate_causal_effect!(m1)
-[0.25714308]
+X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+stimate_causal_effect!(m1)
 julia> validate(m1)
-{"Task" => "Regression", "Regularized" => true, "Activation Function" => relu, 
-"Validation Metric" => "mse","Number of Neurons" => 2, 
-"Number of Neurons in Approximator" => 10, "β" => [0.25714308], 
-"Causal Effect" => -3.9101138, "Standard Error" => 1.903434356, "p-value" = 0.00123356}
 ```
 """
 function validate(its::InterruptedTimeSeries; n=1000, low=0.15, high=0.85)
@@ -98,8 +94,18 @@ function validate(its::InterruptedTimeSeries; n=1000, low=0.15, high=0.85)
 end
 
 """
-    validate(m; <keyword arguments>)
+    validate(m; kwargs)
 
+# Arguments
+- `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
+    
+# Keywords
+- `num_treatments=5::Int`: the maximum number of treatments to use when testing the 
+        plausability of the counterfactual consistency assumption.
+- `min::Float64`=1.0e-6: minimum probability of treatment for the positivity assumption.
+- `high::Float64=1-min`: the maximum probability of treatment for the positivity assumption.
+
+# Notes
 This method tests the counterfactual consistency, exchangeability, and positivity 
 assumptions required for causal inference. It should be noted that consistency and 
 exchangeability are not directly testable, so instead, these tests do not provide definitive 
@@ -123,7 +129,7 @@ in the matrix are levels of covariates that have a zero probability of treatment
 matrix is empty, none of the observations have an estimated zero probability of treatment, 
 which implies the positivity assumption is satisfied.
 
-
+# References
 For a thorough review of casual inference assumptions see:
     Hernan, Miguel A., and James M. Robins. Causal inference what if. Boca Raton: Taylor and 
     Francis, 2024. 
@@ -132,24 +138,13 @@ For more information on the E-value test see:
     VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
     introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
-...
-# Arguments
-- `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
-- `num_treatments=5::Int`: the maximum number of treatments to use when testing the 
-    plausability of the counterfactual consistency assumption.
-- `min::Float64`=1.0e-6: minimum probability of treatment for the positivity assumption.
-- `high::Float64=1-min`: the maximum probability of treatment for the positivity assumption.
-...
-
-Examples
+# Examples
 ```julia
-julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), 
-            vec(rand(1:100, 100, 1)), 
-julia> g_computer = GComputation(x, t, y, temporal=false)
-julia> estimate_causal_effect!(g_computer)
-julia> validate(g_computer)
- 2.7653668647301795
-    ```
+x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1)) 
+g_computer = GComputation(x, t, y, temporal=false)
+estimate_causal_effect!(g_computer)
+validate(g_computer)
+```
 """
 function validate(m; num_treatments=5, min=1.0e-6, max=1.0-min)
     if !isdefined(m, :causal_effect) || m.causal_effect === NaN
@@ -174,9 +169,16 @@ function validate(S::SLearner; num_treatments=5, min=1.0e-6, max=1.0-min)
 end
 
 """
-    covariate_independence(its; <keyword arguments>)
+    covariate_independence(its; kwargs..)
 
 Test for independence between covariates and the event or intervention.
+
+# Arguments
+- `its::InterruptedTImeSeries`: an interrupted time seiries estimator.
+
+# Keywords
+- `n::Int`: the number of permutations for assigning observations to the pre and 
+        post-treatment periods.
 
 This is a Chow Test for covariates with p-values estimated via randomization inference. The 
 p-values are the proportion of times randomly assigning observations to the pre or 
@@ -192,22 +194,12 @@ For more information on using a Chow Test to test for structural breaks see:
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
-...
-# Arguments
-- `its::InterruptedTImeSeries`: an interrupted time seiries estimator.
-- `n::Int`: the number of permutations for assigning observations to the pre and 
-    post-treatment periods.
-...
-
-Examples
+# Examples
 ```julia
-julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
-           randn(10))
-julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-julia> estimate_causal_effect!(its)
-julia> covariate_independence(its)
- Dict("Column 1 p-value" => 0.421, "Column 5 p-value" => 0.07, "Column 3 p-value" => 0.01, 
- "Column 2 p-value" => 0.713, "Column 4 p-value" => 0.043)
+x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10))
+its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+estimate_causal_effect!(its)
+covariate_independence(its)
 ```
 """
 function covariate_independence(its::InterruptedTimeSeries; n=1000)
@@ -229,16 +221,24 @@ function covariate_independence(its::InterruptedTimeSeries; n=1000)
 end
 
 """
-    omitted_predictor(its; <keyword arguments>)
+    omitted_predictor(its; kwargs...)
 
 See how an omitted predictor/variable could change the results of an interrupted time series 
 analysis.
 
+# Arguments
+- `its::InterruptedTImeSeries`: an interrupted time seiries estimator.
+
+# Keywords
+- `n::Int`: the number of times to simulate a confounder.
+
+# Notes
 This method reestimates interrupted time series models with uniform random variables. If the 
 included covariates are good predictors of the counterfactual outcome, adding a random 
 variable as a covariate should not have a large effect on the predicted counterfactual 
 outcomes and therefore the estimated average effect.
 
+# References
 For more information on using a Chow Test to test for structural breaks see:
     Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
     interrupted time series design. No. w26080. National Bureau of Economic Research, 2019.
@@ -246,22 +246,12 @@ For more information on using a Chow Test to test for structural breaks see:
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
-...
-# Arguments
-- `its::InterruptedTImeSeries`: an interrupted time seiries estimator.
-- `n::Int`: the number of times to simulate a confounder.
-...
-
-Examples
+# Examples
 ```julia
-julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
-           randn(10))
-julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-julia> estimate_causal_effect!(its)
-julia> omitted_predictor(its)
- Dict("Mean Biased Effect/Original Effect" => -0.1943184744720332, "Median Biased 
- Effect/Original Effect" => -0.1881814122689084, "Minimum Biased Effect/Original Effect" => 
- -0.2725194360603799, "Maximum Biased Effect/Original Effect" => -0.1419197976977072)
+x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10))
+its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+estimate_causal_effect!(its)
+omitted_predictor(its)
 ```
 """
 function omitted_predictor(its::InterruptedTimeSeries; n=1000)
@@ -291,10 +281,21 @@ function omitted_predictor(its::InterruptedTimeSeries; n=1000)
 end
 
 """
-    sup_wald(its; <keyword arguments>)
+    sup_wald(its; kwargs)
 
 Check if the predicted structural break is the hypothesized structural break.
 
+# Arguments
+- `its::InterruptedTimeSeries`: an interrupted time seiries estimator.
+
+# Keywords
+- `n::Int`: the number of times to simulate a confounder.
+- `low::Float64`=0.15: the minimum proportion of data points to include before or after the 
+        tested break in the Wald supremum test.
+- `high::Float64=0.85`: the maximum proportion of data points to include before or after the 
+        tested break in the Wald supremum test.
+
+# Notes
 This method conducts Wald tests and identifies the structural break with the highest Wald 
 statistic. If this break is not the same as the hypothesized break, it could indicate an 
 anticipation effect, confounding by some other event or intervention, or that the 
@@ -303,6 +304,7 @@ approximate randomization inference and represent the proportion of times we wou
 larger Wald statistic if the data points were randomly allocated to pre and post-event 
 periods for the predicted structural break.
 
+# References
 For more information on using a Chow Test to test for structural breaks see:
     Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
     interrupted time series design. No. w26080. National Bureau of Economic Research, 2019.
@@ -310,25 +312,12 @@ For more information on using a Chow Test to test for structural breaks see:
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
 
-...
-# Arguments
-- `its::InterruptedTimeSeries`: an interrupted time seiries estimator.
-- `n::Int`: the number of times to simulate a confounder.
-- `low::Float64`=0.15: the minimum proportion of data points to include before or after the 
-    tested break in the Wald supremum test.
-- `high::Float64=0.85`: the maximum proportion of data points to include before or after the 
-    tested break in the Wald supremum test.
-...
-
-Examples
+# Examples
 ```julia
-julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
-           randn(10))
-julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-julia> estimate_causal_effect!(its)
-julia> sup_wald(its)
- Dict{String, Real}("Wald Statistic" => 58.16649796321913, "p-value" => 0.005, "Predicted 
- Break Point" => 39, "Hypothesized Break Point" => 100)
+x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10))
+its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+estimate_causal_effect!(its)
+sup_wald(its)
 ```
 """
 function sup_wald(its::InterruptedTimeSeries; low=0.15, high=0.85, n=1000)
@@ -358,26 +347,24 @@ function sup_wald(its::InterruptedTimeSeries; low=0.15, high=0.85, n=1000)
 end
 
 """
-    p_val(x, y, β; <keyword arguments>)
+    p_val(x, y, β; kwargs...)
 
 Estimate the p-value for the hypothesis that an event had a statistically significant effect 
 on the slope of a covariate using randomization inference.
 
-...
 # Arguments
 - `x::Array{<:Real}`: covariates.
 - `y::Array{<:Real}`: the outcome.
 - `β::Array{<:Real}`=0.15: the fitted weights.
-- `two_sided::Bool=false`: whether to conduct a one-sided hypothesis test.
-...
 
-Examples
+# Keywords
+- `two_sided::Bool=false`: whether to conduct a one-sided hypothesis test.
+
+# Examples
 ```julia
-julia> x, y, β = reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
-julia> p_val(x, y, β)
- 0.98
-julia> p_val(x, y, β; n=100, two_sided=true)
- 0.08534054
+x, y, β = reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
+p_val(x, y, β)
+p_val(x, y, β; n=100, two_sided=true)
 ```
 """
 function p_val(x, y, β; n=1000, two_sided=false)
@@ -406,8 +393,16 @@ function p_val(x, y, β; n=1000, two_sided=false)
 end
 
 """
-    counterfactual_consistency(m; <keyword arguments>)
+    counterfactual_consistency(m; kwargs...)
 
+# Arguments
+- `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
+
+# Keywords
+- `num_treatments=5::Int`: the maximum number of treatments to use when testing the 
+        plausability of the counterfactual consistency assumption.
+
+# Notes
 Examine the counterfactual consistency assumption. First, this function generates Jenks 
 breaks based on outcome values for the treatment group. Then, it replaces treatment statuses 
 with the numbers corresponding to each group. Next, it runs two models, one for the 
@@ -417,25 +412,17 @@ data from the mean squared error from the regression with the fake treatment sta
 this number is negative, it might indicate a violation of the counterfactual consistency 
 assumption or omitted variable bias.
 
+# References
 For a primer on G-computation and its assumptions see:
     Naimi, Ashley I., Stephen R. Cole, and Edward H. Kennedy. "An introduction to g 
     methods." International journal of epidemiology 46, no. 2 (2017): 756-762.
 
-...
-# Arguments
-- `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
-- `num_treatments=5::Int`: the maximum number of treatments to use when testing the 
-    plausability of the counterfactual consistency assumption.
-...
-
-Examples
+# Examples
 ```julia
-julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
-            vec(rand(1:100, 100, 1)))
-julia> g_computer = GComputation(x, t, y, temporal=false)
-julia> estimate_causal_effect!(g_computer)
-julia> counterfactual_consistency(g_computer)
- 2.7653668647301795
+x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
+g_computer = GComputation(x, t, y, temporal=false)
+estimate_causal_effect!(g_computer)
+counterfactual_consistency(g_computer)
 ```
 """
 function counterfactual_consistency(m; num_treatments=5)
@@ -457,18 +444,17 @@ end
 Test the sensitivity of a G-computation or doubly robust estimator or metalearner to a 
 violation of the exchangeability assumption.
 
+# References
 For more information on the E-value test see:
     VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
     introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
-Examples
+# Examples
 ```julia
-julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
-            vec(rand(1:100, 100, 1)))
-julia> g_computer = GComputation(x, t, y, temporal=false)
-julia> estimate_causal_effect!(g_computer)
-julia> e_value(g_computer)
- 1.13729886008143832
+x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
+g_computer = GComputation(x, t, y, temporal=false)
+estimate_causal_effect!(g_computer)
+e_value(g_computer)
 ```
 """
 exchangeability(model) = e_value(model)
@@ -478,18 +464,17 @@ exchangeability(model) = e_value(model)
  
 Test the sensitivity of an estimator to a violation of the exchangeability assumption.
 
+# References
 For more information on the E-value test see:
     VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
     introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
-Examples
+# Examples
 ```julia
-julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
-            vec(rand(1:100, 100, 1)))
-julia> g_computer = GComputation(x, t, y, temporal=false)
-julia> estimate_causal_effect!(g_computer)
-julia> e_value(g_computer)
- 2.2555405766985125
+x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
+g_computer = GComputation(x, t, y, temporal=false)
+estimate_causal_effect!(g_computer)
+e_value(g_computer)
 ```
 """
 function e_value(model)
@@ -507,13 +492,9 @@ end
  
 Convert a vector of counts or a continuous vector to a binary vector.
 
-Examples
+# Examples
 ```julia
-julia> binarize([1, 2, 3], 2)
-3-element Vector{Int64}:
- 0
- 0
- 1
+binarize([1, 2, 3], 2)
 ```
 """
 function binarize(x, cutoff)
@@ -531,21 +512,21 @@ end
  
 Calculate the risk ratio for an estimated model.
 
+# Notes
 If the treatment variable is not binary and the outcome variable is not continuous then the 
 treatment variable will be binarized.
 
+# References
 For more information on how other quantities of interest are converted to risk ratios see:
     VanderWeele, Tyler J., and Peng Ding. "Sensitivity analysis in observational research: 
     introducing the E-value." Annals of internal medicine 167, no. 4 (2017): 268-274.
 
-Examples
+# Examples
 ```julia
-julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
-            vec(rand(1:100, 100, 1)))
-julia> g_computer = GComputation(x, t, y, temporal=false)
-julia> estimate_causal_effect!(g_computer)
-julia> risk_ratio(g_computer)
- 2.5320694766985125
+x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
+g_computer = GComputation(x, t, y, temporal=false)
+estimate_causal_effect!(g_computer)
+risk_ratio(g_computer)
 ```
 """
 risk_ratio(mod) = risk_ratio(var_type(mod.T), mod)
@@ -627,10 +608,11 @@ function risk_ratio(::Binary, ::Continuous, mod)
 end
 
 """
-    positivity(model[,min][,max])
+    positivity(model, [,min], [,max])
  
 Find likely violations of the positivity assumption.
 
+# Notes
 This method uses an extreme learning machine or regularized extreme learning machine to 
 estimate probabilities of treatment. The returned matrix, which may be empty, are the 
 covariates that have a (near) zero probability of treatment or near zero probability of 
@@ -638,21 +620,17 @@ being assigned to the control group, whith their entry in the last column being 
 estimated treatment probability. In other words, they likely violate the positivity 
 assumption.
 
-...
 # Arguments
 - `model::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
 - `min::Float64`=1.0e-6: minimum probability of treatment for the positivity assumption.
 - `high::Float64=1-min`: the maximum probability of treatment for the positivity assumption.
-...
 
-Examples
+# Examples
 ```julia
-julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], 
-            vec(rand(1:100, 100, 1)))
-julia> g_computer = GComputation(x, t, y, temporal=false)
-julia> estimate_causal_effect!(g_computer)
-julia> positivity(g_computer)
-0×5 Matrix{Float64}
+x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
+g_computer = GComputation(x, t, y, temporal=false)
+estimate_causal_effect!(g_computer)
+positivity(g_computer)
 ```
 """
 positivity(model, min=1.0e-6, max=1-min) = positivity(model, min, max)
@@ -705,19 +683,14 @@ end
     sums_of_squares(data, num_classes)
 
 Calculate the minimum sum of squares for each data point and class for the Jenks breaks 
-    algorithm.
+algorithm.
 
+# Notes
 This should not be called by the user.
 
-Examples
+# Examples
 ```julia
-julia> sums_of_squares([1, 2, 3, 4, 5], 2)
-5×2 Matrix{Real}:
- 0.0       0.0
- 0.25      0.25
- 0.666667  0.666667
- 1.25      1.16667
- 2.0       1.75
+sums_of_squares([1, 2, 3, 4, 5], 2)
 ```
 """
 function sums_of_squares(data, num_classes=5)
@@ -745,24 +718,13 @@ end
 
 Compute class pointers that minimize the sum of squares for Jenks breaks.
 
+# Notes
 This should not be callled by the user.
 
-Examples
+# Examples
 ```julia
-julia> sums_squares = sums_of_sqs::Matrix{Float64}
-5×2 Matrix{Float64}:
- 0.0       0.0
- 0.25      0.25
- 0.666667  0.666667
- 1.25      1.16667
- 2.0       1.75
-julia> class_pointers([1, 2, 3, 4, 5], 2, sums_squares)
-5×2 Matrix{Int64}:
- 1  0
- 1  1
- 1  1
- 1  1
- 1  1
+sums_squares = sums_of_squares([1, 2, 3, 4, 5], 2)
+class_pointers([1, 2, 3, 4, 5], 2, sums_squares)
 ```
 """
 function class_pointers(data, num_classes, sums_of_sqs)
@@ -790,29 +752,14 @@ end
 
 Determine break points from class assignments.
 
+# Notes
 This should not be called by the user.
 
-Examples
+# Examples
 ```julia
-julia> data = [1, 2, 3, 4, 5]
-[1, 2, 3, 4, 5]
-5-element Vector{Int64}:
- 1
- 2
- 3
- 4
- 5
-julia> ptr = class_pointers([1, 2, 3, 4, 5], 2, sums_of_squares([1, 2, 3, 4, 5], 2))
-5×2 Matrix{Int64}:
- 1  28
- 1   1
- 1   1
- 1   1
- 1   1
-julia> backtrack_to_find_breaks([1, 2, 3, 4, 5], ptr)
-2-element Vector{Int64}:
- 1
- 4
+data = [1, 2, 3, 4, 5]
+ptr = class_pointers([1, 2, 3, 4, 5], 2, sums_of_squares([1, 2, 3, 4, 5], 2))
+backtrack_to_find_breaks([1, 2, 3, 4, 5], ptr)
 ```
 """
 function backtrack_to_find_breaks(data, class_pointers)
@@ -841,12 +788,12 @@ end
 
 Calculate the variance of some numbers.
 
-Note this function does not use Besel's correction.
+# Notes
+This function does not use Besel's correction.
 
-Examples
+# Examples
 ```julia
-julia> variance([1, 2, 3, 4, 5])
-2.0
+variance([1, 2, 3, 4, 5])
 ```
 """
 function variance(data)
@@ -861,22 +808,16 @@ end
 
 Find the best number of splits for Jenks breaks.
 
+# Notes
 This function finds the best number of splits by finding the number of splits that results 
-    in the greatest decrease in the slope of the line between itself and its GVF and the 
-    next higher number of splits and its GVF. This is the same thing as the elbow method.
+in the greatest decrease in the slope of the line between itself and its GVF and the next 
+higher number of splits and its GVF. This is the same thing as the elbow method.
 
 This should nto be called by the user.
 
-Examples
+# Examples
 ```julia
-julia> best_splits(collect(1:10), 5)
-10-element Vector{Int64}:
- 1
- 3
- 3
- ⋮
- 3
- 4
+best_splits(collect(1:10), 5)
 ```
 """
 function best_splits(data, num_classes)
@@ -898,15 +839,12 @@ end
 Group data points into vectors such that data points assigned to the same class are in the 
 same vector.
 
+# Notes
 This should nto be called by the user.
 
-Examples
+# Examples
 ```julia
-julia> group_by_class([1, 2, 3, 4, 5], [1, 1, 1, 2, 3])
-3-element Vector{Vector{Real}}:
- [1, 2, 3]
- [4]
- [5]
+group_by_class([1, 2, 3, 4, 5], [1, 1, 1, 2, 3])
 ```
 """
 function group_by_class(data, classes)
@@ -931,13 +869,9 @@ end
 
 Generate Jenks breaks for a vector of real numbers.
 
-Examples
+# Examples
 ```julia
-julia> jenks_breaks([1, 2, 3, 4, 5], 3)
-3-element Vector{Int64}:
- 1
- 3
- 4
+jenks_breaks([1, 2, 3, 4, 5], 3)
 ```
 """
 function jenks_breaks(data, num_classes)
@@ -955,15 +889,9 @@ end
 Generate fake treatment statuses corresponding to the classes assigned by the Jenks breaks 
 algorithm.
 
-Examples
+# Examples
 ```julia
-julia> fake_treatments([1, 2, 3, 4, 5], 4)
-5-element Vector{Int64}:
- 1
- 2
- 3
- 4
- 4
+fake_treatments([1, 2, 3, 4, 5], 4)
 ```
 """
 function fake_treatments(data, num_classes)
@@ -993,10 +921,9 @@ end
 
 Calculate the sum of squared deviations for array mean for a set of sub arrays.
 
-Examples
+# Examples
 ```julia
-julia> sdam([5, 4, 9, 10]) 
-26.0
+sdam([5, 4, 9, 10])
 ```
 """
 function sdam(x::Vector{T}) where T <: Real
@@ -1010,10 +937,8 @@ end
 
 Calculate the sum of squared deviations for class means for a set of sub arrays.
 
-Examples
-```julia
-julia> scdm([[4], [5, 9, 10]]) 
-14.0
+# Examples
+```juliascdm([[4], [5, 9, 10]])
 ```
 """
 scdm(x::Vector{Vector{T}}) where T <: Real = @fastmath sum(sdam.(x))
@@ -1023,10 +948,9 @@ scdm(x::Vector{Vector{T}}) where T <: Real = @fastmath sum(sdam.(x))
 
 Calculate the goodness of variance fit for a set of sub vectors.
 
-Examples
+# Examples
 ```julia
-julia> gvf([[4, 5], [9, 10]])
-0.96153846153
+gvf([[4, 5], [9, 10]])
 ```
 """
 function gvf(x::Vector{Vector{T}}) where T <: Real

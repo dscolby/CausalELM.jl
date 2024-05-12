@@ -8,31 +8,21 @@ abstract type ExtremeLearningMachine end
 
 Construct an ExtremeLearner for fitting and prediction.
 
+# Notes
 While it is possible to use an ExtremeLearner for regression, it is recommended to use 
 RegularizedExtremeLearner, which imposes an L2 penalty, to reduce multicollinearity.
 
+# References
 For more details see: 
     Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
     and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
 
 See also ['RegularizedExtremeLearner'](@ref).
 
-Examples
+# Examples
 ```julia
-julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
-4×2 Matrix{Float64}:
- 1.0  1.0
- 0.0 1.0
- 0.0 0.0
- 1.0 0.0
-julia> y = [0.0, 1.0, 0.0, 1.0]
- 4-element Vector{Int64}:
- 0.0
- 1.0
- 0.0
- 1.0
-julia> m1 = ExtremeLearner(x, y, 10, σ)
-Extreme Learning Machine with 10 hidden neurons
+x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+m1 = ExtremeLearner(x, y, 10, σ)
 ```
 """
 mutable struct ExtremeLearner <: ExtremeLearningMachine
@@ -59,22 +49,10 @@ end
 
 Construct a RegularizedExtremeLearner for fitting and prediction.
 
-Examples
+# Examples
 ```julia
-julia> x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
-4×2 Matrix{Float64}:
- 1.0  1.0
- 0.0 1.0
- 0.0 0.0
- 1.0 0.0
-julia> y = [0.0, 1.0, 0.0, 1.0]
-4-element Vector{Int64}:
- 0.0
- 1.0
- 0.0
- 1.0
-julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
-Regularized Extreme Learning Machine with 10 hidden neurons
+x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+m1 = RegularizedExtremeLearner(x, y, 10, σ)
 ```
 """
 mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
@@ -102,23 +80,15 @@ end
 
 Make predictions with an ExtremeLearner.
 
+# References
 For more details see: 
     Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
     and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
 
-Examples
+# Examples
 ```julia
-julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden neurons
- julia> f1 = fit!(m1)
- 10-element Vector{Float64}
- -4.403356409043448
- -5.577616954029608
- -2.1732800642523595
- ⋮
- -2.4741301876094655
- 40.642730531608635
- -11.058942121275233
+x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+m1 = ExtremeLearner(x, y, 10, σ)
 ```
 """
 function fit!(model::ExtremeLearner)
@@ -134,24 +104,17 @@ end
 
 Fit a Regularized Extreme Learner.
 
+# References
 For more details see: 
     Li, Guoqiang, and Peifeng Niu. "An enhanced extreme learning machine based on ridge 
     regression for regression." Neural Computing and Applications 22, no. 3 (2013): 
     803-810.
 
-Examples
+# Examples
 ```julia
-julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
-Regularized Extreme Learning Machine with 10 hidden neurons
-julia> f1 = fit!(m1)
-10-element Vector{Float64}
- -4.403356409043448
- -5.577616954029608
- -2.1732800642523595
- ⋮
- -2.4741301876094655
- 40.642730531608635
- -11.058942121275233
+x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+m1 = RegularizedExtremeLearner(x, y, 10, σ)
+f1 = fit!(m1)
 ```
 """
 function fit!(model::RegularizedExtremeLearner)
@@ -171,29 +134,17 @@ end
 
 Use an ExtremeLearningMachine to make predictions.
 
+# References
 For more details see: 
     Huang G-B, Zhu Q-Y, Siew C. Extreme learning machine: theory and applications. 
     Neurocomputing. 2006;70:489–501. https://doi.org/10.1016/j.neucom.2005.12.126
 
-Examples
+# Examples
 ```julia
-julia> m1 = ExtremeLearner(x, y, 10, σ)
-Extreme Learning Machine with 10 hidden neurons
-julia> f1 = fit(m1, sigmoid)
-10-element Vector{Float64}
- -4.403356409043448
- -5.577616954029608
- -2.1732800642523595
- ⋮
- -2.4741301876094655
- 40.642730531608635
- -11.058942121275233
+x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+m1 = ExtremeLearner(x, y, 10, σ)
+f1 = fit(m1, sigmoid)
 julia> predict(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
-4-element Vector{Float64}
- 9.811656638113011e-16
- 0.9999999999999962
- -9.020553785284482e-17
- 0.9999999999999978
 ```
 """
 function predict(model::ExtremeLearningMachine, X) 
@@ -209,30 +160,18 @@ end
 
 Use an ExtremeLearningMachine to predict the counterfactual.
 
-This should be run with the observed covariates. To use synthtic data for what-if 
-    scenarios use predict.
+# Notes
+This should be run with the observed covariates. To use synthtic data for what-if scenarios 
+use predict.
 
 See also [`predict`](@ref).
 
-Examples
+# Examples
 ```julia
-julia> m1 = ExtremeLearner(x, y, 10, σ)
- Extreme Learning Machine with 10 hidden neurons
- julia> f1 = fit(m1, sigmoid)
- 10-element Vector{Float64}
- -4.403356409043448
- -5.577616954029608
- -2.1732800642523595
- ⋮
- -2.4741301876094655
- 40.642730531608635
- -11.058942121275233
-julia> predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
-4-element Vector{Float64}
- 9.811656638113011e-16
- 0.9999999999999962
- -9.020553785284482e-17
- 0.9999999999999978
+x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+m1 = ExtremeLearner(x, y, 10, σ)
+f1 = fit(m1, sigmoid)
+predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
 ```
 """
 function predict_counterfactual!(model::ExtremeLearningMachine, X)
@@ -246,34 +185,20 @@ end
 
 Conduct a placebo test.
 
+# Notes
 This method makes predictions for the post-event or post-treatment period using data 
 in the pre-event or pre-treatment period and the post-event or post-treament. If there
 is a statistically significant difference between these predictions the study design may
 be flawed. Due to the multitude of significance tests for time series data, this function
 returns the predictions but does not test for statistical significance.
 
-Examples
+# Examples
 ```julia
-julia> m1 = ExtremeLearner(x, y, 10, σ)
-Extreme Learning Machine with 10 hidden neurons
-julia> f1 = fit(m1, sigmoid)
-10-element Vector{Float64}
- -4.403356409043448
- -5.577616954029608
- -2.1732800642523595
- ⋮
- -2.4741301876094655
- 40.642730531608635
- -11.058942121275233
-julia> predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
-4-element Vector{Float64}
- 9.811656638113011e-16
- 0.9999999999999962
- -9.020553785284482e-17
- 0.9999999999999978
-julia> placebo_test(m1)
- ([9.811656638113011e-16, 0.9999999999999962, -9.020553785284482e-17, 0.9999999999999978],
- [0.5, 0.4, 0.3, 0.2])
+x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+m1 = ExtremeLearner(x, y, 10, σ)
+f1 = fit(m1, sigmoid)
+predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+placebo_test(m1)
 ```
 """
 function placebo_test(model::ExtremeLearningMachine)
@@ -285,23 +210,25 @@ function placebo_test(model::ExtremeLearningMachine)
 end
 
 """
-    ridge_constant(model, iterations)
+    ridge_constant(model, [,iterations])
 
 Calculate the L2 penalty for a regularized extreme learning machine using generalized cross 
-    validation with successive halving.
+validation with successive halving.
 
+# Arguments
+- `model::RegularizedExtremeLearner`: a regularized extreme learning machine
+- `iterations::Int`: the number of iterations to perform for successive halving.
+
+# References
 For more information see: 
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
-Examples
+# Examples
 ```julia
-julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
-Extreme Learning Machine with 10 hidden neurons
-julia> ridge_constant(m1)
- 0.26789338524662887
-julia> ridge_constant(m1, iterations=20)
- 0.0009765634990234375
+m1 = RegularizedExtremeLearner(x, y, 10, σ)
+ridge_constant(m1)
+ridge_constant(m1, iterations=20)
 ```
 """
 function ridge_constant(model::RegularizedExtremeLearner, iterations::Int=10)
@@ -338,15 +265,15 @@ end
 Calculate the weights and biases for an extreme learning machine or regularized extreme 
 learning machine.
 
+# References
 For details see;
     Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
     and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
 
-Examples
+# Examples
 ```julia
-julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
-Extreme Learning Machine with 10 hidden neurons
-julia> set_weights_biases(m1)
+m1 = RegularizedExtremeLearner(x, y, 10, σ)
+set_weights_biases(m1)
 ```
 """
 function set_weights_biases(model::ExtremeLearningMachine)

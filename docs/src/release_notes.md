@@ -9,6 +9,7 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 learning and doubly robust estimation [39](https://github.com/dscolby/CausalELM.jl/issues/39)
 ### Changed
 *   Removed the estimate_causal_effect! call in the model constructor docstrings [#35](https://github.com/dscolby/CausalELM.jl/issues/35)
+*   Standardized and improved docstrings [#44](https://github.com/dscolby/CausalELM.jl/issues/44)
 ### Fixed
 *   Clipped probabilities between 0 and 1 for estimators that use predictions of binary variables [#36](https://github.com/dscolby/CausalELM.jl/issues/36)
 *   Fixed sample splitting and corss fitting procedure for doubly robust estimation [#42](https://github.com/dscolby/CausalELM.jl/issues/42)

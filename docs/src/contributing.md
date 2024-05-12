@@ -45,5 +45,16 @@ reference the relevant issue/s and ensure your code follows the guidelines below
 
 *   Make generous use of whitespace.
 
+*   All functions should include docstrings.
+
+    **  Docstrings may contain arguments, keywords, notes, references, and examples sections 
+        in that order but some sections may be skipped.
+
+    **  At a minimum, docstrings should contain the signature/s, a short description, and 
+        examples
+
+    **  Each section should include its own level one header.
+
 ## Updating or Fixing Documentation
-To propose a change to the documentation please submit a [pull request](https://github.com/dscolby/CausalELM.jl/pulls).
+To propose a change to the documentation please submit an [issue](https://github.com/dscolby/CausalELM.jl/issues) 
+or [pull request](https://github.com/dscolby/CausalELM.jl/pulls).

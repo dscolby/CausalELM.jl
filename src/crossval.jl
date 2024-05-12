@@ -3,11 +3,11 @@ using Random: randperm
 """
     generate_folds(X, Y, folds)
 
-Creates folds for cross validation.
+Create folds for cross validation.
 
-Examples
+# Examples
 ```julia
-julia> xfolds, y_folds = generate_folds(zeros(20, 2), zeros(20), 5)
+xfolds, y_folds = generate_folds(zeros(20, 2), zeros(20), 5)
 ```
 """
 function generate_folds(X, Y, folds)
@@ -36,11 +36,11 @@ end
 """
     generate_folds(X, Y, folds)
 
-Creates rolling folds for cross validation of time series data.
+Create rolling folds for cross validation of time series data.
 
-Examples
+# Examples
 ```julia
-julia> xfolds, y_folds = generate_temporal_folds(zeros(20, 2), zeros(20), 5, temporal=true)
+xfolds, y_folds = generate_temporal_folds(zeros(20, 2), zeros(20), 5, temporal=true)
 ```
 """
 function generate_temporal_folds(X, Y, folds=5)
@@ -59,11 +59,10 @@ function generate_temporal_folds(X, Y, folds=5)
 end
 
 """
-    validation_loss(xtrain, ytrain, xtest, ytest, nodes, metric; <keyword arguments>)
+    validation_loss(xtrain, ytrain, xtest, ytest, nodes, metric; kwargs...)
 
 Calculate a validation metric for a single fold in k-fold cross validation.
 
-...
 # Arguments
 - `xtrain::Any`: an array of features to train on.
 - `ytrain::Any`: an array of training labels.
@@ -71,15 +70,15 @@ Calculate a validation metric for a single fold in k-fold cross validation.
 - `ytrain::Any`: an array of testing labels.
 - `nodes::Int`: the number of neurons in the extreme learning machine.
 - `metric::Function`: the validation metric to calculate.
+
+# Keywords
 - `activation::Function=relu`: the activation function to use.
 - `regularized::Function=true`: whether to use L2 regularization.
-...
 
-Examples
+# Examples
 ```julia
-julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
-julia> validation_loss(x, y, 5, accuracy, 3)
-0.0
+x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
+validation_loss(x, y, 5, accuracy, 3)
 ```
 """
 function validation_loss(xtrain, ytrain, xtest, ytest, nodes, metric; activation=relu, 
@@ -100,7 +99,8 @@ end
 """
     cross_validate(X, Y, neurons, metric, activation, regularized, folds, temporal)
 
-...
+Calculate a validation metric for k folds using a single set of hyperparameters.
+
 # Arguments
 - `X::Array`: an array of features to train on.
 - `Y::Vector`: a vector of labels to train on.
@@ -110,15 +110,11 @@ end
 - `regularized::Function=true`: whether to use L2 regularization
 - `folds::Int`: the number of folds to use for cross validation.
 - `temporal::Function=true`: whether the data is of a time series or panel nature.
-...
 
-Calculate a validation metric for k folds using a single set of hyperparameters.
-
-Examples
+# Examples
 ```julia
-julia> x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
-julia> cross_validate(x, y, 5, accuracy)
-0.0257841765251021
+x = rand(100, 5); y = Float64.(rand(100) .> 0.5)
+cross_validate(x, y, 5, accuracy)
 ```
 """
 function cross_validate(X, Y, neurons, metric, activation, regularized, folds, temporal)
@@ -151,6 +147,7 @@ end
 
 Compute the best number of neurons for an Extreme Learning Machine.
 
+# Notes
 The procedure tests networks with numbers of neurons in a sequence whose length is given 
 by iterations on the interval [min_neurons, max_neurons]. Then, it uses the networks 
 sizes and validation errors from the sequence to predict the validation error or metric 
@@ -158,7 +155,6 @@ for every network size between min_neurons and max_neurons using the function
 approximation ability of an Extreme Learning Machine. Finally, it returns the network 
 size with the best predicted validation error or metric.
 
-...
 # Arguments
 - `X::Array`: an array of features to train on.
 - `Y::Vector`: a vector of labels to train on.
@@ -173,12 +169,10 @@ size with the best predicted validation error or metric.
 - `iterations::Int`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
 - `elm_size::Int`: the number of nuerons in the validation loss approximator network.
-...
 
-Examples
+# Examples
 ```julia
-julia> best_size(rand(100, 5), rand(100), mse, "regression")
-11
+best_size(rand(100, 5), rand(100), mse, "regression")
 ```
 """
 function best_size(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, 
@@ -208,20 +202,10 @@ end
 
 Shuffles covariates and outcome vector for cross validation.
 
-Examples
+# Examples
 ```julia
-julia> x, y, t = rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> shuffle_data(x, y, t)
-([0.6124923085225416 0.2713900065807924 … 0.6094796972512194 0.6067966603192685; 
-0.7186612932571539 0.8047878363606299 … 0.9787878554455594 0.885819212905816; … ; 
-0.773543733306263 0.10880091279797399 … 0.10525512055751185 0.6303472234021711; 
-0.10845217539341823 0.9911071602976902 … 0.014754069216096566 0.5256103389041187], 
-[0.4302689295553531, 0.2396683446618325, 0.7954433314513768, 0.7191098533903124, 
-0.8168563428651753, 0.7064320936729905, 0.048113106979693065, 0.3102938851371281, 
-0.6246380539228858, 0.3510284321966193  …  0.5324022501182528, 0.8354720951777901, 
-0.7526652774981095, 0.3639742621882005, 0.21030903031988923, 0.6936212944871928, 
-0.3910592143534404, 0.15152013651215301, 0.38891692138831735, 0.08827711410802941], 
-Float64[0, 0, 1, 1, 0, 1, 0, 0, 1, 0  …  0, 0, 1, 1, 1, 1, 0, 1, 0, 0])
+x, y, t = rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+shuffle_data(x, y, t)
 ```
 """
 function shuffle_data(X, Y)

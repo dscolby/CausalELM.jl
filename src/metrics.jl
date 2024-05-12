@@ -9,10 +9,8 @@ See also [`mae`](@ref).
 
 Examples
 ```julia
-julia> mse([0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
- 0.0
-julia> mse([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
- 4.0
+mse([0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
+mse([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
 ```
 """
 function mse(y, ŷ) 
@@ -30,12 +28,10 @@ Calculate the mean absolute error
 
 See also [`mse`](@ref).
 
-Examples
+# Examples
 ```julia
-julia> mae([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
- 2.0
-julia> mae([1.0, 1.0, 1.0], [2.0, 2.0, 2.0])
- 1.0
+mae([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
+mae([1.0, 1.0, 1.0], [2.0, 2.0, 2.0])
 ```
 """
 function mae(y, ŷ) 
@@ -51,12 +47,10 @@ end
 
 Calculate the accuracy for a classification task
 
-Examples
+# Examples
 ```julia
-julia> accuracy([1, 1, 1, 1], [0, 1, 1, 0])
- 0.5
-julia> accuracy([1, 2, 3, 4], [1, 1, 1, 1])
- 0.25
+accuracy([1, 1, 1, 1], [0, 1, 1, 0])
+accuracy([1, 2, 3, 4], [1, 1, 1, 1])
 ```
 """
 function accuracy(y, ŷ)
@@ -80,12 +74,10 @@ Calculate the precision for a classification task
 
 See also [`recall`](@ref).
 
-Examples
+# Examples
 ```julia
-julia> precision([0, 1, 0, 0], [0, 1, 1, 0])
- 0.5
-julia> precision([0, 1, 0, 0], [0, 1, 0, 0])
- 1.0
+precision([0, 1, 0, 0], [0, 1, 1, 0])
+precision([0, 1, 0, 0], [0, 1, 0, 0])
 ```
 """
 function Base.precision(y::Array{Int64}, ŷ::Array{Int64})
@@ -109,12 +101,10 @@ Calculate the recall for a classification task
 
 See also [`precision`](@ref).
 
-Examples
+# Examples
 ```julia
-julia> recall([1, 2, 1, 3, 0], [2, 2, 2, 3, 1])
- 0.5
-julia> recall([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
- 1.0
+recall([1, 2, 1, 3, 0], [2, 2, 2, 3, 1])
+recall([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
 ```
 """
 function recall(y, ŷ)
@@ -136,12 +126,10 @@ end
 
 Calculate the F1 score for a classification task
 
-Examples
+# Examples
 ```julia
-julia> F1([1, 2, 1, 3, 0], [2, 2, 2, 3, 1])
- 0.4
-julia> F1([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
- 0.47058823529411764
+F1([1, 2, 1, 3, 0], [2, 2, 2, 3, 1])
+F1([1, 2, 1, 3, 2], [2, 2, 2, 3, 1])
 ```
 """
 function F1(y, ŷ)
@@ -154,17 +142,10 @@ end
 
 Generate a confusion matrix
 
-Examples
+# Examples
 ```julia
-julia> confusion_matrix([1, 1, 1, 1, 0], [1, 1, 1, 1, 0])
-2×2 Matrix{Int64}:
- 1  0
- 0 4
-julia> confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2])
-3×3 Matrix{Int64}:
- 1  0 0
- 0 4 0
- 0 0 1
+confusion_matrix([1, 1, 1, 1, 0], [1, 1, 1, 1, 0])
+confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2])
 ```
 """
 function confusion_matrix(y, ŷ)

@@ -2,17 +2,18 @@
 abstract type  CausalEstimator end
 
 """
-    InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; <keyword arguments>)
+    InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; kwargs...)
 
 Initialize an interrupted time series estimator. 
 
-...
 # Arguments
 - `X₀::Any`: an array or DataFrame of covariates from the pre-treatment period.
 - `Y₁::Any`: an array or DataFrame of outcomes from the pre-treatment period.
 - `X₁::Any`: an array or DataFrame of covariates from the post-treatment period.
-- `Y₀::Any`: an array or DataFrame of outcomes from the post-treatment period.
+- `Y₁::Any`: an array or DataFrame of outcomes from the post-treatment period.
 - `regularized::Function=true`: whether to use L2 regularization
+
+# Keywords
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
 - `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
@@ -22,7 +23,6 @@ Initialize an interrupted time series estimator.
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
-...
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
@@ -40,16 +40,16 @@ For details and a derivation of the generalized cross validation estimator see:
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
-Examples
+# Examples
 ```julia
-julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-julia> m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
-julia> x₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100))
-julia> y₀_df = DataFrame(y=rand(100))
-julia> x₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)) 
-julia> y₁_df = DataFrame(y=rand(100))
-julia> m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
+X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
+x₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100))
+y₀_df = DataFrame(y=rand(100))
+x₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)) 
+y₁_df = DataFrame(y=rand(100))
+m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 ```
 """
 mutable struct InterruptedTimeSeries
@@ -104,15 +104,16 @@ function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=true, activat
 end
 
 """
-    GComputation(X, T, Y; <keyword arguments>)
+    GComputation(X, T, Y; kwargs...)
 
 Initialize a G-Computation estimator.
 
-...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
 - `task::String`: either regression or classification.
 - `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
     treatment effect.
@@ -126,7 +127,6 @@ Initialize a G-Computation estimator.
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
-...
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
@@ -147,17 +147,17 @@ For details and a derivation of the generalized cross validation estimator see:
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-julia> m1 = GComputation(X, T, Y)
-julia> m2 = GComputation(X, T, Y; task="regression")
-julia> m3 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE)
-julia> m4 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE, 
-julia> regularized=true)
-julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
-julia> m5 = GComputation(x_df, t_df, y_df)
+X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+m1 = GComputation(X, T, Y)
+m2 = GComputation(X, T, Y; task="regression")
+m3 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE)
+m4 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE", regularized=true)
+
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
+m5 = GComputation(x_df, t_df, y_df)
 ```
 """
 mutable struct GComputation <: CausalEstimator
@@ -215,15 +215,16 @@ function GComputation(X, T, Y; task="regression", quantity_of_interest="ATE",
 end
 
 """
-    DoubleMachineLearning(X, T, Y; <keyword arguments>)
+    DoubleMachineLearning(X, T, Y; kwargs...)
 
 Initialize a double machine learning estimator with cross fitting.
 
-...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates of interest.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
 - `W::Any`: an array or dataframe of all possible confounders.
 - `task::String`: either regression or classification.
 - `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
@@ -238,13 +239,16 @@ Initialize a double machine learning estimator with cross fitting.
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
-...
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
 cross validation where the maximum number of iterations is 2 * folds for the successive 
 halving procedure. However, if the penalty in on iteration is approximately the same as in 
 the previous penalty, then the procedure will stop early.
+
+Unlike other estimators, this method does not support time series or panel data. This method 
+also does not work as well with smaller datasets because it estimates separate outcome 
+models for the treatment and control groups.
 
 # References
 For more information see:
@@ -257,14 +261,15 @@ For details and a derivation of the generalized cross validation estimator see:
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> m2 = DoubleMachineLearning(X, T, Y; task="regression")
-julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-julia> m3 = DoubleMachineLearning(x_df, t_df, y_df)
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = DoubleMachineLearning(X, T, Y)
+m2 = DoubleMachineLearning(X, T, Y; task="regression")
+
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+m3 = DoubleMachineLearning(x_df, t_df, y_df)
 ```
 """
 mutable struct DoubleMachineLearning <: CausalEstimator
@@ -316,12 +321,11 @@ end
 
 Estimate the effect of an event relative to a predicted counterfactual.
 
-Examples
+# Examples
 ```julia
-julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-julia> estimate_causal_effect!(m1)
- 0.25714308
+X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(its::InterruptedTimeSeries)
@@ -352,18 +356,18 @@ end
 
 Estimate a causal effect of interest using G-Computation.
 
+# Notes
 If treatents are administered at multiple time periods, the effect will be estimated as the 
 average difference between the outcome of being treated in all periods and being treated in 
-no periods.For example, given that catividuals 1, 2, ..., i ∈ I recieved either a treatment 
+no periods. For example, given that ividuals 1, 2, ..., i ∈ I recieved either a treatment 
 or a placebo in p different periods, the model would estimate the average treatment effect 
 as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0, Xₚ].
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = GComputation(X, T, Y)
-julia> estimate_causal_effect!(m1)
- 0.31067439
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = GComputation(X, T, Y)
+estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(g::GComputation)
@@ -399,20 +403,15 @@ end
 
 Estimate a causal effect of interest using double machine learning.
 
-Unlike other estimators, this method does not support time series or panel data. This method 
-also does not work as well with smaller datasets because it estimates separate outcome 
-models for the treatment and control groups.
-
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> estimate_causal_effect!(m1)
- 0.31067439
-julia> W = rand(100, 6)
-julia> m2 = DoubleMachineLearning(X, T, Y, W=W)
-julia> estimate_causal_effect!(m2)
- 0.7628583414839659
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = DoubleMachineLearning(X, T, Y)
+estimate_causal_effect!(m1)
+
+W = rand(100, 6)
+m2 = DoubleMachineLearning(X, T, Y, W=W)
+estimate_causal_effect!(m2)
 ```
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
@@ -432,24 +431,22 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
 end
 
 """
-    estimate_effect!(DML, cate=false)
+    estimate_effect!(DML, [,cate])
 
 Estimate a treatment effect using double machine learning.
 
+# Notes
 This method should not be called directly.
 
-...
 # Arguments
 - `DML::DoubleMachineLearning`: the DoubleMachineLearning struct to estimate the effect for.
 - `cate::Bool=false`: whether to estimate the cate.
-...
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> estimate_effect!(m1)
- 0.31067439
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = DoubleMachineLearning(X, T, Y)
+estimate_effect!(m1)
 ```
 """
 function estimate_effect!(DML::DoubleMachineLearning, cate=false)
@@ -484,24 +481,17 @@ end
 
 Predict treatment and outcome residuals for doubl machine learning.
 
+# Notes
 This method should not be called directly.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> x_train, x_test = X[1:80, :], X[81:end, :]
-julia> y_train, y_test = Y[1:80], Y[81:end]
-julia> t_train, t_test = T[1:80], T[81:100]
-julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
-100-element Vector{Float64}
- 0.6944714802199426
- 0.6102318624294397
- 0.9563033347529682
- ⋮
- 0.14016601301278353, 
- 0.2217194742841072
- 0.199372555924635
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+x_train, x_test = X[1:80, :], X[81:end, :]
+y_train, y_test = Y[1:80], Y[81:end]
+t_train, t_test = T[1:80], T[81:100]
+m1 = DoubleMachineLearning(X, T, Y)
+predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 ```
 """
 function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train, y_test, 
@@ -530,20 +520,14 @@ end
 
 Make folds for cross fitting for a double machine learning estimator.
 
+# Notes
 This method should not be called directly.
 
-...
-# Arguments
-- `DML::DoubleMachineLearning`: the DoubleMachineLearning struct to estimate the effect for.
-...
-
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> make_folds(m1)
- ([[[0.8737507878554287 0.7398090999242162 … 0.45708199254415094 0.6850379444957528; 
- … 0.08313470408726942 0.365598632217206]]])
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = DoubleMachineLearning(X, T, Y)
+make_folds(m1)
 ```
 """
 function make_folds(D)
@@ -560,13 +544,9 @@ end
 
 Calculates a cumulative moving average.
 
-Examples
+# Examples
 ```julia
-julia> moving_average([1, 2, 3])
-3-element Vector{Float64}
- 1.0
- 1.5
- 2.0
+moving_average([1, 2, 3])
 ```
 """
 function moving_average(x)

@@ -2,15 +2,16 @@
 abstract type Metalearner end
 
 """
-    SLearner(X, T, Y; <keyword arguments>)
+    SLearner(X, T, Y; kwargs...)
 
 Initialize a S-Learner.
 
-...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
 - `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
@@ -22,7 +23,6 @@ Initialize a S-Learner.
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
-...
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
@@ -40,15 +40,16 @@ For details and a derivation of the generalized cross validation estimator see:
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = SLearner(X, T, Y)
-julia> m2 = SLearner(X, T, Y; task="regression")
-julia> m3 = SLearner(X, T, Y; task="regression", regularized=true)
-julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-julia> m4 = SLearner(x_df, t_df, y_df)
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = SLearner(X, T, Y)
+m2 = SLearner(X, T, Y; task="regression")
+m3 = SLearner(X, T, Y; task="regression", regularized=true)
+
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+m4 = SLearner(x_df, t_df, y_df)
 ```
 """
 mutable struct SLearner <: Metalearner
@@ -69,15 +70,16 @@ mutable struct SLearner <: Metalearner
 end
 
 """
-    TLearner(X, T, Y; <keyword arguments>)
+    TLearner(X, T, Y; kwargs...)
 
 Initialize a T-Learner.
 
-...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
 - `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
@@ -89,7 +91,6 @@ Initialize a T-Learner.
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
-...
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
@@ -107,15 +108,16 @@ For details and a derivation of the generalized cross validation estimator see:
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = TLearner(X, T, Y)
-julia> m2 = TLearner(X, T, Y; task="regression")
-julia> m3 = TLearner(X, T, Y; task="regression", regularized=true)
-julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-julia> m4 = TLearner(x_df, t_df, y_df)
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = TLearner(X, T, Y)
+m2 = TLearner(X, T, Y; task="regression")
+m3 = TLearner(X, T, Y; task="regression", regularized=true)
+
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+m4 = TLearner(x_df, t_df, y_df)
 ```
 """
 mutable struct TLearner <: Metalearner
@@ -168,15 +170,16 @@ function TLearner(X, T, Y; task="regression", regularized=false, activation=relu
 end
 
 """
-    XLearner(X, T, Y; <keyword arguments>)
+    XLearner(X, T, Y; kwargs...)
 
 Initialize an X-Learner.
 
-...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
 - `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
@@ -188,7 +191,6 @@ Initialize an X-Learner.
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
-...
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
@@ -206,15 +208,16 @@ For details and a derivation of the generalized cross validation estimator see:
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = XLearner(X, T, Y)
-julia> m2 = XLearner(X, T, Y; task="regression")
-julia> m3 = XLearner(X, T, Y; task="regression", regularized=true)
-julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-julia> m4 = XLearner(x_df, t_df, y_df)
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = XLearner(X, T, Y)
+m2 = XLearner(X, T, Y; task="regression")
+m3 = XLearner(X, T, Y; task="regression", regularized=true)
+
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+m4 = XLearner(x_df, t_df, y_df)
 ```
 """
 mutable struct XLearner <: Metalearner
@@ -269,15 +272,16 @@ function XLearner(X, T, Y; task="regression", regularized=false, activation=relu
 end
 
 """
-    RLearner(X, T, Y; <keyword arguments>)
+    RLearner(X, T, Y; kwargs...)
 
 Initialize an R-Learner.
 
-...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates of interest.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
 - `W::Any` : an array of all possible confounders.
 - `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
@@ -290,7 +294,6 @@ Initialize an R-Learner.
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
-...
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
@@ -298,7 +301,7 @@ cross validation where the maximum number of iterations is 2 * folds for the suc
 halving procedure. However, if the penalty in on iteration is approximately the same as in 
 the previous penalty, then the procedure will stop early.
 
-# References
+## References
 For an explanation of R-Learner estimation see:
     Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
     effects." Biometrika 108, no. 2 (2021): 299-319.
@@ -307,16 +310,18 @@ For details and a derivation of the generalized cross validation estimator see:
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = RLearner(X, T, Y)
-julia> m2 = RLearner(X, T, Y; t_cat=true)
-julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-julia> m4 = RLearner(x_df, t_df, y_df)
-julia> w = rand(100, 6)
-julia> m5 = RLearner(X, T, Y, W=w)
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = RLearner(X, T, Y)
+m2 = RLearner(X, T, Y; t_cat=true)
+
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+m4 = RLearner(x_df, t_df, y_df)
+
+w = rand(100, 6)
+m5 = RLearner(X, T, Y, W=w)
 ```
 """
 mutable struct RLearner <: Metalearner
@@ -336,15 +341,16 @@ mutable struct RLearner <: Metalearner
 end
 
 """
-    DoublyRobustLearner(X, T, Y; <keyword arguments>)
+    DoublyRobustLearner(X, T, Y; kwargs...)
 
 Initialize a doubly robust CATE estimator.
 
-...
 # Arguments
 - `X::Any`: an array or DataFrame of covariates of interest.
 - `T::Any`: an vector or DataFrame of treatment statuses.
 - `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
 - `W::Any`: an array or dataframe of all possible confounders.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
@@ -356,7 +362,6 @@ Initialize a doubly robust CATE estimator.
     min_neurons and max_neurons.
 - `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
     network.
-...
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
@@ -373,14 +378,18 @@ For details and a derivation of the generalized cross validation estimator see:
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = DoublyRobustLearner(X, T, Y)
-julia> m2 = DoublyRobustLearnerLearner(X, T, Y; t_cat=true)
-julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-julia> m4 = DoublyRobustLearner(x_df, t_df, y_df)
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = DoublyRobustLearner(X, T, Y)
+m2 = DoublyRobustLearnerLearner(X, T, Y; t_cat=true)
+
+x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+m4 = DoublyRobustLearner(x_df, t_df, y_df)
+
+w = rand(100, 6)
+m5 = DoublyRobustLearner(X, T, Y, W=w)
 ```
 """
 mutable struct DoublyRobustLearner <: Metalearner
@@ -437,19 +446,11 @@ For an overview of S-learning see:
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m4 = SLearner(X, T, Y)
-julia> estimate_causal_effect!(m4)
-100-element Vector{Float64}
- 0.20729633391630697
- 0.20729633391630697
- 0.20729633391630692
- ⋮
- 0.20729633391630697
- 0.20729633391630697
- 0.20729633391630697
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m4 = SLearner(X, T, Y)
+estimate_causal_effect!(m4)
 ```
 """
 function estimate_causal_effect!(s::SLearner)
@@ -480,19 +481,11 @@ For an overview of T-learning see:
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m5 = TLearner(X, T, Y)
-julia> estimate_causal_effect!(m5)
-100-element Vector{Float64}
- 0.0493951571746305
- 0.049395157174630444
- 0.0493951571746305
- ⋮ 
- 0.049395157174630444
- 0.04939515717463039
- 0.049395157174630444
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m5 = TLearner(X, T, Y)
+estimate_causal_effect!(m5)
 ```
 """
 function estimate_causal_effect!(t::TLearner)
@@ -532,19 +525,11 @@ For an overview of X-learning see:
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
     national academy of sciences 116, no. 10 (2019): 4156-4165.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = XLearner(X, T, Y)
-julia> estimate_causal_effect!(m1)
-100-element Vector{Float64}
--0.025012644892878473
--0.024634294305967294
--0.022144246680543364
-⋮ 
--0.021163590874553318
--0.014607310062509895
--0.022449034332142046
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = XLearner(X, T, Y)
+estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(x::XLearner)
@@ -574,27 +559,11 @@ For an overview of R-learning see:
     Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
     effects." Biometrika 108, no. 2 (2021): 299-319.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = RLearner(X, T, Y)
-julia> estimate_causal_effect!(m1)
-100-element Vector{Float64}
- -0.025012644892878473
- -0.024634294305967294
- -0.022144246680543364
- ⋮
- -0.021163590874553318
- -0.014607310062509895 
--0.022449034332142046
-julia> m2 = RLearner(X, T, Y, W=w)
-julia> estimate_causal_effect!(m2)
-100-element Vector{Float64}:
- 0.5974338191923166
- 0.08251194695862285
- ⋮
- 0.8259613235225352
- 0.8736987932637659
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = RLearner(X, T, Y)
+estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(R::RLearner)
@@ -624,27 +593,11 @@ For details on how this method estimates the CATE see:
     Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
     effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = DoublyRobustLearner(X, T, Y)
-julia> estimate_causal_effect!(m1)
-100-element Vector{Float64}
- -0.025012644892878473
- -0.024634294305967294
- -0.022144246680543364
- ⋮
- -0.021163590874553318
- -0.014607310062509895 
--0.022449034332142046
-julia> X, T, Y, W =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
-julia> m2 = DoublyRobustLearner(X, T, Y, W=W)
-julia> estimate_effect!(m2)
-100-element Vector{Float64}:
- 0.015000753139197576
- 0.6505590641524845
- ⋮
- 0.5165324805032647
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = DoublyRobustLearner(X, T, Y)
+estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(DRE::DoublyRobustLearner)
@@ -678,27 +631,21 @@ Estimate the CATE for a single cross fitting iteration via doubly robust estimat
 
 This method should not be called directly.
 
-...
 # Arguments
 - `DRE::DoublyRobustLearner`: the DoubleMachineLearning struct to estimate the effect for.
 - `X`: a vector of three covariate folds.
 - `T`: a vector of three treatment folds.
 - `Y`: a vector of three outcome folds.
 - `Z` : a vector of three confounder folds and covariate folds.
-...
 
-Examples
+# Examples
 ```julia
-julia> X, T, Y, W =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
-julia> m1 = DoublyRobustLearner(X, T, Y, W=W)
-julia> X, T, W, Y = make_folds(m1)
-julia> Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
-julia> estimate_effect!(m1, X, T, Y, Z)
-100-element Vector{Float64}:
- 0.015000753139197576
- 0.6505590641524845
- ⋮
- 0.5165324805032647
+X, T, Y, W =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
+m1 = DoublyRobustLearner(X, T, Y, W=W)
+
+X, T, W, Y = make_folds(m1)
+Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
+estimate_effect!(m1, X, T, Y, Z)
 ```
 """
 function estimate_effect!(DRE::DoublyRobustLearner, X, T, Y, Z)
@@ -735,10 +682,11 @@ Estimate the first stage models for an X-learner.
 
 This method should not be called by the user.
 
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = XLearner(X, T, Y)
-julia> stage1!(m1)
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = XLearner(X, T, Y)
+stage1!(m1)
 ```
 """
 function stage1!(x::XLearner)
@@ -769,19 +717,12 @@ Estimate the second stage models for an X-learner.
 
 This method should not be called by the user.
 
+# Examples
 ```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = XLearner(X, T, Y)
-julia> stage1!(m1)
-julia> stage2!(m1)
-100-element Vector{Float64}
- 0.6579129842054047
- 0.7644471766429705
- 0.5462780002052421
- ⋮
- 0.8755515354984005
- 0.947588000142362
- 0.29294343704001025
+X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+m1 = XLearner(X, T, Y)
+stage1!(m1)
+stage2!(m1)
 ```
 """
 function stage2!(x::XLearner)
