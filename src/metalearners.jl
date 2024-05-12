@@ -409,6 +409,7 @@ mutable struct DoublyRobustLearner <: Metalearner
     temporal::Bool
     num_neurons::Int64
     causal_effect::Vector{Float64}
+    __fit::Bool
 
     function DoublyRobustLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; W=X,
                                  regularized=true, activation=relu, validation_metric=mse, 
@@ -418,7 +419,7 @@ mutable struct DoublyRobustLearner <: Metalearner
 
         new(Float64.(X), Float64.(T), Float64.(Y), Float64.(W), regularized, activation, 
             validation_metric, min_neurons, max_neurons, 2, iterations, 
-            approximator_neurons, "CATE", false, 0, zeros(length(Y)))
+            approximator_neurons, "CATE", false, 0, zeros(length(Y)), false)
     end
 end
 
@@ -466,7 +467,7 @@ function estimate_causal_effect!(s::SLearner)
         yₜ, yᵤ = predict(s.g.learner, Xₜ), predict(s.g.learner, Xᵤ)
     end
 
-    s.causal_effect = yₜ - yᵤ
+    s.causal_effect = yₜ .- yᵤ
 
     return s.causal_effect
 end
@@ -620,6 +621,7 @@ function estimate_causal_effect!(DRE::DoublyRobustLearner)
     end
 
     DRE.causal_effect ./= 2
+    DRE.__fit = true
 
     return DRE.causal_effect
 end
