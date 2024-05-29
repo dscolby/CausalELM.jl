@@ -180,12 +180,12 @@ Test for independence between covariates and the event or intervention.
 - `n::Int`: the number of permutations for assigning observations to the pre and 
         post-treatment periods.
 
-This is a Chow Test for covariates with p-values estimated via randomization inference. The 
-p-values are the proportion of times randomly assigning observations to the pre or 
-post-intervention period would have a larger estimated effect on the the slope of the 
-covariates. The lower the p-values, the more likely it is that the event/intervention 
-effected the covariates and they cannot provide an unbiased prediction of the counterfactual 
-outcomes.
+This is a Chow Test for covariates with p-values estimated via randomization inference, 
+which does not assume a distribution for the outcome variable. The p-values are the 
+proportion of times randomly assigning observations to the pre or post-intervention period 
+would have a larger estimated effect on the the slope of the covariates. The lower the 
+p-values, the more likely it is that the event/intervention effected the covariates and 
+they cannot provide an unbiased prediction of the counterfactual outcomes.
 
 For more information on using a Chow Test to test for structural breaks see:
     Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
@@ -203,18 +203,17 @@ covariate_independence(its)
 ```
 """
 function covariate_independence(its::InterruptedTimeSeries; n=1000)
-    y₀ = reduce(hcat, (its.X₀[:, 1:end-1], zeros(size(its.X₀, 1))))
-    y₁ = reduce(hcat, (its.X₁[:, 1:end-1], ones(size(its.X₁, 1))))
-    all_vars = [reduce(vcat, (y₀, y₁)) ones(size(y₀, 1) + size(y₁, 1))]
-    x = all_vars[:, end-1:end]
+    x₀ = reduce(hcat, (its.X₀[:, 1:end-1], zeros(size(its.X₀, 1))))
+    x₁ = reduce(hcat, (its.X₁[:, 1:end-1], ones(size(its.X₁, 1))))
+    x = reduce(vcat, (x₀, x₁))
     results = Dict{String, Float64}()
 
     # Estimate a linear regression with each covariate as a dependent variable and all other
     # covariates and time as independent variables
-    for i in 1:size(all_vars, 2)-2
-        y = all_vars[:, i] 
-        β = first(x\y)
-        p = p_val(x, y, β, n=n)
+    for i in eachcol(x)
+        new_x, y = x[:, 1:end .!= i], x[:, i] 
+        β = first(new_x\y)
+        p = p_val(new_x, y, β, n=n)
         results["Column " * string(i) * " p-value"] = p
     end
     return results

@@ -123,9 +123,8 @@ function fit!(model::RegularizedExtremeLearner)
     Id = Matrix(I, size(model.H, 2), size(model.H, 2))
 
     model.β = @fastmath pinv(transpose(model.H)*model.H + k*Id)*transpose(model.H)*model.Y
-
     model.__fit = true  # Enables running predict
-
+    
     return model.β
 end
 
