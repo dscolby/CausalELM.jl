@@ -29,6 +29,12 @@ m3 = ExtremeLearner(x1, y1, 10, σ)
 fit!(m3)
 predictions3 = predict(m3, x1test)
 
+m4 = ExtremeLearner(rand(100, 5), rand(100), 5, relu)
+fit!(m4)
+
+m5 = RegularizedExtremeLearner(rand(100, 5), rand(100), 5, relu)
+fit!(m5)
+
 nofit = ExtremeLearner(x1, y1, 10, σ)
 
 helper_elm = RegularizedExtremeLearner(x1, y1, 5, σ)
@@ -39,6 +45,8 @@ k = ridge_constant(helper_elm)
     @test length(m1.β) == 10
     @test size(m1.weights) == (2, 10)
     @test size(helper_elm.H) == (20, 5)
+    @test length(m4.β) == size(m4.X, 2)
+    @test length(m5.β) == size(m5.X, 2)
  end
 
  @testset "Regularization" begin
