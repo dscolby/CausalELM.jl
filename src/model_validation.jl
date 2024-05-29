@@ -255,7 +255,7 @@ omitted_predictor(its)
 """
 function omitted_predictor(its::InterruptedTimeSeries; n=1000)
     if !isdefined(its, :Δ)
-        throw(ErrorException("call estimatecausaleffect! before calling omittedvariable"))
+        throw(ErrorException("call estimate_causal_effect! before calling omittedvariable"))
     end
 
     its_copy = deepcopy(its)
