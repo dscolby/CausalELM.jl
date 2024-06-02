@@ -210,9 +210,9 @@ function covariate_independence(its::InterruptedTimeSeries; n=1000)
 
     # Estimate a linear regression with each covariate as a dependent variable and all other
     # covariates and time as independent variables
-    for i in eachcol(x)
+    for i in axes(x, 2)
         new_x, y = x[:, 1:end .!= i], x[:, i] 
-        β = first(new_x\y)
+        β = last(new_x\y)
         p = p_val(new_x, y, β, n=n)
         results["Column " * string(i) * " p-value"] = p
     end
@@ -236,11 +236,6 @@ This method reestimates interrupted time series models with uniform random varia
 included covariates are good predictors of the counterfactual outcome, adding a random 
 variable as a covariate should not have a large effect on the predicted counterfactual 
 outcomes and therefore the estimated average effect.
-
-# References
-For more information on using a Chow Test to test for structural breaks see:
-    Baicker, Katherine, and Theodore Svoronos. Testing the validity of the single 
-    interrupted time series design. No. w26080. National Bureau of Economic Research, 2019.
 
 For a primer on randomization inference see: 
     https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
@@ -322,18 +317,18 @@ sup_wald(its)
 function sup_wald(its::InterruptedTimeSeries; low=0.15, high=0.85, n=1000)
     hypothesized_break, current_break, wald = size(its.X₀, 1), size(its.X₀, 1), 0.0
     high_idx, low_idx = Int(floor(high * size(its.X₀, 1))), Int(ceil(low * size(its.X₀, 1)))
-    x, y = reduce(vcat, (its.X₀, its.X₁))[:, 1:end-1], reduce(vcat, (its.Y₀, its.Y₁))
+    x, y = reduce(vcat, (its.X₀, its.X₁)), reduce(vcat, (its.Y₀, its.Y₁))
     t = reduce(vcat, (zeros(size(its.X₀, 1)), ones(size(its.X₁, 1))))
-    best_x = reduce(hcat, (t, x, ones(length(t))))
-    best_β = first(best_x\y)
+    best_x = reduce(hcat, (x, t))
+    best_β = last(best_x\y)
     
     # Set each time as a potential break and calculate its Wald statistic
     for idx in low_idx:high_idx
         t = reduce(vcat, (zeros(idx), ones(size(x, 1)-idx)))
-        new_x = reduce(hcat, (t, x, ones(size(x, 1))))
+        new_x = reduce(hcat, (x, t))
         β, ŷ = @fastmath new_x\y, new_x*(new_x\y)
         se = @fastmath sqrt(1/(size(x, 1)-2))*(sum(y .- ŷ)^2/sum(t .- mean(t))^2)
-        wald_candidate = first(β)/se
+        wald_candidate = last(β)/se
 
         if wald_candidate > wald
             current_break, wald, best_x, best_β = idx, wald_candidate, new_x, best_β
@@ -367,23 +362,18 @@ p_val(x, y, β; n=100, two_sided=true)
 ```
 """
 function p_val(x, y, β; n=1000, two_sided=false)
-    m2 = "the first column of x should be a treatment vector of 0s and 1s"
-    if sort(union(x[:, 1], [0, 1])) != [0, 1]
-        throw(ArgumentError(m2))
-    end
-
-    l = unique(x[:, end])
-
-    if length(l) !== 1 | (length(l) === 1 && l[1] !== 1.0)
-        throw(ArgumentError("the second column in x should be an intercept with all 1s"))
-    end
-
     x_copy, null = deepcopy(x), Vector{Float64}(undef, n)
+    min_x, max_x = minimum(x_copy[:, end]), maximum(x_copy[:, end])
 
     # Run OLS with random treatment vectors to generate a counterfactual distribution
     @simd for i in 1:n
-        @inbounds x_copy[:, 1] = float(rand(0:1, size(x, 1)))  # Random treatment vector
-        null[i] = first(x_copy\y)
+        if var_type(x_copy[:, end]) isa Continuous
+            @inbounds x_copy[:, end] = (max_x - min_x)*rand(length(x_copy[:, end])) .+ min_x
+        else
+            @inbounds x_copy[:, end] = float(rand(min_x:max_x, size(x, 1)))
+        end
+        
+        null[i] = last(x_copy\y)
     end
 
     # Wald test is only one sided

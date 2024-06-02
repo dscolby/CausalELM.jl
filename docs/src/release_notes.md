@@ -16,6 +16,7 @@ learning and doubly robust estimation [39](https://github.com/dscolby/CausalELM.
 *   Addressed numerical instability when finding the ridge penalty by replacing the previous ridge formula with 
 generalized cross validation [#43](https://github.com/dscolby/CausalELM.jl/issues/43)
 *   Uses the correct variable in the ommited predictor test for interrupted time series.
+*   Uses correct range for p-values in interrupted time series validation tests.
 
 ## Version [v0.5.1](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.5.1) - 2024-01-15
 ### Added

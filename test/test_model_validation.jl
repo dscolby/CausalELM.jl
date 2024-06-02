@@ -106,15 +106,6 @@ num_breaks = length(unique(CausalELM.best_splits(data, 6)))
 end
 
 @testset "p-values" begin
-    @testset "p-value Argument Validation" begin
-        @test_throws ArgumentError CausalELM.p_val(rand(10, 1), rand(10), 0.5)
-        @test_throws ArgumentError CausalELM.p_val(rand(10, 3), rand(10), 0.5)
-        @test_throws ArgumentError CausalELM.p_val(reduce(hcat, (rand(10), ones(10))), 
-            rand(10), 0.5)
-        @test_throws ArgumentError CausalELM.p_val(reduce(hcat, (float(rand(0:1, 10)), 
-            rand(10))), rand(10), 0.5)
-    end
-
     @testset "p-values for OLS" begin
         @test 0 <= CausalELM.p_val(reduce(hcat, (float(rand(0:1, 10)), ones(10))), 
             rand(10), 0.5) <= 1
@@ -122,14 +113,14 @@ end
             0.5, n=100) <= 1
         @test 0 <= CausalELM.p_val(reduce(hcat, (reduce(vcat, (zeros(5), ones(5))), 
             ones(10))), randn(10), 0.5) <= 1
-end
+    end
 end
 
 @testset "Interrupted Time Series Assumptions" begin
 
     @testset "Covariate Independence Assumption" begin
         # Test covariate_independence method
-        @test length(its_independence) === 5
+        @test length(its_independence) === 6
         @test all(0 .<= values(its_independence) .<= 1) === true
     end
 
