@@ -73,25 +73,6 @@ r_learner_no_effect = RLearner(x, t, y)
 dr_learner = DoublyRobustLearner(x, t, y)
 estimate_causal_effect!(dr_learner)
 
-# Used to test helper functions for Jenks breaks
-sum_of_squares2 = CausalELM.sums_of_squares([1, 2, 3, 4, 5], 2)
-sum_of_squares3 = CausalELM.sums_of_squares([1, 2, 3, 4, 5], 3)
-
-# Generate synthetic data with three distinct clusters
-function generate_synthetic_data()
-    cluster1 = rand(1:10, 50) .+ randn(50)
-    cluster2 = rand(20:30, 60) .+ randn(60)
-    cluster3 = rand(40:50, 40) .+ randn(40)
-    data = vcat(cluster1, cluster2, cluster3)
-    return data
-end
-
-# Generate synthetic data
-data = generate_synthetic_data()
-
-# Find the best number of breaks using the Jenks Natural Breaks algorithm
-num_breaks = length(unique(CausalELM.best_splits(data, 6)))
-
 @testset "Variable Types and Conversion" begin
     @testset "Variable Types" begin
         @test CausalELM.var_type([0, 1, 0, 1, 1]) isa CausalELM.Binary
@@ -149,50 +130,6 @@ end
     end
 end
 
-@testset "Jenks Breaks" begin
-    @testset "Helper Functions for Finding Breaks" begin
-        @test sum_of_squares2[1, 1] == 0.0
-        @test sum_of_squares2[5, 2] == 1.75
-        @test sum_of_squares3[1, 1] == 0.0
-        @test sum_of_squares3[1, 2] == 0.0
-        @test sum_of_squares3[5, 3] == 1.6666666666666665
-        @test CausalELM.class_pointers([1, 2, 3, 4, 5], 2, sum_of_squares2)[:, 1] == ones(
-                                                                                        Int, 
-                                                                                        5
-                                                                                        )
-        @test length(CausalELM.class_pointers([1, 2, 3, 4, 5], 2, 
-            CausalELM.sums_of_squares([1, 2, 3, 4, 5], 2))) == 10
-        @test CausalELM.class_pointers([1, 2, 3, 4, 5], 3, sum_of_squares3)[:, 1] == ones(
-                                                                                        Int, 
-                                                                                        5
-                                                                                        )
-        @test length(CausalELM.class_pointers([1, 2, 3, 4, 5], 3, 
-            CausalELM.sums_of_squares([1, 2, 3, 4, 5], 3))) == 15
-        @test length(CausalELM.class_pointers([1, 2, 3, 4, 5], 3, 
-            CausalELM.sums_of_squares([1, 2, 3, 4, 5], 3))) == 15
-        @test length(CausalELM.backtrack_to_find_breaks([1, 2, 3, 4, 5], 
-            [1 1 1 1 1; 2 2 3 4 5])) == 5
-        @test CausalELM.variance([1, 2, 3, 4, 5]) == 2.0
-    end
-
-    @testset "Jenks Breaks Function" begin
-        @test 2 <= length(unique(CausalELM.jenks_breaks(data, num_breaks))) <= num_breaks
-    end
-
-    @testset "Helpers to Find the Best Number of Breaks" begin
-        @test length(unique(CausalELM.fake_treatments([1, 2, 3, 4, 5], 3))) == 3
-        @test CausalELM.group_by_class([1, 2, 3, 4, 5], [1, 1, 1, 2, 3]) == [[1, 2, 3], [4], 
-                                                                                [5]]
-        @test CausalELM.sdam([5, 4, 9, 10]) == 26
-        @test CausalELM.scdm([[4], [5, 9, 10]]) == 14
-        @test CausalELM.gvf([[4, 5], [9, 10]]) ≈ 0.96153846153
-        @test CausalELM.gvf([[4], [5], [9, 10]]) ≈ 0.9807692307692307
-        @test length(CausalELM.best_splits(test_outcomes, 5)) == length(test_outcomes)
-        @test setdiff(Set(sort(unique(CausalELM.fake_treatments(test_outcomes, 3)))), 
-            [1, 2, 3]) == Set()
-    end
-end
-
 @testset "E-values" begin
     @testset "Generating E-values" begin
         @test CausalELM.e_value(binary_g_computer) isa Real
@@ -208,7 +145,8 @@ end
 
 @testset "G-Computation Assumptions" begin
     @testset "Counterfactual Consistency" begin
-        @test CausalELM.counterfactual_consistency(g_computer) isa Real
+        @test CausalELM.counterfactual_consistency(g_computer, (0.25, 0.5, 0.75, 1.0), 
+                                                   10) isa Dict{Float64, Float64}
     end
 
     @testset "Exchangeability" begin
@@ -234,7 +172,9 @@ end
 end
 
 @testset "Double Machine Learning Assumptions" begin
-    @test CausalELM.counterfactual_consistency(dml) isa Real
+    @test CausalELM.counterfactual_consistency(
+        dml, (0.25, 0.5, 0.75, 1.0), 10
+    ) isa Dict{Float64, Float64}
     @test CausalELM.exchangeability(dml) isa Real
     @test size(CausalELM.positivity(dml), 2) == size(dml.X, 2)+1
     @test length(validate(dml)) == 3
@@ -242,10 +182,21 @@ end
 
 @testset "Metalearner Assumptions" begin
     @testset "Counterfactual Consistency" begin
-        @test CausalELM.counterfactual_consistency(s_learner.g) isa Real
-        @test CausalELM.counterfactual_consistency(t_learner) isa Real
-        @test CausalELM.counterfactual_consistency(x_learner) isa Real
-        @test CausalELM.counterfactual_consistency(dr_learner) isa Real
+        @test CausalELM.counterfactual_consistency(
+            s_learner.g, (0.25, 0.5, 0.75, 1.0), 10
+        ) isa Dict{Float64, Float64}
+
+        @test CausalELM.counterfactual_consistency(
+            t_learner, (0.25, 0.5, 0.75, 1.0), 10
+        ) isa Dict{Float64, Float64}
+
+        @test CausalELM.counterfactual_consistency(
+            x_learner, (0.25, 0.5, 0.75, 1.0), 10
+        ) isa Dict{Float64, Float64}
+
+        @test CausalELM.counterfactual_consistency(
+            dr_learner, (0.25, 0.5, 0.75, 1.0), 10
+        ) isa Dict{Float64, Float64}
     end
 
     @testset "Exchangeability" begin

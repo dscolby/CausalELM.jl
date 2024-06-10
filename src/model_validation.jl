@@ -100,8 +100,10 @@ end
 - `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
     
 # Keywords
-- `num_treatments=5::Int`: the maximum number of treatments to use when testing the 
-        plausability of the counterfactual consistency assumption.
+- `devs=::Any`: an iterable of deviations from which to generate noise to simulate 
+    violations of the counterfactual consistency assumption.
+- `num_iterations=10::Int: the number of times to simulate a violation of the counterfactual 
+    consistency assumption.`
 - `min::Float64`=1.0e-6: minimum probability of treatment for the positivity assumption.
 - `high::Float64=1-min`: the maximum probability of treatment for the positivity assumption.
 
@@ -110,21 +112,21 @@ This method tests the counterfactual consistency, exchangeability, and positivit
 assumptions required for causal inference. It should be noted that consistency and 
 exchangeability are not directly testable, so instead, these tests do not provide definitive 
 evidence of a violation of these assumptions. To probe the counterfactual consistency 
-assumption, we assume there were multiple levels of treatments and find them by binning the
-dependent vairable for treated observations using Jenks breaks. The optimal number of breaks 
-between 2 and num_treatments is found using the elbow method. Using these hypothesized 
-treatment assignemnts, this method compares the MSE of linear regressions using the observed 
-and hypothesized treatments. If the counterfactual consistency assumption holds then the 
-difference between the MSE with hypothesized treatments and the observed treatments should 
-be positive because the hypothesized treatments should not provide useful information. If 
-it is negative, that indicates there was more useful information provided by the 
-hypothesized treatments than the observed treatments or that there is an unobserved 
-confounder. Next, this methods tests the model's sensitivity to a violation of the 
+assumption, we simulate counterfactual outcomes that are different from the observed 
+outcomes, estimate models with the simulated counterfactual outcomes, and take the averages.
+If the outcome is continuous, the noise for the simulated counterfactuals is drawn from 
+N(0, dev) for each element in devs, otherwise the default is 0.25, 0.5, 0.75, and 1.0 
+standard deviations from the mean outcome. For discrete variables, each outcome is replaced 
+with a different value in the range of outcomes with probability ϵ for each ϵ in devs, 
+otherwise the default is 0.025, 0.05, 0.075, 0.1. If the average estimate for a given level 
+of violation differs greatly from the effect estimated on the actual data, then the model is 
+very sensitive to violations of the counterfactual consistency assumption for that level of 
+violation. Next, this methods tests the model's sensitivity to a violation of the 
 exchangeability assumption by calculating the E-value, which is the minimum strength of 
 association, on the risk ratio scale, that an unobserved confounder would need to have with 
 the treatment and outcome variable to fully explain away the estimated effect. Thus, higher 
 E-values imply the model is more robust to a violation of the exchangeability assumption. 
-Finally, this method tests the positivity assumption by estimating propensity scores. Rows
+Finally, this method tests the positivity assumption by estimating propensity scores. Rows 
 in the matrix are levels of covariates that have a zero probability of treatment. If the 
 matrix is empty, none of the observations have an estimated zero probability of treatment, 
 which implies the positivity assumption is satisfied.
@@ -146,7 +148,7 @@ estimate_causal_effect!(g_computer)
 validate(g_computer)
 ```
 """
-function validate(m; num_treatments=5, min=1.0e-6, max=1.0-min)
+function validate(m, devs; iterations=10, min=1.0e-6, max=1.0-min)
     if !isdefined(m, :causal_effect) || m.causal_effect === NaN
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
@@ -156,16 +158,33 @@ function validate(m; num_treatments=5, min=1.0e-6, max=1.0-min)
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
-    return counterfactual_consistency(m, num_treatments=num_treatments), exchangeability(m), 
+    return counterfactual_consistency(m, devs, iterations), exchangeability(m), 
         positivity(m, min, max)
 end
 
-function validate(R::RLearner; num_treatments=5, min=1.0e-6, max=1.0-min)
-    return validate(R.dml, num_treatments=num_treatments, min=min, max=max)
+function validate(R::RLearner, devs; iterations=10, min=1.0e-6, max=1.0-min)
+    return validate(R.dml, devs, iterations=iterations, min=min, max=max)
 end
 
-function validate(S::SLearner; num_treatments=5, min=1.0e-6, max=1.0-min)
-    return validate(S.g, num_treatments=num_treatments, min=min, max=max)
+function validate(R::RLearner; iterations=10, min=1.0e-6, max=1.0-min)
+    return validate(R.dml, iterations=iterations, min=min, max=max)
+end
+
+function validate(S::SLearner, devs; iterations=10, min=1.0e-6, max=1.0-min)
+    return validate(S.g, devs, iterations=iterations, min=min, max=max)
+end
+
+function validate(S::SLearner; iterations=10, min=1.0e-6, max=1.0-min)
+    return validate(S.g, iterations=iterations, min=min, max=max)
+end
+
+function validate(m; iterations=10, min=1.0e-6, max=1.0-min)
+    if var_type(m.Y) isa Continuous
+        devs = 0.25, 0.5, 0.75, 1.0
+    else
+        devs = 0.025, 0.05, 0.075, 0.1
+    end
+    return validate(m, devs; iterations=iterations, min=min, max=max)
 end
 
 """
@@ -372,7 +391,7 @@ function p_val(x, y, β; n=1000, two_sided=false)
         else
             @inbounds x_copy[:, end] = float(rand(min_x:max_x, size(x, 1)))
         end
-        
+
         null[i] = last(x_copy\y)
     end
 
@@ -388,23 +407,20 @@ end
 - `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
 
 # Keywords
-- `num_treatments=5::Int`: the maximum number of treatments to use when testing the 
-        plausability of the counterfactual consistency assumption.
+- `num_devs=(0.25, 0.5, 0.75, 1.0)::Tuple`: the number of standard deviations from which 
+    to generate noise from a normal distribution to simulate violations of the 
+    counterfactual consistency assumption.
+- `num_iterations=10::Int: the number of times to simulate a violation of the counterfactual 
+    consistency assumption.`
 
 # Notes
-Examine the counterfactual consistency assumption. First, this function generates Jenks 
-breaks based on outcome values for the treatment group. Then, it replaces treatment statuses 
-with the numbers corresponding to each group. Next, it runs two models, one for the 
-treatment group, one with and one without the fake treatment assignemnts generated by 
-the Jenks breaks. Finally, it subtracts the mean squared error from the regression with real 
-data from the mean squared error from the regression with the fake treatment statuses. If 
-this number is negative, it might indicate a violation of the counterfactual consistency 
-assumption or omitted variable bias.
-
-# References
-For a primer on G-computation and its assumptions see:
-    Naimi, Ashley I., Stephen R. Cole, and Edward H. Kennedy. "An introduction to g 
-    methods." International journal of epidemiology 46, no. 2 (2017): 756-762.
+Examine the counterfactual consistency assumption. First, this function simulates 
+counterfactual outcomes that are offset from the outcomes in the dataset by random scalars
+drawn from a N(0, num_std_dev). Then, the procedure is repeated num_iterations times and 
+averaged. If the model is a metalearner, then the estimated individual treatment effects 
+are averaged and the mean CATE is averaged over all the iterations, otherwise the estimated 
+treatment effect is averaged over the iterations. The previous steps are repeated for each 
+element in num_devs.
 
 # Examples
 ```julia
@@ -414,17 +430,39 @@ estimate_causal_effect!(g_computer)
 counterfactual_consistency(g_computer)
 ```
 """
-function counterfactual_consistency(m; num_treatments=5)
-    treatment_covariates, treatment_outcomes = m.X[m.T .== 1, :], m.Y[m.T .== 1]
-    fake_treat = best_splits(treatment_outcomes, num_treatments)
-    β_real = treatment_covariates\treatment_outcomes
-    β_fake = Real.(reduce(hcat, (treatment_covariates, fake_treat))\treatment_outcomes)
-    ŷ_real = treatment_covariates*β_real
-    ŷ_fake = Real.(reduce(hcat, (treatment_covariates, fake_treat))*β_fake)
-    mse_real_treat = mse(treatment_outcomes, ŷ_real)
-    mse_fake_treat = mse(treatment_outcomes, ŷ_fake)
+function counterfactual_consistency(model, devs, iterations)
+    counterfactual_model = deepcopy(model)
+    avg_counterfactual_effects = Dict{Float64, Float64}()
 
-    return mse_fake_treat - mse_real_treat
+    for dev in devs
+        avg_counterfactual_effects[dev] = 0.0
+
+        # Averaging multiple iterations of random violatons for each std dev
+        for iteration in 1:iterations
+            counterfactual_model.Y = simulate_counterfactual(model.Y, dev)
+            estimate_causal_effect!(counterfactual_model)
+
+            if counterfactual_model isa Metalearner
+                avg_counterfactual_effects[dev] += mean(counterfactual_model.causal_effect)
+            else
+                avg_counterfactual_effects[dev] += counterfactual_model.causal_effect
+            end
+        end
+        avg_counterfactual_effects[dev] /= iterations
+    end
+    return avg_counterfactual_effects
+end
+
+function simulate_counterfactual(y::Vector{<:Real}, dev::Float64)
+    min_y, max_y = minimum(y), maximum(y)
+
+    if var_type(y) isa Continuous
+        violations = (sqrt(var(y)) * dev) * randn(length(y))
+        counterfactual_Y = y .+ violations
+    else
+        counterfactual_Y = ifelse.(rand() > dev, Float64(rand(min_y:max_y)), y)
+    end
+    return counterfactual_Y
 end
 
 """
@@ -666,282 +704,4 @@ function positivity(mod, min=1.0e-6, max=1-min)
     return reduce(hcat, (mod.X[propensity_scores .<= min .|| propensity_scores .>= max, :], 
                   propensity_scores[propensity_scores .<= min .|| 
                   propensity_scores .>= max]))
-end
-
-"""
-    sums_of_squares(data, num_classes)
-
-Calculate the minimum sum of squares for each data point and class for the Jenks breaks 
-algorithm.
-
-# Notes
-This should not be called by the user.
-
-# Examples
-```julia
-sums_of_squares([1, 2, 3, 4, 5], 2)
-```
-"""
-function sums_of_squares(data, num_classes=5)
-    n = length(data)
-    sums_of_squares = zeros(Float64, n, num_classes)
-    
-    @inbounds for (k, i) in Iterators.product(1:num_classes, 1:n)
-        if k == 1
-            @inbounds sums_of_squares[i, k] = variance(data[1:i])
-
-        # Calculates the sums of squares for each potential class and break point
-        else
-            sums = Vector{Float64}(undef, i)
-            @simd for j in 1:i
-                @inbounds sums[j] = sums_of_squares[j, k-1] + (i-j+1) * variance(data[j:i])
-            end
-            @inbounds sums_of_squares[i, k] = minimum(sums)
-            end
-    end
-    return sums_of_squares
-end
-
-"""
-    class_pointers(data, num_classes, sums_of_sqs)
-
-Compute class pointers that minimize the sum of squares for Jenks breaks.
-
-# Notes
-This should not be callled by the user.
-
-# Examples
-```julia
-sums_squares = sums_of_squares([1, 2, 3, 4, 5], 2)
-class_pointers([1, 2, 3, 4, 5], 2, sums_squares)
-```
-"""
-function class_pointers(data, num_classes, sums_of_sqs)
-    n = length(data)
-    class_pointers = Matrix{Int}(undef, n, num_classes)
-
-    # Initialize the first column of class pointers
-    for i in 1:n
-        @inbounds class_pointers[i, 1] = 1
-    end
-
-    # Update class pointers based on their sums of squares
-    @simd for k in 2:num_classes
-        for i in 2:n
-            @inbounds map(1:i) do j
-                class_pointers[i, k] = argmin([sums_of_sqs[j, k-1]+class_pointers[j, k-1]])
-            end
-        end
-    end
-    return class_pointers
-end
-
-"""
-    backtrack_to_find_breaks(data, num_classes, sums_of_sqs)
-
-Determine break points from class assignments.
-
-# Notes
-This should not be called by the user.
-
-# Examples
-```julia
-data = [1, 2, 3, 4, 5]
-ptr = class_pointers([1, 2, 3, 4, 5], 2, sums_of_squares([1, 2, 3, 4, 5], 2))
-backtrack_to_find_breaks([1, 2, 3, 4, 5], ptr)
-```
-"""
-function backtrack_to_find_breaks(data, class_pointers)
-    n, num_classes = size(class_pointers)
-    breaks = Vector{eltype(data)}(undef, num_classes)
-    current_class, current_break = num_classes, n
-    
-    @simd for i in (n-1):-1:1
-        if class_pointers[i, current_class] != current_break
-            @inbounds current_break = class_pointers[i, current_class]
-            @inbounds breaks[current_class] = data[i+1]
-            current_class -= 1
-        end
-    end
-    
-    # Assigns breaks at the smallest value in the data if a class doesn't have a break
-    @simd for j in current_class:-1:1
-        @inbounds breaks[j] = data[1]
-    end
-
-    return breaks
-end
-
-"""
-    variance(data)
-
-Calculate the variance of some numbers.
-
-# Notes
-This function does not use Besel's correction.
-
-# Examples
-```julia
-variance([1, 2, 3, 4, 5])
-```
-"""
-function variance(data)
-    mean_val = mean(data)
-    sum_squares = sum((x - mean_val)^2 for x in data)
-
-    return sum_squares/length(data)
-end
-
-"""
-    best_splits(data, num_classes)
-
-Find the best number of splits for Jenks breaks.
-
-# Notes
-This function finds the best number of splits by finding the number of splits that results 
-in the greatest decrease in the slope of the line between itself and its GVF and the next 
-higher number of splits and its GVF. This is the same thing as the elbow method.
-
-This should nto be called by the user.
-
-# Examples
-```julia
-best_splits(collect(1:10), 5)
-```
-"""
-function best_splits(data, num_classes)
-    candidate_classes = [fake_treatments(data, i) for i in 2:num_classes]
-    grouped_candidate_breaks = [group_by_class(data, class) for class in candidate_classes]
-    gvfs = [gvf(breaks) for breaks in grouped_candidate_breaks]
-
-    # Find the set of splits with the largest decrease in slope
-    rise, run = consecutive(gvfs), consecutive(collect(2:num_classes))
-    δ_slope = consecutive(rise ./ run)
-    _, δ_idx = findmax(δ_slope)
-
-    return candidate_classes[δ_idx+1]
-end
-
-"""
-    group_by_class(data, classes)
-
-Group data points into vectors such that data points assigned to the same class are in the 
-same vector.
-
-# Notes
-This should nto be called by the user.
-
-# Examples
-```julia
-group_by_class([1, 2, 3, 4, 5], [1, 1, 1, 2, 3])
-```
-"""
-function group_by_class(data, classes)
-    # Create a dictionary to store elements by class
-    class_dict = Dict{Int, Vector{Real}}()
-    
-    # Iterate through numbers and classes and group elements
-    for (point, cls) in zip(data, classes)
-        if haskey(class_dict, cls)
-            push!(class_dict[cls], point)
-        else
-            class_dict[cls] = [point]
-        end
-    end
-    # Convert the dictionary to a vector of vectors
-    class_vectors = [class_dict[cls] for cls in unique(classes)]
-    return class_vectors
-end
-
-"""
-    jenks_breaks(data, num_classes)
-
-Generate Jenks breaks for a vector of real numbers.
-
-# Examples
-```julia
-jenks_breaks([1, 2, 3, 4, 5], 3)
-```
-"""
-function jenks_breaks(data, num_classes)
-    sorted_data = sort(data)                 # The data needs to be sorted for this to work
-    sums_squares = sums_of_squares(sorted_data, num_classes)
-    cls_pointers = class_pointers(sorted_data, num_classes, sums_squares)
-    breaks = backtrack_to_find_breaks(sorted_data, cls_pointers)
-    
-    return breaks
-end
-
-"""
-    fake_treatments(data, num_classes)
-
-Generate fake treatment statuses corresponding to the classes assigned by the Jenks breaks 
-algorithm.
-
-# Examples
-```julia
-fake_treatments([1, 2, 3, 4, 5], 4)
-```
-"""
-function fake_treatments(data, num_classes)
-    breaks = jenks_breaks(data, num_classes)
-
-    # Finds the class of a single data point
-    function find_class(number)
-        if number <= breaks[1]
-            return 1
-        elseif number >= breaks[end]
-            return num_classes
-        else
-            for i in 2:(length(breaks))
-                if number < breaks[i]
-                    return i-1
-                elseif number == breaks[i]
-                    return i
-                end
-            end
-        end
-    end
-    return find_class.(data)
-end
-
-"""
-    sdam(x)
-
-Calculate the sum of squared deviations for array mean for a set of sub arrays.
-
-# Examples
-```julia
-sdam([5, 4, 9, 10])
-```
-"""
-function sdam(x::Vector{T}) where T <: Real
-    x̄ = mean(x)
-
-    return @fastmath sum((x .- x̄).^2)
-end
-
-"""
-    sdcm(x)
-
-Calculate the sum of squared deviations for class means for a set of sub arrays.
-
-# Examples
-```juliascdm([[4], [5, 9, 10]])
-```
-"""
-scdm(x::Vector{Vector{T}}) where T <: Real = @fastmath sum(sdam.(x))
-
-"""
-    gvf(x)
-
-Calculate the goodness of variance fit for a set of sub vectors.
-
-# Examples
-```julia
-gvf([[4, 5], [9, 10]])
-```
-"""
-function gvf(x::Vector{Vector{T}}) where T <: Real
-    return (sdam(collect(Iterators.flatten(x)))-scdm(x))/sdam(collect(Iterators.flatten(x)))
 end
