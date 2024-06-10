@@ -93,24 +93,25 @@ We can validate the model by examining the plausibility that the main assumption
 inference, counterfactual consistency, exchangeability, and positivity, hold. It should be 
 noted that consistency and exchangeability are not directly testable, so instead, these 
 tests do not provide definitive evidence of a violation of these assumptions. To probe the 
-counterfactual consistency assumption, we assume there were multiple levels of treatments 
-and find them by binning the dependent vairable for treated observations using Jenks breaks. 
-The optimal number of breaks between 2 and num_treatments is found using the elbow method. 
-Using these hypothesized treatment assignemnts, this method compares the MSE of linear 
-regressions using the observed and hypothesized treatments. If the counterfactual 
-consistency assumption holds then the difference between the MSE with hypothesized 
-treatments and the observed treatments should be positive because the hypothesized 
-treatments should not provide useful information. If it is negative, that indicates there 
-was more useful information provided by the hypothesized treatments than the observed 
-treatments or that there is an unobserved confounder. Next, this methods tests the model's 
+counterfactual consistency assumption, we simulate counterfactual outcomes that are 
+different from the observed outcomes, estimate models with the simulated counterfactual 
+outcomes, and take the averages. If the outcome is continuous, the noise for the simulated 
+counterfactuals is drawn from N(0, dev) for each element in devs, otherwise the default is 
+0.25, 0.5, 0.75, and 1.0 standard deviations from the mean outcome. For discrete variables, 
+each outcome is replaced with a different value in the range of outcomes with probability ϵ 
+for each ϵ in devs, otherwise the default is 0.025, 0.05, 0.075, 0.1. If the average 
+estimate for a given level of violation differs greatly from the effect estimated on the 
+actual data, then the model is very sensitive to violations of the counterfactual 
+consistency assumption for that level of violation. Next, this method tests the model's 
 sensitivity to a violation of the exchangeability assumption by calculating the E-value, 
 which is the minimum strength of association, on the risk ratio scale, that an unobserved 
 confounder would need to have with the treatment and outcome variable to fully explain away 
 the estimated effect. Thus, higher E-values imply the model is more robust to a violation of 
 the exchangeability assumption. Finally, this method tests the positivity assumption by 
 estimating propensity scores. Rows in the matrix are levels of covariates that have a zero 
-probability of treatment. If the matrix is empty, none of the observations have an estimated 
-zero probability of treatment, which implies the positivity assumption is satisfied.
+or near zero probability of treatment. If the matrix is empty, none of the observations have 
+an estimated zero probability of treatment, which implies the positivity assumption is 
+satisfied.
 
 !!! tip
     One can also specify the maxium number of possible treatments to consider for the causal 
