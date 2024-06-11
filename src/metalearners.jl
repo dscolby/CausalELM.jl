@@ -7,21 +7,21 @@ abstract type Metalearner end
 Initialize a S-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: array or DataFrame of covariates.
+- `T::Any`: vector or DataFrame of treatment statuses.
+- `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
 - `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
-- `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `activation::Function=relu`: activation function to use.
+- `validation_metric::Function`: validation metric to calculate during cross validation.
+- `min_neurons::Int`: minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: maximum number of neurons to consider for the extreme learner.
+- `folds::Int`: number of cross validation folds to find the best number of neurons.
+- `iterations::Int`: number of iterations to perform cross validation between min_neurons 
+    and max_neurons.
+- `approximator_neurons::Int`: number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -42,14 +42,14 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = SLearner(X, T, Y)
-m2 = SLearner(X, T, Y; task="regression")
-m3 = SLearner(X, T, Y; task="regression", regularized=true)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = SLearner(X, T, Y)
+julia> m2 = SLearner(X, T, Y; task="regression")
+julia> m3 = SLearner(X, T, Y; task="regression", regularized=true)
 
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-m4 = SLearner(x_df, t_df, y_df)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m4 = SLearner(x_df, t_df, y_df)
 ```
 """
 mutable struct SLearner <: Metalearner
@@ -70,26 +70,31 @@ mutable struct SLearner <: Metalearner
 end
 
 """
+Enables using the same method to estimate causal effects for G-computation and S-learning
+"""
+SingleModelLearner = Union{GComputation, SLearner}
+
+"""
     TLearner(X, T, Y; kwargs...)
 
 Initialize a T-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: array or DataFrame of covariates.
+- `T::Any`: vector or DataFrame of treatment statuses.
+- `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
 - `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
-- `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `activation::Function=relu`: activation function to use.
+- `validation_metric::Function`: validation metric to calculate during cross validation.
+- `min_neurons::Int`: minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: maximum number of neurons to consider for the extreme learner.
+- `folds::Int`: number of cross validation folds to find the best number of neurons.
+- `iterations::Int`: number of iterations to perform cross validation between min_neurons 
+    and max_neurons.
+- `approximator_neurons::Int`: number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -110,14 +115,14 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = TLearner(X, T, Y)
-m2 = TLearner(X, T, Y; task="regression")
-m3 = TLearner(X, T, Y; task="regression", regularized=true)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = TLearner(X, T, Y)
+julia> m2 = TLearner(X, T, Y; task="regression")
+julia> m3 = TLearner(X, T, Y; task="regression", regularized=true)
 
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-m4 = TLearner(x_df, t_df, y_df)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m4 = TLearner(x_df, t_df, y_df)
 ```
 """
 mutable struct TLearner <: Metalearner
@@ -175,21 +180,21 @@ end
 Initialize an X-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: array or DataFrame of covariates.
+- `T::Any`: vector or DataFrame of treatment statuses.
+- `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
 - `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
-- `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `activation::Function=relu`: activation function to use.
+- `validation_metric::Function`: validation metric to calculate during cross validation.
+- `min_neurons::Int`: minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: maximum number of neurons to consider for the extreme learner.
+- `folds::Int`: number of cross validation folds to find the best number of neurons.
+- `iterations::Int`: number of iterations to perform cross validation between min_neurons 
+    and max_neurons.
+- `approximator_neurons::Int`: number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -210,14 +215,14 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = XLearner(X, T, Y)
-m2 = XLearner(X, T, Y; task="regression")
-m3 = XLearner(X, T, Y; task="regression", regularized=true)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = XLearner(X, T, Y)
+julia> m2 = XLearner(X, T, Y; task="regression")
+julia> m3 = XLearner(X, T, Y; task="regression", regularized=true)
 
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-m4 = XLearner(x_df, t_df, y_df)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m4 = XLearner(x_df, t_df, y_df)
 ```
 """
 mutable struct XLearner <: Metalearner
@@ -277,22 +282,22 @@ end
 Initialize an R-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates of interest.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: array or DataFrame of covariates of interest.
+- `T::Any`: vector or DataFrame of treatment statuses.
+- `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
-- `W::Any` : an array of all possible confounders.
+- `W::Any`: array of all possible confounders.
 - `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
-- `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `activation::Function=relu`: activation function to use.
+- `validation_metric::Function`: validation metric to calculate during cross validation.
+- `min_neurons::Int`: minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: maximum number of neurons to consider for the extreme learner.
+- `folds::Int`: number of cross validation folds to find the best number of neurons.
+- `iterations::Int`: number of iterations to perform cross validation between min_neurons 
+    and max_neurons.
+- `approximator_neurons::Int`: number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -312,16 +317,16 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = RLearner(X, T, Y)
-m2 = RLearner(X, T, Y; t_cat=true)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = RLearner(X, T, Y)
+julia> m2 = RLearner(X, T, Y; t_cat=true)
 
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-m4 = RLearner(x_df, t_df, y_df)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m4 = RLearner(x_df, t_df, y_df)
 
-w = rand(100, 6)
-m5 = RLearner(X, T, Y, W=w)
+julia> w = rand(100, 6)
+julia> m5 = RLearner(X, T, Y, W=w)
 ```
 """
 mutable struct RLearner <: Metalearner
@@ -341,26 +346,32 @@ mutable struct RLearner <: Metalearner
 end
 
 """
+Enables using the same method to estimate causal effects for double machine learning and 
+    R-learning
+"""
+OrthogolalLearner = Union{DoubleMachineLearning, RLearner}
+
+"""
     DoublyRobustLearner(X, T, Y; kwargs...)
 
 Initialize a doubly robust CATE estimator.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates of interest.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: array or DataFrame of covariates of interest.
+- `T::Any`: vector or DataFrame of treatment statuses.
+- `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
-- `W::Any`: an array or dataframe of all possible confounders.
+- `W::Any`: array or dataframe of all possible confounders.
 - `regularized::Function=true`: whether to use L2 regularization
-- `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `activation::Function=relu`: activation function to use.
+- `validation_metric::Function`: validation metric to calculate during cross validation.
+- `min_neurons::Int`: minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: maximum number of neurons to consider for the extreme learner.
+- `folds::Int`: number of cross validation folds to find the best number of neurons.
+- `iterations::Int`: number of iterations to perform cross validation between min_neurons 
+    and max_neurons.
+- `approximator_neurons::Int`: number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -380,16 +391,16 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoublyRobustLearner(X, T, Y)
-m2 = DoublyRobustLearnerLearner(X, T, Y; t_cat=true)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoublyRobustLearner(X, T, Y)
+julia> m2 = DoublyRobustLearnerLearner(X, T, Y; t_cat=true)
 
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-m4 = DoublyRobustLearner(x_df, t_df, y_df)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m4 = DoublyRobustLearner(x_df, t_df, y_df)
 
-w = rand(100, 6)
-m5 = DoublyRobustLearner(X, T, Y, W=w)
+julia> w = rand(100, 6)
+julia> m5 = DoublyRobustLearner(X, T, Y, W=w)
 ```
 """
 mutable struct DoublyRobustLearner <: Metalearner
@@ -449,9 +460,9 @@ For an overview of S-learning see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m4 = SLearner(X, T, Y)
-estimate_causal_effect!(m4)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m4 = SLearner(X, T, Y)
+julia> estimate_causal_effect!(m4)
 ```
 """
 function estimate_causal_effect!(s::SLearner)
@@ -484,9 +495,9 @@ For an overview of T-learning see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m5 = TLearner(X, T, Y)
-estimate_causal_effect!(m5)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m5 = TLearner(X, T, Y)
+julia> estimate_causal_effect!(m5)
 ```
 """
 function estimate_causal_effect!(t::TLearner)
@@ -528,9 +539,9 @@ For an overview of X-learning see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = XLearner(X, T, Y)
-estimate_causal_effect!(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = XLearner(X, T, Y)
+julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(x::XLearner)
@@ -562,9 +573,9 @@ For an overview of R-learning see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = RLearner(X, T, Y)
-estimate_causal_effect!(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = RLearner(X, T, Y)
+julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(R::RLearner)
@@ -596,9 +607,9 @@ For details on how this method estimates the CATE see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoublyRobustLearner(X, T, Y)
-estimate_causal_effect!(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoublyRobustLearner(X, T, Y)
+julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(DRE::DoublyRobustLearner)
@@ -631,23 +642,24 @@ end
 
 Estimate the CATE for a single cross fitting iteration via doubly robust estimation.
 
+# Notes
 This method should not be called directly.
 
 # Arguments
-- `DRE::DoublyRobustLearner`: the DoubleMachineLearning struct to estimate the effect for.
-- `X`: a vector of three covariate folds.
-- `T`: a vector of three treatment folds.
-- `Y`: a vector of three outcome folds.
-- `Z` : a vector of three confounder folds and covariate folds.
+- `DRE::DoublyRobustLearner`: DoubleMachineLearning struct to estimate the effect for.
+- `X`: vector of three covariate folds.
+- `T`: vector of three treatment folds.
+- `Y`: vector of three outcome folds.
+- `Z` : vector of three confounder folds and covariate folds.
 
 # Examples
 ```julia
-X, T, Y, W =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
-m1 = DoublyRobustLearner(X, T, Y, W=W)
+julia> X, T, Y, W = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
+julia> m1 = DoublyRobustLearner(X, T, Y, W=W)
 
-X, T, W, Y = make_folds(m1)
-Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
-estimate_effect!(m1, X, T, Y, Z)
+julia> X, T, W, Y = make_folds(m1)
+julia> Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
+julia> estimate_effect!(m1, X, T, Y, Z)
 ```
 """
 function estimate_effect!(DRE::DoublyRobustLearner, X, T, Y, Z)
@@ -682,13 +694,14 @@ stage1!(x)
 
 Estimate the first stage models for an X-learner.
 
+# Notes
 This method should not be called by the user.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = XLearner(X, T, Y)
-stage1!(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = XLearner(X, T, Y)
+julia> stage1!(m1)
 ```
 """
 function stage1!(x::XLearner)
@@ -717,14 +730,15 @@ stage2!(x)
 
 Estimate the second stage models for an X-learner.
 
+# Notes
 This method should not be called by the user.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = XLearner(X, T, Y)
-stage1!(m1)
-stage2!(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = XLearner(X, T, Y)
+julia> stage1!(m1)
+julia> stage2!(m1)
 ```
 """
 function stage2!(x::XLearner)

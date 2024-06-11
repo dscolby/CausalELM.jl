@@ -19,18 +19,18 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = GComputation(X, T, Y)
-estimate_causal_effect!(m1)
-summarize(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = GComputation(X, T, Y)
+julia> estimate_causal_effect!(m1)
+julia> summarize(m1)
 
-m2 = RLearner(X, T, Y)
-estimate_causal_effect(m2)
+julia> m2 = RLearner(X, T, Y)
+julia> estimate_causal_effect(m2)
 julia> summarize(m2)
 
-m3 = SLearner(X, T, Y)
-estimate_causal_effect!(m3)
-summarise(m3)
+julia> m3 = SLearner(X, T, Y)
+julia> estimate_causal_effect!(m3)
+julia> summarise(m3)  # British spelling works too!
 ```
 """
 function summarize(mod, n=1000)
@@ -65,17 +65,17 @@ end
 Get a summary from an interrupted time series estimator.
 
 # Arguments
-- `its::InterruptedTimeSeries`: an interrupted time series estimator
-- `n::Int=100`: the number of iterations to generate the numll distribution for 
-    randomization inference.
+- `its::InterruptedTimeSeries`: interrupted time series estimator
+- `n::Int=100`: number of iterations to generate the numll distribution for randomization 
+    inference.
 - `mean_effect::Bool=true`: whether to estimate the mean or cumulative effect for an 
     interrupted time series estimator.
 
 # Examples
 ```julia
-X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-m4 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-estimate_causal_effect!(m4)
+julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+julia> m4 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+julia> estimate_causal_effect!(m4)
 julia> summarize(m4)
 ```
 """
@@ -114,9 +114,9 @@ Generate a null distribution for the treatment effect of G-computation, double m
 learning, or metalearning.
 
 # Arguments
-- `mod::Union{CausalEstimator, Metalearner}`: a model to summarize.
-- `n::Int=100`: the number of iterations to generate the numll distribution for 
-    randomization inference.
+- `mod::Any`: model to summarize.
+- `n::Int=100`: number of iterations to generate the null distribution for randomization 
+    inference.
 
 # Notes
 This method estimates the same model that is provided using random permutations of the 
@@ -128,10 +128,10 @@ the null hypothesis.
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
-g_computer = GComputation(x, t, y)
-estimate_causal_effect!(g_computer)
-generate_null_distribution(g_computer, 500)
+julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+julia> g_computer = GComputation(x, t, y)
+julia> estimate_causal_effect!(g_computer)
+julia> generate_null_distribution(g_computer, 500)
 ```
 """
 function generate_null_distribution(mod, n)
@@ -159,18 +159,18 @@ end
     generate_null_distribution(its, n, mean_effect)
 
 # Arguments
-- `its::InterruptedTimeSeries`: an interrupted time series estimator
-- `n::Int=100`: the number of iterations to generate the numll distribution for 
-        randomization inference.
+- `its::InterruptedTimeSeries`: interrupted time series estimator
+- `n::Int=100`: number of iterations to generate the numll distribution for randomization 
+    inference.
 - `mean_effect::Bool=true`: whether to estimate the mean or cumulative effect for an 
-        interrupted time series estimator.
+    interrupted time series estimator.
 
 # Examples
 ```julia
-x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
-its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-estimate_causale_ffect!(its)
-generate_null_distribution(its, 10)
+julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimate_causal_effect!(its)
+julia> generate_null_distribution(its, 10)
 ```
 """
 function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
@@ -213,10 +213,10 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
-g_computer = GComputation(x, t, y)
-estimate_causal_effect!(g_computer)
-quantities_of_interest(g_computer, 1000)
+julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+julia> g_computer = GComputation(x, t, y)
+julia> estimate_causal_effect!(g_computer)
+julia> quantities_of_interest(g_computer, 1000)
 ```
 """
 function quantities_of_interest(mod, n)
@@ -249,10 +249,10 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
-its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-estimate_causal_effect!(its)
-quantities_of_interest(its, 10)
+julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimate_causal_effect!(its)
+julia> quantities_of_interest(its, 10)
 ```
 """
 function quantities_of_interest(mod::InterruptedTimeSeries, n, mean_effect)

@@ -21,8 +21,8 @@ See also ['RegularizedExtremeLearner'](@ref).
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
 ```
 """
 mutable struct ExtremeLearner <: ExtremeLearningMachine
@@ -51,8 +51,8 @@ Construct a RegularizedExtremeLearner for fitting and prediction.
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = RegularizedExtremeLearner(x, y, 10, σ)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
 ```
 """
 mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
@@ -87,8 +87,8 @@ For more details see:
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
 ```
 """
 function fit!(model::ExtremeLearner)
@@ -112,9 +112,9 @@ For more details see:
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = RegularizedExtremeLearner(x, y, 10, σ)
-f1 = fit!(m1)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+julia> f1 = fit!(m1)
 ```
 """
 function fit!(model::RegularizedExtremeLearner)
@@ -140,9 +140,9 @@ For more details see:
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
-f1 = fit(m1, sigmoid)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
+julia> f1 = fit(m1, sigmoid)
 julia> predict(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
 ```
 """
@@ -155,7 +155,7 @@ function predict(model::ExtremeLearningMachine, X)
 end
 
 """
-    predictcounterfactual(model, X)
+    predict_counterfactual!(model, X)
 
 Use an ExtremeLearningMachine to predict the counterfactual.
 
@@ -167,10 +167,10 @@ See also [`predict`](@ref).
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
-f1 = fit(m1, sigmoid)
-predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
+julia> f1 = fit(m1, sigmoid)
+julia> predict_counterfactual!(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
 ```
 """
 function predict_counterfactual!(model::ExtremeLearningMachine, X)
@@ -193,11 +193,11 @@ returns the predictions but does not test for statistical significance.
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
-f1 = fit(m1, sigmoid)
-predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
-placebo_test(m1)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
+julia> f1 = fit(m1, sigmoid)
+julia> predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+julia> placebo_test(m1)
 ```
 """
 function placebo_test(model::ExtremeLearningMachine)
@@ -215,8 +215,8 @@ Calculate the L2 penalty for a regularized extreme learning machine using genera
 validation with successive halving.
 
 # Arguments
-- `model::RegularizedExtremeLearner`: a regularized extreme learning machine
-- `iterations::Int`: the number of iterations to perform for successive halving.
+- `model::RegularizedExtremeLearner`: regularized extreme learning machine.
+- `iterations::Int`: number of iterations to perform for successive halving.
 
 # References
 For more information see: 
@@ -225,9 +225,9 @@ For more information see:
 
 # Examples
 ```julia
-m1 = RegularizedExtremeLearner(x, y, 10, σ)
-ridge_constant(m1)
-ridge_constant(m1, iterations=20)
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+julia> ridge_constant(m1)
+julia> ridge_constant(m1, iterations=20)
 ```
 """
 function ridge_constant(model::RegularizedExtremeLearner, iterations::Int=10)
@@ -271,8 +271,8 @@ For details see;
 
 # Examples
 ```julia
-m1 = RegularizedExtremeLearner(x, y, 10, σ)
-set_weights_biases(m1)
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+julia> set_weights_biases(m1)
 ```
 """
 function set_weights_biases(model::ExtremeLearningMachine)

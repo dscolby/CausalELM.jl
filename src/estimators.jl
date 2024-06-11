@@ -7,21 +7,21 @@ abstract type  CausalEstimator end
 Initialize an interrupted time series estimator. 
 
 # Arguments
-- `X₀::Any`: an array or DataFrame of covariates from the pre-treatment period.
-- `Y₁::Any`: an array or DataFrame of outcomes from the pre-treatment period.
-- `X₁::Any`: an array or DataFrame of covariates from the post-treatment period.
-- `Y₁::Any`: an array or DataFrame of outcomes from the post-treatment period.
+- `X₀::Any`: array or DataFrame of covariates from the pre-treatment period.
+- `Y₁::Any`: array or DataFrame of outcomes from the pre-treatment period.
+- `X₁::Any`: array or DataFrame of covariates from the post-treatment period.
+- `Y₁::Any`: array or DataFrame of outcomes from the post-treatment period.
 - `regularized::Function=true`: whether to use L2 regularization
 
 # Keywords
-- `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `activation::Function=relu`: activation function to use.
+- `validation_metric::Function`: validation metric to calculate during cross validation.
+- `min_neurons::Int`: minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: maximum number of neurons to consider for the extreme learner.
+- `folds::Int`: number of cross validation folds to find the best number of neurons.
+- `iterations::Int`: number of iterations to perform cross validation between min_neurons 
+    and max_neurons.
+- `approximator_neurons::Int`: number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -42,14 +42,16 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
-x₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100))
-y₀_df = DataFrame(y=rand(100))
-x₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)) 
-y₁_df = DataFrame(y=rand(100))
-m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
+julia> X₀, Y₀, X₁, Y₁ = rand(100, 5), rand(100), rand(10, 5), rand(10)
+julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+
+julia> m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
+
+julia> x₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100))
+julia> y₀_df = DataFrame(y=rand(100))
+julia> x₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)) 
+julia> y₁_df = DataFrame(y=rand(100))
+julia> m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 ```
 """
 mutable struct InterruptedTimeSeries
@@ -109,23 +111,23 @@ end
 Initialize a G-Computation estimator.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: array or DataFrame of covariates.
+- `T::Any`: vector or DataFrame of treatment statuses.
+- `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
 - `task::String`: either regression or classification.
 - `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
     treatment effect.
 - `regularized::Function=true`: whether to use L2 regularization
-- `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
+- `activation::Function=relu`: activation function to use.
+- `validation_metric::Function`: validation metric to calculate during cross validation.
+- `min_neurons::Int`: minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: maximum number of neurons to consider for the extreme learner.
+- `folds::Int`: number of cross validation folds to find the best number of neurons.
+- `iterations::Int`: number of iterations to perform cross validation between 
     min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `approximator_neurons::Int`: number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -149,15 +151,15 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-m1 = GComputation(X, T, Y)
-m2 = GComputation(X, T, Y; task="regression")
-m3 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE)
-m4 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE", regularized=true)
+julia> X, T, Y = rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = GComputation(X, T, Y)
+julia> m2 = GComputation(X, T, Y; task="regression")
+julia> m3 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE)
+julia> m4 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE", regularized=true)
 
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
-m5 = GComputation(x_df, t_df, y_df)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
+julia> m5 = GComputation(x_df, t_df, y_df)
 ```
 """
 mutable struct GComputation <: CausalEstimator
@@ -220,24 +222,24 @@ end
 Initialize a double machine learning estimator with cross fitting.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates of interest.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: array or DataFrame of covariates of interest.
+- `T::Any`: vector or DataFrame of treatment statuses.
+- `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
-- `W::Any`: an array or dataframe of all possible confounders.
+- `W::Any`: array or dataframe of all possible confounders.
 - `task::String`: either regression or classification.
 - `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
     treatment effect.
 - `regularized::Function=true`: whether to use L2 regularization
-- `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `activation::Function=relu`: activation function to use.
+- `validation_metric::Function`: validation metric to calculate during cross validation.
+- `min_neurons::Int`: minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Int`: maximum number of neurons to consider for the extreme learner.
+- `folds::Int`: number of cross validation folds to find the best number of neurons.
+- `iterations::Int`: number of iterations to perform cross validation between min_neurons 
+    and max_neurons.
+- `approximator_neurons::Int`: number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -263,13 +265,13 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoubleMachineLearning(X, T, Y)
-m2 = DoubleMachineLearning(X, T, Y; task="regression")
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> m2 = DoubleMachineLearning(X, T, Y; task="regression")
 
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-m3 = DoubleMachineLearning(x_df, t_df, y_df)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m3 = DoubleMachineLearning(x_df, t_df, y_df)
 ```
 """
 mutable struct DoubleMachineLearning <: CausalEstimator
@@ -317,15 +319,15 @@ function DoubleMachineLearning(X, T, Y; W=X, regularized=true, activation=relu,
 end
 
 """
-    estimate_causal_effect!(its)
+    estimate_causal_effect!(its::InterruptedTimeSeries)
 
 Estimate the effect of an event relative to a predicted counterfactual.
 
 # Examples
 ```julia
-X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-estimate_causal_effect!(m1)
+julia> X₀, Y₀, X₁, Y₁ = rand(100, 5), rand(100), rand(10, 5), rand(10)
+julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(its::InterruptedTimeSeries)
@@ -352,7 +354,7 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
 end
 
 """
-    estimate_causal_effect!(g)
+    estimate_causal_effect!(g::GComputation)
 
 Estimate a causal effect of interest using G-Computation.
 
@@ -365,9 +367,9 @@ as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0,
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = GComputation(X, T, Y)
-estimate_causal_effect!(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = GComputation(X, T, Y)
+julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(g::GComputation)
@@ -399,19 +401,19 @@ function estimate_causal_effect!(g::GComputation)
 end
 
 """
-    estimate_causal_effect!(DML)
+    estimate_causal_effect!(DML::DoubleMachineLearning)
 
 Estimate a causal effect of interest using double machine learning.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoubleMachineLearning(X, T, Y)
-estimate_causal_effect!(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> estimate_causal_effect!(m1)
 
-W = rand(100, 6)
-m2 = DoubleMachineLearning(X, T, Y, W=W)
-estimate_causal_effect!(m2)
+julia> W = rand(100, 6)  # confounders differ from covariates of interest
+julia> m2 = DoubleMachineLearning(X, T, Y, W=W)
+julia> estimate_causal_effect!(m2)
 ```
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
@@ -431,7 +433,7 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
 end
 
 """
-    estimate_effect!(DML, [,cate])
+    estimate_effect!(DML::DoubleMachineLearning, [,cate])
 
 Estimate a treatment effect using double machine learning.
 
@@ -439,14 +441,14 @@ Estimate a treatment effect using double machine learning.
 This method should not be called directly.
 
 # Arguments
-- `DML::DoubleMachineLearning`: the DoubleMachineLearning struct to estimate the effect for.
+- `DML::DoubleMachineLearning`: DoubleMachineLearning instance to estimate the effect for.
 - `cate::Bool=false`: whether to estimate the cate.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoubleMachineLearning(X, T, Y)
-estimate_effect!(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+jullia> m1 = DoubleMachineLearning(X, T, Y)
+julia> estimate_effect!(m1)
 ```
 """
 function estimate_effect!(DML::DoubleMachineLearning, cate=false)
@@ -486,12 +488,12 @@ This method should not be called directly.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-x_train, x_test = X[1:80, :], X[81:end, :]
-y_train, y_test = Y[1:80], Y[81:end]
-t_train, t_test = T[1:80], T[81:100]
-m1 = DoubleMachineLearning(X, T, Y)
-predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> x_train, x_test = X[1:80, :], X[81:end, :]
+julia> y_train, y_test = Y[1:80], Y[81:end]
+julia> t_train, t_test = T[1:80], T[81:100]
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 ```
 """
 function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train, y_test, 
@@ -525,9 +527,9 @@ This method should not be called directly.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoubleMachineLearning(X, T, Y)
-make_folds(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> make_folds(m1)
 ```
 """
 function make_folds(D)
@@ -545,14 +547,19 @@ end
 Calculates a cumulative moving average.
 
 # Examples
-```julia
-moving_average([1, 2, 3])
+```jldoctest
+julia> CausalELM.moving_average([1, 2, 3])
+3-element Vector{Float64}:
+ 1.0
+ 1.5
+ 2.0
 ```
 """
 function moving_average(x)
-    result = similar(x)
-    for i = 1:length(x)
-        result[i] = mean(x[1:i])
+    y = Float64.(x)
+    result = similar(y)
+    for i = 1:length(y)
+        result[i] = mean(y[1:i])
     end
     return result
 end

@@ -16,8 +16,9 @@ struct Continuous <: Nonbinary end
 Determine the type of variable held by a vector.
 
 # Examples
-```julia
-var_type([1, 2, 3, 2, 3, 1, 1, 3, 2])
+```jldoctest
+julia> CausalELM.var_type([1, 2, 3, 2, 3, 1, 1, 3, 2])
+CausalELM.Count()
 ```
 """
 function var_type(x::Array{<:Real})
@@ -40,10 +41,10 @@ Test the validity of an estimated interrupted time series analysis.
 - `its::InterruptedTimeSeries`: an interrupted time seiries estimator.
 
 # Keywords
-- `n::Int`: the number of times to simulate a confounder.
-- `low::Float64`=0.15: the minimum proportion of data points to include before or after the 
+- `n::Int`: number of times to simulate a confounder.
+- `low::Float64`=0.15: minimum proportion of data points to include before or after the 
     tested break in the Wald supremum test.
-- `high::Float64=0.85`: the maximum proportion of data points to include before or after the 
+- `high::Float64=0.85`: maximum proportion of data points to include before or after the 
     tested break in the Wald supremum test.
 
 # Notes
@@ -78,9 +79,9 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-stimate_causal_effect!(m1)
+julia> X₀, Y₀, X₁, Y₁ = rand(100, 5), rand(100), rand(10, 5), rand(10)
+julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+julia> estimate_causal_effect!(m1)
 julia> validate(m1)
 ```
 """
@@ -100,12 +101,12 @@ end
 - `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
     
 # Keywords
-- `devs=::Any`: an iterable of deviations from which to generate noise to simulate 
-    violations of the counterfactual consistency assumption.
-- `num_iterations=10::Int: the number of times to simulate a violation of the counterfactual 
+- `devs=::Any`: iterable of deviations from which to generate noise to simulate violations 
+    of the counterfactual consistency assumption.
+- `num_iterations=10::Int: number of times to simulate a violation of the counterfactual 
     consistency assumption.`
 - `min::Float64`=1.0e-6: minimum probability of treatment for the positivity assumption.
-- `high::Float64=1-min`: the maximum probability of treatment for the positivity assumption.
+- `high::Float64=1-min`: maximum probability of treatment for the positivity assumption.
 
 # Notes
 This method tests the counterfactual consistency, exchangeability, and positivity 
@@ -142,10 +143,10 @@ For more information on the E-value test see:
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1)) 
-g_computer = GComputation(x, t, y, temporal=false)
-estimate_causal_effect!(g_computer)
-validate(g_computer)
+julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1)) 
+julia> g_computer = GComputation(x, t, y, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> validate(g_computer)
 ```
 """
 function validate(m, devs; iterations=10, min=1.0e-6, max=1.0-min)
@@ -196,7 +197,7 @@ Test for independence between covariates and the event or intervention.
 - `its::InterruptedTImeSeries`: an interrupted time seiries estimator.
 
 # Keywords
-- `n::Int`: the number of permutations for assigning observations to the pre and 
+- `n::Int`: number of permutations for assigning observations to the pre and 
         post-treatment periods.
 
 This is a Chow Test for covariates with p-values estimated via randomization inference, 
@@ -215,10 +216,11 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10))
-its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-estimate_causal_effect!(its)
-covariate_independence(its)
+julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
+       randn(10))
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimate_causal_effect!(its)
+julia> covariate_independence(its)
 ```
 """
 function covariate_independence(its::InterruptedTimeSeries; n=1000)
@@ -245,10 +247,10 @@ See how an omitted predictor/variable could change the results of an interrupted
 analysis.
 
 # Arguments
-- `its::InterruptedTImeSeries`: an interrupted time seiries estimator.
+- `its::InterruptedTImeSeries`: interrupted time seiries estimator.
 
 # Keywords
-- `n::Int`: the number of times to simulate a confounder.
+- `n::Int`: number of times to simulate a confounder.
 
 # Notes
 This method reestimates interrupted time series models with uniform random variables. If the 
@@ -261,10 +263,10 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10))
-its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-estimate_causal_effect!(its)
-omitted_predictor(its)
+julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10))
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimate_causal_effect!(its)
+julia> omitted_predictor(its)
 ```
 """
 function omitted_predictor(its::InterruptedTimeSeries; n=1000)
@@ -299,13 +301,13 @@ end
 Check if the predicted structural break is the hypothesized structural break.
 
 # Arguments
-- `its::InterruptedTimeSeries`: an interrupted time seiries estimator.
+- `its::InterruptedTimeSeries`: interrupted time seiries estimator.
 
 # Keywords
-- `n::Int`: the number of times to simulate a confounder.
-- `low::Float64`=0.15: the minimum proportion of data points to include before or after the 
+- `n::Int`: number of times to simulate a confounder.
+- `low::Float64`=0.15: minimum proportion of data points to include before or after the 
         tested break in the Wald supremum test.
-- `high::Float64=0.85`: the maximum proportion of data points to include before or after the 
+- `high::Float64=0.85`: maximum proportion of data points to include before or after the 
         tested break in the Wald supremum test.
 
 # Notes
@@ -327,10 +329,11 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), randn(10))
-its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-estimate_causal_effect!(its)
-sup_wald(its)
+julia> x₀, y₀, x₁, y₁ = (Float64.(rand(1:5, 100, 5)), randn(100), rand(1:5, (10, 5)), 
+       randn(10))
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimate_causal_effect!(its)
+julia> sup_wald(its)
 ```
 """
 function sup_wald(its::InterruptedTimeSeries; low=0.15, high=0.85, n=1000)
@@ -367,17 +370,17 @@ on the slope of a covariate using randomization inference.
 
 # Arguments
 - `x::Array{<:Real}`: covariates.
-- `y::Array{<:Real}`: the outcome.
-- `β::Array{<:Real}`=0.15: the fitted weights.
+- `y::Array{<:Real}`: outcome.
+- `β::Array{<:Real}`=0.15: fitted weights.
 
 # Keywords
 - `two_sided::Bool=false`: whether to conduct a one-sided hypothesis test.
 
 # Examples
 ```julia
-x, y, β = reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
-p_val(x, y, β)
-p_val(x, y, β; n=100, two_sided=true)
+julia> x, y, β = reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
+julia> p_val(x, y, β)
+julia> p_val(x, y, β; n=100, two_sided=true)
 ```
 """
 function p_val(x, y, β; n=1000, two_sided=false)
@@ -404,13 +407,13 @@ end
     counterfactual_consistency(m; kwargs...)
 
 # Arguments
-- `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
+- `m::Union{CausalEstimator, Metalearner}`: model to validate/test the assumptions of.
 
 # Keywords
-- `num_devs=(0.25, 0.5, 0.75, 1.0)::Tuple`: the number of standard deviations from which 
-    to generate noise from a normal distribution to simulate violations of the 
-    counterfactual consistency assumption.
-- `num_iterations=10::Int: the number of times to simulate a violation of the counterfactual 
+- `num_devs=(0.25, 0.5, 0.75, 1.0)::Tuple`: number of standard deviations from which to 
+    generate noise from a normal distribution to simulate violations of the counterfactual 
+    consistency assumption.
+- `num_iterations=10::Int: number of times to simulate a violation of the counterfactual 
     consistency assumption.`
 
 # Notes
@@ -424,10 +427,11 @@ element in num_devs.
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
-g_computer = GComputation(x, t, y, temporal=false)
-estimate_causal_effect!(g_computer)
-counterfactual_consistency(g_computer)
+julia> x, t = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]
+julia> y = vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> counterfactual_consistency(g_computer)
 ```
 """
 function counterfactual_consistency(model, devs, iterations)
@@ -478,10 +482,11 @@ For more information on the E-value test see:
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
-g_computer = GComputation(x, t, y, temporal=false)
-estimate_causal_effect!(g_computer)
-e_value(g_computer)
+julia> x, t = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]
+julia> y = vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> e_value(g_computer)
 ```
 """
 exchangeability(model) = e_value(model)
@@ -498,10 +503,11 @@ For more information on the E-value test see:
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
-g_computer = GComputation(x, t, y, temporal=false)
-estimate_causal_effect!(g_computer)
-e_value(g_computer)
+julia> x, t = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]
+julia> y = vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> e_value(g_computer)
 ```
 """
 function e_value(model)
@@ -519,9 +525,18 @@ end
  
 Convert a vector of counts or a continuous vector to a binary vector.
 
+# Arguments
+- `x::Any`: interable of numbers to binarize.
+- `x::Any`: threshold after which numbers are converted to 1 and befrore which are converted 
+    to 0.
+
 # Examples
-```julia
-binarize([1, 2, 3], 2)
+```jldoctest
+julia> CausalELM.binarize([1, 2, 3], 2)
+3-element Vector{Int64}:
+ 0
+ 0
+ 1
 ```
 """
 function binarize(x, cutoff)
@@ -550,10 +565,11 @@ For more information on how other quantities of interest are converted to risk r
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
-g_computer = GComputation(x, t, y, temporal=false)
-estimate_causal_effect!(g_computer)
-risk_ratio(g_computer)
+julia> x, t = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]
+julia> y = vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> risk_ratio(g_computer)
 ```
 """
 risk_ratio(mod) = risk_ratio(var_type(mod.T), mod)
@@ -654,10 +670,11 @@ assumption.
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100], vec(rand(1:100, 100, 1)))
-g_computer = GComputation(x, t, y, temporal=false)
-estimate_causal_effect!(g_computer)
-positivity(g_computer)
+julia> x, t = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]
+julia> y = vec(rand(1:100, 100, 1)))
+julia> g_computer = GComputation(x, t, y, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> positivity(g_computer)
 ```
 """
 positivity(model, min=1.0e-6, max=1-min) = positivity(model, min, max)
