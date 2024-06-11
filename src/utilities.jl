@@ -24,27 +24,6 @@ julia> CausalELM.var([1, 2, 3, 4])
 """
 var(x) = sum((x .- mean(x)).^2)/(length(x)-1)
 
-
-"""
-    consecutive(x)
-
-Subtract consecutive elements in a vector.
-
-# Notes
-This function is only used to create a rolling average for interrupted time series analysis.
-
-# Examples
-```jldoctest
-julia> CausalELM.consecutive([1, 2, 3, 4, 5])
-4-element Vector{Int64}:
- 1
- 1
- 1
- 1
-```
-"""
-consecutive(v) = [-(v[i+1], v[i]) for i = 1:length(v)-1]
-
 """
     one_hot_encode(x)
 
