@@ -10,20 +10,20 @@ ovb = CausalELM.omitted_predictor(its)
 its_validation = validate(its)
 
 x, t, y = rand(100, 5), Float64.([rand() < 0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
-g_computer = GComputation(x, t, y, temporal=false)
+g_computer = GComputation(x, t, y; temporal=false)
 estimate_causal_effect!(g_computer)
-test_outcomes = g_computer.Y[g_computer.T.==1]
+test_outcomes = g_computer.Y[g_computer.T .== 1]
 
 # Create binary GComputation to test E-values with a binary outcome
 x1, y1 = rand(100, 5), Float64.([rand() < 0.4 for i in 1:100])
 t1 = Float64.([rand() < 0.4 for i in 1:100])
-binary_g_computer = GComputation(x1, t1, y1, temporal=false)
+binary_g_computer = GComputation(x1, t1, y1; temporal=false)
 estimate_causal_effect!(binary_g_computer)
 
 # Create binary GComputation to test E-values with a count outcome
 x2, y2 = rand(100, 5), rand(1.0:5.0, 100)
 t2 = Float64.([rand() < 0.4 for i in 1:100])
-count_g_computer = GComputation(x2, t2, y2, temporal=false)
+count_g_computer = GComputation(x2, t2, y2; temporal=false)
 estimate_causal_effect!(count_g_computer)
 
 # Create double machine learning estimator
@@ -31,7 +31,7 @@ dml = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dml)
 
 # Create double machine learning estimator without regularization
-dml_noreg = DoubleMachineLearning(x, t, y, regularized=false)
+dml_noreg = DoubleMachineLearning(x, t, y; regularized=false)
 estimate_causal_effect!(dml_noreg)
 
 # Testing the risk ratio with a nonbinary treatment variable
@@ -88,17 +88,25 @@ end
 
 @testset "p-values" begin
     @testset "p-values for OLS" begin
-        @test 0 <= CausalELM.p_val(reduce(hcat, (float(rand(0:1, 10)), ones(10))),
-                  rand(10), 0.5) <= 1
-        @test 0 <= CausalELM.p_val(reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10),
-                  0.5, n=100) <= 1
-        @test 0 <= CausalELM.p_val(reduce(hcat, (reduce(vcat, (zeros(5), ones(5))),
-                      ones(10))), randn(10), 0.5) <= 1
+        @test 0 <=
+            CausalELM.p_val(
+                reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5
+            ) <=
+            1
+        @test 0 <=
+            CausalELM.p_val(
+                reduce(hcat, (float(rand(0:1, 10)), ones(10))), rand(10), 0.5; n=100
+            ) <=
+            1
+        @test 0 <=
+            CausalELM.p_val(
+                reduce(hcat, (reduce(vcat, (zeros(5), ones(5))), ones(10))), randn(10), 0.5
+            ) <=
+            1
     end
 end
 
 @testset "Interrupted Time Series Assumptions" begin
-
     @testset "Covariate Independence Assumption" begin
         # Test covariate_independence method
         @test length(its_independence) === 6
@@ -117,8 +125,9 @@ end
     @testset "Sensitivity to Omitted Predictors" begin
         # Test omittedvariable method
         # The first test should throw an error since estimatecausaleffect! was not called
-        @test_throws ErrorException CausalELM.omitted_predictor(InterruptedTimeSeries(x₀,
-            y₀, x₁, y₁))
+        @test_throws ErrorException CausalELM.omitted_predictor(
+            InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+        )
         @test ovb isa Dict{String,Float64}
         @test isa.(values(ovb), Float64) == Bool[1, 1, 1, 1]
     end
@@ -145,8 +154,9 @@ end
 
 @testset "G-Computation Assumptions" begin
     @testset "Counterfactual Consistency" begin
-        @test CausalELM.counterfactual_consistency(g_computer, (0.25, 0.5, 0.75, 1.0),
-            10) isa Dict{Float64,Float64}
+        @test CausalELM.counterfactual_consistency(
+            g_computer, (0.25, 0.5, 0.75, 1.0), 10
+        ) isa Dict{Float64,Float64}
     end
 
     @testset "Exchangeability" begin
@@ -156,10 +166,10 @@ end
     end
 
     @testset "Positivity" begin
-        @test size(CausalELM.positivity(binary_g_computer), 2) == size(binary_g_computer.X,
-            2) + 1
-        @test size(CausalELM.positivity(count_g_computer), 2) == size(count_g_computer.X,
-            2) + 1
+        @test size(CausalELM.positivity(binary_g_computer), 2) ==
+            size(binary_g_computer.X, 2) + 1
+        @test size(CausalELM.positivity(count_g_computer), 2) ==
+            size(count_g_computer.X, 2) + 1
         @test size(CausalELM.positivity(g_computer), 2) == size(g_computer.X, 2) + 1
         @test size(CausalELM.positivity(dm_noreg), 2) == size(dm_noreg.X, 2) + 1
     end
@@ -172,9 +182,8 @@ end
 end
 
 @testset "Double Machine Learning Assumptions" begin
-    @test CausalELM.counterfactual_consistency(
-        dml, (0.25, 0.5, 0.75, 1.0), 10
-    ) isa Dict{Float64,Float64}
+    @test CausalELM.counterfactual_consistency(dml, (0.25, 0.5, 0.75, 1.0), 10) isa
+        Dict{Float64,Float64}
     @test CausalELM.exchangeability(dml) isa Real
     @test size(CausalELM.positivity(dml), 2) == size(dml.X, 2) + 1
     @test length(validate(dml)) == 3

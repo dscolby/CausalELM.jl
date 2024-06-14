@@ -81,7 +81,6 @@ end
     @test_throws ErrorException placebo_test(nofit)
 end
 
-
 @testset "Print Models" begin
     msg1, msg2 = "Extreme Learning Machine with ", "hidden neurons"
     msg3 = "Regularized " * msg1

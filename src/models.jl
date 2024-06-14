@@ -40,7 +40,7 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     counterfactual::Array{Float64}
 
     function ExtremeLearner(X, Y, hidden_neurons, activation)
-        new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
+        return new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end
 end
 
@@ -71,7 +71,7 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     counterfactual::Array{Float64}
 
     function RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
-        new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
+        return new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end
 end
 
@@ -122,7 +122,9 @@ function fit!(model::RegularizedExtremeLearner)
     k = ridge_constant(model)
     Id = Matrix(I, size(model.H, 2), size(model.H, 2))
 
-    model.β = @fastmath pinv(transpose(model.H) * model.H + k * Id) * transpose(model.H) * model.Y
+    model.β = @fastmath pinv(transpose(model.H) * model.H + k * Id) *
+        transpose(model.H) *
+        model.Y
     model.__fit = true  # Enables running predict
 
     return model.β
@@ -283,11 +285,20 @@ function set_weights_biases(model::ExtremeLearningMachine)
     a, b = -sqrt(6) / sqrt(n_in + n_out), sqrt(6) / sqrt(n_in + n_out)
     model.weights = @fastmath a .+ ((b - a) .* rand(model.features, model.hidden_neurons))
 
-    model.H = @fastmath model.activation((model.X * model.weights))
+    return model.H = @fastmath model.activation((model.X * model.weights))
 end
 
-Base.show(io::IO, model::ExtremeLearner) = print(io,
-    "Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons")
+function Base.show(io::IO, model::ExtremeLearner)
+    return print(
+        io, "Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons"
+    )
+end
 
-Base.show(io::IO, model::RegularizedExtremeLearner) = print(io,
-    "Regularized Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons")
+function Base.show(io::IO, model::RegularizedExtremeLearner)
+    return print(
+        io,
+        "Regularized Extreme Learning Machine with ",
+        model.hidden_neurons,
+        " hidden neurons",
+    )
+end

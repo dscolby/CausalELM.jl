@@ -90,7 +90,8 @@ function validate(its::InterruptedTimeSeries; n=1000, low=0.15, high=0.85)
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
-    return covariate_independence(its; n=n), sup_wald(its; low=low, high=high, n=n),
+    return covariate_independence(its; n=n),
+    sup_wald(its; low=low, high=high, n=n),
     omitted_predictor(its; n=n)
 end
 
@@ -159,24 +160,25 @@ function validate(m, devs; iterations=10, min=1.0e-6, max=1.0 - min)
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
-    return counterfactual_consistency(m, devs, iterations), exchangeability(m),
+    return counterfactual_consistency(m, devs, iterations),
+    exchangeability(m),
     positivity(m, min, max)
 end
 
 function validate(R::RLearner, devs; iterations=10, min=1.0e-6, max=1.0 - min)
-    return validate(R.dml, devs, iterations=iterations, min=min, max=max)
+    return validate(R.dml, devs; iterations=iterations, min=min, max=max)
 end
 
 function validate(R::RLearner; iterations=10, min=1.0e-6, max=1.0 - min)
-    return validate(R.dml, iterations=iterations, min=min, max=max)
+    return validate(R.dml; iterations=iterations, min=min, max=max)
 end
 
 function validate(S::SLearner, devs; iterations=10, min=1.0e-6, max=1.0 - min)
-    return validate(S.g, devs, iterations=iterations, min=min, max=max)
+    return validate(S.g, devs; iterations=iterations, min=min, max=max)
 end
 
 function validate(S::SLearner; iterations=10, min=1.0e-6, max=1.0 - min)
-    return validate(S.g, iterations=iterations, min=min, max=max)
+    return validate(S.g; iterations=iterations, min=min, max=max)
 end
 
 function validate(m; iterations=10, min=1.0e-6, max=1.0 - min)
@@ -224,18 +226,18 @@ julia> covariate_independence(its)
 ```
 """
 function covariate_independence(its::InterruptedTimeSeries; n=1000)
-    x₀ = reduce(hcat, (its.X₀[:, 1:end-1], zeros(size(its.X₀, 1))))
-    x₁ = reduce(hcat, (its.X₁[:, 1:end-1], ones(size(its.X₁, 1))))
+    x₀ = reduce(hcat, (its.X₀[:, 1:(end - 1)], zeros(size(its.X₀, 1))))
+    x₁ = reduce(hcat, (its.X₁[:, 1:(end - 1)], ones(size(its.X₁, 1))))
     x = reduce(vcat, (x₀, x₁))
     results = Dict{String,Float64}()
 
     # Estimate a linear regression with each covariate as a dependent variable and all other
     # covariates and time as independent variables
     for i in axes(x, 2)
-        new_x, y = x[:, 1:end.!=i], x[:, i]
+        new_x, y = x[:, 1:end .!= i], x[:, i]
         β = last(new_x \ y)
-        p = p_val(new_x, y, β, n=n)
-        results["Column "*string(i)*" p-value"] = p
+        p = p_val(new_x, y, β; n=n)
+        results["Column " * string(i) * " p-value"] = p
     end
     return results
 end
@@ -288,8 +290,11 @@ function omitted_predictor(its::InterruptedTimeSeries; n=1000)
     results["Minimum Biased Effect/Original Effect"] = biased_effects[1]
     results["Mean Biased Effect/Original Effect"] = mean(biased_effects)
     results["Maximum Biased Effect/Original Effect"] = biased_effects[n]
-    median = ifelse(n % 2 === 1, biased_effects[Int(ceil(n / 2))],
-        mean([biased_effects[Int(n / 2)], biased_effects[Int(n / 2)+1]]))
+    median = ifelse(
+        n % 2 === 1,
+        biased_effects[Int(ceil(n / 2))],
+        mean([biased_effects[Int(n / 2)], biased_effects[Int(n / 2) + 1]]),
+    )
     results["Median Biased Effect/Original Effect"] = median
 
     return results
@@ -357,9 +362,12 @@ function sup_wald(its::InterruptedTimeSeries; low=0.15, high=0.85, n=1000)
         end
     end
     p = p_val(best_x, y, best_β; n=n, two_sided=true)
-    return Dict("Hypothesized Break Point" => hypothesized_break,
-        "Predicted Break Point" => current_break, "Wald Statistic" => wald,
-        "p-value" => p)
+    return Dict(
+        "Hypothesized Break Point" => hypothesized_break,
+        "Predicted Break Point" => current_break,
+        "Wald Statistic" => wald,
+        "p-value" => p,
+    )
 end
 
 """
@@ -390,7 +398,8 @@ function p_val(x, y, β; n=1000, two_sided=false)
     # Run OLS with random treatment vectors to generate a counterfactual distribution
     @simd for i in 1:n
         if var_type(x_copy[:, end]) isa Continuous
-            @inbounds x_copy[:, end] = (max_x - min_x) * rand(length(x_copy[:, end])) .+ min_x
+            @inbounds x_copy[:, end] =
+                (max_x - min_x) * rand(length(x_copy[:, end])) .+ min_x
         else
             @inbounds x_copy[:, end] = float(rand(min_x:max_x, size(x, 1)))
         end
@@ -399,7 +408,7 @@ function p_val(x, y, β; n=1000, two_sided=false)
     end
 
     # Wald test is only one sided
-    p = two_sided ? length(null[β.<null]) / n : length(null[abs(β).<abs.(null)]) / n
+    p = two_sided ? length(null[β .< null]) / n : length(null[abs(β) .< abs.(null)]) / n
     return p
 end
 
@@ -543,8 +552,8 @@ function binarize(x, cutoff)
     if var_type(x) isa Binary
         return x
     else
-        x[x.<=cutoff] .= 0
-        x[x.>cutoff] .= 1
+        x[x .<= cutoff] .= 0
+        x[x .> cutoff] .= 1
     end
     return x
 end
@@ -601,7 +610,7 @@ end
 
 # This approximates the risk ratio for a binary treatment with a binary outcome
 function risk_ratio(::Binary, ::Binary, mod)
-    Xₜ, Xᵤ = mod.X[mod.T.==1, :], mod.X[mod.T.==0, :]
+    Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
     Xₜ, Xᵤ = reduce(hcat, (Xₜ, ones(size(Xₜ, 1)))), reduce(hcat, (Xᵤ, ones(size(Xᵤ, 1))))
 
     # For algorithms that use one model to estimate the outcome
@@ -611,32 +620,35 @@ function risk_ratio(::Binary, ::Binary, mod)
         # For models that use separate models for outcomes in the treatment and control group
     else
         hasfield(typeof(mod), :μ₀)
-        Xₜ, Xᵤ = mod.X[mod.T.==1, :], mod.X[mod.T.==0, :]
+        Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
         return @fastmath mean(predict(mod.μ₁, Xₜ)) / mean(predict(mod.μ₀, Xᵤ))
     end
 end
 
 # This approximates the risk ratio with a binary treatment and count or categorical outcome
 function risk_ratio(::Binary, ::Count, mod)
-    Xₜ, Xᵤ = mod.X[mod.T.==1, :], mod.X[mod.T.==0, :]
+    Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
     m, n = size(Xₜ, 1), size(Xᵤ, 1) # The number of obeservations in each group
     Xₜ, Xᵤ = reduce(hcat, (Xₜ, ones(m))), reduce(hcat, (Xᵤ, ones(n)))
 
     # For estimators with a single model of the outcome variable
     if hasfield(typeof(mod), :learner)
-        return @fastmath (sum(predict(mod.learner, Xₜ)) / m) / (sum(predict(mod.learner, Xᵤ)) / n)
+        return @fastmath (sum(predict(mod.learner, Xₜ)) / m) /
+            (sum(predict(mod.learner, Xᵤ)) / n)
 
         # For models that use separate models for outcomes in the treatment and control group
     elseif hasfield(typeof(mod), :μ₀)
-        Xₜ, Xᵤ = mod.X[mod.T.==1, :], mod.X[mod.T.==0, :]
+        Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
         return @fastmath mean(predict(mod.μ₁, Xₜ)) / mean(predict(mod.μ₀, Xᵤ))
     else
         if mod.regularized
-            learner = RegularizedExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y,
-                mod.num_neurons, mod.activation)
+            learner = RegularizedExtremeLearner(
+                reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, mod.activation
+            )
         else
-            learner = ExtremeLearner(reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons,
-                mod.activation)
+            learner = ExtremeLearner(
+                reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, mod.activation
+            )
         end
         fit!(learner)
         @fastmath (sum(predict(learner, Xₜ)) / m) / (sum(predict(learner, Xᵤ)) / n)
@@ -682,16 +694,32 @@ positivity(model, min=1.0e-6, max=1 - min) = positivity(model, min, max)
 
 function positivity(mod::XLearner, min=1.0e-6, max=1 - min)
     # Observations that have a zero probability of treatment or control assignment
-    return reduce(hcat, (mod.X[mod.ps.<=min.||mod.ps.>=max, :],
-        mod.ps[mod.ps.<=min.||mod.ps.>=max]))
+    return reduce(
+        hcat,
+        (
+            mod.X[mod.ps .<= min .|| mod.ps .>= max, :],
+            mod.ps[mod.ps .<= min .|| mod.ps .>= max],
+        ),
+    )
 end
 
 function positivity(mod::DoubleMachineLearning, min=1.0e-6, max=1 - min)
     task = var_type(mod.T) == Binary() ? "classification" : "regression"
 
-    num_neurons = best_size(mod.X, mod.T, mod.validation_metric, task, mod.activation,
-        mod.min_neurons, mod.max_neurons, mod.regularized, mod.folds,
-        false, mod.iterations, mod.approximator_neurons)
+    num_neurons = best_size(
+        mod.X,
+        mod.T,
+        mod.validation_metric,
+        task,
+        mod.activation,
+        mod.min_neurons,
+        mod.max_neurons,
+        mod.regularized,
+        mod.folds,
+        false,
+        mod.iterations,
+        mod.approximator_neurons,
+    )
 
     if mod.regularized
         ps_mod = RegularizedExtremeLearner(mod.X, mod.T, num_neurons, mod.activation)
@@ -703,8 +731,13 @@ function positivity(mod::DoubleMachineLearning, min=1.0e-6, max=1 - min)
     propensity_scores = predict(ps_mod, mod.X)
 
     # Observations that have a zero probability of treatment or control assignment
-    return reduce(hcat, (mod.X[propensity_scores.<=min.||propensity_scores.>=max, :],
-        propensity_scores[propensity_scores.<=min.||propensity_scores.>=max]))
+    return reduce(
+        hcat,
+        (
+            mod.X[propensity_scores .<= min .|| propensity_scores .>= max, :],
+            propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max],
+        ),
+    )
 end
 
 function positivity(mod, min=1.0e-6, max=1 - min)
@@ -718,6 +751,11 @@ function positivity(mod, min=1.0e-6, max=1 - min)
     propensity_scores = predict(ps_mod, mod.X)
 
     # Observations that have a zero probability of treatment or control assignment
-    return reduce(hcat, (mod.X[propensity_scores.<=min.||propensity_scores.>=max, :],
-        propensity_scores[propensity_scores.<=min.||propensity_scores.>=max]))
+    return reduce(
+        hcat,
+        (
+            mod.X[propensity_scores .<= min .|| propensity_scores .>= max, :],
+            propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max],
+        ),
+    )
 end

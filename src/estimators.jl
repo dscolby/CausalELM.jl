@@ -1,5 +1,5 @@
 """Abstract type for GComputation and DoubleMachineLearning"""
-abstract type  CausalEstimator end
+abstract type CausalEstimator end
 
 """
     InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; kwargs...)
@@ -59,37 +59,81 @@ mutable struct InterruptedTimeSeries
     Y₁::Array{Float64}
     @model_config "individual_effect"
 
-    function InterruptedTimeSeries(X₀::Array{<:Real}, Y₀::Array{<:Real}, X₁::Array{<:Real}, 
-                                   Y₁::Array{<:Real}; regularized=true, activation=relu, 
-                                   validation_metric=mse, min_neurons=1, max_neurons=100, 
-                                   folds=5, iterations=round(size(X₀, 1)/10), 
-                                   approximator_neurons=round(size(X₀, 1)/10), 
-                                   autoregression=true)
+    function InterruptedTimeSeries(
+        X₀::Array{<:Real},
+        Y₀::Array{<:Real},
+        X₁::Array{<:Real},
+        Y₁::Array{<:Real};
+        regularized=true,
+        activation=relu,
+        validation_metric=mse,
+        min_neurons=1,
+        max_neurons=100,
+        folds=5,
+        iterations=round(size(X₀, 1) / 10),
+        approximator_neurons=round(size(X₀, 1) / 10),
+        autoregression=true,
+    )
 
         # Add autoregressive term
         X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
         X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, moving_average(Y₁))), X₁)
 
-        new(X₀, Float64.(Y₀), Float64.(X₁), Float64.(Y₁), "difference", true, "regression", 
-            regularized, activation, validation_metric, min_neurons, max_neurons, folds, 
-            iterations, approximator_neurons, 0)
+        return new(
+            X₀,
+            Float64.(Y₀),
+            Float64.(X₁),
+            Float64.(Y₁),
+            "difference",
+            true,
+            "regression",
+            regularized,
+            activation,
+            validation_metric,
+            min_neurons,
+            max_neurons,
+            folds,
+            iterations,
+            approximator_neurons,
+            0,
+        )
     end
 end
 
-function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=true, activation=relu, 
-                               validation_metric=mse, min_neurons=1, max_neurons=100, 
-                               folds=5, iterations=round(size(X₀, 1)/10), 
-                               approximator_neurons=round(size(X₀, 1)/10), 
-                               autoregression=true)
+function InterruptedTimeSeries(
+    X₀,
+    Y₀,
+    X₁,
+    Y₁;
+    regularized=true,
+    activation=relu,
+    validation_metric=mse,
+    min_neurons=1,
+    max_neurons=100,
+    folds=5,
+    iterations=round(size(X₀, 1) / 10),
+    approximator_neurons=round(size(X₀, 1) / 10),
+    autoregression=true,
+)
 
     # Convert to arrays
     X₀, X₁, Y₀, Y₁ = Matrix{Float64}(X₀), Matrix{Float64}(X₁), Y₀[:, 1], Y₁[:, 1]
 
-    InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=regularized, 
-                          activation=activation, validation_metric=validation_metric, 
-                          min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
-                          iterations=iterations, approximator_neurons=approximator_neurons, 
-                          autoregression=autoregression)
+    return InterruptedTimeSeries(
+        X₀,
+        Y₀,
+        X₁,
+        Y₁;
+        regularized=regularized,
+        activation=activation,
+        validation_metric=validation_metric,
+        min_neurons=min_neurons,
+        max_neurons=max_neurons,
+        folds=folds,
+        iterations=iterations,
+        approximator_neurons=approximator_neurons,
+        autoregression=autoregression,
+    )
 end
 
 """
@@ -154,39 +198,85 @@ mutable struct GComputation <: CausalEstimator
     @model_config "average_effect"
     learner::ExtremeLearningMachine
 
-    function GComputation(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-                          task="regression", quantity_of_interest="ATE", regularized=true, 
-                          activation=relu, temporal=true, validation_metric=mse, 
-                          min_neurons=1, max_neurons=100, folds=5, 
-                          iterations=round(size(X, 1)/10), 
-                          approximator_neurons=round(size(X, 1)/10))
-
+    function GComputation(
+        X::Array{<:Real},
+        T::Array{<:Real},
+        Y::Array{<:Real};
+        task="regression",
+        quantity_of_interest="ATE",
+        regularized=true,
+        activation=relu,
+        temporal=true,
+        validation_metric=mse,
+        min_neurons=1,
+        max_neurons=100,
+        folds=5,
+        iterations=round(size(X, 1) / 10),
+        approximator_neurons=round(size(X, 1) / 10),
+    )
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
         elseif quantity_of_interest ∉ ("ATE", "ITT", "ATT")
             throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
         end
 
-        new(Float64.(X), Float64.(T), Float64.(Y), quantity_of_interest, temporal, task, 
-            regularized, activation, validation_metric, min_neurons, max_neurons, 
-            folds, iterations, approximator_neurons, 0, NaN)
+        return new(
+            Float64.(X),
+            Float64.(T),
+            Float64.(Y),
+            quantity_of_interest,
+            temporal,
+            task,
+            regularized,
+            activation,
+            validation_metric,
+            min_neurons,
+            max_neurons,
+            folds,
+            iterations,
+            approximator_neurons,
+            0,
+            NaN,
+        )
     end
 end
 
-function GComputation(X, T, Y; task="regression", quantity_of_interest="ATE", 
-                      regularized=true, activation=relu, temporal=true, 
-                      validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-                      iterations=round(size(X, 1)/10), 
-                      approximator_neurons=round(size(X, 1)/10))
+function GComputation(
+    X,
+    T,
+    Y;
+    task="regression",
+    quantity_of_interest="ATE",
+    regularized=true,
+    activation=relu,
+    temporal=true,
+    validation_metric=mse,
+    min_neurons=1,
+    max_neurons=100,
+    folds=5,
+    iterations=round(size(X, 1) / 10),
+    approximator_neurons=round(size(X, 1) / 10),
+)
 
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
-    GComputation(X, T, Y; task=task, quantity_of_interest=quantity_of_interest, 
-                 regularized=regularized, activation=activation, temporal=temporal, 
-                 validation_metric=validation_metric, min_neurons=min_neurons, 
-                 max_neurons=max_neurons, folds=folds, iterations=iterations, 
-                 approximator_neurons=approximator_neurons)
+    return GComputation(
+        X,
+        T,
+        Y;
+        task=task,
+        quantity_of_interest=quantity_of_interest,
+        regularized=regularized,
+        activation=activation,
+        temporal=temporal,
+        validation_metric=validation_metric,
+        min_neurons=min_neurons,
+        max_neurons=max_neurons,
+        folds=folds,
+        iterations=iterations,
+        approximator_neurons=approximator_neurons,
+    )
 end
 
 """
@@ -251,31 +341,75 @@ mutable struct DoubleMachineLearning <: CausalEstimator
     @double_learner_input_data
     @model_config "average_effect"
 
-    function DoubleMachineLearning(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-                                   W=X, task="regression", regularized=true, 
-                                   activation=relu, validation_metric=mse, min_neurons=1, 
-                                   max_neurons=100, folds=5, 
-                                   iterations=round(size(X, 1)/10), 
-                                   approximator_neurons=round(size(X, 1)/10))
-
-        new(Float64.(X), Float64.(T), Float64.(Y), Float64.(W), "ATE", false, task, 
-            regularized, activation, validation_metric, min_neurons, max_neurons, folds, 
-            iterations, approximator_neurons, 0, NaN)
+    function DoubleMachineLearning(
+        X::Array{<:Real},
+        T::Array{<:Real},
+        Y::Array{<:Real};
+        W=X,
+        task="regression",
+        regularized=true,
+        activation=relu,
+        validation_metric=mse,
+        min_neurons=1,
+        max_neurons=100,
+        folds=5,
+        iterations=round(size(X, 1) / 10),
+        approximator_neurons=round(size(X, 1) / 10),
+    )
+        return new(
+            Float64.(X),
+            Float64.(T),
+            Float64.(Y),
+            Float64.(W),
+            "ATE",
+            false,
+            task,
+            regularized,
+            activation,
+            validation_metric,
+            min_neurons,
+            max_neurons,
+            folds,
+            iterations,
+            approximator_neurons,
+            0,
+            NaN,
+        )
     end
 end
 
-function DoubleMachineLearning(X, T, Y; W=X, regularized=true, activation=relu, 
-                               validation_metric=mse, min_neurons=1, max_neurons=100, 
-                               folds=5, iterations=round(size(X, 1)/10), 
-                               approximator_neurons=round(size(X, 1)/10))
+function DoubleMachineLearning(
+    X,
+    T,
+    Y;
+    W=X,
+    regularized=true,
+    activation=relu,
+    validation_metric=mse,
+    min_neurons=1,
+    max_neurons=100,
+    folds=5,
+    iterations=round(size(X, 1) / 10),
+    approximator_neurons=round(size(X, 1) / 10),
+)
 
     # Convert to arrays
     X, T, Y, W = Matrix{Float64}(X), T[:, 1], Y[:, 1], Matrix{Float64}(W)
 
-    DoubleMachineLearning(X, T, Y; W=W, regularized=regularized, activation=activation, 
-                          validation_metric=validation_metric, min_neurons=min_neurons, 
-                          max_neurons=max_neurons, folds=folds, iterations=iterations, 
-                          approximator_neurons=approximator_neurons)
+    return DoubleMachineLearning(
+        X,
+        T,
+        Y;
+        W=W,
+        regularized=regularized,
+        activation=activation,
+        validation_metric=validation_metric,
+        min_neurons=min_neurons,
+        max_neurons=max_neurons,
+        folds=folds,
+        iterations=iterations,
+        approximator_neurons=approximator_neurons,
+    )
 end
 
 """
@@ -295,10 +429,20 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
     if its.num_neurons === 0
-        its.num_neurons = best_size(its.X₀, its.Y₀, its.validation_metric, "regression", 
-                                    its.activation, its.min_neurons, its.max_neurons, 
-                                    its.regularized, its.folds, true, its.iterations, 
-                                    its.approximator_neurons)
+        its.num_neurons = best_size(
+            its.X₀,
+            its.Y₀,
+            its.validation_metric,
+            "regression",
+            its.activation,
+            its.min_neurons,
+            its.max_neurons,
+            its.regularized,
+            its.folds,
+            true,
+            its.iterations,
+            its.approximator_neurons,
+        )
     end
 
     if its.regularized
@@ -336,15 +480,26 @@ function estimate_causal_effect!(g::GComputation)
     covariates, y = hcat(g.X, g.T), var_type(g.Y)
 
     if g.quantity_of_interest ∈ ("ITT", "ATE")
-        Xₜ, Xᵤ= hcat(g.X, ones(size(g.T, 1))), hcat(g.X, zeros(size(g.T, 1)))
+        Xₜ, Xᵤ = hcat(g.X, ones(size(g.T, 1))), hcat(g.X, zeros(size(g.T, 1)))
     else
         Xₜ, Xᵤ = hcat(g.X, g.T), hcat(g.X, zeros(size(g.Y, 1)))
     end
 
     if g.num_neurons === 0  # Don't search for the best number of neurons multiple times
-        g.num_neurons = best_size(Array(covariates), g.Y, g.validation_metric, g.task, 
-                                  g.activation, g.min_neurons, g.max_neurons, g.regularized, 
-                                  g.folds, g.temporal, g.iterations, g.approximator_neurons)
+        g.num_neurons = best_size(
+            Array(covariates),
+            g.Y,
+            g.validation_metric,
+            g.task,
+            g.activation,
+            g.min_neurons,
+            g.max_neurons,
+            g.regularized,
+            g.folds,
+            g.temporal,
+            g.iterations,
+            g.approximator_neurons,
+        )
     end
 
     if g.regularized
@@ -380,10 +535,20 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
     # Uses the same number of neurons for all phases of estimation
     if DML.num_neurons === 0
         task = var_type(DML.Y) == Binary() ? "classification" : "regression"
-        DML.num_neurons = best_size(DML.X, DML.Y, DML.validation_metric, task, 
-                                    DML.activation, DML.min_neurons, DML.max_neurons, 
-                                    DML.regularized, DML.folds, false, DML.iterations, 
-                                    DML.approximator_neurons)
+        DML.num_neurons = best_size(
+            DML.X,
+            DML.Y,
+            DML.validation_metric,
+            task,
+            DML.activation,
+            DML.min_neurons,
+            DML.max_neurons,
+            DML.regularized,
+            DML.folds,
+            false,
+            DML.iterations,
+            DML.approximator_neurons,
+        )
     end
 
     estimate_effect!(DML, false)
@@ -417,25 +582,26 @@ function estimate_effect!(DML::DoubleMachineLearning, cate=false)
     DML.causal_effect = 0
 
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
-    for fld in 1:DML.folds
+    for fld in 1:(DML.folds)
         X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
         Y_train, Y_test = reduce(vcat, Y[1:end .!== fld]), Y[fld]
         T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
         W_train, W_test = reduce(vcat, W[1:end .!== fld]), W[fld]
 
-        Ỹ, T̃ = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test, 
-                                 W_train, W_test)
-        DML.causal_effect += (vec(sum(T̃ .* X_test, dims=2))\Ỹ)[1]
+        Ỹ, T̃ = predict_residuals(
+            DML, X_train, X_test, Y_train, Y_test, T_train, T_test, W_train, W_test
+        )
+        DML.causal_effect += (vec(sum(T̃ .* X_test; dims=2)) \ Ỹ)[1]
 
         if cate  # Using the weight trick to get the non-parametric CATE for an R-learner
-            X[fld], Y[fld] = (T̃.^2) .* X_test, (T̃.^2) .* (Ỹ./T̃)
+            X[fld], Y[fld] = (T̃ .^ 2) .* X_test, (T̃ .^ 2) .* (Ỹ ./ T̃)
             mod = RegularizedExtremeLearner(X[fld], Y[fld], DML.num_neurons, DML.activation)
             fit!(mod)
             predictors[fld] = mod
         end
     end
     final_predictions = cate ? [predict(m, reduce(vcat, X)) for m in predictors] : Nothing
-    cate && return vec(mapslices(mean, reduce(hcat, final_predictions), dims=2))
+    cate && return vec(mapslices(mean, reduce(hcat, final_predictions); dims=2))
 end
 
 """
@@ -456,8 +622,17 @@ m1 = DoubleMachineLearning(X, T, Y)
 predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 ```
 """
-function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train, y_test, 
-                           t_train, t_test, w_train, w_test)
+function predict_residuals(
+    DML::DoubleMachineLearning,
+    x_train,
+    x_test,
+    y_train,
+    y_test,
+    t_train,
+    t_test,
+    w_train,
+    w_test,
+)
     V = x_train != w_train && x_test != w_test ? reduce(hcat, (x_train, w_train)) : x_train
     V_test = V == x_train ? x_test : reduce(hcat, (x_test, w_test))
 
@@ -469,7 +644,8 @@ function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train,
         t = ExtremeLearner(V, t_train, DML.num_neurons, DML.activation)
     end
 
-    fit!(y); fit!(t)
+    fit!(y)
+    fit!(t)
     y_pred = clip_if_binary(predict(y, V_test), var_type(DML.Y))
     t_pred = clip_if_binary(predict(t, V_test), var_type(DML.T))
     ỹ, t̃ = y_test - y_pred, t_test - t_pred
@@ -495,8 +671,8 @@ make_folds(m1)
 function make_folds(D)
     X_T_W, Y = generate_folds(reduce(hcat, (D.X, D.T, D.W)), D.Y, D.folds)
     X = [fl[:, 1:size(D.X, 2)] for fl in X_T_W]
-    T = [fl[:, size(D.X, 2)+1] for fl in X_T_W]
-    W = [fl[:, size(D.X, 2)+2:end] for fl in X_T_W]
+    T = [fl[:, size(D.X, 2) + 1] for fl in X_T_W]
+    W = [fl[:, (size(D.X, 2) + 2):end] for fl in X_T_W]
 
     return X, T, W, Y
 end
@@ -513,7 +689,7 @@ moving_average([1, 2, 3])
 """
 function moving_average(x)
     result = similar(x)
-    for i = 1:length(x)
+    for i in 1:length(x)
         result[i] = mean(x[1:i])
     end
     return result

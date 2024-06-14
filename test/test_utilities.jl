@@ -81,25 +81,29 @@ end
 
     # We only look at even indices because the odd indices have information about what linear
     # of VSCode each variable was defined in, which will differ in both expressions
-    @test (model_config_avg_ground_truth.args[model_config_avg_idx]
-           ==
-           model_config_avg_ground_truth.args[model_config_avg_idx])
+    @test (
+        model_config_avg_ground_truth.args[model_config_avg_idx] ==
+        model_config_avg_ground_truth.args[model_config_avg_idx]
+    )
 
-    @test (model_config_ind_ground_truth.args[model_config_avg_idx]
-           ==
-           model_config_ind_ground_truth.args[model_config_avg_idx])
+    @test (
+        model_config_ind_ground_truth.args[model_config_avg_idx] ==
+        model_config_ind_ground_truth.args[model_config_avg_idx]
+    )
 
     @test_throws ArgumentError @macroexpand @model_config "mean"
 
     @test standard_input_expr.head == standard_input_ground_truth.head
 
-    @test (standard_input_expr.args[standard_input_idx]
-           ==
-           standard_input_ground_truth.args[standard_input_idx])
+    @test (
+        standard_input_expr.args[standard_input_idx] ==
+        standard_input_ground_truth.args[standard_input_idx]
+    )
 
     @test double_model_input_expr.head == double_model_input_ground_truth.head
 
-    @test (double_model_input_expr.args[double_model_input_idx]
-           ==
-           double_model_input_ground_truth.args[double_model_input_idx])
+    @test (
+        double_model_input_expr.args[double_model_input_idx] ==
+        double_model_input_ground_truth.args[double_model_input_idx]
+    )
 end

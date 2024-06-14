@@ -40,7 +40,7 @@ julia> σ([1.0, 0.0])
 """
 @inline function σ(x)
     t = exp(-abs(x))
-    ifelse(x ≥ 0, inv(1 + t), t / (1 + t))
+    return ifelse(x ≥ 0, inv(1 + t), t / (1 + t))
 end
 
 σ(x::Array{Float64}) = σ.(x)
@@ -148,7 +148,7 @@ softmax(x) = @fastmath exp(x) / sum(exp(x))
 
 softmax(x::Vector{Float64}) = @fastmath exp.(x .- maximum(x)) / sum(exp.(x .- maximum(x)))
 
-softmax(x::Array{Float64}) = mapslices(softmax, x, dims=2)
+softmax(x::Array{Float64}) = mapslices(softmax, x; dims=2)
 
 """
     softplus(x)

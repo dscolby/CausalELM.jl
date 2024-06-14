@@ -56,16 +56,38 @@ mutable struct SLearner <: Metalearner
     g::GComputation
     causal_effect::Array{Float64}
 
-    function SLearner(X, T, Y; task="regression", regularized=true, activation=relu,
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5,
+    function SLearner(
+        X,
+        T,
+        Y;
+        task="regression",
+        regularized=true,
+        activation=relu,
+        validation_metric=mse,
+        min_neurons=1,
+        max_neurons=100,
+        folds=5,
         iterations=round(size(X, 1) / 10),
-        approximator_neurons=round(size(X, 1) / 10))
-
-        new(GComputation(X, T, Y, task=task, quantity_of_interest="ATE",
-            regularized=regularized, activation=activation, temporal=false,
-            validation_metric=validation_metric, min_neurons=min_neurons,
-            max_neurons=max_neurons, folds=folds, iterations=iterations,
-            approximator_neurons=approximator_neurons))
+        approximator_neurons=round(size(X, 1) / 10),
+    )
+        return new(
+            GComputation(
+                X,
+                T,
+                Y;
+                task=task,
+                quantity_of_interest="ATE",
+                regularized=regularized,
+                activation=activation,
+                temporal=false,
+                validation_metric=validation_metric,
+                min_neurons=min_neurons,
+                max_neurons=max_neurons,
+                folds=folds,
+                iterations=iterations,
+                approximator_neurons=approximator_neurons,
+            ),
+        )
     end
 end
 
@@ -126,34 +148,76 @@ mutable struct TLearner <: Metalearner
     μ₀::ExtremeLearningMachine
     μ₁::ExtremeLearningMachine
 
-    function TLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real};
-        task="regression", regularized=false, activation=relu,
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5,
+    function TLearner(
+        X::Array{<:Real},
+        T::Array{<:Real},
+        Y::Array{<:Real};
+        task="regression",
+        regularized=false,
+        activation=relu,
+        validation_metric=mse,
+        min_neurons=1,
+        max_neurons=100,
+        folds=5,
         iterations=round(size(X, 1) / 10),
-        approximator_neurons=round(size(X, 1) / 10))
-
+        approximator_neurons=round(size(X, 1) / 10),
+    )
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
         end
 
-        new(Float64.(X), Float64.(T), Float64.(Y), "CATE", false, task, regularized,
-            activation, validation_metric, min_neurons, max_neurons, folds, iterations,
-            approximator_neurons, false)
+        return new(
+            Float64.(X),
+            Float64.(T),
+            Float64.(Y),
+            "CATE",
+            false,
+            task,
+            regularized,
+            activation,
+            validation_metric,
+            min_neurons,
+            max_neurons,
+            folds,
+            iterations,
+            approximator_neurons,
+            false,
+        )
     end
 end
 
-function TLearner(X, T, Y; task="regression", regularized=false, activation=relu,
-    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5,
+function TLearner(
+    X,
+    T,
+    Y;
+    task="regression",
+    regularized=false,
+    activation=relu,
+    validation_metric=mse,
+    min_neurons=1,
+    max_neurons=100,
+    folds=5,
     iterations=round(size(X, 1) / 10),
-    approximator_neurons=round(size(X, 1) / 10))
+    approximator_neurons=round(size(X, 1) / 10),
+)
 
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
-    TLearner(X, T, Y; task=task, regularized=regularized, activation=activation,
-        validation_metric=validation_metric, min_neurons=min_neurons,
-        max_neurons=max_neurons, folds=folds, iterations=iterations,
-        approximator_neurons=approximator_neurons)
+    return TLearner(
+        X,
+        T,
+        Y;
+        task=task,
+        regularized=regularized,
+        activation=activation,
+        validation_metric=validation_metric,
+        min_neurons=min_neurons,
+        max_neurons=max_neurons,
+        folds=folds,
+        iterations=iterations,
+        approximator_neurons=approximator_neurons,
+    )
 end
 
 """
@@ -214,34 +278,76 @@ mutable struct XLearner <: Metalearner
     μ₁::ExtremeLearningMachine
     ps::Array{Float64}
 
-    function XLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real};
-        task="regression", regularized=false, activation=relu,
-        validation_metric=mse, min_neurons=1, max_neurons=100, folds=5,
+    function XLearner(
+        X::Array{<:Real},
+        T::Array{<:Real},
+        Y::Array{<:Real};
+        task="regression",
+        regularized=false,
+        activation=relu,
+        validation_metric=mse,
+        min_neurons=1,
+        max_neurons=100,
+        folds=5,
         iterations=round(size(X, 1) / 10),
-        approximator_neurons=round(size(X, 1) / 10))
-
+        approximator_neurons=round(size(X, 1) / 10),
+    )
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
         end
 
-        new(Float64.(X), Float64.(T), Float64.(Y), "CATE", false, task, regularized,
-            activation, validation_metric, min_neurons, max_neurons, folds, iterations,
-            approximator_neurons, 0)
+        return new(
+            Float64.(X),
+            Float64.(T),
+            Float64.(Y),
+            "CATE",
+            false,
+            task,
+            regularized,
+            activation,
+            validation_metric,
+            min_neurons,
+            max_neurons,
+            folds,
+            iterations,
+            approximator_neurons,
+            0,
+        )
     end
 end
 
-function XLearner(X, T, Y; task="regression", regularized=false, activation=relu,
-    validation_metric=mse, min_neurons=1, max_neurons=100, folds=5,
+function XLearner(
+    X,
+    T,
+    Y;
+    task="regression",
+    regularized=false,
+    activation=relu,
+    validation_metric=mse,
+    min_neurons=1,
+    max_neurons=100,
+    folds=5,
     iterations=round(size(X, 1) / 10),
-    approximator_neurons=round(size(X, 1) / 10))
+    approximator_neurons=round(size(X, 1) / 10),
+)
 
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
-    XLearner(X, T, Y; task=task, regularized=regularized, activation=activation,
-        validation_metric=validation_metric, min_neurons=min_neurons,
-        max_neurons=max_neurons, folds=folds, iterations=iterations,
-        approximator_neurons=approximator_neurons)
+    return XLearner(
+        X,
+        T,
+        Y;
+        task=task,
+        regularized=regularized,
+        activation=activation,
+        validation_metric=validation_metric,
+        min_neurons=min_neurons,
+        max_neurons=max_neurons,
+        folds=folds,
+        iterations=iterations,
+        approximator_neurons=approximator_neurons,
+    )
 end
 
 """
@@ -301,15 +407,35 @@ mutable struct RLearner <: Metalearner
     dml::DoubleMachineLearning
     causal_effect::Array{Float64}
 
-    function RLearner(X, T, Y; W=X, activation=relu, validation_metric=mse, min_neurons=1,
-        max_neurons=100, folds=5, iterations=round(size(X, 1) / 10),
-        approximator_neurons=round(size(X, 1) / 10))
-
-        new(DoubleMachineLearning(X, T, Y; W=W, regularized=true, activation=activation,
-            validation_metric=validation_metric,
-            min_neurons=min_neurons, max_neurons=max_neurons,
-            folds=folds, iterations=iterations,
-            approximator_neurons=approximator_neurons))
+    function RLearner(
+        X,
+        T,
+        Y;
+        W=X,
+        activation=relu,
+        validation_metric=mse,
+        min_neurons=1,
+        max_neurons=100,
+        folds=5,
+        iterations=round(size(X, 1) / 10),
+        approximator_neurons=round(size(X, 1) / 10),
+    )
+        return new(
+            DoubleMachineLearning(
+                X,
+                T,
+                Y;
+                W=W,
+                regularized=true,
+                activation=activation,
+                validation_metric=validation_metric,
+                min_neurons=min_neurons,
+                max_neurons=max_neurons,
+                folds=folds,
+                iterations=iterations,
+                approximator_neurons=approximator_neurons,
+            ),
+        )
     end
 end
 
@@ -370,30 +496,74 @@ mutable struct DoublyRobustLearner <: Metalearner
     @model_config "individual_effect"
     __fit::Bool
 
-    function DoublyRobustLearner(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; W=X,
-        task="regression", regularized=true, activation=relu,
-        validation_metric=mse, min_neurons=1, max_neurons=100,
+    function DoublyRobustLearner(
+        X::Array{<:Real},
+        T::Array{<:Real},
+        Y::Array{<:Real};
+        W=X,
+        task="regression",
+        regularized=true,
+        activation=relu,
+        validation_metric=mse,
+        min_neurons=1,
+        max_neurons=100,
         iterations=round(size(X, 1) / 10),
-        approximator_neurons=round(size(X, 1) / 10))
-
-        new(Float64.(X), Float64.(T), Float64.(Y), Float64.(W), "CATE", false, task,
-            regularized, activation, validation_metric, min_neurons, max_neurons, 2,
-            iterations, approximator_neurons, 0, zeros(size(Y, 1)))
+        approximator_neurons=round(size(X, 1) / 10),
+    )
+        return new(
+            Float64.(X),
+            Float64.(T),
+            Float64.(Y),
+            Float64.(W),
+            "CATE",
+            false,
+            task,
+            regularized,
+            activation,
+            validation_metric,
+            min_neurons,
+            max_neurons,
+            2,
+            iterations,
+            approximator_neurons,
+            0,
+            zeros(size(Y, 1)),
+        )
     end
 end
 
-function DoublyRobustLearner(X, T, Y; W=X, task="regression", regularized=true,
-    activation=relu, validation_metric=mse, min_neurons=1,
-    max_neurons=100, iterations=round(size(X, 1) / 10),
-    approximator_neurons=round(size(X, 1) / 10))
+function DoublyRobustLearner(
+    X,
+    T,
+    Y;
+    W=X,
+    task="regression",
+    regularized=true,
+    activation=relu,
+    validation_metric=mse,
+    min_neurons=1,
+    max_neurons=100,
+    iterations=round(size(X, 1) / 10),
+    approximator_neurons=round(size(X, 1) / 10),
+)
 
     # Convert to arrays
     X, T, Y, W = Matrix{Float64}(X), T[:, 1], Y[:, 1], Matrix{Float64}(W)
 
-    DoublyRobustLearner(X, T, Y; W=W, task=task, regularized=regularized,
-        activation=activation, validation_metric=validation_metric,
-        min_neurons=min_neurons, max_neurons=max_neurons,
-        iterations=iterations, approximator_neurons=approximator_neurons)
+    return DoublyRobustLearner(
+        X,
+        T,
+        Y;
+        W=W,
+        task=task,
+        regularized=regularized,
+        activation=activation,
+        validation_metric=validation_metric,
+        min_neurons=min_neurons,
+        max_neurons=max_neurons,
+        iterations=iterations,
+        approximator_neurons=approximator_neurons,
+    )
 end
 
 """
@@ -449,14 +619,25 @@ estimate_causal_effect!(m5)
 ```
 """
 function estimate_causal_effect!(t::TLearner)
-    x₀, x₁, y₀, y₁ = t.X[t.T.==0, :], t.X[t.T.==1, :], t.Y[t.T.==0], t.Y[t.T.==1]
+    x₀, x₁, y₀, y₁ = t.X[t.T .== 0, :], t.X[t.T .== 1, :], t.Y[t.T .== 0], t.Y[t.T .== 1]
     type = var_type(t.Y)
 
     # Only search for the best number of neurons once and use the same number for inference
     if t.num_neurons === 0
-        t.num_neurons = best_size(t.X, t.Y, t.validation_metric, t.task, t.activation,
-            t.min_neurons, t.max_neurons, t.regularized, t.folds,
-            false, t.iterations, t.approximator_neurons)
+        t.num_neurons = best_size(
+            t.X,
+            t.Y,
+            t.validation_metric,
+            t.task,
+            t.activation,
+            t.min_neurons,
+            t.max_neurons,
+            t.regularized,
+            t.folds,
+            false,
+            t.iterations,
+            t.approximator_neurons,
+        )
     end
 
     if t.regularized
@@ -496,17 +677,30 @@ estimate_causal_effect!(m1)
 function estimate_causal_effect!(x::XLearner)
     # Only search for the best number of neurons once and use the same number for inference
     if x.num_neurons === 0
-        x.num_neurons = best_size(x.X, x.Y, x.validation_metric, x.task, x.activation,
-            x.min_neurons, x.max_neurons, x.regularized, x.folds,
-            false, x.iterations, x.approximator_neurons)
+        x.num_neurons = best_size(
+            x.X,
+            x.Y,
+            x.validation_metric,
+            x.task,
+            x.activation,
+            x.min_neurons,
+            x.max_neurons,
+            x.regularized,
+            x.folds,
+            false,
+            x.iterations,
+            x.approximator_neurons,
+        )
     end
 
     type = var_type(x.Y)
     stage1!(x)
     μχ₀, μχ₁ = stage2!(x)
 
-    x.causal_effect = @fastmath vec(((x.ps .* clip_if_binary(predict(μχ₀, x.X), type)) .+
-                                     ((1 .- x.ps) .* clip_if_binary(predict(μχ₁, x.X), type))))
+    x.causal_effect = @fastmath vec((
+        (x.ps .* clip_if_binary(predict(μχ₀, x.X), type)) .+
+        ((1 .- x.ps) .* clip_if_binary(predict(μχ₁, x.X), type))
+    ))
 
     return x.causal_effect
 end
@@ -530,10 +724,20 @@ estimate_causal_effect!(m1)
 function estimate_causal_effect!(R::RLearner)
     # Uses the same number of neurons for all phases of estimation
     if R.dml.num_neurons === 0
-        R.dml.num_neurons = best_size(R.dml.X, R.dml.Y, R.dml.validation_metric,
-            "regression", R.dml.activation, R.dml.min_neurons,
-            R.dml.max_neurons, R.dml.regularized, R.dml.folds,
-            false, R.dml.iterations, R.dml.approximator_neurons)
+        R.dml.num_neurons = best_size(
+            R.dml.X,
+            R.dml.Y,
+            R.dml.validation_metric,
+            "regression",
+            R.dml.activation,
+            R.dml.min_neurons,
+            R.dml.max_neurons,
+            R.dml.regularized,
+            R.dml.folds,
+            false,
+            R.dml.iterations,
+            R.dml.approximator_neurons,
+        )
     end
 
     # Just estimate the causal effect using the underlying DML and the weight trick
@@ -568,14 +772,24 @@ function estimate_causal_effect!(DRE::DoublyRobustLearner)
 
     # Uses the same number of neurons for all phases of estimation
     if DRE.num_neurons === 0
-        DRE.num_neurons = best_size(DRE.X, DRE.Y, DRE.validation_metric, task,
-            DRE.activation, DRE.min_neurons, DRE.max_neurons,
-            DRE.regularized, DRE.folds, false, DRE.iterations,
-            DRE.approximator_neurons)
+        DRE.num_neurons = best_size(
+            DRE.X,
+            DRE.Y,
+            DRE.validation_metric,
+            task,
+            DRE.activation,
+            DRE.min_neurons,
+            DRE.max_neurons,
+            DRE.regularized,
+            DRE.folds,
+            false,
+            DRE.iterations,
+            DRE.approximator_neurons,
+        )
     end
 
     # Rotating folds for cross fitting
-    for i in 1:DRE.folds
+    for i in 1:(DRE.folds)
         DRE.causal_effect .+= estimate_effect!(DRE, X, T, Y, Z)
         X, T, Y, Z = [X[2], X[1]], [T[2], T[1]], [Y[2], Y[1]], [Z[2], Z[1]]
     end
@@ -612,8 +826,8 @@ estimate_effect!(m1, X, T, Y, Z)
 """
 function estimate_effect!(DRE::DoublyRobustLearner, X, T, Y, Z)
     π_arg, P = (Z[1], T[1], DRE.num_neurons, σ), var_type(DRE.Y)
-    μ₀_arg = Z[1][T[1].==0, :], Y[1][T[1].==0], DRE.num_neurons, DRE.activation
-    μ₁_arg = Z[1][T[1].==1, :], Y[1][T[1].==1], DRE.num_neurons, DRE.activation
+    μ₀_arg = Z[1][T[1] .== 0, :], Y[1][T[1] .== 0], DRE.num_neurons, DRE.activation
+    μ₁_arg = Z[1][T[1] .== 1, :], Y[1][T[1] .== 1], DRE.num_neurons, DRE.activation
 
     # Propensity scores
     π_e = DRE.regularized ? RegularizedExtremeLearner(π_arg...) : ExtremeLearner(π_arg...)
@@ -627,7 +841,9 @@ function estimate_effect!(DRE::DoublyRobustLearner, X, T, Y, Z)
     μ₀̂, μ₁̂ = clip_if_binary(predict(μ₀, Z[2]), P), clip_if_binary(predict(μ₁, Z[2]), P)
 
     # Pseudo outcomes
-    ϕ̂ = ((T[2] .- π̂) ./ (π̂ .* (1 .- π̂))) .* (Y[2] .- T[2] .* μ₁̂ .- (1 .- T[2]) .* μ₀̂) .+ μ₁̂ .- μ₀̂
+    ϕ̂ =
+        ((T[2] .- π̂) ./ (π̂ .* (1 .- π̂))) .*
+        (Y[2] .- T[2] .* μ₁̂ .- (1 .- T[2]) .* μ₀̂) .+ μ₁̂ .- μ₀̂
 
     # Final model
     τ_arg = X[2], ϕ̂, DRE.num_neurons, DRE.activation
@@ -654,14 +870,20 @@ stage1!(m1)
 function stage1!(x::XLearner)
     if x.regularized
         g = RegularizedExtremeLearner(x.X, x.T, x.num_neurons, x.activation)
-        x.μ₀ = RegularizedExtremeLearner(x.X[x.T.==0, :], x.Y[x.T.==0], x.num_neurons,
-            x.activation)
-        x.μ₁ = RegularizedExtremeLearner(x.X[x.T.==1, :], x.Y[x.T.==1], x.num_neurons,
-            x.activation)
+        x.μ₀ = RegularizedExtremeLearner(
+            x.X[x.T .== 0, :], x.Y[x.T .== 0], x.num_neurons, x.activation
+        )
+        x.μ₁ = RegularizedExtremeLearner(
+            x.X[x.T .== 1, :], x.Y[x.T .== 1], x.num_neurons, x.activation
+        )
     else
         g = ExtremeLearner(x.X, x.T, x.num_neurons, x.activation)
-        x.μ₀ = ExtremeLearner(x.X[x.T.==0, :], x.Y[x.T.==0], x.num_neurons, x.activation)
-        x.μ₁ = ExtremeLearner(x.X[x.T.==1, :], x.Y[x.T.==1], x.num_neurons, x.activation)
+        x.μ₀ = ExtremeLearner(
+            x.X[x.T .== 0, :], x.Y[x.T .== 0], x.num_neurons, x.activation
+        )
+        x.μ₁ = ExtremeLearner(
+            x.X[x.T .== 1, :], x.Y[x.T .== 1], x.num_neurons, x.activation
+        )
     end
 
     # Get propensity scores
@@ -670,7 +892,7 @@ function stage1!(x::XLearner)
 
     # Fit first stage outcome models
     fit!(x.μ₀)
-    fit!(x.μ₁)
+    return fit!(x.μ₁)
 end
 
 """
@@ -694,13 +916,15 @@ function stage2!(x::XLearner)
     d = ifelse(x.T === 0, m₁, x.Y .- m₀)
 
     if x.regularized
-        μχ₀ = RegularizedExtremeLearner(x.X[x.T.==0, :], d[x.T.==0], x.num_neurons,
-            x.activation)
-        μχ₁ = RegularizedExtremeLearner(x.X[x.T.==1, :], d[x.T.==1], x.num_neurons,
-            x.activation)
+        μχ₀ = RegularizedExtremeLearner(
+            x.X[x.T .== 0, :], d[x.T .== 0], x.num_neurons, x.activation
+        )
+        μχ₁ = RegularizedExtremeLearner(
+            x.X[x.T .== 1, :], d[x.T .== 1], x.num_neurons, x.activation
+        )
     else
-        μχ₀ = ExtremeLearner(x.X[x.T.==0, :], d[x.T.==0], x.num_neurons, x.activation)
-        μχ₁ = ExtremeLearner(x.X[x.T.==1, :], d[x.T.==1], x.num_neurons, x.activation)
+        μχ₀ = ExtremeLearner(x.X[x.T .== 0, :], d[x.T .== 0], x.num_neurons, x.activation)
+        μχ₁ = ExtremeLearner(x.X[x.T .== 1, :], d[x.T .== 1], x.num_neurons, x.activation)
     end
 
     fit!(μχ₀)

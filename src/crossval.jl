@@ -24,10 +24,10 @@ function generate_folds(X, Y, folds)
     fold_sety = Array{Array{Float64,1}}(undef, folds)
 
     # Indices to start and stop for each fold
-    stops = round.(Int, range(start=1, stop=n, length=folds + 1))
+    stops = round.(Int, range(; start=1, stop=n, length=folds + 1))
 
     # Indices to use for making folds
-    indices = [s:e-(e<n)*1 for (s, e) in zip(stops[1:end-1], stops[2:end])]
+    indices = [s:(e - (e < n) * 1) for (s, e) in zip(stops[1:(end - 1)], stops[2:end])]
 
     for (i, idx) in enumerate(indices)
         fold_setx[i], fold_sety[i] = X[idx, :], Y[idx]
@@ -88,9 +88,9 @@ julia> validation_loss(x, y, 5, accuracy, 3)
 0.5402532843396273
 ```
 """
-function validation_loss(xtrain, ytrain, xtest, ytest, nodes, metric; activation=relu,
-    regularized=true)
-
+function validation_loss(
+    xtrain, ytrain, xtest, ytest, nodes, metric; activation=relu, regularized=true
+)
     if regularized
         network = RegularizedExtremeLearner(xtrain, ytrain, nodes, activation)
     else
@@ -126,7 +126,6 @@ julia> cross_validate(x, y, 5, accuracy)
 ```
 """
 function cross_validate(X, Y, neurons, metric, activation, regularized, folds, temporal)
-
     mean_metric = 0.0
     xfs, yfs = temporal ? generate_temporal_folds(X, Y, folds) : generate_folds(X, Y, folds)
 
@@ -138,13 +137,22 @@ function cross_validate(X, Y, neurons, metric, activation, regularized, folds, t
             # The last fold can't be used to training since it will leave nothing to predict
         elseif temporal && fold < folds
             xtr, ytr = reduce(vcat, xfs[1:fold]), reduce(vcat, yfs[1:fold])
-            xtst, ytst = reduce(vcat, xfs[fold+1:end]), reduce(vcat, yfs[fold+1:end])
+            xtst, ytst = reduce(vcat, xfs[(fold + 1):end]),
+            reduce(vcat, yfs[(fold + 1):end])
         else
             continue
         end
 
-        mean_metric += validation_loss(xtr, ytr, xtst, ytst, neurons, metric,
-            activation=activation, regularized=regularized)
+        mean_metric += validation_loss(
+            xtr,
+            ytr,
+            xtst,
+            ytst,
+            neurons,
+            metric;
+            activation=activation,
+            regularized=regularized,
+        )
     end
     return mean_metric / folds
 end
@@ -184,17 +192,36 @@ julia> best_size(rand(100, 5), rand(100), mse, "regression")
 8
 ```
 """
-function best_size(X, Y, metric, task, activation, min_neurons, max_neurons, regularized,
-    folds, temporal, iterations, elm_size)
-
+function best_size(
+    X,
+    Y,
+    metric,
+    task,
+    activation,
+    min_neurons,
+    max_neurons,
+    regularized,
+    folds,
+    temporal,
+    iterations,
+    elm_size,
+)
     loss = Vector{Float64}(undef, iterations)
-    num_neurons = round.(Int, range(min_neurons, max_neurons, length=iterations))
+    num_neurons = round.(Int, range(min_neurons, max_neurons; length=iterations))
 
     # Use cross validation to calculate the validation loss for each number of neurons in 
     # the interval of min_neurons to max_neurons spaced evenly in steps of iterations
     @inbounds for (idx, potential_neurons) in pairs(num_neurons)
-        loss[idx] = cross_validate(X, Y, round(Int, potential_neurons), metric, activation,
-            regularized, folds, temporal)
+        loss[idx] = cross_validate(
+            X,
+            Y,
+            round(Int, potential_neurons),
+            metric,
+            activation,
+            regularized,
+            folds,
+            temporal,
+        )
     end
 
     # Use an extreme learning machine to learn a mapping from number of neurons to 

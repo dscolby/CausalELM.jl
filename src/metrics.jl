@@ -60,11 +60,11 @@ function accuracy(y, ŷ)
 
     # Converting from one hot encoding to the original representation if y is multiclass
     if !isa(y, Vector)
-        y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, ŷ, dims=2))
+        y, ŷ = vec(mapslices(argmax, y; dims=2)), vec(mapslices(argmax, ŷ; dims=2))
     end
 
     @fastmath differences = y .- ŷ
-    return @fastmath length(differences[differences.==0]) / length(ŷ)
+    return @fastmath length(differences[differences .== 0]) / length(ŷ)
 end
 
 """
@@ -88,7 +88,7 @@ function Base.precision(y::Array{Int64}, ŷ::Array{Int64})
         confmat[1, 2] == 0 && 1.0
         return @fastmath confmat[1, 1] / sum(confmat[1, :])
     else
-        intermediate = @fastmath diag(confmat) ./ vec(sum(confmat, dims=2))
+        intermediate = @fastmath diag(confmat) ./ vec(sum(confmat; dims=2))
         replace!(intermediate, NaN => 0)
         return mean(intermediate)
     end
@@ -115,7 +115,7 @@ function recall(y, ŷ)
         confmat[2, 1] == 0 && 1.0
         return @fastmath confmat[1, 1] / sum(confmat[:, 1])
     else
-        intermediate = @fastmath diag(confmat) ./ vec(sum(confmat, dims=1))
+        intermediate = @fastmath diag(confmat) ./ vec(sum(confmat; dims=1))
         replace!(intermediate, NaN => 0)
         return mean(intermediate)
     end
@@ -153,7 +153,7 @@ julia> CausalELM.confusion_matrix([1, 1, 1, 1, 0], [1, 1, 1, 1, 0])
 function confusion_matrix(y, ŷ)
     # Converting from one hot encoding to the original representation if y is multiclass
     if !isa(y, Vector)
-        y, ŷ = vec(mapslices(argmax, y, dims=2)), vec(mapslices(argmax, ŷ, dims=2))
+        y, ŷ = vec(mapslices(argmax, y; dims=2)), vec(mapslices(argmax, ŷ; dims=2))
     end
 
     # Recode since Julia is a 1-index language

@@ -9,7 +9,7 @@ julia> CausalELM.mean([1, 2, 3, 4])
 2.5
 ```
 """
-mean(x) = sum(x)/size(x, 1)
+mean(x) = sum(x) / size(x, 1)
 
 """
     var(x)
@@ -22,7 +22,7 @@ julia> CausalELM.var([1, 2, 3, 4])
 1.6666666666666667
 ```
 """
-var(x) = sum((x .- mean(x)).^2)/(length(x)-1)
+var(x) = sum((x .- mean(x)) .^ 2) / (length(x) - 1)
 
 """
     one_hot_encode(x)
