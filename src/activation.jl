@@ -48,17 +48,17 @@ end
 """
     tanh(x)
 
-Apply the tanh activation function.
+Apply the hyperbolic tangent activation function.
 
 # Examples
 ```jldoctest
-julia> tanh([1.0, 0.0])
+julia> CausalELM.tanh([1.0, 0.0])
 2-element Vector{Float64}:
  0.7615941559557649
  0.0
 ```
 """
-Base.tanh(x::Array{Float64}) = @fastmath Base.tanh.(x)
+tanh(x::Array{Float64}) = @fastmath tanh.(x)
 
 """
     relu(x)

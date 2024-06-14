@@ -76,11 +76,11 @@ See also [`recall`](@ref).
 
 # Examples
 ```jldoctest
-julia> precision([0, 1, 0, 0], [0, 1, 1, 0])
+julia> CausalELM.precision([0, 1, 0, 0], [0, 1, 1, 0])
 1.0
 ```
 """
-function Base.precision(y::Array{Int64}, ŷ::Array{Int64})
+function precision(y::Array{Int64}, ŷ::Array{Int64})
     confmat = confusion_matrix(y, ŷ)
 
     if size(confmat) == (2, 2)
