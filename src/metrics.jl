@@ -13,12 +13,12 @@ julia> mse([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
 4.0
 ```
 """
-function mse(y, ŷ) 
+function mse(y, ŷ)
     if length(y) !== length(ŷ)
         throw(DimensionMismatch("y and ̂y must be the same length"))
     end
 
-    return @fastmath sum((y - ŷ).^2) / length(y)
+    return @fastmath sum((y - ŷ) .^ 2) / length(y)
 end
 
 """
@@ -34,7 +34,7 @@ julia> mae([-1.0, -1.0, -1.0], [1.0, 1.0, 1.0])
 2.0
 ```
 """
-function mae(y, ŷ) 
+function mae(y, ŷ)
     if length(y) !== length(ŷ)
         throw(DimensionMismatch("y and ̂y must be the same length"))
     end
@@ -64,7 +64,7 @@ function accuracy(y, ŷ)
     end
 
     @fastmath differences = y .- ŷ
-    return @fastmath length(differences[differences .== 0]) / length(ŷ)
+    return @fastmath length(differences[differences.==0]) / length(ŷ)
 end
 
 """
@@ -86,10 +86,10 @@ function Base.precision(y::Array{Int64}, ŷ::Array{Int64})
     if size(confmat) == (2, 2)
         confmat[1, 1] == 0 && 0.0
         confmat[1, 2] == 0 && 1.0
-        return @fastmath confmat[1, 1]/sum(confmat[1, :])
+        return @fastmath confmat[1, 1] / sum(confmat[1, :])
     else
-        intermediate = @fastmath diag(confmat)./vec(sum(confmat, dims=2))
-        replace!(intermediate, NaN=>0)
+        intermediate = @fastmath diag(confmat) ./ vec(sum(confmat, dims=2))
+        replace!(intermediate, NaN => 0)
         return mean(intermediate)
     end
 end
@@ -113,10 +113,10 @@ function recall(y, ŷ)
     if size(confmat) == (2, 2)
         confmat[1, 1] == 0 && 0.0
         confmat[2, 1] == 0 && 1.0
-        return @fastmath confmat[1, 1]/sum(confmat[:, 1])
+        return @fastmath confmat[1, 1] / sum(confmat[:, 1])
     else
-        intermediate = @fastmath diag(confmat)./vec(sum(confmat, dims=1))
-        replace!(intermediate, NaN=>0)
+        intermediate = @fastmath diag(confmat) ./ vec(sum(confmat, dims=1))
+        replace!(intermediate, NaN => 0)
         return mean(intermediate)
     end
 end

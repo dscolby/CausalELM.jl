@@ -1,7 +1,7 @@
 using Test
 using CausalELM
 
-length4, length5  = rand(4), rand(5)
+length4, length5 = rand(4), rand(5)
 
 @testset "Mean squared error" begin
     @test mse([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]) == 0
@@ -18,9 +18,9 @@ end
 @testset "Confusion Matrix" begin
     @test CausalELM.confusion_matrix([1, 1, 1, 1, 0], [1, 1, 1, 1, 0]) == [1 0; 0 4]
     @test CausalELM.confusion_matrix([1, 0, 1, 0], [0, 1, 0, 1]) == [0 2; 2 0]
-    @test CausalELM.confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2]) == [1 0 0; 
-                                                                                 0 4 0; 
-                                                                                 0 0 1]
+    @test CausalELM.confusion_matrix([1, 1, 1, 1, 0, 2], [1, 1, 1, 1, 0, 2]) == [1 0 0;
+        0 4 0;
+        0 0 1]
     @test CausalELM.confusion_matrix(rand(0:1, 5, 3), rand(0:1, 5, 3)) isa Matrix
 end
 
@@ -31,7 +31,7 @@ end
     @test accuracy([1.0, 2.0, 3.0, 4.0], [1.0, 1.0, 1.0, 1.0]) == 0.25
 
     # Testing with one hot encoding for multiclass classification
-    @test accuracy([1.0 0.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0], 
+    @test accuracy([1.0 0.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0],
         [0.0 0.0 1.0; 0.0 1.0 0.0; 1.0 0.0 0.0]) ≈ 0.33333333333
 end
 

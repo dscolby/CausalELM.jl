@@ -10,7 +10,7 @@ For more details on Extreme Learning Machines see:
     and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
 """
 module CausalELM
- 
+
 export validate
 export gelu, gaussian
 export hard_tanh, elish, fourier

@@ -17,9 +17,16 @@ Before submitting a [pull request](https://github.com/dscolby/CausalELM.jl/pulls
 changes and you are not fixing something very minor. When submitting a pull request, please 
 reference the relevant issue/s and ensure your code follows the guidelines below.
 
+*   Before being merged, all pull requests should be well tested and all tests must be passing.
+
 *   All abstract types, structs, functions, methods, macros, and constants have docstrings 
     that follow the same format as the other docstrings. These functions should also be 
     included in the relevant section of the API Manual.
+
+*   Most new structs for estimating causal effects should have mostly the same fields. To 
+    reduce the burden of repeatedly defining all these feilds, it is advisable to use the 
+    model_config, standard_input_data, and double_learner_input_data macro to 
+    programmatically generate fields for new structs.
 
 *   There are no repeated code blocks. If there are repeated codeblocks, then they should be 
     consolidated into a separate function.
@@ -54,6 +61,10 @@ reference the relevant issue/s and ensure your code follows the guidelines below
         examples
 
     **  Each section should include its own level one header.
+
+!!! note
+    CausalELM follows the Blue style guide and all code is automatically formatted to conform 
+    with this standard upon being pushed to GitHub.
 
 ## Updating or Fixing Documentation
 To propose a change to the documentation please submit an [issue](https://github.com/dscolby/CausalELM.jl/issues) 

@@ -41,16 +41,16 @@ function summarize(mod, n=1000)
     summary_dict = Dict()
     double_estimators = (DoubleMachineLearning, DoublyRobustLearner)
     task = typeof(mod) in double_estimators ? "regression" : mod.task
-    nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
-                 "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
-                 "Number of Neurons in Approximator", "Causal Effect", "Standard Error", 
-                 "p-value"]
-    
+    nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function",
+        "Time Series/Panel Data", "Validation Metric", "Number of Neurons",
+        "Number of Neurons in Approximator", "Causal Effect", "Standard Error",
+        "p-value"]
+
     p, stderr = quantities_of_interest(mod, n)
 
-    values = [task, mod.quantity_of_interest, mod.regularized, mod.activation, mod.temporal, 
-              mod.validation_metric, mod.num_neurons, mod.approximator_neurons, 
-              mod.causal_effect, stderr, p]
+    values = [task, mod.quantity_of_interest, mod.regularized, mod.activation, mod.temporal,
+        mod.validation_metric, mod.num_neurons, mod.approximator_neurons,
+        mod.causal_effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value
@@ -80,21 +80,21 @@ julia> summarize(m4)
 ```
 """
 function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
-    if !isdefined(its, :Δ)
+    if !isdefined(its, :causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
 
-    effect = ifelse(mean_effect, mean(its.Δ), sum(its.Δ))
+    effect = ifelse(mean_effect, mean(its.causal_effect), sum(its.causal_effect))
 
     p, stderr = quantities_of_interest(its, n, mean_effect)
 
     summary_dict = Dict()
-    nicenames = ["Task", "Regularized", "Activation Function", "Validation Metric", 
-                 "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect", 
-                 "Standard Error", "p-value"]
+    nicenames = ["Task", "Regularized", "Activation Function", "Validation Metric",
+        "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect",
+        "Standard Error", "p-value"]
 
-    values = ["Regression", its.regularized, its.activation, its.validation_metric, 
-              its.num_neurons, its.approximator_neurons, effect, stderr, p]
+    values = ["Regression", its.regularized, its.activation, its.validation_metric,
+        its.num_neurons, its.approximator_neurons, effect, stderr, p]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value
@@ -138,17 +138,17 @@ function generate_null_distribution(mod, n)
     local m = deepcopy(mod)
     nobs = size(m.T, 1)
     results = Vector{Float64}(undef, n)
-    
+
     # Generate random treatment assignments and estimate the causal effects
-    for iter in 1:n 
+    for iter in 1:n
 
         # Sample from a continuous distribution if the treatment is continuous
         if var_type(mod.T) isa Continuous
-            m.T = (maximum(m.T)-minimum(m.T)).*rand(nobs).+minimum(m.T)
+            m.T = (maximum(m.T) - minimum(m.T)) .* rand(nobs) .+ minimum(m.T)
         else
             m.T = float(rand(unique(m.T), nobs))
         end
-        
+
         estimate_causal_effect!(m)
         results[iter] = mod isa Metalearner ? mean(m.causal_effect) : m.causal_effect
     end
@@ -191,7 +191,12 @@ function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
         model.X₀, model.Y₀ = permuted_x₀, permuted_y₀
         model.X₁, model.Y₁ = permuted_x₁, permuted_y₁
         estimate_causal_effect!(model)
-        results[iter] = ifelse(mean_effect, mean(model.Δ), sum(model.Δ))
+
+        results[iter] = if mean_effect
+            mean(model.causal_effect)
+        else
+            sum(model.causal_effect)
+        end
     end
     return results
 end
@@ -223,10 +228,10 @@ function quantities_of_interest(mod, n)
     local null_dist = generate_null_distribution(mod, n)
     local avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
 
-    extremes = length(null_dist[abs(avg_effect) .< abs.(null_dist)])
-    pvalue = extremes/n
+    extremes = length(null_dist[abs(avg_effect).<abs.(null_dist)])
+    pvalue = extremes / n
 
-    stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist])/(n-1)) / sqrt(n)
+    stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist]) / (n - 1)) / sqrt(n)
 
     return pvalue, stderr
 end
@@ -258,12 +263,12 @@ julia> quantities_of_interest(its, 10)
 function quantities_of_interest(mod::InterruptedTimeSeries, n, mean_effect)
     local null_dist = generate_null_distribution(mod, n, mean_effect)
     local metric = ifelse(mean_effect, mean, sum)
-    local effect = metric(mod.Δ)
+    local effect = metric(mod.causal_effect)
 
-    extremes = length(null_dist[effect .< abs.(null_dist)])
-    pvalue = extremes/n
+    extremes = length(null_dist[effect.<abs.(null_dist)])
+    pvalue = extremes / n
 
-    stderr = (sum([(effect .- x)^2 for x in null_dist])/(n-1))/sqrt(n)
+    stderr = (sum([(effect .- x)^2 for x in null_dist]) / (n - 1)) / sqrt(n)
 
     return pvalue, stderr
 end

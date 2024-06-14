@@ -21,7 +21,7 @@ estimate_causal_effect!(its_no_ar)
 its_noreg = InterruptedTimeSeries(x₀, y₀, x₁, y₁, regularized=false)
 estimate_causal_effect!(its_noreg)
 
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
+x, t, y = rand(100, 5), Float64.([rand() < 0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
 g_computer = GComputation(x, t, y, temporal=false)
 estimate_causal_effect!(g_computer)
 
@@ -39,8 +39,8 @@ gcomputer_noreg = GComputation(x, t, y, regularized=false)
 estimate_causal_effect!(gcomputer_noreg)
 
 # Make sure the data isn't shuffled
-g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), 
-    Float64.([rand()<0.4 for i in 1:10]), rand(10))
+g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)),
+    Float64.([rand() < 0.4 for i in 1:10]), rand(10))
 
 dm = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dm)
@@ -74,8 +74,8 @@ t_train, t_test = t[1:80], t[81:100]
 y_train, y_test = y[1:80], y[81:end]
 residual_predictor = DoubleMachineLearning(x, t, y)
 residual_predictor.num_neurons = 5
-residuals = CausalELM.predict_residuals(residual_predictor, x_train, x_test, y_train, 
-                                        y_test, t_train, t_test, x_train, x_test)
+residuals = CausalELM.predict_residuals(residual_predictor, x_train, x_test, y_train,
+    y_test, t_train, t_test, x_train, x_test)
 
 # Estimating the CATE
 cate_estimator = DoubleMachineLearning(x, t, y, regularized=false)
@@ -103,13 +103,13 @@ cate_predictors = CausalELM.estimate_effect!(cate_estimator, true)
     end
 
     @testset "Interrupted Time Series Estimation" begin
-        @test isa(its.Δ, Array)
+        @test isa(its.causal_effect, Array)
 
         # Without autocorrelation
-        @test isa(its_no_ar.Δ, Array)
+        @test isa(its_no_ar.causal_effect, Array)
 
         # Without regularization
-        @test isa(its_noreg.Δ, Array)
+        @test isa(its_noreg.causal_effect, Array)
     end
 end
 
@@ -153,7 +153,7 @@ end
         @test dm_noreg.X !== Nothing
         @test dm_noreg.T !== Nothing
         @test dm_noreg.Y !== Nothing
-        
+
         # Intialized with dataframes
         @test dm_df.X !== Nothing
         @test dm_df.T !== Nothing
@@ -170,7 +170,7 @@ end
         @test residuals[1] isa Vector
         @test residuals[2] isa Vector
     end
-  
+
     @testset "CATE Estimation" begin
         @test cate_predictors isa Vector
         @test length(cate_predictors) == length(cate_estimator.Y)
@@ -183,8 +183,8 @@ end
         @test dm_noreg.causal_effect isa Float64
         @test dm_w.causal_effect isa Float64
     end
-end  
-  
+end
+
 @testset "Summarization and Inference" begin
     @testset "Quanities of Interest Errors" begin
         @test_throws ArgumentError GComputation(x, y, t, quantity_of_interest="abc")
@@ -193,7 +193,7 @@ end
     @testset "Task Errors" begin
         @test_throws ArgumentError GComputation(x, y, t, task="abc")
     end
-    
+
     @testset "Moving Averages" begin
         @test CausalELM.moving_average(Float64[]) isa Array{Float64}
         @test CausalELM.moving_average([1.0]) == [1.0]

@@ -146,7 +146,7 @@ julia> softmax([1.0 2.0 3.0; 4.0 5.0 6.0])
 """
 softmax(x) = @fastmath exp(x) / sum(exp(x))
 
-softmax(x::Vector{Float64}) = @fastmath exp.(x.-maximum(x))/sum(exp.(x.-maximum(x)))
+softmax(x::Vector{Float64}) = @fastmath exp.(x .- maximum(x)) / sum(exp.(x .- maximum(x)))
 
 softmax(x::Array{Float64}) = mapslices(softmax, x, dims=2)
 
@@ -227,7 +227,7 @@ julia> hard_tanh([-2.0, 0.0, 2.0])
   1
 ```
 """
-@inline function hard_tanh(x) 
+@inline function hard_tanh(x)
     if x < -1
         -1
     elseif -1 <= x <= 1
@@ -255,7 +255,7 @@ julia> elish([-1.0, 1.0])
   0.7310585786300049
 ```
 """
-elish(x) = ifelse(x >= 0, swish(x), @fastmath ((exp(x)-1)) * σ(x))
+elish(x) = ifelse(x >= 0, swish(x), @fastmath ((exp(x) - 1)) * σ(x))
 
 elish(x::Array{Float64}) = elish.(x)
 

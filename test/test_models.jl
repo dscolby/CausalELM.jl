@@ -41,19 +41,19 @@ helper_elm = RegularizedExtremeLearner(x1, y1, 5, σ)
 set_weights_biases(helper_elm)
 k = ridge_constant(helper_elm)
 
- @testset "Model Fit" begin
+@testset "Model Fit" begin
     @test length(m1.β) == 10
     @test size(m1.weights) == (2, 10)
     @test size(helper_elm.H) == (20, 5)
     @test length(m4.β) == size(m4.X, 2)
     @test length(m5.β) == size(m5.X, 2)
- end
+end
 
- @testset "Regularization" begin
+@testset "Regularization" begin
     @test k isa Float64
- end
+end
 
- @testset "Model Predictions" begin
+@testset "Model Predictions" begin
     @test predictions1[1] < 0.1
     @test predictions1[2] > 0.9
     @test predictions1[3] < 0.1
@@ -69,23 +69,22 @@ k = ridge_constant(helper_elm)
 
     # Ensure we can predict with a test set with more data points than the training set
     @test isa(predictions3, Array{Float64})
- end
+end
 
- @testset "Placebo Test" begin
+@testset "Placebo Test" begin
     @test length(placebo1) == 2
     @test length(placebo2) == 2
- end
+end
 
- @testset "Predict Before Fit" begin
+@testset "Predict Before Fit" begin
     @test_throws ErrorException predict(nofit, x1test)
     @test_throws ErrorException placebo_test(nofit)
- end
+end
 
 
- @testset "Print Models" begin
+@testset "Print Models" begin
     msg1, msg2 = "Extreme Learning Machine with ", "hidden neurons"
     msg3 = "Regularized " * msg1
     @test sprint(print, m1) === msg1 * string(m1.hidden_neurons) * " " * msg2
     @test sprint(print, m2) === msg3 * string(m2.hidden_neurons) * " " * msg2
- end
- 
+end
