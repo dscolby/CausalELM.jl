@@ -77,7 +77,7 @@ jobs:
           julia  -e 'using JuliaFormatter; format(".", BlueStyle())'
       - name: Create Pull Request
         id: cpr
-        uses: dscolby/CausalELM@v3
+        uses: dscolby/CausalELM
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Format .jl files
