@@ -87,7 +87,7 @@ mutable struct SLearner <: Metalearner
                 iterations=iterations,
                 approximator_neurons=approximator_neurons,
             ),
-            fill(NaN, size(T, 1))
+            fill(NaN, size(T, 1)),
         )
     end
 end
@@ -183,7 +183,7 @@ mutable struct TLearner <: Metalearner
             iterations,
             approximator_neurons,
             0,
-            fill(NaN, size(T, 1))
+            fill(NaN, size(T, 1)),
         )
     end
 end
@@ -314,7 +314,7 @@ mutable struct XLearner <: Metalearner
             iterations,
             approximator_neurons,
             0,
-            fill(NaN, size(T, 1))
+            fill(NaN, size(T, 1)),
         )
     end
 end
@@ -438,7 +438,7 @@ mutable struct RLearner <: Metalearner
                 iterations=iterations,
                 approximator_neurons=approximator_neurons,
             ),
-            fill(NaN, size(T, 1))
+            fill(NaN, size(T, 1)),
         )
     end
 end
