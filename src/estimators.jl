@@ -96,6 +96,7 @@ mutable struct InterruptedTimeSeries
             iterations,
             approximator_neurons,
             0,
+            fill(NaN, size(Y₁, 1)),
         )
     end
 end

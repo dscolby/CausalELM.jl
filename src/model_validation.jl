@@ -86,7 +86,7 @@ julia> validate(m1)
 ```
 """
 function validate(its::InterruptedTimeSeries; n=1000, low=0.15, high=0.85)
-    if !isdefined(its, :causal_effect)
+    if all(isnan, its.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
@@ -151,12 +151,7 @@ julia> validate(g_computer)
 ```
 """
 function validate(m, devs; iterations=10, min=1.0e-6, max=1.0 - min)
-    if !isdefined(m, :causal_effect) || m.causal_effect === NaN
-        throw(ErrorException("call estimate_causal_effect! before calling validate"))
-    end
-
-    # The causal effect is initialized to zeros in doubly robust estimation
-    if isdefined(m, :__fit) && !m.__fit
+    if all(isnan, m.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling validate"))
     end
 
@@ -272,7 +267,7 @@ julia> omitted_predictor(its)
 ```
 """
 function omitted_predictor(its::InterruptedTimeSeries; n=1000)
-    if !isdefined(its, :causal_effect)
+    if all(isnan, its.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling omittedvariable"))
     end
 

@@ -34,7 +34,7 @@ julia> summarise(m3)  # British spelling works too!
 ```
 """
 function summarize(mod, n=1000)
-    if !isdefined(mod, :causal_effect) || mod.causal_effect === NaN
+    if all(isnan, mod.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
 
@@ -99,7 +99,7 @@ julia> summarize(m4)
 ```
 """
 function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
-    if !isdefined(its, :causal_effect)
+    if all(isnan, its.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
 
@@ -210,7 +210,7 @@ julia> generate_null_distribution(its, 10)
 ```
 """
 function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
-    local model = deepcopy(its)
+    model = deepcopy(its)
     split_idx = size(model.Y₀, 1)
     results = Vector{Float64}(undef, n)
     data = reduce(hcat, (reduce(vcat, (its.X₀, its.X₁)), reduce(vcat, (its.Y₀, its.Y₁))))
@@ -261,8 +261,8 @@ julia> quantities_of_interest(g_computer, 1000)
 ```
 """
 function quantities_of_interest(mod, n)
-    local null_dist = generate_null_distribution(mod, n)
-    local avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
+    null_dist = generate_null_distribution(mod, n)
+    avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
 
     extremes = length(null_dist[abs(avg_effect) .< abs.(null_dist)])
     pvalue = extremes / n

@@ -87,6 +87,7 @@ mutable struct SLearner <: Metalearner
                 iterations=iterations,
                 approximator_neurons=approximator_neurons,
             ),
+            fill(NaN, size(T, 1))
         )
     end
 end
@@ -181,7 +182,8 @@ mutable struct TLearner <: Metalearner
             folds,
             iterations,
             approximator_neurons,
-            false,
+            0,
+            fill(NaN, size(T, 1))
         )
     end
 end
@@ -312,6 +314,7 @@ mutable struct XLearner <: Metalearner
             iterations,
             approximator_neurons,
             0,
+            fill(NaN, size(T, 1))
         )
     end
 end
@@ -435,6 +438,7 @@ mutable struct RLearner <: Metalearner
                 iterations=iterations,
                 approximator_neurons=approximator_neurons,
             ),
+            fill(NaN, size(T, 1))
         )
     end
 end
@@ -494,7 +498,6 @@ m5 = DoublyRobustLearner(X, T, Y, W=w)
 mutable struct DoublyRobustLearner <: Metalearner
     @double_learner_input_data
     @model_config "individual_effect"
-    __fit::Bool
 
     function DoublyRobustLearner(
         X::Array{<:Real},
@@ -527,7 +530,7 @@ mutable struct DoublyRobustLearner <: Metalearner
             iterations,
             approximator_neurons,
             0,
-            zeros(size(Y, 1)),
+            fill(NaN, size(T, 1)),
         )
     end
 end
@@ -769,6 +772,7 @@ function estimate_causal_effect!(DRE::DoublyRobustLearner)
     X, T, W, Y = make_folds(DRE)
     Z = DRE.W == DRE.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
     task = var_type(DRE.Y) == Binary() ? "classification" : "regression"
+    causal_effect = zeros(size(DRE.T, 1))
 
     # Uses the same number of neurons for all phases of estimation
     if DRE.num_neurons === 0
@@ -790,12 +794,12 @@ function estimate_causal_effect!(DRE::DoublyRobustLearner)
 
     # Rotating folds for cross fitting
     for i in 1:(DRE.folds)
-        DRE.causal_effect .+= estimate_effect!(DRE, X, T, Y, Z)
+        causal_effect .+= estimate_effect!(DRE, X, T, Y, Z)
         X, T, Y, Z = [X[2], X[1]], [T[2], T[1]], [Y[2], Y[1]], [Z[2], Z[1]]
     end
 
-    DRE.causal_effect ./= 2
-    DRE.__fit = true
+    causal_effect ./= 2
+    DRE.causal_effect = causal_effect
 
     return DRE.causal_effect
 end
