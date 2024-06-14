@@ -7,8 +7,8 @@
         <img src="https://github.com/dscolby/CausalELM/actions/workflows/CI.yml/badge.svg?branch=main"
             alt="Build Status">
     </a>
-    <a href="https://app.codecov.io/gh/dscolby/CausalELM/tree/main/src">
-        <img src="https://codecov.io/gh/dscolby/CausalELM/graph/badge.svg"
+    <a href="https://app.codecov.io/gh/dscolby/CausalELM.jl/tree/main/src">
+        <img src="https://codecov.io/gh/dscolby/CausalELM.jl/graph/badge.svg"
          alt="Code Coverage">
     </a>
     <a href="https://opensource.org/licenses/MIT">
