@@ -6,8 +6,8 @@ struct Binary end
 struct Count end
 
 # Variables for checking the output of the model_config macro because it is difficult
-model_config_avg_expr = @macroexpand @model_config "average_effect"
-model_config_ind_expr = @macroexpand @model_config "individual_effect"
+model_config_avg_expr = @macroexpand @model_config average_effect
+model_config_ind_expr = @macroexpand @model_config individual_effect
 model_config_avg_idx = Int64.(collect(range(2, 26, 13)))
 model_config_ind_idx = Int64.(collect(range(2, 26, 13)))
 model_config_avg_ground_truth = quote
@@ -91,7 +91,7 @@ end
         model_config_ind_ground_truth.args[model_config_avg_idx]
     )
 
-    @test_throws ArgumentError @macroexpand @model_config "mean"
+    @test_throws ArgumentError @macroexpand @model_config mean
 
     @test standard_input_expr.head == standard_input_ground_truth.head
 

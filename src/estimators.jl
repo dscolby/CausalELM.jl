@@ -57,7 +57,7 @@ mutable struct InterruptedTimeSeries
     Y₀::Array{Float64}
     X₁::Array{Float64}
     Y₁::Array{Float64}
-    @model_config "individual_effect"
+    @model_config individual_effect
 
     function InterruptedTimeSeries(
         X₀::Array{<:Real},
@@ -196,7 +196,7 @@ m5 = GComputation(x_df, t_df, y_df)
 """
 mutable struct GComputation <: CausalEstimator
     @standard_input_data
-    @model_config "average_effect"
+    @model_config average_effect
     learner::ExtremeLearningMachine
 
     function GComputation(
@@ -340,7 +340,7 @@ m3 = DoubleMachineLearning(x_df, t_df, y_df)
 """
 mutable struct DoubleMachineLearning <: CausalEstimator
     @double_learner_input_data
-    @model_config "average_effect"
+    @model_config average_effect
 
     function DoubleMachineLearning(
         X::Array{<:Real},
@@ -458,6 +458,11 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     return its.causal_effect
 end
 
+function estimate_causal_effect!(g::GComputation)
+    g.causal_effect = mean(g_formula!(g))
+    return g.causal_effect
+end
+
 """
     estimate_causal_effect!(g)
 
@@ -474,10 +479,10 @@ as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0,
 ```julia
 X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 m1 = GComputation(X, T, Y)
-estimate_causal_effect!(m1)
+g_formula!(m1)
 ```
 """
-function estimate_causal_effect!(g::GComputation)
+function g_formula!(g)
     covariates, y = hcat(g.X, g.T), var_type(g.Y)
 
     if g.quantity_of_interest ∈ ("ITT", "ATE")
@@ -512,8 +517,7 @@ function estimate_causal_effect!(g::GComputation)
     fit!(g.learner)
     yₜ = clip_if_binary(predict(g.learner, Xₜ), y)
     yᵤ = clip_if_binary(predict(g.learner, Xᵤ), y)
-    g.causal_effect = mean(vec(yₜ) - vec(yᵤ))
-    return g.causal_effect
+    return vec(yₜ) - vec(yᵤ)
 end
 
 """
@@ -552,14 +556,14 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
         )
     end
 
-    estimate_effect!(DML, false)
+    causal_loss!(DML)
     DML.causal_effect /= DML.folds
 
     return DML.causal_effect
 end
 
 """
-    estimate_effect!(DML, [,cate])
+    causal_loss!(D, [,cate])
 
 Estimate a treatment effect using double machine learning.
 
@@ -574,12 +578,11 @@ This method should not be called directly.
 ```julia
 X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 m1 = DoubleMachineLearning(X, T, Y)
-estimate_effect!(m1)
+causal_loss!(m1)
 ```
 """
-function estimate_effect!(DML::DoubleMachineLearning, cate=false)
+function causal_loss!(DML)
     X, T, W, Y = make_folds(DML)
-    predictors = cate ? Vector{RegularizedExtremeLearner}(undef, DML.folds) : Nothing
     DML.causal_effect = 0
 
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
@@ -593,20 +596,11 @@ function estimate_effect!(DML::DoubleMachineLearning, cate=false)
             DML, X_train, X_test, Y_train, Y_test, T_train, T_test, W_train, W_test
         )
         DML.causal_effect += (vec(sum(T̃ .* X_test; dims=2)) \ Ỹ)[1]
-
-        if cate  # Using the weight trick to get the non-parametric CATE for an R-learner
-            X[fld], Y[fld] = (T̃ .^ 2) .* X_test, (T̃ .^ 2) .* (Ỹ ./ T̃)
-            mod = RegularizedExtremeLearner(X[fld], Y[fld], DML.num_neurons, DML.activation)
-            fit!(mod)
-            predictors[fld] = mod
-        end
     end
-    final_predictions = cate ? [predict(m, reduce(vcat, X)) for m in predictors] : Nothing
-    cate && return vec(mapslices(mean, reduce(hcat, final_predictions); dims=2))
 end
 
 """
-    predict_residuals(DML, x_train, x_test, y_train, y_test, t_train, t_test)
+    predict_residuals(D, x_train, x_test, y_train, y_test, t_train, t_test)
 
 Predict treatment and outcome residuals for doubl machine learning.
 
@@ -624,7 +618,7 @@ predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 ```
 """
 function predict_residuals(
-    DML::DoubleMachineLearning,
+    D,
     x_train,
     x_test,
     y_train,
@@ -637,25 +631,25 @@ function predict_residuals(
     V = x_train != w_train && x_test != w_test ? reduce(hcat, (x_train, w_train)) : x_train
     V_test = V == x_train ? x_test : reduce(hcat, (x_test, w_test))
 
-    if DML.regularized
-        y = RegularizedExtremeLearner(V, y_train, DML.num_neurons, DML.activation)
-        t = RegularizedExtremeLearner(V, t_train, DML.num_neurons, DML.activation)
+    if D.regularized
+        y = RegularizedExtremeLearner(V, y_train, D.num_neurons, D.activation)
+        t = RegularizedExtremeLearner(V, t_train, D.num_neurons, D.activation)
     else
-        y = ExtremeLearner(V, y_train, DML.num_neurons, DML.activation)
-        t = ExtremeLearner(V, t_train, DML.num_neurons, DML.activation)
+        y = ExtremeLearner(V, y_train, D.num_neurons, D.activation)
+        t = ExtremeLearner(V, t_train, D.num_neurons, D.activation)
     end
 
     fit!(y)
     fit!(t)
-    y_pred = clip_if_binary(predict(y, V_test), var_type(DML.Y))
-    t_pred = clip_if_binary(predict(t, V_test), var_type(DML.T))
+    y_pred = clip_if_binary(predict(y, V_test), var_type(D.Y))
+    t_pred = clip_if_binary(predict(t, V_test), var_type(D.T))
     ỹ, t̃ = y_test - y_pred, t_test - t_pred
 
     return ỹ, t̃
 end
 
 """
-    make_folds(DML)
+    make_folds(D)
 
 Make folds for cross fitting for a double machine learning estimator.
 

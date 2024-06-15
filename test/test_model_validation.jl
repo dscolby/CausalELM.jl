@@ -192,7 +192,7 @@ end
 @testset "Metalearner Assumptions" begin
     @testset "Counterfactual Consistency" begin
         @test CausalELM.counterfactual_consistency(
-            s_learner.g, (0.25, 0.5, 0.75, 1.0), 10
+            s_learner, (0.25, 0.5, 0.75, 1.0), 10
         ) isa Dict{Float64,Float64}
 
         @test CausalELM.counterfactual_consistency(
@@ -209,7 +209,7 @@ end
     end
 
     @testset "Exchangeability" begin
-        @test CausalELM.exchangeability(s_learner.g) isa Real
+        @test CausalELM.exchangeability(s_learner) isa Real
         @test CausalELM.exchangeability(t_learner) isa Real
         @test CausalELM.exchangeability(t_learner_binary) isa Real
         @test CausalELM.exchangeability(x_learner) isa Real
@@ -219,7 +219,7 @@ end
     end
 
     @testset "Positivity" begin
-        @test size(CausalELM.positivity(s_learner.g), 2) == size(s_learner.g.X, 2) + 1
+        @test size(CausalELM.positivity(s_learner), 2) == size(s_learner.X, 2) + 1
         @test size(CausalELM.positivity(t_learner), 2) == size(t_learner.X, 2) + 1
         @test size(CausalELM.positivity(x_learner), 2) == size(x_learner.X, 2) + 1
         @test size(CausalELM.positivity(dr_learner), 2) == size(dr_learner.X, 2) + 1

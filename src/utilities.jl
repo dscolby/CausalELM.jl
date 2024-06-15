@@ -83,21 +83,20 @@ structs.
 
 # Examples
 ```julia
-julia> struct TestStruct CausalELM.@model_config "average_effect" end
+julia> struct TestStruct CausalELM.@model_config average_effect end
 julia> TestStruct("ATE", false, "classification", true, relu, F1, 2, 10, 5, 100, 5, 5, 0.25)
 TestStruct("ATE", false, "classification", true, relu, F1, 2, 10, 5, 100, 5, 5, 0.25)
 ```
 """
-macro model_config(effect_type::String)
+macro model_config(effect_type)
     msg = "the effect type must either be average_effect or individual_effect"
-    if !(effect_type in ("average_effect", "individual_effect"))
-        throw(ArgumentError(msg))
-    end
 
-    field_type = if effect_type == "average_effect"
-        Float64
+    if string(effect_type) == "average_effect"
+        field_type = :Float64
+    elseif string(effect_type) == "individual_effect"
+        field_type = :(Array{Float64})
     else
-        Array{Float64}
+        throw(ArgumentError(msg))
     end
 
     fields = quote

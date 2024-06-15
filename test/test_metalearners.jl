@@ -72,7 +72,7 @@ X_T, Y = generate_folds(
 X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T]
 T = [fl[:, size(dr_learner.X, 2) + 1] for fl in X_T]
 W = [fl[:, (size(dr_learner.W, 2) + 2):end] for fl in X_T]
-τ̂ = CausalELM.estimate_effect!(dr_learner, X, T, Y, reduce(hcat, (W, X)))
+τ̂ = CausalELM.g_formula!(dr_learner, X, T, Y, reduce(hcat, (W, X)))
 estimate_causal_effect!(dr_learner)
 
 # Doubly Robust Estimation with no regularization
@@ -89,9 +89,17 @@ estimate_causal_effect!(dr_learner_df)
 
 @testset "S-Learners" begin
     @testset "S-Learner Structure" begin
-        @test slearner1.g isa GComputation
-        @test slearner2.g isa GComputation
-        @test s_learner_df.g isa GComputation
+        @test slearner1.X isa Array{Float64}
+        @test slearner1.T isa Array{Float64}
+        @test slearner1.Y isa Array{Float64}
+
+        @test slearner2.X isa Array{Float64}
+        @test slearner2.T isa Array{Float64}
+        @test slearner2.Y isa Array{Float64}
+
+        @test s_learner_df.X isa Array{Float64}
+        @test s_learner_df.T isa Array{Float64}
+        @test s_learner_df.Y isa Array{Float64}
     end
 
     @testset "S-Learner Estimation" begin
@@ -165,8 +173,14 @@ end
 
 @testset "R-learning" begin
     @testset "R-learner Structure" begin
-        @test rlearner.dml !== Nothing
-        @test r_learner_df.dml !== Nothing
+        @test rlearner.X isa Array{Float64}
+        @test rlearner.T isa Array{Float64}
+        @test rlearner.Y isa Array{Float64}
+        @test rlearner.W isa Array{Float64}
+        @test r_learner_df.X isa Array{Float64}
+        @test r_learner_df.T isa Array{Float64}
+        @test r_learner_df.Y isa Array{Float64}
+        @test r_learner_df.W isa Array{Float64}
     end
 
     @testset "R-learner estimation" begin

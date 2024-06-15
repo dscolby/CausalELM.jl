@@ -66,7 +66,7 @@ estimate_causal_effect!(dm_w)
 # Calling estimate_effect!
 dm_estimate_effect = DoubleMachineLearning(x, t, y)
 dm_estimate_effect.num_neurons = 5
-CausalELM.estimate_effect!(dm_estimate_effect)
+CausalELM.causal_loss!(dm_estimate_effect)
 
 # Generating folds
 x_fold, t_fold, w_fold, y_fold = CausalELM.make_folds(dm)
@@ -80,11 +80,6 @@ residual_predictor.num_neurons = 5
 residuals = CausalELM.predict_residuals(
     residual_predictor, x_train, x_test, y_train, y_test, t_train, t_test, x_train, x_test
 )
-
-# Estimating the CATE
-cate_estimator = DoubleMachineLearning(x, t, y; regularized=false)
-cate_estimator.num_neurons = 5
-cate_predictors = CausalELM.estimate_effect!(cate_estimator, true)
 
 @testset "Interrupted Time Series Estimation" begin
     @testset "Interrupted Time Series Structure" begin
@@ -173,12 +168,6 @@ end
         @test length(t_fold) == dm.folds
         @test residuals[1] isa Vector
         @test residuals[2] isa Vector
-    end
-
-    @testset "CATE Estimation" begin
-        @test cate_predictors isa Vector
-        @test length(cate_predictors) == length(cate_estimator.Y)
-        @test eltype(cate_predictors) == Float64
     end
 
     @testset "Double Machine Learning Post-estimation Structure" begin

@@ -160,22 +160,6 @@ function validate(m, devs; iterations=10, min=1.0e-6, max=1.0 - min)
     positivity(m, min, max)
 end
 
-function validate(R::RLearner, devs; iterations=10, min=1.0e-6, max=1.0 - min)
-    return validate(R.dml, devs; iterations=iterations, min=min, max=max)
-end
-
-function validate(R::RLearner; iterations=10, min=1.0e-6, max=1.0 - min)
-    return validate(R.dml; iterations=iterations, min=min, max=max)
-end
-
-function validate(S::SLearner, devs; iterations=10, min=1.0e-6, max=1.0 - min)
-    return validate(S.g, devs; iterations=iterations, min=min, max=max)
-end
-
-function validate(S::SLearner; iterations=10, min=1.0e-6, max=1.0 - min)
-    return validate(S.g; iterations=iterations, min=min, max=max)
-end
-
 function validate(m; iterations=10, min=1.0e-6, max=1.0 - min)
     if var_type(m.Y) isa Continuous
         devs = 0.25, 0.5, 0.75, 1.0
@@ -612,7 +596,7 @@ function risk_ratio(::Binary, ::Binary, mod)
     if hasfield(typeof(mod), :learner)
         return @fastmath mean(predict(mod.learner, Xₜ)) / mean(predict(mod.learner, Xᵤ))
 
-        # For models that use separate models for outcomes in the treatment and control group
+    # For models that use separate models for outcomes in the treatment and control group
     else
         hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
@@ -631,7 +615,7 @@ function risk_ratio(::Binary, ::Count, mod)
         return @fastmath (sum(predict(mod.learner, Xₜ)) / m) /
             (sum(predict(mod.learner, Xᵤ)) / n)
 
-        # For models that use separate models for outcomes in the treatment and control group
+    # For models that use separate models for outcomes in the treatment and control group
     elseif hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
         return @fastmath mean(predict(mod.μ₁, Xₜ)) / mean(predict(mod.μ₀, Xᵤ))
@@ -698,14 +682,12 @@ function positivity(mod::XLearner, min=1.0e-6, max=1 - min)
     )
 end
 
-function positivity(mod::DoubleMachineLearning, min=1.0e-6, max=1 - min)
-    task = var_type(mod.T) == Binary() ? "classification" : "regression"
-
+function positivity(mod::Union{DoubleMachineLearning, RLearner}, min=1.0e-6, max=1 - min)
     num_neurons = best_size(
         mod.X,
         mod.T,
         mod.validation_metric,
-        task,
+        mod.task,
         mod.activation,
         mod.min_neurons,
         mod.max_neurons,

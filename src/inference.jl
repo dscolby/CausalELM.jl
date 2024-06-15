@@ -139,10 +139,6 @@ function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
     return summary_dict
 end
 
-summarize(R::RLearner, n=1000) = summarize(R.dml, n)
-
-summarize(S::SLearner, n=1000) = summarize(S.g, n)
-
 """
     generate_null_distribution(mod, n)
 
