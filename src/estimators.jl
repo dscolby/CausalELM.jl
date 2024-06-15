@@ -618,15 +618,7 @@ predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 ```
 """
 function predict_residuals(
-    D,
-    x_train,
-    x_test,
-    y_train,
-    y_test,
-    t_train,
-    t_test,
-    w_train,
-    w_test,
+    D, x_train, x_test, y_train, y_test, t_train, t_test, w_train, w_test
 )
     V = x_train != w_train && x_test != w_test ? reduce(hcat, (x_train, w_train)) : x_train
     V_test = V == x_train ? x_test : reduce(hcat, (x_test, w_test))
