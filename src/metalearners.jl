@@ -71,7 +71,6 @@ mutable struct SLearner <: Metalearner
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
-
         if task ∉ ("regression", "classification")
             throw(ArgumentError("task must be either regression or classification"))
         end
