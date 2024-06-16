@@ -443,9 +443,8 @@ mutable struct RLearner <: Metalearner
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
-
         task = var_type(Y) isa Binary ? "classification" : "regression"
-        
+
         return new(
             Float64.(X),
             Float64.(T),
@@ -569,7 +568,6 @@ mutable struct DoublyRobustLearner <: Metalearner
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
-
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
         return new(
