@@ -72,7 +72,7 @@ X_T, Y = generate_folds(
 X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T]
 T = [fl[:, size(dr_learner.X, 2) + 1] for fl in X_T]
 W = [fl[:, (size(dr_learner.W, 2) + 2):end] for fl in X_T]
-τ̂ = CausalELM.g_formula!(dr_learner, X, T, Y, reduce(hcat, (W, X)))
+τ̂ = CausalELM.doubly_robust_formula!(dr_learner, X, T, Y, reduce(hcat, (W, X)))
 estimate_causal_effect!(dr_learner)
 
 # Doubly Robust Estimation with no regularization

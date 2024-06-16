@@ -431,7 +431,7 @@ function counterfactual_consistency(model, devs, iterations)
 
         # Averaging multiple iterations of random violatons for each std dev
         for iteration in 1:iterations
-            counterfactual_model.Y = simulate_counterfactual(model.Y, dev)
+            counterfactual_model.Y = simulate_counterfactual_violations(model.Y, dev)
             estimate_causal_effect!(counterfactual_model)
 
             if counterfactual_model isa Metalearner
@@ -445,7 +445,7 @@ function counterfactual_consistency(model, devs, iterations)
     return avg_counterfactual_effects
 end
 
-function simulate_counterfactual(y::Vector{<:Real}, dev::Float64)
+function simulate_counterfactual_violations(y::Vector{<:Real}, dev::Float64)
     min_y, max_y = minimum(y), maximum(y)
 
     if var_type(y) isa Continuous
@@ -573,8 +573,8 @@ function risk_ratio(::Nonbinary, mod)
     if var_type(mod.Y) isa Continuous
         return risk_ratio(Binary(), Continuous(), mod)
 
-        # Otherwise, we convert the treatment variable to a binary variable and then 
-        # dispatch based on the type of outcome variable
+    # Otherwise, we convert the treatment variable to a binary variable and then 
+    # dispatch based on the type of outcome variable
     else
         original_T, binary_T = mod.T, binarize(mod.T, mean(mod.Y))
         mod.T = binary_T
@@ -596,7 +596,7 @@ function risk_ratio(::Binary, ::Binary, mod)
     if hasfield(typeof(mod), :learner)
         return @fastmath mean(predict(mod.learner, Xₜ)) / mean(predict(mod.learner, Xᵤ))
 
-        # For models that use separate models for outcomes in the treatment and control group
+    # For models that use separate models for outcomes in the treatment and control group
     else
         hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
@@ -615,7 +615,7 @@ function risk_ratio(::Binary, ::Count, mod)
         return @fastmath (sum(predict(mod.learner, Xₜ)) / m) /
             (sum(predict(mod.learner, Xᵤ)) / n)
 
-        # For models that use separate models for outcomes in the treatment and control group
+    # For models that use separate models for outcomes in the treatment and control group
     elseif hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
         return @fastmath mean(predict(mod.μ₁, Xₜ)) / mean(predict(mod.μ₀, Xᵤ))
@@ -682,21 +682,8 @@ function positivity(mod::XLearner, min=1.0e-6, max=1 - min)
     )
 end
 
-function positivity(mod::Union{DoubleMachineLearning,RLearner}, min=1.0e-6, max=1 - min)
-    num_neurons = best_size(
-        mod.X,
-        mod.T,
-        mod.validation_metric,
-        mod.task,
-        mod.activation,
-        mod.min_neurons,
-        mod.max_neurons,
-        mod.regularized,
-        mod.folds,
-        false,
-        mod.iterations,
-        mod.approximator_neurons,
-    )
+function positivity(mod::Union{DoubleMachineLearning, RLearner}, min=1.0e-6, max=1 - min)
+    num_neurons = best_size(mod)
 
     if mod.regularized
         ps_mod = RegularizedExtremeLearner(mod.X, mod.T, num_neurons, mod.activation)

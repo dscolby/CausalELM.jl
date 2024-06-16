@@ -10,6 +10,13 @@ xfolds_ts, yfolds_ts = generate_temporal_folds(
     float.(hcat([1:10;], 11:20)), [1.0:1.0:10.0;], 5
 )
 
+X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+its = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+
+X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+g_computation_regression = GComputation(X, T, Y)
+g_computation_classification = GComputation(X, T, rand(0:1, 100))
+
 @testset "Fold Generation" begin
     @test_throws ArgumentError generate_folds(zeros(5, 2), zeros(5), 6)
     @test_throws ArgumentError generate_folds(zeros(5, 2), zeros(5), 5)
@@ -145,28 +152,9 @@ end
 end
 
 @testset "Best network size" begin
-    @test 100 >=
-        best_size(
-            rand(100, 5),
-            rand(100),
-            accuracy,
-            "classification",
-            σ,
-            1,
-            10,
-            false,
-            5,
-            true,
-            10,
-            2,
-        ) >=
-        1
-
-    @test 100 >=
-        best_size(
-            rand(100, 5), rand(100), mse, "regression", relu, 1, 10, false, 5, true, 10, 2
-        ) >=
-        1
+    @test 100 >= best_size(its) >= 1
+    @test 100 >= best_size(g_computation_regression) >= 1
+    @test 100 >= best_size(g_computation_classification) >= 1
 end
 
 @testset "Data Shuffling" begin

@@ -333,22 +333,7 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     # We will not find the best number of neurons after we have already estimated the causal
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
-    if its.num_neurons === 0
-        its.num_neurons = best_size(
-            its.X₀,
-            its.Y₀,
-            its.validation_metric,
-            "regression",
-            its.activation,
-            its.min_neurons,
-            its.max_neurons,
-            its.regularized,
-            its.folds,
-            true,
-            its.iterations,
-            its.approximator_neurons,
-        )
-    end
+    its.num_neurons = its.num_neurons === 0 ? best_size(its) : its.num_neurons
 
     if its.regularized
         learner = RegularizedExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
@@ -397,22 +382,7 @@ function g_formula!(g)
         Xᵤ = hcat(covariates[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
     end
 
-    if g.num_neurons === 0  # Don't search for the best number of neurons multiple times
-        g.num_neurons = best_size(
-            g.X,
-            g.Y,
-            g.validation_metric,
-            g.task,
-            g.activation,
-            g.min_neurons,
-            g.max_neurons,
-            g.regularized,
-            g.folds,
-            g.temporal,
-            g.iterations,
-            g.approximator_neurons,
-        )
-    end
+    g.num_neurons = g.num_neurons === 0 ? best_size(g) : g.num_neurons
 
     if g.regularized
         g.learner = RegularizedExtremeLearner(covariates, y, g.num_neurons, g.activation)
@@ -444,23 +414,7 @@ julia> estimate_causal_effect!(m2)
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
     # Uses the same number of neurons for all phases of estimation
-    if DML.num_neurons === 0
-        task = var_type(DML.Y) == Binary() ? "classification" : "regression"
-        DML.num_neurons = best_size(
-            DML.X,
-            DML.Y,
-            DML.validation_metric,
-            task,
-            DML.activation,
-            DML.min_neurons,
-            DML.max_neurons,
-            DML.regularized,
-            DML.folds,
-            false,
-            DML.iterations,
-            DML.approximator_neurons,
-        )
-    end
+    DML.num_neurons = DML.num_neurons === 0 ? best_size(DML) : DML.num_neurons
 
     causal_loss!(DML)
     DML.causal_effect /= DML.folds

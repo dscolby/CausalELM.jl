@@ -543,22 +543,7 @@ function estimate_causal_effect!(t::TLearner)
     type = var_type(t.Y)
 
     # Only search for the best number of neurons once and use the same number for inference
-    if t.num_neurons === 0
-        t.num_neurons = best_size(
-            t.X,
-            t.Y,
-            t.validation_metric,
-            t.task,
-            t.activation,
-            t.min_neurons,
-            t.max_neurons,
-            t.regularized,
-            t.folds,
-            false,
-            t.iterations,
-            t.approximator_neurons,
-        )
-    end
+    t.num_neurons = t.num_neurons === 0 ? best_size(t) : t.num_neurons
 
     if t.regularized
         t.μ₀ = RegularizedExtremeLearner(x₀, y₀, t.num_neurons, t.activation)
@@ -596,22 +581,7 @@ julia> estimate_causal_effect!(m1)
 """
 function estimate_causal_effect!(x::XLearner)
     # Only search for the best number of neurons once and use the same number for inference
-    if x.num_neurons === 0
-        x.num_neurons = best_size(
-            x.X,
-            x.Y,
-            x.validation_metric,
-            x.task,
-            x.activation,
-            x.min_neurons,
-            x.max_neurons,
-            x.regularized,
-            x.folds,
-            false,
-            x.iterations,
-            x.approximator_neurons,
-        )
-    end
+    x.num_neurons = x.num_neurons === 0 ? best_size(x) : x.num_neurons
 
     type = var_type(x.Y)
     stage1!(x)
@@ -643,22 +613,7 @@ julia> estimate_causal_effect!(m1)
 """
 function estimate_causal_effect!(R::RLearner)
     # Uses the same number of neurons for all phases of estimation
-    if R.num_neurons === 0
-        R.num_neurons = best_size(
-            R.X,
-            R.Y,
-            R.validation_metric,
-            R.task,
-            R.activation,
-            R.min_neurons,
-            R.max_neurons,
-            R.regularized,
-            R.folds,
-            false,
-            R.iterations,
-            R.approximator_neurons,
-        )
-    end
+    R.num_neurons =  R.num_neurons === 0 ? best_size(R) : R.num_neurons
 
     # Just estimate the causal effect using the underlying DML and the weight trick
     R.causal_effect = causal_loss(R)
@@ -710,30 +665,14 @@ julia> estimate_causal_effect!(m1)
 function estimate_causal_effect!(DRE::DoublyRobustLearner)
     X, T, W, Y = make_folds(DRE)
     Z = DRE.W == DRE.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
-    task = var_type(DRE.Y) == Binary() ? "classification" : "regression"
     causal_effect = zeros(size(DRE.T, 1))
 
     # Uses the same number of neurons for all phases of estimation
-    if DRE.num_neurons === 0
-        DRE.num_neurons = best_size(
-            DRE.X,
-            DRE.Y,
-            DRE.validation_metric,
-            task,
-            DRE.activation,
-            DRE.min_neurons,
-            DRE.max_neurons,
-            DRE.regularized,
-            DRE.folds,
-            false,
-            DRE.iterations,
-            DRE.approximator_neurons,
-        )
-    end
+    DRE.num_neurons =  DRE.num_neurons === 0 ? best_size(DRE) : DRE.num_neurons
 
     # Rotating folds for cross fitting
     for i in 1:(DRE.folds)
-        causal_effect .+= g_formula!(DRE, X, T, Y, Z)
+        causal_effect .+= doubly_robust_formula!(DRE, X, T, Y, Z)
         X, T, Y, Z = [X[2], X[1]], [T[2], T[1]], [Y[2], Y[1]], [Z[2], Z[1]]
     end
 
@@ -767,7 +706,7 @@ julia> Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
 julia> g_formula!(m1, X, T, Y, Z)
 ```
 """
-function g_formula!(DRE::DoublyRobustLearner, X, T, Y, Z)
+function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y, Z)
     π_arg, P = (Z[1], T[1], DRE.num_neurons, σ), var_type(DRE.Y)
     μ₀_arg = Z[1][T[1] .== 0, :], Y[1][T[1] .== 0], DRE.num_neurons, DRE.activation
     μ₁_arg = Z[1][T[1] .== 1, :], Y[1][T[1] .== 1], DRE.num_neurons, DRE.activation

@@ -157,10 +157,9 @@ function cross_validate(X, Y, neurons, metric, activation, regularized, folds, t
 end
 
 """
-    best_size(X, Y, metric, task, activation, min_neurons, max_neurons, regularized, folds, 
-              temporal, iterations, elm_size)
+    best_size(m)
 
-Compute the best number of neurons for an Extreme Learning Machine.
+Compute the best number of neurons for an estimator.
 
 # Notes
 The procedure tests networks with numbers of neurons in a sequence whose length is given 
@@ -171,65 +170,46 @@ approximation ability of an Extreme Learning Machine. Finally, it returns the ne
 size with the best predicted validation error or metric.
 
 # Arguments
-- `X::Array`: array of features to train on.
-- `Y::Vector`: vector of labels to train on.
-- `metric::Function`: validation metric to calculate.
-- `task::String`: either regression or classification.
-- `activation::Function=relu`: activation function to use.
-- `min_neurons::Int`: minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: maximum number of neurons to consider for the extreme learner.
-- `regularized::Function=true`: whether to use L2 regularization
-- `folds::Int`: number of folds to use for cross validation.
-- `temporal::Function=true`: whether the data is of a time series or panel nature.
-- `iterations::Int`: number of iterations to perform cross validation between min_neurons 
-    and max_neurons.
-- `elm_size::Int`: number of nuerons in the validation loss approximator network.
+- `m::Any`: estimator to find the best number of neurons for.
 
 # Examples
 ```julia
-julia> best_size(rand(100, 5), rand(100), mse, "regression")
+julia> X, T, Y = rand(100, 5), rand(0:1, 100), rand(100)
+julia> m1 = GComputation(X, T, y)
+julia> best_size(m1)
 8
 ```
 """
-function best_size(
-    X,
-    Y,
-    metric,
-    task,
-    activation,
-    min_neurons,
-    max_neurons,
-    regularized,
-    folds,
-    temporal,
-    iterations,
-    elm_size,
-)
-    loss = Vector{Float64}(undef, iterations)
-    num_neurons = round.(Int, range(min_neurons, max_neurons; length=iterations))
+function best_size(m)
+    loss = Vector{Float64}(undef, m.iterations)
+    num_neurons = round.(Int, range(m.min_neurons, m.max_neurons; length=m.iterations))
+    (X, Y) = m isa InterruptedTimeSeries ? (m.X₀, m.Y₀) : (m.X, m.Y)
 
-    # Use cross validation to calculate the validation loss for each number of neurons in 
-    # the interval of min_neurons to max_neurons spaced evenly in steps of iterations
+    # Use cross validation to get testing loss from [min_neurons, max_neurons] by iterations
     @inbounds for (idx, potential_neurons) in pairs(num_neurons)
         loss[idx] = cross_validate(
             X,
             Y,
             round(Int, potential_neurons),
-            metric,
-            activation,
-            regularized,
-            folds,
-            temporal,
+            m.validation_metric,
+            m.activation,
+            m.regularized,
+            m.folds,
+            m.temporal,
         )
     end
 
-    # Use an extreme learning machine to learn a mapping from number of neurons to 
-    # validation error
-    mapper = ExtremeLearner(reshape(num_neurons, :, 1), reshape(loss, :, 1), elm_size, relu)
+    # Use an extreme learning machine to learn a function F:num_neurons -> loss
+    mapper = ExtremeLearner(
+        reshape(num_neurons, :, 1), 
+        reshape(loss, :, 1), 
+        m.approximator_neurons, 
+        relu,
+    )
     fit!(mapper)
-    pred_metrics = predict(mapper, Float64[min_neurons:max_neurons;])
+    pred_metrics = predict(mapper, Float64[m.min_neurons:m.max_neurons;])
 
-    return ifelse(startswith(task, "c"), argmax([pred_metrics]), argmin([pred_metrics]))
+    return ifelse(startswith(m.task, "c"), argmax([pred_metrics]), argmin([pred_metrics]))
 end
 
 """
