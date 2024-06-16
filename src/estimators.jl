@@ -486,11 +486,11 @@ function g_formula!(g)
     covariates, y = hcat(g.X, g.T), g.Y
 
     if g.quantity_of_interest ∈ ("ITT", "ATE", "CATE")
-        Xₜ = hcat(covariates[:, 1:end-1], ones(size(covariates, 1)))
-        Xᵤ = hcat(covariates[:, 1:end-1], zeros(size(covariates, 1)))
+        Xₜ = hcat(covariates[:, 1:(end - 1)], ones(size(covariates, 1)))
+        Xᵤ = hcat(covariates[:, 1:(end - 1)], zeros(size(covariates, 1)))
     else
-        Xₜ = hcat(covariates[g.T .== 1, 1:end-1], ones(size(g.T[g.T .== 1], 1)))
-        Xᵤ = hcat(covariates[g.T .== 1, 1:end-1], zeros(size(g.T[g.T .== 1], 1)))
+        Xₜ = hcat(covariates[g.T .== 1, 1:(end - 1)], ones(size(g.T[g.T .== 1], 1)))
+        Xᵤ = hcat(covariates[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
     end
 
     if g.num_neurons === 0  # Don't search for the best number of neurons multiple times
