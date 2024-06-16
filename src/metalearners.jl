@@ -12,7 +12,6 @@ Initialize a S-Learner.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
@@ -61,7 +60,6 @@ mutable struct SLearner <: Metalearner
         X::Array{<:Real},
         T::Array{<:Real},
         Y::Array{<:Real};
-        task="regression",
         regularized=true,
         activation=relu,
         validation_metric=mse,
@@ -71,9 +69,7 @@ mutable struct SLearner <: Metalearner
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
+        task = var_type(Y) isa Binary ? "classification" : "regression"
 
         return new(
             Float64.(X),
@@ -96,6 +92,38 @@ mutable struct SLearner <: Metalearner
     end
 end
 
+function SLearner(
+    X,
+    T,
+    Y;
+    regularized=true,
+    activation=relu,
+    validation_metric=mse,
+    min_neurons=1,
+    max_neurons=100,
+    folds=5,
+    iterations=round(size(X, 1) / 10),
+    approximator_neurons=round(size(X, 1) / 10),
+)
+
+    # Convert to arrays
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+
+    return SLearner(
+        X,
+        T,
+        Y;
+        regularized=regularized,
+        activation=activation,
+        validation_metric=validation_metric,
+        min_neurons=min_neurons,
+        max_neurons=max_neurons,
+        folds=folds,
+        iterations=iterations,
+        approximator_neurons=approximator_neurons,
+    )
+end
+
 """
     TLearner(X, T, Y; kwargs...)
 
@@ -107,7 +135,6 @@ Initialize a T-Learner.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
@@ -157,7 +184,6 @@ mutable struct TLearner <: Metalearner
         X::Array{<:Real},
         T::Array{<:Real},
         Y::Array{<:Real};
-        task="regression",
         regularized=false,
         activation=relu,
         validation_metric=mse,
@@ -167,9 +193,7 @@ mutable struct TLearner <: Metalearner
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
+        task = var_type(Y) isa Binary ? "classification" : "regression"
 
         return new(
             Float64.(X),
@@ -192,45 +216,10 @@ mutable struct TLearner <: Metalearner
     end
 end
 
-function SLearner(
-    X,
-    T,
-    Y;
-    task="regression",
-    regularized=true,
-    activation=relu,
-    validation_metric=mse,
-    min_neurons=1,
-    max_neurons=100,
-    folds=5,
-    iterations=round(size(X, 1) / 10),
-    approximator_neurons=round(size(X, 1) / 10),
-)
-
-    # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
-
-    return SLearner(
-        X,
-        T,
-        Y;
-        task=task,
-        regularized=regularized,
-        activation=activation,
-        validation_metric=validation_metric,
-        min_neurons=min_neurons,
-        max_neurons=max_neurons,
-        folds=folds,
-        iterations=iterations,
-        approximator_neurons=approximator_neurons,
-    )
-end
-
 function TLearner(
     X,
     T,
     Y;
-    task="regression",
     regularized=false,
     activation=relu,
     validation_metric=mse,
@@ -248,7 +237,6 @@ function TLearner(
         X,
         T,
         Y;
-        task=task,
         regularized=regularized,
         activation=activation,
         validation_metric=validation_metric,
@@ -271,7 +259,6 @@ Initialize an X-Learner.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
@@ -332,9 +319,7 @@ mutable struct XLearner <: Metalearner
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        end
+        task = var_type(Y) isa Binary ? "classification" : "regression"
 
         return new(
             Float64.(X),
@@ -361,7 +346,6 @@ function XLearner(
     X,
     T,
     Y;
-    task="regression",
     regularized=false,
     activation=relu,
     validation_metric=mse,
@@ -379,7 +363,6 @@ function XLearner(
         X,
         T,
         Y;
-        task=task,
         regularized=regularized,
         activation=activation,
         validation_metric=validation_metric,
@@ -403,7 +386,6 @@ Initialize an R-Learner.
 
 # Keywords
 - `W::Any` : an array of all possible confounders.
-- `task::String`: either regression or classification.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
@@ -453,7 +435,6 @@ mutable struct RLearner <: Metalearner
         T::Array{<:Real},
         Y::Array{<:Real};
         W=X,
-        task="regression",
         activation=relu,
         validation_metric=mse,
         min_neurons=1,
@@ -462,6 +443,9 @@ mutable struct RLearner <: Metalearner
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
+
+        task = var_type(Y) isa Binary ? "classification" : "regression"
+        
         return new(
             Float64.(X),
             Float64.(T),
@@ -489,7 +473,6 @@ function RLearner(
     T,
     Y;
     W=X,
-    task="regression",
     activation=relu,
     validation_metric=mse,
     min_neurons=1,
@@ -507,7 +490,6 @@ function RLearner(
         T,
         Y;
         W=W,
-        task,
         activation=activation,
         validation_metric=validation_metric,
         min_neurons=min_neurons,
@@ -579,7 +561,6 @@ mutable struct DoublyRobustLearner <: Metalearner
         T::Array{<:Real},
         Y::Array{<:Real};
         W=X,
-        task="regression",
         regularized=true,
         activation=relu,
         validation_metric=mse,
@@ -588,6 +569,9 @@ mutable struct DoublyRobustLearner <: Metalearner
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
+
+        task = var_type(Y) isa Binary ? "classification" : "regression"
+
         return new(
             Float64.(X),
             Float64.(T),
@@ -615,7 +599,6 @@ function DoublyRobustLearner(
     T,
     Y;
     W=X,
-    task="regression",
     regularized=true,
     activation=relu,
     validation_metric=mse,
@@ -633,7 +616,6 @@ function DoublyRobustLearner(
         T,
         Y;
         W=W,
-        task=task,
         regularized=regularized,
         activation=activation,
         validation_metric=validation_metric,

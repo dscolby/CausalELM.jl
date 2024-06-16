@@ -148,9 +148,8 @@ Initialize a G-Computation estimator.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `task::String`: either regression or classification.
-- `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
-    treatment effect.
+- `quantity_of_interest::String`: ATE for average treatment effect or ATT for average 
+    treatment effect on the treated.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
@@ -203,7 +202,6 @@ mutable struct GComputation <: CausalEstimator
         X::Array{<:Real},
         T::Array{<:Real},
         Y::Array{<:Real};
-        task="regression",
         quantity_of_interest="ATE",
         regularized=true,
         activation=relu,
@@ -215,11 +213,11 @@ mutable struct GComputation <: CausalEstimator
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        elseif quantity_of_interest ∉ ("ATE", "ITT", "ATT")
+        if quantity_of_interest ∉ ("ATE", "ITT", "ATT")
             throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
         end
+
+        task = var_type(Y) isa Binary ? "classification" : "regression"
 
         return new(
             Float64.(X),
@@ -246,7 +244,6 @@ function GComputation(
     X,
     T,
     Y;
-    task="regression",
     quantity_of_interest="ATE",
     regularized=true,
     activation=relu,
@@ -266,7 +263,6 @@ function GComputation(
         X,
         T,
         Y;
-        task=task,
         quantity_of_interest=quantity_of_interest,
         regularized=regularized,
         activation=activation,
@@ -292,9 +288,6 @@ Initialize a double machine learning estimator with cross fitting.
 
 # Keywords
 - `W::Any`: an array or dataframe of all possible confounders.
-- `task::String`: either regression or classification.
-- `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
-    treatment effect.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
@@ -347,7 +340,6 @@ mutable struct DoubleMachineLearning <: CausalEstimator
         T::Array{<:Real},
         Y::Array{<:Real};
         W=X,
-        task="regression",
         regularized=true,
         activation=relu,
         validation_metric=mse,
@@ -357,6 +349,9 @@ mutable struct DoubleMachineLearning <: CausalEstimator
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
+
+        task = var_type(Y) isa Binary ? "classification" : "regression"
+
         return new(
             Float64.(X),
             Float64.(T),

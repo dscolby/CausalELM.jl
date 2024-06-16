@@ -223,9 +223,3 @@ end
         @test eltype(dr_no_reg.causal_effect) == Float64
     end
 end
-
-@testset "Task Errors" begin
-    @test_throws ArgumentError SLearner(x, t, y, task="abc")
-    @test_throws ArgumentError TLearner(x, t, y, task="def")
-    @test_throws ArgumentError XLearner(x, t, y, task="xyz")
-end

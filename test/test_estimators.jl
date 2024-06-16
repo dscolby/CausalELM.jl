@@ -183,10 +183,6 @@ end
         @test_throws ArgumentError GComputation(x, y, t, quantity_of_interest="abc")
     end
 
-    @testset "Task Errors" begin
-        @test_throws ArgumentError GComputation(x, y, t, task="abc")
-    end
-
     @testset "Moving Averages" begin
         @test CausalELM.moving_average(Float64[]) isa Array{Float64}
         @test CausalELM.moving_average([1.0]) == [1.0]
