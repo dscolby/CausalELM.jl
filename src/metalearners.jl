@@ -74,7 +74,7 @@ mutable struct SLearner <: Metalearner
 
         # Convert to arrays
         X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
-        
+
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
         return new(
@@ -381,23 +381,23 @@ function RLearner(
     task = var_type(Y) isa Binary ? "classification" : "regression"
 
     return RLearner(
-            X,
-            Float64.(T),
-            Float64.(Y),
-            W,
-            "CATE",
-            false,
-            task,
-            true,
-            activation,
-            validation_metric,
-            min_neurons,
-            max_neurons,
-            folds,
-            iterations,
-            approximator_neurons,
-            0,
-            fill(NaN, size(T, 1))
+        X,
+        Float64.(T),
+        Float64.(Y),
+        W,
+        "CATE",
+        false,
+        task,
+        true,
+        activation,
+        validation_metric,
+        min_neurons,
+        max_neurons,
+        folds,
+        iterations,
+        approximator_neurons,
+        0,
+        fill(NaN, size(T, 1)),
     )
 end
 
@@ -479,23 +479,23 @@ function DoublyRobustLearner(
     task = var_type(Y) isa Binary ? "classification" : "regression"
 
     return DoublyRobustLearner(
-            X,
-            Float64.(T),
-            Float64.(Y),
-            W,
-            "CATE",
-            false,
-            task,
-            regularized,
-            activation,
-            validation_metric,
-            min_neurons,
-            max_neurons,
-            2,
-            iterations,
-            approximator_neurons,
-            0,
-            fill(NaN, size(T, 1)),
+        X,
+        Float64.(T),
+        Float64.(Y),
+        W,
+        "CATE",
+        false,
+        task,
+        regularized,
+        activation,
+        validation_metric,
+        min_neurons,
+        max_neurons,
+        2,
+        iterations,
+        approximator_neurons,
+        0,
+        fill(NaN, size(T, 1)),
     )
 end
 
@@ -723,8 +723,9 @@ function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y, Z)
     μ₀̂, μ₁̂ = clip_if_binary(predict(μ₀, Z[2]), P), clip_if_binary(predict(μ₁, Z[2]), P)
 
     # Pseudo outcomes
-    ϕ̂  = ((T[2] .- π̂) ./ (π̂ .* (1 .- π̂))) .*
-         (Y[2] .- T[2] .* μ₁̂ .- (1 .- T[2]) .* μ₀̂) .+ μ₁̂ .- μ₀̂
+    ϕ̂ =
+        ((T[2] .- π̂) ./ (π̂ .* (1 .- π̂))) .*
+        (Y[2] .- T[2] .* μ₁̂ .- (1 .- T[2]) .* μ₀̂) .+ μ₁̂ .- μ₀̂
 
     # Final model
     τ_arg = X[2], ϕ̂, DRE.num_neurons, DRE.activation
