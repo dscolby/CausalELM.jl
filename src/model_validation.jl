@@ -99,7 +99,7 @@ end
     validate(m; kwargs)
 
 # Arguments
-- `m::Union{CausalEstimator, Metalearner}`: a model to validate/test the assumptions of.
+- `m::Union{CausalEstimator, Metalearner}`: model to validate/test the assumptions of.
     
 # Keywords
 - `devs=::Any`: iterable of deviations from which to generate noise to simulate violations 
@@ -445,6 +445,22 @@ function counterfactual_consistency(model, devs, iterations)
     return avg_counterfactual_effects
 end
 
+"""
+    simulate_counterfactual_violations(y, dev)
+
+# Arguments
+- `y::Vector{<:Real}`: vector of real-valued outcomes.
+- `dev::Float64`: deviation of the observed outcomes from the true counterfactual outcomes.
+
+# Examples
+```julia
+julia> x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1)) 
+julia> g_computer = GComputation(x, t, y, temporal=false)
+julia> estimate_causal_effect!(g_computer)
+julia> simulate_counterfactual_violations(g_computer)
+-0.7748591231872396
+```
+"""
 function simulate_counterfactual_violations(y::Vector{<:Real}, dev::Float64)
     min_y, max_y = minimum(y), maximum(y)
 
