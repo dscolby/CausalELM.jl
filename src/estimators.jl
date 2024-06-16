@@ -483,17 +483,19 @@ g_formula!(m1)
 ```
 """
 function g_formula!(g)
-    covariates, y = hcat(g.X, g.T), var_type(g.Y)
+    covariates, y = hcat(g.X, g.T), g.Y
 
-    if g.quantity_of_interest ∈ ("ITT", "ATE")
-        Xₜ, Xᵤ = hcat(g.X, ones(size(g.T, 1))), hcat(g.X, zeros(size(g.T, 1)))
+    if g.quantity_of_interest ∈ ("ITT", "ATE", "CATE")
+        Xₜ = hcat(covariates[:, 1:end-1], ones(size(covariates, 1)))
+        Xᵤ = hcat(covariates[:, 1:end-1], zeros(size(covariates, 1)))
     else
-        Xₜ, Xᵤ = hcat(g.X, g.T), hcat(g.X, zeros(size(g.Y, 1)))
+        Xₜ = hcat(covariates[g.T .== 1, 1:end-1], ones(size(g.T[g.T .== 1], 1)))
+        Xᵤ = hcat(covariates[g.T .== 1, 1:end-1], zeros(size(g.T[g.T .== 1], 1)))
     end
 
     if g.num_neurons === 0  # Don't search for the best number of neurons multiple times
         g.num_neurons = best_size(
-            Array(covariates),
+            g.X,
             g.Y,
             g.validation_metric,
             g.task,
@@ -509,14 +511,14 @@ function g_formula!(g)
     end
 
     if g.regularized
-        g.learner = RegularizedExtremeLearner(covariates, g.Y, g.num_neurons, g.activation)
+        g.learner = RegularizedExtremeLearner(covariates, y, g.num_neurons, g.activation)
     else
-        g.learner = ExtremeLearner(covariates, g.Y, g.num_neurons, g.activation)
+        g.learner = ExtremeLearner(covariates, y, g.num_neurons, g.activation)
     end
 
     fit!(g.learner)
-    yₜ = clip_if_binary(predict(g.learner, Xₜ), y)
-    yᵤ = clip_if_binary(predict(g.learner, Xᵤ), y)
+    yₜ = clip_if_binary(predict(g.learner, Xₜ), var_type(g.Y))
+    yᵤ = clip_if_binary(predict(g.learner, Xᵤ), var_type(g.Y))
     return vec(yₜ) - vec(yᵤ)
 end
 

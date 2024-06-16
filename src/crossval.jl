@@ -12,8 +12,7 @@ julia> xfolds, y_folds = CausalELM.generate_folds(zeros(4, 2), zeros(4), 2)
 ```
 """
 function generate_folds(X, Y, folds)
-    msg = """the number of folds must be less than the number of 
-             observations and greater than or equal to iteration"""
+    msg = """the number of folds must be less than the number of observations"""
     n = length(Y)
 
     if folds >= n

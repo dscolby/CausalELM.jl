@@ -121,7 +121,7 @@ end
     standard_input_data()
 
 Generate fields common to all CausalEstimators except DoubleMachineLearning and all 
-Metalearners excetp RLearner and DoublyRobustLearner.
+Metalearners except RLearner and DoublyRobustLearner.
 
 # Examples
 ```julia
