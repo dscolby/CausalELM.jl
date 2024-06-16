@@ -10,10 +10,10 @@ xfolds_ts, yfolds_ts = generate_temporal_folds(
     float.(hcat([1:10;], 11:20)), [1.0:1.0:10.0;], 5
 )
 
-X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+X₀, Y₀, X₁, Y₁ = rand(100, 5), rand(100), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 
-X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+X, T, Y = rand(100, 5), rand(100), [rand() < 0.4 for i in 1:100]
 g_computation_regression = GComputation(X, T, Y)
 g_computation_classification = GComputation(X, T, rand(0:1, 100))
 

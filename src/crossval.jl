@@ -201,13 +201,10 @@ function best_size(m)
 
     # Use an extreme learning machine to learn a function F:num_neurons -> loss
     mapper = ExtremeLearner(
-        reshape(num_neurons, :, 1), 
-        reshape(loss, :, 1), 
-        m.approximator_neurons, 
-        relu,
+        reshape(num_neurons, :, 1), reshape(loss, :, 1), m.approximator_neurons, relu
     )
     fit!(mapper)
-    pred_metrics = predict(mapper, Float64[m.min_neurons:m.max_neurons;])
+    pred_metrics = predict(mapper, Float64[(m.min_neurons):(m.max_neurons);])
 
     return ifelse(startswith(m.task, "c"), argmax([pred_metrics]), argmin([pred_metrics]))
 end

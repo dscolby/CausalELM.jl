@@ -613,7 +613,7 @@ julia> estimate_causal_effect!(m1)
 """
 function estimate_causal_effect!(R::RLearner)
     # Uses the same number of neurons for all phases of estimation
-    R.num_neurons =  R.num_neurons === 0 ? best_size(R) : R.num_neurons
+    R.num_neurons = R.num_neurons === 0 ? best_size(R) : R.num_neurons
 
     # Just estimate the causal effect using the underlying DML and the weight trick
     R.causal_effect = causal_loss(R)
@@ -668,7 +668,7 @@ function estimate_causal_effect!(DRE::DoublyRobustLearner)
     causal_effect = zeros(size(DRE.T, 1))
 
     # Uses the same number of neurons for all phases of estimation
-    DRE.num_neurons =  DRE.num_neurons === 0 ? best_size(DRE) : DRE.num_neurons
+    DRE.num_neurons = DRE.num_neurons === 0 ? best_size(DRE) : DRE.num_neurons
 
     # Rotating folds for cross fitting
     for i in 1:(DRE.folds)
