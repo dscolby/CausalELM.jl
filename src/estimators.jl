@@ -349,7 +349,6 @@ mutable struct DoubleMachineLearning <: CausalEstimator
         iterations=round(size(X, 1) / 10),
         approximator_neurons=round(size(X, 1) / 10),
     )
-
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
         return new(
