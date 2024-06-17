@@ -1,5 +1,5 @@
 """Abstract type for GComputation and DoubleMachineLearning"""
-abstract type  CausalEstimator end
+abstract type CausalEstimator end
 
 """
     InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; kwargs...)
@@ -16,12 +16,12 @@ Initialize an interrupted time series estimator.
 # Keywords
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
+- `min_neurons::Real`: the minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
+- `folds::Real`: the number of cross validation folds to find the best number of neurons.
+- `iterations::Real`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -42,14 +42,14 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
-x₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100))
-y₀_df = DataFrame(y=rand(100))
-x₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)) 
-y₁_df = DataFrame(y=rand(100))
-m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
+julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+julia> m2 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=false)
+julia> x₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100))
+julia> y₀_df = DataFrame(y=rand(100))
+julia> x₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)) 
+julia> y₁_df = DataFrame(y=rand(100))
+julia> m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 ```
 """
 mutable struct InterruptedTimeSeries
@@ -57,50 +57,51 @@ mutable struct InterruptedTimeSeries
     Y₀::Array{Float64}
     X₁::Array{Float64}
     Y₁::Array{Float64}
-    task::String
-    regularized::Bool
-    activation::Function
-    validation_metric::Function
-    min_neurons::Int64
-    max_neurons::Int64
-    folds::Int64
-    iterations::Int64
-    approximator_neurons::Int64
-    autoregression::Bool
-    num_neurons::Int64
-    Δ::Array{Float64}
-
-    function InterruptedTimeSeries(X₀::Array{<:Real}, Y₀::Array{<:Real}, X₁::Array{<:Real}, 
-                                   Y₁::Array{<:Real}; regularized=true, activation=relu, 
-                                   validation_metric=mse, min_neurons=1, max_neurons=100, 
-                                   folds=5, iterations=round(size(X₀, 1)/10), 
-                                   approximator_neurons=round(size(X₀, 1)/10), 
-                                   autoregression=true)
-
-        # Add autoregressive term
-        X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
-        X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, moving_average(Y₁))), X₁)
-
-        new(X₀, Float64.(Y₀), Float64.(X₁), Float64.(Y₁), "regression", regularized, 
-            activation, validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, autoregression, 0)
-    end
+    @model_config individual_effect
 end
 
-function InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=true, activation=relu, 
-                               validation_metric=mse, min_neurons=1, max_neurons=100, 
-                               folds=5, iterations=round(size(X₀, 1)/10), 
-                               approximator_neurons=round(size(X₀, 1)/10), 
-                               autoregression=true)
+function InterruptedTimeSeries(
+    X₀,
+    Y₀,
+    X₁,
+    Y₁;
+    regularized::Bool=true,
+    activation::Function=relu,
+    validation_metric::Function=mse,
+    min_neurons::Real=1,
+    max_neurons::Real=100,
+    folds::Real=5,
+    iterations::Real=round(size(X₀, 1) / 10),
+    approximator_neurons::Real=round(size(X₀, 1) / 10),
+    autoregression::Bool=true,
+)
 
     # Convert to arrays
     X₀, X₁, Y₀, Y₁ = Matrix{Float64}(X₀), Matrix{Float64}(X₁), Y₀[:, 1], Y₁[:, 1]
 
-    InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; regularized=regularized, 
-                          activation=activation, validation_metric=validation_metric, 
-                          min_neurons=min_neurons, max_neurons=max_neurons, folds=folds, 
-                          iterations=iterations, approximator_neurons=approximator_neurons, 
-                          autoregression=autoregression)
+    # Add autoregressive term
+    X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
+    X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, moving_average(Y₁))), X₁)
+
+    return InterruptedTimeSeries(
+        X₀,
+        Float64.(Y₀),
+        Float64.(X₁),
+        Float64.(Y₁),
+        "difference",
+        true,
+        "regression",
+        regularized,
+        activation,
+        validation_metric,
+        min_neurons,
+        max_neurons,
+        folds,
+        iterations,
+        approximator_neurons,
+        0,
+        fill(NaN, size(Y₁, 1)),
+    )
 end
 
 """
@@ -114,18 +115,18 @@ Initialize a G-Computation estimator.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `task::String`: either regression or classification.
-- `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
-    treatment effect.
+- `quantity_of_interest::String`: ATE for average treatment effect or ATT for average 
+    treatment effect on the treated.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
+- `validation_metric::Function`: the validation metric to calculate during cross 
+    validation.
+- `min_neurons::Real: the minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
+- `folds::Real`: the number of cross validation folds to find the best number of neurons.
+- `iterations::Real`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -149,69 +150,64 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-m1 = GComputation(X, T, Y)
-m2 = GComputation(X, T, Y; task="regression")
-m3 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE)
-m4 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE", regularized=true)
+julia> X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = GComputation(X, T, Y)
+julia> m2 = GComputation(X, T, Y; task="regression")
+julia> m3 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE)
 
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
-m5 = GComputation(x_df, t_df, y_df)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
+julia> m5 = GComputation(x_df, t_df, y_df)
 ```
 """
 mutable struct GComputation <: CausalEstimator
-    X::Array{Float64}
-    T::Array{Float64}
-    Y::Array{Float64}
-    task::String
-    quantity_of_interest::String
-    regularized::Bool
-    activation::Function
-    temporal::Bool
-    validation_metric::Function
-    min_neurons::Int64
-    max_neurons::Int64
-    folds::Int64
-    iterations::Int64
-    approximator_neurons::Int64
-    num_neurons::Int64
-    causal_effect::Float64
+    @standard_input_data
+    @model_config average_effect
     learner::ExtremeLearningMachine
 
-    function GComputation(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-                          task="regression", quantity_of_interest="ATE", regularized=true, 
-                          activation=relu, temporal=true, validation_metric=mse, 
-                          min_neurons=1, max_neurons=100, folds=5, 
-                          iterations=round(size(X, 1)/10), 
-                          approximator_neurons=round(size(X, 1)/10))
-
-        if task ∉ ("regression", "classification")
-            throw(ArgumentError("task must be either regression or classification"))
-        elseif quantity_of_interest ∉ ("ATE", "ITT", "ATT")
+    function GComputation(
+        X,
+        T,
+        Y;
+        quantity_of_interest::String="ATE",
+        regularized::Bool=true,
+        activation::Function=relu,
+        temporal::Bool=true,
+        validation_metric::Function=mse,
+        min_neurons::Real=1,
+        max_neurons::Real=100,
+        folds::Real=5,
+        iterations::Real=round(size(X, 1) / 10),
+        approximator_neurons::Real=round(size(X, 1) / 10),
+    )
+        if quantity_of_interest ∉ ("ATE", "ITT", "ATT")
             throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
         end
 
-        new(Float64.(X), Float64.(T), Float64.(Y), task, quantity_of_interest, regularized, 
-            activation, temporal, validation_metric, min_neurons, max_neurons, folds, 
-            iterations, approximator_neurons, 0, NaN)
+        # Convert to arrays
+        X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+
+        task = var_type(Y) isa Binary ? "classification" : "regression"
+
+        return new(
+            Float64.(X),
+            Float64.(T),
+            Float64.(Y),
+            quantity_of_interest,
+            temporal,
+            task,
+            regularized,
+            activation,
+            validation_metric,
+            min_neurons,
+            max_neurons,
+            folds,
+            iterations,
+            approximator_neurons,
+            0,
+            NaN,
+        )
     end
-end
-
-function GComputation(X, T, Y; task="regression", quantity_of_interest="ATE", 
-                      regularized=true, activation=relu, temporal=true, 
-                      validation_metric=mse, min_neurons=1, max_neurons=100, folds=5, 
-                      iterations=round(size(X, 1)/10), 
-                      approximator_neurons=round(size(X, 1)/10))
-
-    # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
-
-    GComputation(X, T, Y; task=task, quantity_of_interest=quantity_of_interest, 
-                 regularized=regularized, activation=activation, temporal=temporal, 
-                 validation_metric=validation_metric, min_neurons=min_neurons, 
-                 max_neurons=max_neurons, folds=folds, iterations=iterations, 
-                 approximator_neurons=approximator_neurons)
 end
 
 """
@@ -226,18 +222,15 @@ Initialize a double machine learning estimator with cross fitting.
 
 # Keywords
 - `W::Any`: an array or dataframe of all possible confounders.
-- `task::String`: either regression or classification.
-- `quantity_of_interest::String`: ATE for average treatment effect or CTE for cummulative 
-    treatment effect.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
 - `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Int`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Int`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Int`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Int`: the number of iterations to perform cross validation between 
+- `min_neurons::Real`: the minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
+- `folds::Real`: the number of cross validation folds to find the best number of neurons.
+- `iterations::Real`: the number of iterations to perform cross validation between 
     min_neurons and max_neurons.
-- `approximator_neurons::Int`: the number of nuerons in the validation loss approximator 
+- `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
     network.
 
 # Notes
@@ -263,57 +256,59 @@ For details and a derivation of the generalized cross validation estimator see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoubleMachineLearning(X, T, Y)
-m2 = DoubleMachineLearning(X, T, Y; task="regression")
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> m2 = DoubleMachineLearning(X, T, Y; task="regression")
 
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-m3 = DoubleMachineLearning(x_df, t_df, y_df)
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m3 = DoubleMachineLearning(x_df, t_df, y_df)
 ```
 """
 mutable struct DoubleMachineLearning <: CausalEstimator
-    X::Array{Float64}
-    T::Array{Float64}
-    Y::Array{Float64}
-    W::Array{Float64}
-    regularized::Bool
-    activation::Function
-    validation_metric::Function
-    min_neurons::Int64
-    max_neurons::Int64
-    folds::Int64
-    iterations::Int64
-    approximator_neurons::Int64
-    quantity_of_interest::String
-    temporal::Bool
-    num_neurons::Int64
-    causal_effect::Float64
-
-    function DoubleMachineLearning(X::Array{<:Real}, T::Array{<:Real}, Y::Array{<:Real}; 
-                                   W=X, regularized=true, activation=relu, 
-                                   validation_metric=mse, min_neurons=1, max_neurons=100, 
-                                   folds=5, iterations=round(size(X, 1)/10), 
-                                   approximator_neurons=round(size(X, 1)/10))
-
-        new(Float64.(X), Float64.(T), Float64.(Y), Float64.(W), regularized, activation, 
-            validation_metric, min_neurons, max_neurons, folds, iterations, 
-            approximator_neurons, "ATE", false, 0, NaN)
-    end
+    @double_learner_input_data
+    @model_config average_effect
 end
 
-function DoubleMachineLearning(X, T, Y; W=X, regularized=true, activation=relu, 
-                               validation_metric=mse, min_neurons=1, max_neurons=100, 
-                               folds=5, iterations=round(size(X, 1)/10), 
-                               approximator_neurons=round(size(X, 1)/10))
+function DoubleMachineLearning(
+    X,
+    T,
+    Y;
+    W=X,
+    regularized::Bool=true,
+    activation::Function=relu,
+    validation_metric::Function=mse,
+    min_neurons::Real=1,
+    max_neurons::Real=100,
+    folds::Real=5,
+    iterations::Real=round(size(X, 1) / 10),
+    approximator_neurons::Real=round(size(X, 1) / 10),
+)
 
     # Convert to arrays
     X, T, Y, W = Matrix{Float64}(X), T[:, 1], Y[:, 1], Matrix{Float64}(W)
 
-    DoubleMachineLearning(X, T, Y; W=W, regularized=regularized, activation=activation, 
-                          validation_metric=validation_metric, min_neurons=min_neurons, 
-                          max_neurons=max_neurons, folds=folds, iterations=iterations, 
-                          approximator_neurons=approximator_neurons)
+    task = var_type(Y) isa Binary ? "classification" : "regression"
+
+    return DoubleMachineLearning(
+        X,
+        Float64.(T),
+        Float64.(Y),
+        Float64.(W),
+        "ATE",
+        false,
+        task,
+        regularized,
+        activation,
+        validation_metric,
+        min_neurons,
+        max_neurons,
+        folds,
+        iterations,
+        approximator_neurons,
+        0,
+        NaN,
+    )
 end
 
 """
@@ -323,21 +318,16 @@ Estimate the effect of an event relative to a predicted counterfactual.
 
 # Examples
 ```julia
-X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-estimate_causal_effect!(m1)
+julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(its::InterruptedTimeSeries)
     # We will not find the best number of neurons after we have already estimated the causal
     # effect and are getting p-values, confidence intervals, or standard errors. We will use
     # the same number that was found when calling this method.
-    if its.num_neurons === 0
-        its.num_neurons = best_size(its.X₀, its.Y₀, its.validation_metric, "regression", 
-                                    its.activation, its.min_neurons, its.max_neurons, 
-                                    its.regularized, its.folds, true, its.iterations, 
-                                    its.approximator_neurons)
-    end
+    its.num_neurons = its.num_neurons === 0 ? best_size(its) : its.num_neurons
 
     if its.regularized
         learner = RegularizedExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
@@ -346,9 +336,14 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     end
 
     fit!(learner)
-    its.Δ = predict_counterfactual!(learner, its.X₁) - its.Y₁
+    its.causal_effect = predict_counterfactual!(learner, its.X₁) - its.Y₁
 
-    return its.Δ
+    return its.causal_effect
+end
+
+function estimate_causal_effect!(g::GComputation)
+    g.causal_effect = mean(g_formula!(g))
+    return g.causal_effect
 end
 
 """
@@ -365,37 +360,34 @@ as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0,
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = GComputation(X, T, Y)
-estimate_causal_effect!(m1)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = GComputation(X, T, Y)
+julia> g_formula!(m1)
 ```
 """
-function estimate_causal_effect!(g::GComputation)
-    covariates, y = hcat(g.X, g.T), var_type(g.Y)
+function g_formula!(g)
+    covariates, y = hcat(g.X, g.T), g.Y
 
-    if g.quantity_of_interest ∈ ("ITT", "ATE")
-        Xₜ, Xᵤ= hcat(g.X, ones(size(g.T, 1))), hcat(g.X, zeros(size(g.T, 1)))
+    if g.quantity_of_interest ∈ ("ITT", "ATE", "CATE")
+        Xₜ = hcat(covariates[:, 1:(end - 1)], ones(size(covariates, 1)))
+        Xᵤ = hcat(covariates[:, 1:(end - 1)], zeros(size(covariates, 1)))
     else
-        Xₜ, Xᵤ = hcat(g.X, g.T), hcat(g.X, zeros(size(g.Y, 1)))
+        Xₜ = hcat(covariates[g.T .== 1, 1:(end - 1)], ones(size(g.T[g.T .== 1], 1)))
+        Xᵤ = hcat(covariates[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
     end
 
-    if g.num_neurons === 0  # Don't search for the best number of neurons multiple times
-        g.num_neurons = best_size(Array(covariates), g.Y, g.validation_metric, g.task, 
-                                  g.activation, g.min_neurons, g.max_neurons, g.regularized, 
-                                  g.folds, g.temporal, g.iterations, g.approximator_neurons)
-    end
+    g.num_neurons = g.num_neurons === 0 ? best_size(g) : g.num_neurons
 
     if g.regularized
-        g.learner = RegularizedExtremeLearner(covariates, g.Y, g.num_neurons, g.activation)
+        g.learner = RegularizedExtremeLearner(covariates, y, g.num_neurons, g.activation)
     else
-        g.learner = ExtremeLearner(covariates, g.Y, g.num_neurons, g.activation)
+        g.learner = ExtremeLearner(covariates, y, g.num_neurons, g.activation)
     end
 
     fit!(g.learner)
-    yₜ = clip_if_binary(predict(g.learner, Xₜ), y)
-    yᵤ = clip_if_binary(predict(g.learner, Xᵤ), y)
-    g.causal_effect = mean(vec(yₜ) - vec(yᵤ))
-    return g.causal_effect
+    yₜ = clip_if_binary(predict(g.learner, Xₜ), var_type(g.Y))
+    yᵤ = clip_if_binary(predict(g.learner, Xᵤ), var_type(g.Y))
+    return vec(yₜ) - vec(yᵤ)
 end
 
 """
@@ -405,118 +397,104 @@ Estimate a causal effect of interest using double machine learning.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoubleMachineLearning(X, T, Y)
-estimate_causal_effect!(m1)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> estimate_causal_effect!(m1)
 
-W = rand(100, 6)
-m2 = DoubleMachineLearning(X, T, Y, W=W)
-estimate_causal_effect!(m2)
+julia> W = rand(100, 6)
+julia> m2 = DoubleMachineLearning(X, T, Y, W=W)
+julia> estimate_causal_effect!(m2)
 ```
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
     # Uses the same number of neurons for all phases of estimation
-    if DML.num_neurons === 0
-        task = var_type(DML.Y) == Binary() ? "classification" : "regression"
-        DML.num_neurons = best_size(DML.X, DML.Y, DML.validation_metric, task, 
-                                    DML.activation, DML.min_neurons, DML.max_neurons, 
-                                    DML.regularized, DML.folds, false, DML.iterations, 
-                                    DML.approximator_neurons)
-    end
+    DML.num_neurons = DML.num_neurons === 0 ? best_size(DML) : DML.num_neurons
 
-    estimate_effect!(DML, false)
+    causal_loss!(DML)
     DML.causal_effect /= DML.folds
 
     return DML.causal_effect
 end
 
 """
-    estimate_effect!(DML, [,cate])
+    causal_loss!(DML, [,cate])
 
-Estimate a treatment effect using double machine learning.
+Minimize the causal loss function for double machine learning.
 
 # Notes
 This method should not be called directly.
 
 # Arguments
 - `DML::DoubleMachineLearning`: the DoubleMachineLearning struct to estimate the effect for.
-- `cate::Bool=false`: whether to estimate the cate.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoubleMachineLearning(X, T, Y)
-estimate_effect!(m1)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> causal_loss!(m1)
 ```
 """
-function estimate_effect!(DML::DoubleMachineLearning, cate=false)
+function causal_loss!(DML::DoubleMachineLearning)
     X, T, W, Y = make_folds(DML)
-    predictors = cate ? Vector{RegularizedExtremeLearner}(undef, DML.folds) : Nothing
     DML.causal_effect = 0
 
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
-    for fld in 1:DML.folds
+    for fld in 1:(DML.folds)
         X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
         Y_train, Y_test = reduce(vcat, Y[1:end .!== fld]), Y[fld]
         T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
         W_train, W_test = reduce(vcat, W[1:end .!== fld]), W[fld]
 
-        Ỹ, T̃ = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test, 
-                                 W_train, W_test)
-        DML.causal_effect += (vec(sum(T̃ .* X_test, dims=2))\Ỹ)[1]
-
-        if cate  # Using the weight trick to get the non-parametric CATE for an R-learner
-            X[fld], Y[fld] = (T̃.^2) .* X_test, (T̃.^2) .* (Ỹ./T̃)
-            mod = RegularizedExtremeLearner(X[fld], Y[fld], DML.num_neurons, DML.activation)
-            fit!(mod)
-            predictors[fld] = mod
-        end
+        Ỹ, T̃ = predict_residuals(
+            DML, X_train, X_test, Y_train, Y_test, T_train, T_test, W_train, W_test
+        )
+        DML.causal_effect += (vec(sum(T̃ .* X_test; dims=2)) \ Ỹ)[1]
     end
-    final_predictions = cate ? [predict(m, reduce(vcat, X)) for m in predictors] : Nothing
-    cate && return vec(mapslices(mean, reduce(hcat, final_predictions), dims=2))
 end
 
 """
-    predict_residuals(DML, x_train, x_test, y_train, y_test, t_train, t_test)
+    predict_residuals(D, x_train, x_test, y_train, y_test, t_train, t_test)
 
-Predict treatment and outcome residuals for doubl machine learning.
+Predict treatment and outcome residuals for double machine learning or R-learning.
 
 # Notes
 This method should not be called directly.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-x_train, x_test = X[1:80, :], X[81:end, :]
-y_train, y_test = Y[1:80], Y[81:end]
-t_train, t_test = T[1:80], T[81:100]
-m1 = DoubleMachineLearning(X, T, Y)
-predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> x_train, x_test = X[1:80, :], X[81:end, :]
+julia> y_train, y_test = Y[1:80], Y[81:end]
+julia> t_train, t_test = T[1:80], T[81:100]
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 ```
 """
-function predict_residuals(DML::DoubleMachineLearning, x_train, x_test, y_train, y_test, 
-                           t_train, t_test, w_train, w_test)
+function predict_residuals(
+    D, x_train, x_test, y_train, y_test, t_train, t_test, w_train, w_test
+)
     V = x_train != w_train && x_test != w_test ? reduce(hcat, (x_train, w_train)) : x_train
     V_test = V == x_train ? x_test : reduce(hcat, (x_test, w_test))
 
-    if DML.regularized
-        y = RegularizedExtremeLearner(V, y_train, DML.num_neurons, DML.activation)
-        t = RegularizedExtremeLearner(V, t_train, DML.num_neurons, DML.activation)
+    if D.regularized
+        y = RegularizedExtremeLearner(V, y_train, D.num_neurons, D.activation)
+        t = RegularizedExtremeLearner(V, t_train, D.num_neurons, D.activation)
     else
-        y = ExtremeLearner(V, y_train, DML.num_neurons, DML.activation)
-        t = ExtremeLearner(V, t_train, DML.num_neurons, DML.activation)
+        y = ExtremeLearner(V, y_train, D.num_neurons, D.activation)
+        t = ExtremeLearner(V, t_train, D.num_neurons, D.activation)
     end
 
-    fit!(y); fit!(t)
-    y_pred = clip_if_binary(predict(y, V_test), var_type(DML.Y))
-    t_pred = clip_if_binary(predict(t, V_test), var_type(DML.T))
+    fit!(y)
+    fit!(t)
+    y_pred = clip_if_binary(predict(y, V_test), var_type(D.Y))
+    t_pred = clip_if_binary(predict(t, V_test), var_type(D.T))
     ỹ, t̃ = y_test - y_pred, t_test - t_pred
 
     return ỹ, t̃
 end
 
 """
-    make_folds(DML)
+    make_folds(D)
 
 Make folds for cross fitting for a double machine learning estimator.
 
@@ -525,16 +503,16 @@ This method should not be called directly.
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = DoubleMachineLearning(X, T, Y)
-make_folds(m1)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = DoubleMachineLearning(X, T, Y)
+julia> make_folds(m1)
 ```
 """
 function make_folds(D)
     X_T_W, Y = generate_folds(reduce(hcat, (D.X, D.T, D.W)), D.Y, D.folds)
     X = [fl[:, 1:size(D.X, 2)] for fl in X_T_W]
-    T = [fl[:, size(D.X, 2)+1] for fl in X_T_W]
-    W = [fl[:, size(D.X, 2)+2:end] for fl in X_T_W]
+    T = [fl[:, size(D.X, 2) + 1] for fl in X_T_W]
+    W = [fl[:, (size(D.X, 2) + 2):end] for fl in X_T_W]
 
     return X, T, W, Y
 end
@@ -546,12 +524,12 @@ Calculates a cumulative moving average.
 
 # Examples
 ```julia
-moving_average([1, 2, 3])
+julia> moving_average([1, 2, 3])
 ```
 """
 function moving_average(x)
     result = similar(x)
-    for i = 1:length(x)
+    for i in 1:length(x)
         result[i] = mean(x[1:i])
     end
     return result

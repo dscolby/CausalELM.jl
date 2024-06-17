@@ -3,8 +3,8 @@
 </div>
 
 <p align="center">
-    <a href="https://github.com/dscolby/CausalELM.jl/actions">
-        <img src="https://github.com/dscolby/CausalELM.jl/actions/workflows/CI.yml/badge.svg?branch=main"
+    <a href="https://github.com/dscolby/CausalELM/actions">
+        <img src="https://github.com/dscolby/CausalELM/actions/workflows/CI.yml/badge.svg?branch=main"
             alt="Build Status">
     </a>
     <a href="https://app.codecov.io/gh/dscolby/CausalELM.jl/tree/main/src">
@@ -15,13 +15,21 @@
         <img src="https://img.shields.io/badge/License-MIT-yelllow"
             alt="License">
     </a>
-    <a href="https://dscolby.github.io/CausalELM.jl/stable">
+    <a href="https://dscolby.github.io/CausalELM/stable">
     <img src="https://img.shields.io/badge/docs-stable-blue.svg"
          alt="Documentation">
     </a>
-    <a href="https://dscolby.github.io/CausalELM.jl/dev/">
+    <a href="https://dscolby.github.io/CausalELM/dev/">
         <img src="https://img.shields.io/badge/docs-dev-blue.svg"
              alt="Develmopmental Documentation">
+    </a>
+    <a href="https://github.com/JuliaTesting/Aqua.jl">
+        <img src="https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg"
+             alt="Aqua QA">
+    </a>
+    <a href="https://github.com/JuliaDiff/BlueStyle">
+        <img src="https://img.shields.io/badge/code%20style-blue-4495d1.svg"
+             alt="Code Style: Blue">
     </a>
 </p>
 

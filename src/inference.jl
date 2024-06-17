@@ -19,38 +19,57 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-m1 = GComputation(X, T, Y)
-estimate_causal_effect!(m1)
-summarize(m1)
+julia> X, T, Y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = GComputation(X, T, Y)
+julia> estimate_causal_effect!(m1)
+julia> summarize(m1)
 
-m2 = RLearner(X, T, Y)
-estimate_causal_effect(m2)
+julia> m2 = RLearner(X, T, Y)
+julia> estimate_causal_effect(m2)
 julia> summarize(m2)
 
-m3 = SLearner(X, T, Y)
-estimate_causal_effect!(m3)
-summarise(m3)
+julia> m3 = SLearner(X, T, Y)
+julia> estimate_causal_effect!(m3)
+julia> summarise(m3)  # British spelling works too!
 ```
 """
 function summarize(mod, n=1000)
-    if !isdefined(mod, :causal_effect) || mod.causal_effect === NaN
+    if all(isnan, mod.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
 
     summary_dict = Dict()
     double_estimators = (DoubleMachineLearning, DoublyRobustLearner)
     task = typeof(mod) in double_estimators ? "regression" : mod.task
-    nicenames = ["Task", "Quantity of Interest", "Regularized", "Activation Function", 
-                 "Time Series/Panel Data", "Validation Metric", "Number of Neurons", 
-                 "Number of Neurons in Approximator", "Causal Effect", "Standard Error", 
-                 "p-value"]
-    
+    nicenames = [
+        "Task",
+        "Quantity of Interest",
+        "Regularized",
+        "Activation Function",
+        "Time Series/Panel Data",
+        "Validation Metric",
+        "Number of Neurons",
+        "Number of Neurons in Approximator",
+        "Causal Effect",
+        "Standard Error",
+        "p-value",
+    ]
+
     p, stderr = quantities_of_interest(mod, n)
 
-    values = [task, mod.quantity_of_interest, mod.regularized, mod.activation, mod.temporal, 
-              mod.validation_metric, mod.num_neurons, mod.approximator_neurons, 
-              mod.causal_effect, stderr, p]
+    values = [
+        task,
+        mod.quantity_of_interest,
+        mod.regularized,
+        mod.activation,
+        mod.temporal,
+        mod.validation_metric,
+        mod.num_neurons,
+        mod.approximator_neurons,
+        mod.causal_effect,
+        stderr,
+        p,
+    ]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value
@@ -65,36 +84,53 @@ end
 Get a summary from an interrupted time series estimator.
 
 # Arguments
-- `its::InterruptedTimeSeries`: an interrupted time series estimator
-- `n::Int=100`: the number of iterations to generate the numll distribution for 
-    randomization inference.
+- `its::InterruptedTimeSeries`: interrupted time series estimator
+- `n::Int=100`: number of iterations to generate the numll distribution for randomization 
+    inference.
 - `mean_effect::Bool=true`: whether to estimate the mean or cumulative effect for an 
     interrupted time series estimator.
 
 # Examples
 ```julia
-X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-m4 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-estimate_causal_effect!(m4)
+julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
+julia> m4 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
+julia> estimate_causal_effect!(m4)
 julia> summarize(m4)
 ```
 """
 function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
-    if !isdefined(its, :Δ)
+    if all(isnan, its.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
 
-    effect = ifelse(mean_effect, mean(its.Δ), sum(its.Δ))
+    effect = ifelse(mean_effect, mean(its.causal_effect), sum(its.causal_effect))
 
     p, stderr = quantities_of_interest(its, n, mean_effect)
 
     summary_dict = Dict()
-    nicenames = ["Task", "Regularized", "Activation Function", "Validation Metric", 
-                 "Number of Neurons", "Number of Neurons in Approximator", "Causal Effect", 
-                 "Standard Error", "p-value"]
+    nicenames = [
+        "Task",
+        "Regularized",
+        "Activation Function",
+        "Validation Metric",
+        "Number of Neurons",
+        "Number of Neurons in Approximator",
+        "Causal Effect",
+        "Standard Error",
+        "p-value",
+    ]
 
-    values = ["Regression", its.regularized, its.activation, its.validation_metric, 
-              its.num_neurons, its.approximator_neurons, effect, stderr, p]
+    values = [
+        "Regression",
+        its.regularized,
+        its.activation,
+        its.validation_metric,
+        its.num_neurons,
+        its.approximator_neurons,
+        effect,
+        stderr,
+        p,
+    ]
 
     for (nicename, value) in zip(nicenames, values)
         summary_dict[nicename] = value
@@ -103,10 +139,6 @@ function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
     return summary_dict
 end
 
-summarize(R::RLearner, n=1000) = summarize(R.dml, n)
-
-summarize(S::SLearner, n=1000) = summarize(S.g, n)
-
 """
     generate_null_distribution(mod, n)
 
@@ -114,9 +146,9 @@ Generate a null distribution for the treatment effect of G-computation, double m
 learning, or metalearning.
 
 # Arguments
-- `mod::Union{CausalEstimator, Metalearner}`: a model to summarize.
-- `n::Int=100`: the number of iterations to generate the numll distribution for 
-    randomization inference.
+- `mod::Any`: model to summarize.
+- `n::Int=100`: number of iterations to generate the null distribution for randomization 
+    inference.
 
 # Notes
 This method estimates the same model that is provided using random permutations of the 
@@ -128,27 +160,27 @@ the null hypothesis.
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
-g_computer = GComputation(x, t, y)
-estimate_causal_effect!(g_computer)
-generate_null_distribution(g_computer, 500)
+julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+julia> g_computer = GComputation(x, t, y)
+julia> estimate_causal_effect!(g_computer)
+julia> generate_null_distribution(g_computer, 500)
 ```
 """
 function generate_null_distribution(mod, n)
     local m = deepcopy(mod)
     nobs = size(m.T, 1)
     results = Vector{Float64}(undef, n)
-    
+
     # Generate random treatment assignments and estimate the causal effects
-    for iter in 1:n 
+    for iter in 1:n
 
         # Sample from a continuous distribution if the treatment is continuous
         if var_type(mod.T) isa Continuous
-            m.T = (maximum(m.T)-minimum(m.T)).*rand(nobs).+minimum(m.T)
+            m.T = (maximum(m.T) - minimum(m.T)) .* rand(nobs) .+ minimum(m.T)
         else
             m.T = float(rand(unique(m.T), nobs))
         end
-        
+
         estimate_causal_effect!(m)
         results[iter] = mod isa Metalearner ? mean(m.causal_effect) : m.causal_effect
     end
@@ -159,22 +191,22 @@ end
     generate_null_distribution(its, n, mean_effect)
 
 # Arguments
-- `its::InterruptedTimeSeries`: an interrupted time series estimator
-- `n::Int=100`: the number of iterations to generate the numll distribution for 
-        randomization inference.
+- `its::InterruptedTimeSeries`: interrupted time series estimator
+- `n::Int=100`: number of iterations to generate the numll distribution for randomization 
+    inference.
 - `mean_effect::Bool=true`: whether to estimate the mean or cumulative effect for an 
-        interrupted time series estimator.
+    interrupted time series estimator.
 
 # Examples
 ```julia
-x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
-its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-estimate_causale_ffect!(its)
-generate_null_distribution(its, 10)
+julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimate_causal_effect!(its)
+julia> generate_null_distribution(its, 10)
 ```
 """
 function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
-    local model = deepcopy(its)
+    model = deepcopy(its)
     split_idx = size(model.Y₀, 1)
     results = Vector{Float64}(undef, n)
     data = reduce(hcat, (reduce(vcat, (its.X₀, its.X₁)), reduce(vcat, (its.Y₀, its.Y₁))))
@@ -182,16 +214,21 @@ function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
     # Generate random treatment assignments and estimate the causal effects
     for iter in 1:n
         permuted_data = data[shuffle(1:end), :]
-        permuted_x₀ = permuted_data[1:split_idx, 1:end-1]
-        permuted_x₁ = permuted_data[split_idx+1:end, 1:end-1]
+        permuted_x₀ = permuted_data[1:split_idx, 1:(end - 1)]
+        permuted_x₁ = permuted_data[(split_idx + 1):end, 1:(end - 1)]
         permuted_y₀ = permuted_data[1:split_idx, end]
-        permuted_y₁ = permuted_data[split_idx+1:end, end]
+        permuted_y₁ = permuted_data[(split_idx + 1):end, end]
 
         # Reestimate the model with the intervention now at the nth interval
         model.X₀, model.Y₀ = permuted_x₀, permuted_y₀
         model.X₁, model.Y₁ = permuted_x₁, permuted_y₁
         estimate_causal_effect!(model)
-        results[iter] = ifelse(mean_effect, mean(model.Δ), sum(model.Δ))
+
+        results[iter] = if mean_effect
+            mean(model.causal_effect)
+        else
+            sum(model.causal_effect)
+        end
     end
     return results
 end
@@ -213,20 +250,20 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
-g_computer = GComputation(x, t, y)
-estimate_causal_effect!(g_computer)
-quantities_of_interest(g_computer, 1000)
+julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+julia> g_computer = GComputation(x, t, y)
+julia> estimate_causal_effect!(g_computer)
+julia> quantities_of_interest(g_computer, 1000)
 ```
 """
 function quantities_of_interest(mod, n)
-    local null_dist = generate_null_distribution(mod, n)
-    local avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
+    null_dist = generate_null_distribution(mod, n)
+    avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
 
     extremes = length(null_dist[abs(avg_effect) .< abs.(null_dist)])
-    pvalue = extremes/n
+    pvalue = extremes / n
 
-    stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist])/(n-1)) / sqrt(n)
+    stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist]) / (n - 1)) / sqrt(n)
 
     return pvalue, stderr
 end
@@ -249,21 +286,21 @@ For a primer on randomization inference see:
 
 # Examples
 ```julia
-x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
-its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-estimate_causal_effect!(its)
-quantities_of_interest(its, 10)
+julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimate_causal_effect!(its)
+julia> quantities_of_interest(its, 10)
 ```
 """
 function quantities_of_interest(mod::InterruptedTimeSeries, n, mean_effect)
     local null_dist = generate_null_distribution(mod, n, mean_effect)
     local metric = ifelse(mean_effect, mean, sum)
-    local effect = metric(mod.Δ)
+    local effect = metric(mod.causal_effect)
 
     extremes = length(null_dist[effect .< abs.(null_dist)])
-    pvalue = extremes/n
+    pvalue = extremes / n
 
-    stderr = (sum([(effect .- x)^2 for x in null_dist])/(n-1))/sqrt(n)
+    stderr = (sum([(effect .- x)^2 for x in null_dist]) / (n - 1)) / sqrt(n)
 
     return pvalue, stderr
 end

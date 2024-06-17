@@ -1,32 +1,33 @@
-
 using CausalELM
 using Test
 using DataFrames
 
 include("../src/models.jl")
 
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
-slearner1, slearner2 = SLearner(x, t, y), SLearner(x, t, y, regularized=true)
-estimate_causal_effect!(slearner1); estimate_causal_effect!(slearner2)
+x, t, y = rand(100, 5), Float64.([rand() < 0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
+slearner1, slearner2 = SLearner(x, t, y), SLearner(x, t, y; regularized=true)
+estimate_causal_effect!(slearner1);
+estimate_causal_effect!(slearner2);
 
 # S-learner with a binary outcome
 s_learner_binary = SLearner(x, y, t)
 estimate_causal_effect!(s_learner_binary)
 
 # S-learner initialized with DataFrames
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+x_df = DataFrame(; x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(; t=rand(0:1, 100)), DataFrame(; y=rand(100))
 
 s_learner_df = SLearner(x_df, t_df, y_df)
 
-tlearner1, tlearner2 = TLearner(x, t, y), TLearner(x, t, y, regularized=false)
-estimate_causal_effect!(tlearner1); estimate_causal_effect!(tlearner2)
+tlearner1, tlearner2 = TLearner(x, t, y), TLearner(x, t, y; regularized=false)
+estimate_causal_effect!(tlearner1);
+estimate_causal_effect!(tlearner2);
 
 # T-learner initialized with DataFrames
 t_learner_df = TLearner(x_df, t_df, y_df)
 
 # Testing with a binary outcome
-t_learner_binary = TLearner(x, t, Float64.([rand()<0.8 for i in 1:100]))
+t_learner_binary = TLearner(x, t, Float64.([rand() < 0.8 for i in 1:100]))
 estimate_causal_effect!(t_learner_binary)
 
 xlearner1 = XLearner(x, t, y)
@@ -34,50 +35,52 @@ xlearner1.num_neurons = 5
 CausalELM.stage1!(xlearner1)
 stage21 = CausalELM.stage2!(xlearner1)
 
-xlearner2 = XLearner(x, t, y, regularized=true)
+xlearner2 = XLearner(x, t, y; regularized=true)
 xlearner2.num_neurons = 5
-CausalELM.stage1!(xlearner2); CausalELM.stage2!(xlearner2)
+CausalELM.stage1!(xlearner2);
+CausalELM.stage2!(xlearner2);
 stage22 = CausalELM.stage2!(xlearner1)
 
 xlearner3 = XLearner(x, t, y)
 estimate_causal_effect!(xlearner3)
 
-xlearner4 = XLearner(x, t, y, regularized=true)
+xlearner4 = XLearner(x, t, y; regularized=true)
 estimate_causal_effect!(xlearner4)
 
 # Testing initialization with DataFrames
 x_learner_df = XLearner(x_df, t_df, y_df)
 
 # Testing with binary outcome
-x_learner_binary = XLearner(x, t, Float64.([rand()<0.4 for i in 1:100]))
+x_learner_binary = XLearner(x, t, Float64.([rand() < 0.4 for i in 1:100]))
 estimate_causal_effect!(x_learner_binary)
 
 rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
 
 # Testing with a W arguments
-r_learner_w = RLearner(x, t, y, W=rand(100, 4))
+r_learner_w = RLearner(x, t, y; W=rand(100, 4))
 estimate_causal_effect!(r_learner_w)
 
 # Testing initialization with DataFrames
 r_learner_df = RLearner(x_df, t_df, y_df)
 
 # Doubly Robust Estimation
-dr_learner = DoublyRobustLearner(x, t, y, W=rand(100, 4))
-X_T, Y = generate_folds(reduce(hcat, (dr_learner.X, dr_learner.T, dr_learner.W)), 
-                               dr_learner.Y, 2)
-X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T] 
-T = [fl[:, size(dr_learner.X, 2)+1] for fl in X_T]
-W = [fl[:, size(dr_learner.W, 2)+2:end] for fl in X_T]
-τ̂  = CausalELM.estimate_effect!(dr_learner, X, T, Y, reduce(hcat, (W, X)))
+dr_learner = DoublyRobustLearner(x, t, y; W=rand(100, 4))
+X_T, Y = generate_folds(
+    reduce(hcat, (dr_learner.X, dr_learner.T, dr_learner.W)), dr_learner.Y, 2
+)
+X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T]
+T = [fl[:, size(dr_learner.X, 2) + 1] for fl in X_T]
+W = [fl[:, (size(dr_learner.W, 2) + 2):end] for fl in X_T]
+τ̂ = CausalELM.doubly_robust_formula!(dr_learner, X, T, Y, reduce(hcat, (W, X)))
 estimate_causal_effect!(dr_learner)
 
 # Doubly Robust Estimation with no regularization
-dr_no_reg = DoublyRobustLearner(x, t, y, W=rand(100, 4), regularized=false)
+dr_no_reg = DoublyRobustLearner(x, t, y; W=rand(100, 4), regularized=false)
 estimate_causal_effect!(dr_no_reg)
 
 # Testing Doubly Robust Estimation with a binary outcome
-dr_learner_binary = DoublyRobustLearner(x, t, Float64.([rand()<0.8 for i in 1:100]))
+dr_learner_binary = DoublyRobustLearner(x, t, Float64.([rand() < 0.8 for i in 1:100]))
 estimate_causal_effect!(dr_learner_binary)
 
 # Doubly robust estimation with DataFrames
@@ -86,9 +89,17 @@ estimate_causal_effect!(dr_learner_df)
 
 @testset "S-Learners" begin
     @testset "S-Learner Structure" begin
-        @test slearner1.g isa GComputation
-        @test slearner2.g isa GComputation
-        @test s_learner_df.g isa GComputation
+        @test slearner1.X isa Array{Float64}
+        @test slearner1.T isa Array{Float64}
+        @test slearner1.Y isa Array{Float64}
+
+        @test slearner2.X isa Array{Float64}
+        @test slearner2.T isa Array{Float64}
+        @test slearner2.Y isa Array{Float64}
+
+        @test s_learner_df.X isa Array{Float64}
+        @test s_learner_df.T isa Array{Float64}
+        @test s_learner_df.Y isa Array{Float64}
     end
 
     @testset "S-Learner Estimation" begin
@@ -162,8 +173,14 @@ end
 
 @testset "R-learning" begin
     @testset "R-learner Structure" begin
-        @test rlearner.dml !== Nothing
-        @test r_learner_df.dml !== Nothing
+        @test rlearner.X isa Array{Float64}
+        @test rlearner.T isa Array{Float64}
+        @test rlearner.Y isa Array{Float64}
+        @test rlearner.W isa Array{Float64}
+        @test r_learner_df.X isa Array{Float64}
+        @test r_learner_df.T isa Array{Float64}
+        @test r_learner_df.Y isa Array{Float64}
+        @test r_learner_df.W isa Array{Float64}
     end
 
     @testset "R-learner estimation" begin
@@ -179,12 +196,12 @@ end
 @testset "Doubly Robust Learners" begin
     @testset "Doubly Robust Learner Structure" begin
         for field in fieldnames(typeof(dr_learner))
-           @test getfield(dr_learner, field) !== Nothing
+            @test getfield(dr_learner, field) !== Nothing
         end
 
         for field in fieldnames(typeof(dr_learner_df))
             @test getfield(dr_learner_df, field) !== Nothing
-         end
+        end
     end
 
     @testset "Calling estimate_effect!" begin
@@ -205,10 +222,4 @@ end
         @test length(dr_no_reg.causal_effect) === length(y)
         @test eltype(dr_no_reg.causal_effect) == Float64
     end
-end
-
-@testset "Task Errors" begin
-    @test_throws ArgumentError SLearner(x, t, y, task="abc")
-    @test_throws ArgumentError TLearner(x, t, y, task="def")
-    @test_throws ArgumentError XLearner(x, t, y, task="xyz")
 end

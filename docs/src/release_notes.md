@@ -9,16 +9,17 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 learning and doubly robust estimation [39](https://github.com/dscolby/CausalELM.jl/issues/39)
 ### Changed
 *   Removed the estimate_causal_effect! call in the model constructor docstrings [#35](https://github.com/dscolby/CausalELM.jl/issues/35)
-*   Standardized and improved docstrings [#44](https://github.com/dscolby/CausalELM.jl/issues/44)
+*   Standardized and improved docstrings and added doctests [#44](https://github.com/dscolby/CausalELM.jl/issues/44)
 *   Counterfactual consistency now simulates outcomes that violate the counterfactual consistency assumption rather than 
-binning of treatments and now works with discrete or continuous treatments [#33](https://github.com/dscolby/CausalELM.jl/issues/33)
+binning of treatments and works with discrete or continuous treatments [#33](https://github.com/dscolby/CausalELM.jl/issues/33)
 ### Fixed
 *   Clipped probabilities between 0 and 1 for estimators that use predictions of binary variables [#36](https://github.com/dscolby/CausalELM.jl/issues/36)
-*   Fixed sample splitting and corss fitting procedure for doubly robust estimation [#42](https://github.com/dscolby/CausalELM.jl/issues/42)
+*   Fixed sample splitting and cross fitting procedure for doubly robust estimation [#42](https://github.com/dscolby/CausalELM.jl/issues/42)
 *   Addressed numerical instability when finding the ridge penalty by replacing the previous ridge formula with 
 generalized cross validation [#43](https://github.com/dscolby/CausalELM.jl/issues/43)
 *   Uses the correct variable in the ommited predictor test for interrupted time series.
 *   Uses correct range for p-values in interrupted time series validation tests.
+*   Correctly subsets the data for ATT estimation in G-computation [#52](https://github.com/dscolby/CausalELM.jl/issues/52)
 
 ## Version [v0.5.1](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.5.1) - 2024-01-15
 ### Added

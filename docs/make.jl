@@ -14,7 +14,7 @@ makedocs(;
         canonical="https://dscolby.github.io/CausalELM.jl",
         edit_link="main",
         sidebar_sitename=false,
-        footer = "© 2024 Darren Colby",
+        footer="© 2024 Darren Colby",
         assets=[],
     ),
     pages=[
@@ -25,16 +25,16 @@ makedocs(;
             "G-computation" => "guide/gcomputation.md",
             "Double Machine Learning" => "guide/doublemachinelearning.md",
             "Metalearners" => "guide/metalearners.md",
-            "Doubly Robust Estimation" => "guide/doublyrobust.md"
+            "Doubly Robust Estimation" => "guide/doublyrobust.md",
         ],
         "API" => "api.md",
         "Contributing" => "contributing.md",
-        "Release Notes" => "release_notes.md"
+        "Release Notes" => "release_notes.md",
     ],
 )
 
 deploydocs(;
     repo="github.com/dscolby/CausalELM.jl",
-    devbranch = "main",
-    versions = ["stable" => "v^", "v#.#.#"]
+    devbranch="main",
+    versions=["stable" => "v^", "v#.#.#"],
 )

@@ -9,8 +9,10 @@ its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
 
 # ITS with a DataFrame
-x₀_df, y₀_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)), DataFrame(y=rand(100))
-x₁_df, y₁_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100)), DataFrame(y=rand(100))
+x₀_df, y₀_df = DataFrame(; x1=rand(100), x2=rand(100), x3=rand(100)),
+DataFrame(; y=rand(100))
+x₁_df, y₁_df = DataFrame(; x1=rand(100), x2=rand(100), x3=rand(100)),
+DataFrame(; y=rand(100))
 its_df = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 
 # No autoregressive term
@@ -18,29 +20,30 @@ its_no_ar = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its_no_ar)
 
 # Testing without regularization
-its_noreg = InterruptedTimeSeries(x₀, y₀, x₁, y₁, regularized=false)
+its_noreg = InterruptedTimeSeries(x₀, y₀, x₁, y₁; regularized=false)
 estimate_causal_effect!(its_noreg)
 
-x, t, y = rand(100, 5), Float64.([rand()<0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
-g_computer = GComputation(x, t, y, temporal=false)
+x, t, y = rand(100, 5), rand(0:1, 100), vec(rand(1:100, 100, 1))
+g_computer = GComputation(x, t, y; temporal=false)
 estimate_causal_effect!(g_computer)
 
 # Testing with a binary outcome
-g_computer_binary_out = GComputation(x, y, t, temporal=false)
+g_computer_binary_out = GComputation(x, y, t; temporal=false)
 estimate_causal_effect!(g_computer_binary_out)
 
 # G-computation with a DataFrame
-x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+x_df = DataFrame(; x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+t_df, y_df = DataFrame(; t=rand(0:1, 100)), DataFrame(; y=rand(100))
 g_computer_df = GComputation(x_df, t_df, y_df)
-gcomputer_att = GComputation(x, t, y, quantity_of_interest="ATT", temporal=false)
+gcomputer_att = GComputation(x, t, y; quantity_of_interest="ATT", temporal=false)
 estimate_causal_effect!(gcomputer_att)
-gcomputer_noreg = GComputation(x, t, y, regularized=false)
+gcomputer_noreg = GComputation(x, t, y; regularized=false)
 estimate_causal_effect!(gcomputer_noreg)
 
 # Make sure the data isn't shuffled
-g_computer_ts = GComputation(float.(hcat([1:10;], 11:20)), 
-    Float64.([rand()<0.4 for i in 1:10]), rand(10))
+g_computer_ts = GComputation(
+    float.(hcat([1:10;], 11:20)), Float64.([rand() < 0.4 for i in 1:10]), rand(10)
+)
 
 dm = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dm)
@@ -53,17 +56,17 @@ estimate_causal_effect!(dm_binary_out)
 dm_df = DoubleMachineLearning(x_df, t_df, y_df)
 
 # No regularization
-dm_noreg = DoubleMachineLearning(x, t, y, regularized=false)
+dm_noreg = DoubleMachineLearning(x, t, y; regularized=false)
 estimate_causal_effect!(dm_noreg)
 
 # Specifying W
-dm_w = DoubleMachineLearning(x, t, y, W=rand(100, 4))
+dm_w = DoubleMachineLearning(x, t, y; W=rand(100, 4))
 estimate_causal_effect!(dm_w)
 
 # Calling estimate_effect!
 dm_estimate_effect = DoubleMachineLearning(x, t, y)
 dm_estimate_effect.num_neurons = 5
-CausalELM.estimate_effect!(dm_estimate_effect)
+CausalELM.causal_loss!(dm_estimate_effect)
 
 # Generating folds
 x_fold, t_fold, w_fold, y_fold = CausalELM.make_folds(dm)
@@ -74,13 +77,9 @@ t_train, t_test = t[1:80], t[81:100]
 y_train, y_test = y[1:80], y[81:end]
 residual_predictor = DoubleMachineLearning(x, t, y)
 residual_predictor.num_neurons = 5
-residuals = CausalELM.predict_residuals(residual_predictor, x_train, x_test, y_train, 
-                                        y_test, t_train, t_test, x_train, x_test)
-
-# Estimating the CATE
-cate_estimator = DoubleMachineLearning(x, t, y, regularized=false)
-cate_estimator.num_neurons = 5
-cate_predictors = CausalELM.estimate_effect!(cate_estimator, true)
+residuals = CausalELM.predict_residuals(
+    residual_predictor, x_train, x_test, y_train, y_test, t_train, t_test, x_train, x_test
+)
 
 @testset "Interrupted Time Series Estimation" begin
     @testset "Interrupted Time Series Structure" begin
@@ -103,13 +102,13 @@ cate_predictors = CausalELM.estimate_effect!(cate_estimator, true)
     end
 
     @testset "Interrupted Time Series Estimation" begin
-        @test isa(its.Δ, Array)
+        @test isa(its.causal_effect, Array)
 
         # Without autocorrelation
-        @test isa(its_no_ar.Δ, Array)
+        @test isa(its_no_ar.causal_effect, Array)
 
         # Without regularization
-        @test isa(its_noreg.Δ, Array)
+        @test isa(its_noreg.causal_effect, Array)
     end
 end
 
@@ -153,7 +152,7 @@ end
         @test dm_noreg.X !== Nothing
         @test dm_noreg.T !== Nothing
         @test dm_noreg.Y !== Nothing
-        
+
         # Intialized with dataframes
         @test dm_df.X !== Nothing
         @test dm_df.T !== Nothing
@@ -170,12 +169,6 @@ end
         @test residuals[1] isa Vector
         @test residuals[2] isa Vector
     end
-  
-    @testset "CATE Estimation" begin
-        @test cate_predictors isa Vector
-        @test length(cate_predictors) == length(cate_estimator.Y)
-        @test eltype(cate_predictors) == Float64
-    end
 
     @testset "Double Machine Learning Post-estimation Structure" begin
         @test dm.causal_effect isa Float64
@@ -183,17 +176,13 @@ end
         @test dm_noreg.causal_effect isa Float64
         @test dm_w.causal_effect isa Float64
     end
-end  
-  
+end
+
 @testset "Summarization and Inference" begin
     @testset "Quanities of Interest Errors" begin
         @test_throws ArgumentError GComputation(x, y, t, quantity_of_interest="abc")
     end
 
-    @testset "Task Errors" begin
-        @test_throws ArgumentError GComputation(x, y, t, task="abc")
-    end
-    
     @testset "Moving Averages" begin
         @test CausalELM.moving_average(Float64[]) isa Array{Float64}
         @test CausalELM.moving_average([1.0]) == [1.0]

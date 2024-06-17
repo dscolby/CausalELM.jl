@@ -21,8 +21,8 @@ See also ['RegularizedExtremeLearner'](@ref).
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
 ```
 """
 mutable struct ExtremeLearner <: ExtremeLearningMachine
@@ -32,15 +32,15 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     features::Int64
     hidden_neurons::Int64
     activation::Function
-    __fit::Bool             
-    __estimated::Bool       
+    __fit::Bool
+    __estimated::Bool
     weights::Array{Float64}
     β::Array{Float64}
     H::Array{Float64}
     counterfactual::Array{Float64}
 
     function ExtremeLearner(X, Y, hidden_neurons, activation)
-        new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
+        return new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end
 end
 
@@ -51,8 +51,8 @@ Construct a RegularizedExtremeLearner for fitting and prediction.
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = RegularizedExtremeLearner(x, y, 10, σ)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
 ```
 """
 mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
@@ -62,16 +62,16 @@ mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
     features::Int64
     hidden_neurons::Int64
     activation::Function
-    __fit::Bool             
-    __estimated::Bool       
+    __fit::Bool
+    __estimated::Bool
     weights::Array{Float64}
     β::Array{Float64}
     k::Float64
     H::Array{Float64}
     counterfactual::Array{Float64}
-    
+
     function RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
-        new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
+        return new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
     end
 end
 
@@ -87,8 +87,8 @@ For more details see:
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
 ```
 """
 function fit!(model::ExtremeLearner)
@@ -112,9 +112,9 @@ For more details see:
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = RegularizedExtremeLearner(x, y, 10, σ)
-f1 = fit!(m1)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+julia> f1 = fit!(m1)
 ```
 """
 function fit!(model::RegularizedExtremeLearner)
@@ -122,9 +122,11 @@ function fit!(model::RegularizedExtremeLearner)
     k = ridge_constant(model)
     Id = Matrix(I, size(model.H, 2), size(model.H, 2))
 
-    model.β = @fastmath pinv(transpose(model.H)*model.H + k*Id)*transpose(model.H)*model.Y
+    model.β = @fastmath pinv(transpose(model.H) * model.H + k * Id) *
+        transpose(model.H) *
+        model.Y
     model.__fit = true  # Enables running predict
-    
+
     return model.β
 end
 
@@ -140,13 +142,13 @@ For more details see:
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
-f1 = fit(m1, sigmoid)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
+julia> f1 = fit(m1, sigmoid)
 julia> predict(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
 ```
 """
-function predict(model::ExtremeLearningMachine, X) 
+function predict(model::ExtremeLearningMachine, X)
     if !model.__fit
         throw(ErrorException("run fit! before calling predict"))
     end
@@ -155,7 +157,7 @@ function predict(model::ExtremeLearningMachine, X)
 end
 
 """
-    predictcounterfactual(model, X)
+    predict_counterfactual!(model, X)
 
 Use an ExtremeLearningMachine to predict the counterfactual.
 
@@ -167,15 +169,15 @@ See also [`predict`](@ref).
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
-f1 = fit(m1, sigmoid)
-predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
+julia> f1 = fit(m1, sigmoid)
+julia> predict_counterfactual!(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
 ```
 """
 function predict_counterfactual!(model::ExtremeLearningMachine, X)
     model.counterfactual, model.__estimated = predict(model, X), true
-    
+
     return model.counterfactual
 end
 
@@ -193,11 +195,11 @@ returns the predictions but does not test for statistical significance.
 
 # Examples
 ```julia
-x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-m1 = ExtremeLearner(x, y, 10, σ)
-f1 = fit(m1, sigmoid)
-predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
-placebo_test(m1)
+julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
+julia> m1 = ExtremeLearner(x, y, 10, σ)
+julia> f1 = fit(m1, sigmoid)
+julia> predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+julia> placebo_test(m1)
 ```
 """
 function placebo_test(model::ExtremeLearningMachine)
@@ -215,8 +217,8 @@ Calculate the L2 penalty for a regularized extreme learning machine using genera
 validation with successive halving.
 
 # Arguments
-- `model::RegularizedExtremeLearner`: a regularized extreme learning machine
-- `iterations::Int`: the number of iterations to perform for successive halving.
+- `model::RegularizedExtremeLearner`: regularized extreme learning machine.
+- `iterations::Int`: number of iterations to perform for successive halving.
 
 # References
 For more information see: 
@@ -225,13 +227,13 @@ For more information see:
 
 # Examples
 ```julia
-m1 = RegularizedExtremeLearner(x, y, 10, σ)
-ridge_constant(m1)
-ridge_constant(m1, iterations=20)
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+julia> ridge_constant(m1)
+julia> ridge_constant(m1, iterations=20)
 ```
 """
 function ridge_constant(model::RegularizedExtremeLearner, iterations::Int=10)
-    S(λ, X, X̂, n) =  X * pinv(X̂ .+ (n * λ * Matrix(I, n, n))) * transpose(X)
+    S(λ, X, X̂, n) = X * pinv(X̂ .+ (n * λ * Matrix(I, n, n))) * transpose(X)
     set_weights_biases(model)
     Ĥ = transpose(model.H) * model.H
 
@@ -264,6 +266,9 @@ end
 Calculate the weights and biases for an extreme learning machine or regularized extreme 
 learning machine.
 
+# Notes
+Initialization is done using uniform Xavier initialization.
+
 # References
 For details see;
     Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
@@ -271,20 +276,29 @@ For details see;
 
 # Examples
 ```julia
-m1 = RegularizedExtremeLearner(x, y, 10, σ)
-set_weights_biases(m1)
+julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+julia> set_weights_biases(m1)
 ```
 """
 function set_weights_biases(model::ExtremeLearningMachine)
-    a, b = -length(model.X), length(model.X)
-    model.weights = (b - a) * rand(model.features, model.hidden_neurons) .+ a
-    model.weights .+= (b - a) * rand(model.features) .+ a
+    n_in, n_out = size(model.X, 2), model.hidden_neurons
+    a, b = -sqrt(6) / sqrt(n_in + n_out), sqrt(6) / sqrt(n_in + n_out)
+    model.weights = @fastmath a .+ ((b - a) .* rand(model.features, model.hidden_neurons))
 
-    model.H = @fastmath model.activation((model.X * model.weights))
+    return model.H = @fastmath model.activation((model.X * model.weights))
 end
 
-Base.show(io::IO, model::ExtremeLearner) = print(io, 
-    "Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons")
+function Base.show(io::IO, model::ExtremeLearner)
+    return print(
+        io, "Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons"
+    )
+end
 
-Base.show(io::IO, model::RegularizedExtremeLearner) = print(io, 
-    "Regularized Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons")
+function Base.show(io::IO, model::RegularizedExtremeLearner)
+    return print(
+        io,
+        "Regularized Extreme Learning Machine with ",
+        model.hidden_neurons,
+        " hidden neurons",
+    )
+end
