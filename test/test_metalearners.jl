@@ -5,7 +5,7 @@ using DataFrames
 include("../src/models.jl")
 
 x, t, y = rand(100, 5), Float64.([rand() < 0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
-slearner1, slearner2 = SLearner(x, t, y), SLearner(x, t, y; regularized=true)
+slearner1, slearner2 = SLearner(x, t, y), SLearner(x, t, y; regularized=false)
 estimate_causal_effect!(slearner1);
 estimate_causal_effect!(slearner2);
 
@@ -24,7 +24,7 @@ estimate_causal_effect!(tlearner1);
 estimate_causal_effect!(tlearner2);
 
 # T-learner initialized with DataFrames
-t_learner_df = TLearner(x_df, t_df, y_df)
+t_learner_df = TLearner(x_df, t_df, y_df, regularized=false)
 
 # Testing with a binary outcome
 t_learner_binary = TLearner(x, t, Float64.([rand() < 0.8 for i in 1:100]))
@@ -35,7 +35,7 @@ xlearner1.num_neurons = 5
 CausalELM.stage1!(xlearner1)
 stage21 = CausalELM.stage2!(xlearner1)
 
-xlearner2 = XLearner(x, t, y; regularized=true)
+xlearner2 = XLearner(x, t, y; regularized=false)
 xlearner2.num_neurons = 5
 CausalELM.stage1!(xlearner2);
 CausalELM.stage2!(xlearner2);

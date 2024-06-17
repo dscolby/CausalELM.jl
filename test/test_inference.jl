@@ -11,7 +11,7 @@ g_inference = CausalELM.generate_null_distribution(g_computer, 1000)
 p1, stderr1 = CausalELM.quantities_of_interest(g_computer, 1000)
 summary1 = summarize(g_computer)
 
-dm = DoubleMachineLearning(x, t, y)
+dm = DoubleMachineLearning(x, 5 * randn(100) .+ 2, y)
 estimate_causal_effect!(dm)
 dm_inference = CausalELM.generate_null_distribution(dm, 1000)
 p2, stderr2 = CausalELM.quantities_of_interest(dm, 1000)

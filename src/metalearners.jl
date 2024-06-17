@@ -162,7 +162,7 @@ mutable struct TLearner <: Metalearner
         X,
         T,
         Y;
-        regularized::Bool=false,
+        regularized::Bool=true,
         activation::Function=relu,
         validation_metric::Function=mse,
         min_neurons::Real=1,
@@ -264,7 +264,7 @@ mutable struct XLearner <: Metalearner
         X,
         T,
         Y;
-        regularized::Bool=false,
+        regularized::Bool=true,
         activation::Function=relu,
         validation_metric::Function=mse,
         min_neurons::Real=1,
