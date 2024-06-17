@@ -33,6 +33,8 @@ jobs:
           - x64
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: 'main'
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
