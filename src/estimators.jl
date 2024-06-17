@@ -1,19 +1,10 @@
 """Abstract type for GComputation and DoubleMachineLearning"""
 abstract type CausalEstimator end
 
-"""Stores variables, results, and configuration for interrupted time series estimation"""
-mutable struct InterruptedTimeSeries
-    X₀::Array{Float64}
-    Y₀::Array{Float64}
-    X₁::Array{Float64}
-    Y₁::Array{Float64}
-    @model_config individual_effect
-end
-
-"""@doc
+"""
     InterruptedTimeSeries(X₀, Y₀, X₁, Y₁; kwargs...)
 
-Initialize an interrupted time seriFes estimator. 
+Initialize an interrupted time series estimator. 
 
 # Arguments
 - `X₀::Any`: an array or DataFrame of covariates from the pre-treatment period.
@@ -61,6 +52,14 @@ julia> y₁_df = DataFrame(y=rand(100))
 julia> m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 ```
 """
+mutable struct InterruptedTimeSeries
+    X₀::Array{Float64}
+    Y₀::Array{Float64}
+    X₁::Array{Float64}
+    Y₁::Array{Float64}
+    @model_config individual_effect
+end
+
 function InterruptedTimeSeries(
     X₀,
     Y₀,
@@ -105,71 +104,67 @@ function InterruptedTimeSeries(
     )
 end
 
-"""Stores variables, results, and configuration for G-computation"""
+"""
+    GComputation(X, T, Y; kwargs...)
+
+Initialize a G-Computation estimator.
+
+# Arguments
+- `X::Any`: an array or DataFrame of covariates.
+- `T::Any`: an vector or DataFrame of treatment statuses.
+- `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
+- `quantity_of_interest::String`: ATE for average treatment effect or ATT for average 
+    treatment effect on the treated.
+- `regularized::Function=true`: whether to use L2 regularization
+- `activation::Function=relu`: the activation function to use.
+- `validation_metric::Function`: the validation metric to calculate during cross 
+    validation.
+- `min_neurons::Real: the minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
+- `folds::Real`: the number of cross validation folds to find the best number of neurons.
+- `iterations::Real`: the number of iterations to perform cross validation between 
+    min_neurons and max_neurons.
+- `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
+    network.
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as in 
+the previous penalty, then the procedure will stop early.
+
+# References
+For a good overview of G-Computation see:
+    Chatton, Arthur, Florent Le Borgne, Clémence Leyrat, Florence Gillaizeau, Chloé 
+    Rousseau, Laetitia Barbin, David Laplaud, Maxime Léger, Bruno Giraudeau, and Yohann 
+    Foucher. "G-computation, propensity score-based methods, and targeted maximum likelihood 
+    estimator for causal inference with different covariates sets: a comparative simulation 
+    study." Scientific reports 10, no. 1 (2020): 9219.
+
+
+For details and a derivation of the generalized cross validation estimator see:
+    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
+
+# Examples
+```julia
+julia> X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
+julia> m1 = GComputation(X, T, Y)
+julia> m2 = GComputation(X, T, Y; task="regression")
+julia> m3 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE)
+
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
+julia> m5 = GComputation(x_df, t_df, y_df)
+```
+"""
 mutable struct GComputation <: CausalEstimator
     @standard_input_data
     @model_config average_effect
     learner::ExtremeLearningMachine
 
-    """@doc
-        GComputation(X, T, Y; kwargs...)
-
-    Initialize a G-Computation estimator.
-
-    # Arguments
-    - `X::Any`: an array or DataFrame of covariates.
-    - `T::Any`: an vector or DataFrame of treatment statuses.
-    - `Y::Any`: an array or DataFrame of outcomes.
-
-    # Keywords
-    - `quantity_of_interest::String`: ATE for average treatment effect or ATT for average 
-        treatment effect on the treated.
-    - `regularized::Function=true`: whether to use L2 regularization
-    - `activation::Function=relu`: the activation function to use.
-    - `validation_metric::Function`: the validation metric to calculate during cross 
-        validation.
-    - `min_neurons::Real: the minimum number of neurons to consider for the extreme learner.
-    - `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
-    - `folds::Real`: the number of cross validation folds to find the best number of neurons.
-    - `iterations::Real`: the number of iterations to perform cross validation between 
-        min_neurons and max_neurons.
-    - `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
-        network.
-
-    # Notes
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as 
-    in the previous penalty, then the procedure will stop early.
-
-    # References
-    For a good overview of G-Computation see:
-        Chatton, Arthur, Florent Le Borgne, Clémence Leyrat, Florence Gillaizeau, Chloé 
-        Rousseau, Laetitia Barbin, David Laplaud, Maxime Léger, Bruno Giraudeau, and Yohann 
-        Foucher. "G-computation, propensity score-based methods, and targeted maximum 
-        likelihood estimator for causal inference with different covariates sets: a 
-        comparative simulation study." Scientific reports 10, no. 1 (2020): 9219.
-
-
-    For details and a derivation of the generalized cross validation estimator see:
-        Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-        method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 
-        215-223.
-
-    # Examples
-    ```julia
-    julia> X, T, Y =  rand(100, 5), rand(100), [rand()<0.4 for i in 1:100]
-    julia> m1 = GComputation(X, T, Y)
-    julia> m2 = GComputation(X, T, Y; task="regression")
-    julia> m3 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE)
-    julia> m4 = GComputation(X, T, Y; task="regression", quantity_of_interest="ATE", 
-           regularized=true)
-
-    julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-    julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100)) 
-    julia> m5 = GComputation(x_df, t_df, y_df)
-    ```
-    """
     function GComputation(
         X,
         T,
@@ -215,13 +210,7 @@ mutable struct GComputation <: CausalEstimator
     end
 end
 
-"""Stores variables, results, and configuration for double machine learning"""
-mutable struct DoubleMachineLearning <: CausalEstimator
-    @double_learner_input_data
-    @model_config average_effect
-end
-
-"""@doc
+"""
     DoubleMachineLearning(X, T, Y; kwargs...)
 
 Initialize a double machine learning estimator with cross fitting.
@@ -276,6 +265,11 @@ julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m3 = DoubleMachineLearning(x_df, t_df, y_df)
 ```
 """
+mutable struct DoubleMachineLearning <: CausalEstimator
+    @double_learner_input_data
+    @model_config average_effect
+end
+
 function DoubleMachineLearning(
     X,
     T,

@@ -1,63 +1,62 @@
 """Abstract type for metalearners"""
 abstract type Metalearner end
 
-"""Stores variables, results, and configuration for S-learning"""
+"""
+    SLearner(X, T, Y; kwargs...)
+
+Initialize a S-Learner.
+
+# Arguments
+- `X::Any`: an array or DataFrame of covariates.
+- `T::Any`: an vector or DataFrame of treatment statuses.
+- `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
+- `regularized::Function=true`: whether to use L2 regularization
+- `activation::Function=relu`: the activation function to use.
+- `validation_metric::Function`: the validation metric to calculate during cross validation.
+- `min_neurons::Real`: the minimum number of neurons to consider for the extreme learner.
+- `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
+- `folds::Real`: the number of cross validation folds to find the best number of neurons.
+- `iterations::Real`: the number of iterations to perform cross validation between 
+min_neurons and max_neurons.
+- `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
+network.
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as 
+in the previous penalty, then the procedure will stop early.
+
+# References
+For an overview of S-Learners and other metalearners see:
+Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+estimating heterogeneous treatment effects using machine learning." Proceedings of 
+the national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+For details and a derivation of the generalized cross validation estimator see:
+Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 
+215-223.
+
+# Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = SLearner(X, T, Y)
+julia> m2 = SLearner(X, T, Y; task="regression")
+julia> m3 = SLearner(X, T, Y; task="regression", regularized=true)
+
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m4 = SLearner(x_df, t_df, y_df)
+```
+"""
 mutable struct SLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
     learner::ExtremeLearningMachine
 
-    """@doc
-        SLearner(X, T, Y; kwargs...)
-
-    Initialize a S-Learner.
-
-    # Arguments
-    - `X::Any`: an array or DataFrame of covariates.
-    - `T::Any`: an vector or DataFrame of treatment statuses.
-    - `Y::Any`: an array or DataFrame of outcomes.
-
-    # Keywords
-    - `regularized::Function=true`: whether to use L2 regularization
-    - `activation::Function=relu`: the activation function to use.
-    - `validation_metric::Function`: the validation metric to calculate during cross validation.
-    - `min_neurons::Real`: the minimum number of neurons to consider for the extreme learner.
-    - `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
-    - `folds::Real`: the number of cross validation folds to find the best number of neurons.
-    - `iterations::Real`: the number of iterations to perform cross validation between 
-        min_neurons and max_neurons.
-    - `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
-        network.
-
-    # Notes
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as 
-    in the previous penalty, then the procedure will stop early.
-
-    # References
-    For an overview of S-Learners and other metalearners see:
-        Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-        estimating heterogeneous treatment effects using machine learning." Proceedings of 
-        the national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-    For details and a derivation of the generalized cross validation estimator see:
-        Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-        method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 
-        215-223.
-
-    # Examples
-    ```julia
-    julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-    julia> m1 = SLearner(X, T, Y)
-    julia> m2 = SLearner(X, T, Y; task="regression")
-    julia> m3 = SLearner(X, T, Y; task="regression", regularized=true)
-
-    julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-    julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-    julia> m4 = SLearner(x_df, t_df, y_df)
-    ```
-    """
     function SLearner(
         X,
         T,
@@ -98,68 +97,67 @@ mutable struct SLearner <: Metalearner
     end
 end
 
-"""Stores variables, results, and configuration for T-learning"""
+"""
+    TLearner(X, T, Y; kwargs...)
+
+Initialize a T-Learner.
+
+# Arguments
+- `X::Any`: an array or DataFrame of covariates.
+- `T::Any`: an vector or DataFrame of treatment statuses.
+- `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
+- `regularized::Function=true`: whether to use L2 regularization
+- `activation::Function=relu`: the activation function to use.
+- `validation_metric::Function`: the validation metric to calculate during cross 
+validation.
+- `min_neurons::Real`: the minimum number of neurons to consider for the extreme 
+learner.
+- `max_neurons::Real`: the maximum number of neurons to consider for the extreme 
+learner.
+- `folds::Real`: the number of cross validation folds to find the best number of 
+neurons.
+- `iterations::Real`: the number of iterations to perform cross validation between 
+min_neurons and max_neurons.
+- `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
+network.
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as 
+in the previous penalty, then the procedure will stop early.
+
+# References
+For an overview of T-Learners and other metalearners see:
+Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+estimating heterogeneous treatment effects using machine learning." Proceedings of 
+the national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+For details and a derivation of the generalized cross validation estimator see:
+Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 
+215-223.
+
+# Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = TLearner(X, T, Y)
+julia> m2 = TLearner(X, T, Y; task="regression")
+julia> m3 = TLearner(X, T, Y; task="regression", regularized=true)
+
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m4 = TLearner(x_df, t_df, y_df)
+```
+"""
 mutable struct TLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
     μ₀::ExtremeLearningMachine
     μ₁::ExtremeLearningMachine
 
-    """@doc
-        TLearner(X, T, Y; kwargs...)
-
-    Initialize a T-Learner.
-
-    # Arguments
-    - `X::Any`: an array or DataFrame of covariates.
-    - `T::Any`: an vector or DataFrame of treatment statuses.
-    - `Y::Any`: an array or DataFrame of outcomes.
-
-    # Keywords
-    - `regularized::Function=true`: whether to use L2 regularization
-    - `activation::Function=relu`: the activation function to use.
-    - `validation_metric::Function`: the validation metric to calculate during cross 
-        validation.
-    - `min_neurons::Real`: the minimum number of neurons to consider for the extreme 
-        learner.
-    - `max_neurons::Real`: the maximum number of neurons to consider for the extreme 
-        learner.
-    - `folds::Real`: the number of cross validation folds to find the best number of 
-        neurons.
-    - `iterations::Real`: the number of iterations to perform cross validation between 
-        min_neurons and max_neurons.
-    - `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
-        network.
-
-    # Notes
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as 
-    in the previous penalty, then the procedure will stop early.
-
-    # References
-    For an overview of T-Learners and other metalearners see:
-        Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-        estimating heterogeneous treatment effects using machine learning." Proceedings of 
-        the national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-    For details and a derivation of the generalized cross validation estimator see:
-        Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-        method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 
-        215-223.
-
-    # Examples
-    ```julia
-    julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-    julia> m1 = TLearner(X, T, Y)
-    julia> m2 = TLearner(X, T, Y; task="regression")
-    julia> m3 = TLearner(X, T, Y; task="regression", regularized=true)
-
-    julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-    julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-    julia> m4 = TLearner(x_df, t_df, y_df)
-    ```
-    """
     function TLearner(
         X,
         T,
@@ -200,7 +198,61 @@ mutable struct TLearner <: Metalearner
     end
 end
 
-"""Stores variables, results, and configuration for X-learning"""
+"""
+    XLearner(X, T, Y; kwargs...)
+
+Initialize an X-Learner.
+
+# Arguments
+- `X::Any`: an array or DataFrame of covariates.
+- `T::Any`: an vector or DataFrame of treatment statuses.
+- `Y::Any`: an array or DataFrame of outcomes.
+
+# Keywords
+- `regularized::Function=true`: whether to use L2 regularization
+- `activation::Function=relu`: the activation function to use.
+- `validation_metric::Function`: the validation metric to calculate during cross 
+validation.
+- `min_neurons::Real`: the minimum number of neurons to consider for the extreme 
+learner.
+- `max_neurons::Real`: the maximum number of neurons to consider for the extreme 
+learner.
+- `folds::Real`: the number of cross validation folds to find the best number of 
+neurons.
+- `iterations::Real`: the number of iterations to perform cross validation between 
+min_neurons and max_neurons.
+- `approximator_neurons::Real`: the number of nuerons in the validation loss 
+approximator network.
+
+# Notes
+If regularized is set to true then the ridge penalty will be estimated using generalized 
+cross validation where the maximum number of iterations is 2 * folds for the successive 
+halving procedure. However, if the penalty in on iteration is approximately the same as 
+in the previous penalty, then the procedure will stop early.
+
+# References
+For an overview of X-Learners and other metalearners see:
+Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+estimating heterogeneous treatment effects using machine learning." Proceedings of 
+the national academy of sciences 116, no. 10 (2019): 4156-4165.
+
+For details and a derivation of the generalized cross validation estimator see:
+Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
+method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 
+215-223.
+
+# Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = XLearner(X, T, Y)
+julia> m2 = XLearner(X, T, Y; task="regression")
+julia> m3 = XLearner(X, T, Y; task="regression", regularized=true)
+
+julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
+julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
+julia> m4 = XLearner(x_df, t_df, y_df)
+```
+"""
 mutable struct XLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
@@ -208,61 +260,6 @@ mutable struct XLearner <: Metalearner
     μ₁::ExtremeLearningMachine
     ps::Array{Float64}
 
-    """@doc
-        XLearner(X, T, Y; kwargs...)
-
-    Initialize an X-Learner.
-
-    # Arguments
-    - `X::Any`: an array or DataFrame of covariates.
-    - `T::Any`: an vector or DataFrame of treatment statuses.
-    - `Y::Any`: an array or DataFrame of outcomes.
-
-    # Keywords
-    - `regularized::Function=true`: whether to use L2 regularization
-    - `activation::Function=relu`: the activation function to use.
-    - `validation_metric::Function`: the validation metric to calculate during cross 
-        validation.
-    - `min_neurons::Real`: the minimum number of neurons to consider for the extreme 
-        learner.
-    - `max_neurons::Real`: the maximum number of neurons to consider for the extreme 
-        learner.
-    - `folds::Real`: the number of cross validation folds to find the best number of 
-        neurons.
-    - `iterations::Real`: the number of iterations to perform cross validation between 
-        min_neurons and max_neurons.
-    - `approximator_neurons::Real`: the number of nuerons in the validation loss 
-        approximator network.
-
-    # Notes
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as 
-    in the previous penalty, then the procedure will stop early.
-
-    # References
-    For an overview of X-Learners and other metalearners see:
-        Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-        estimating heterogeneous treatment effects using machine learning." Proceedings of 
-        the national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-    For details and a derivation of the generalized cross validation estimator see:
-        Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-        method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 
-        215-223.
-
-    # Examples
-    ```julia
-    julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-    julia> m1 = XLearner(X, T, Y)
-    julia> m2 = XLearner(X, T, Y; task="regression")
-    julia> m3 = XLearner(X, T, Y; task="regression", regularized=true)
-
-    julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
-    julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-    julia> m4 = XLearner(x_df, t_df, y_df)
-    ```
-    """
     function XLearner(
         X,
         T,
@@ -303,13 +300,7 @@ mutable struct XLearner <: Metalearner
     end
 end
 
-"""Stores variables, results, and configuration for R-learning"""
-mutable struct RLearner <: Metalearner
-    @double_learner_input_data
-    @model_config individual_effect
-end
-
-"""@doc
+"""
     RLearner(X, T, Y; kwargs...)
 
 Initialize an R-Learner.
@@ -361,6 +352,11 @@ julia> w = rand(100, 6)
 julia> m5 = RLearner(X, T, Y, W=w)
 ```
 """
+mutable struct RLearner <: Metalearner
+    @double_learner_input_data
+    @model_config individual_effect
+end
+
 function RLearner(
     X,
     T,
@@ -401,13 +397,7 @@ function RLearner(
     )
 end
 
-"""Stores variables, results, and configuration for doubly robust learning"""
-mutable struct DoublyRobustLearner <: Metalearner
-    @double_learner_input_data
-    @model_config individual_effect
-end
-
-"""@doc
+"""
     DoublyRobustLearner(X, T, Y; kwargs...)
 
 Initialize a doubly robust CATE estimator.
@@ -459,6 +449,11 @@ julia> w = rand(100, 6)
 julia> m5 = DoublyRobustLearner(X, T, Y, W=w)
 ```
 """
+mutable struct DoublyRobustLearner <: Metalearner
+    @double_learner_input_data
+    @model_config individual_effect
+end
+
 function DoublyRobustLearner(
     X,
     T,

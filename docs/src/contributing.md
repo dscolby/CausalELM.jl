@@ -13,9 +13,11 @@ open an issue that explains what function or method you would like to be added a
 believe it should behave. Also be sure to use the enhancement tag.
 
 ## Contributing Code
-Before submitting a [pull request](https://github.com/dscolby/CausalELM.jl/pulls), please open an issue explaining what the proposed code is and why you want to add it, if there is not already an issue that addresses your 
-changes and you are not fixing something very minor. When submitting a pull request, please 
-reference the relevant issue/s and ensure your code follows the guidelines below.
+Before submitting a [pull request](https://github.com/dscolby/CausalELM.jl/pulls), please 
+open an issue explaining what the proposed code is and why you want to add it, if there is 
+not already an issue that addresses your changes and you are not fixing something very 
+minor. When submitting a pull request, please reference the relevant issue/s and ensure your 
+code follows the guidelines below.
 
 *   Before being merged, all pull requests should be well tested and all tests must be passing.
 
@@ -24,7 +26,7 @@ reference the relevant issue/s and ensure your code follows the guidelines below
     included in the relevant section of the API Manual.
 
 *   Most new structs for estimating causal effects should have mostly the same fields. To 
-    reduce the burden of repeatedly defining all these feilds, it is advisable to use the 
+    reduce the burden of repeatedly defining all these fields, it is advisable to use the 
     model_config, standard_input_data, and double_learner_input_data macro to 
     programmatically generate fields for new structs.
 
@@ -63,8 +65,8 @@ reference the relevant issue/s and ensure your code follows the guidelines below
     **  Each section should include its own level one header.
 
 !!! note
-    CausalELM follows the Blue style guide and all code is automatically formatted to conform 
-    with this standard upon being pushed to GitHub.
+    CausalELM follows the Blue style guide and all code is automatically formatted to 
+    conform with this standard upon being pushed to GitHub.
 
 ## Updating or Fixing Documentation
 To propose a change to the documentation please submit an [issue](https://github.com/dscolby/CausalELM.jl/issues) 

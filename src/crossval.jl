@@ -205,7 +205,6 @@ function best_size(m)
     )
     fit!(mapper)
     pred_metrics = predict(mapper, Float64[(m.min_neurons):(m.max_neurons);])
-
     return ifelse(startswith(m.task, "c"), argmax([pred_metrics]), argmin([pred_metrics]))
 end
 
