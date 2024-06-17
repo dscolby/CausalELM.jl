@@ -2,7 +2,8 @@ name: CI
 on: 
   push:
     branches:
-      - '**'
+      - main
+    tags: '*'
   pull_request:
     branches:
       - main
@@ -33,8 +34,6 @@ jobs:
           - x64
     steps:
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref }}
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
@@ -53,7 +52,7 @@ jobs:
       contents: write
       statuses: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1.8'
@@ -67,26 +66,3 @@ jobs:
             using CausalELM
             DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true)
             doctest(CausalELM)'
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: julia-actions/cache@v1
-      - name: Install JuliaFormatter and format
-        run: |
-          julia  -e 'import Pkg; Pkg.add("JuliaFormatter")'
-          julia  -e 'using JuliaFormatter; format(".", BlueStyle())'
-      - name: Create Pull Request
-        id: cpr
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: Format .jl files
-          title: 'Automatic JuliaFormatter.jl run'
-          branch: auto-juliaformatter-pr
-          delete-branch: true
-          labels: formatting, automated pr, no changelog
-      - name: Check outputs
-        run: |
-          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
-          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
