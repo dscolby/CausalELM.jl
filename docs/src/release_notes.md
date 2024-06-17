@@ -12,6 +12,7 @@ learning and doubly robust estimation [39](https://github.com/dscolby/CausalELM.
 *   Standardized and improved docstrings and added doctests [#44](https://github.com/dscolby/CausalELM.jl/issues/44)
 *   Counterfactual consistency now simulates outcomes that violate the counterfactual consistency assumption rather than 
 binning of treatments and works with discrete or continuous treatments [#33](https://github.com/dscolby/CausalELM.jl/issues/33)
+*   Refactored estimator and metalearner structs, constructors, and estimate_causal_effect! methods [#45](https://github.com/dscolby/CausalELM.jl/issues/45)
 ### Fixed
 *   Clipped probabilities between 0 and 1 for estimators that use predictions of binary variables [#36](https://github.com/dscolby/CausalELM.jl/issues/36)
 *   Fixed sample splitting and cross fitting procedure for doubly robust estimation [#42](https://github.com/dscolby/CausalELM.jl/issues/42)
