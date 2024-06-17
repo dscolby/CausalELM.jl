@@ -175,7 +175,7 @@ end
 Test for independence between covariates and the event or intervention.
 
 # Arguments
-- `its::InterruptedTImeSeries`: an interrupted time seiries estimator.
+- `its::InterruptedTImeSeries`: an interrupted time series estimator.
 
 # Keywords
 - `n::Int`: number of permutations for assigning observations to the pre and 
@@ -685,56 +685,56 @@ julia> estimate_causal_effect!(g_computer)
 julia> positivity(g_computer)
 ```
 """
-positivity(model, min=1.0e-6, max=1 - min) = positivity(model, min, max)
-
-function positivity(mod::XLearner, min=1.0e-6, max=1 - min)
-    # Observations that have a zero probability of treatment or control assignment
-    return reduce(
-        hcat,
-        (
-            mod.X[mod.ps .<= min .|| mod.ps .>= max, :],
-            mod.ps[mod.ps .<= min .|| mod.ps .>= max],
-        ),
-    )
-end
-
-function positivity(mod::Union{DoubleMachineLearning,RLearner}, min=1.0e-6, max=1 - min)
-    num_neurons = best_size(mod)
-
-    if mod.regularized
-        ps_mod = RegularizedExtremeLearner(mod.X, mod.T, num_neurons, mod.activation)
+function positivity(model, min=1.0e-6, max=1 - min)
+    if model.regularized
+        ps_mod = RegularizedExtremeLearner(
+            model.X, model.T, model.num_neurons, model.activation
+            )
     else
-        ps_mod = ExtremeLearner(mod.X, mod.T, num_neurons, mod.activation)
+        ps_mod = ExtremeLearner(model.X, model.T, model.num_neurons, model.activation)
     end
 
     fit!(ps_mod)
-    propensity_scores = predict(ps_mod, mod.X)
+    propensity_scores = predict(ps_mod, model.X)
 
     # Observations that have a zero probability of treatment or control assignment
     return reduce(
         hcat,
         (
-            mod.X[propensity_scores .<= min .|| propensity_scores .>= max, :],
+            model.X[propensity_scores .<= min .|| propensity_scores .>= max, :],
             propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max],
         ),
     )
 end
 
-function positivity(mod, min=1.0e-6, max=1 - min)
-    if mod.regularized
-        ps_mod = RegularizedExtremeLearner(mod.X, mod.T, mod.num_neurons, mod.activation)
+function positivity(model::XLearner, min=1.0e-6, max=1 - min)
+    # Observations that have a zero probability of treatment or control assignment
+    return reduce(
+        hcat,
+        (
+            model.X[model.ps .<= min .|| model.ps .>= max, :],
+            model.ps[model.ps .<= min .|| model.ps .>= max],
+        ),
+    )
+end
+
+function positivity(model::Union{DoubleMachineLearning,RLearner}, min=1.0e-6, max=1 - min)
+    num_neurons = best_size(model)
+
+    if model.regularized
+        ps_mod = RegularizedExtremeLearner(model.X, model.T, num_neurons, model.activation)
     else
-        ps_mod = ExtremeLearner(mod.X, mod.T, mod.num_neurons, mod.activation)
+        ps_mod = ExtremeLearner(model.X, model.T, num_neurons, model.activation)
     end
 
     fit!(ps_mod)
-    propensity_scores = predict(ps_mod, mod.X)
+    propensity_scores = predict(ps_mod, model.X)
 
     # Observations that have a zero probability of treatment or control assignment
     return reduce(
         hcat,
         (
-            mod.X[propensity_scores .<= min .|| propensity_scores .>= max, :],
+            model.X[propensity_scores .<= min .|| propensity_scores .>= max, :],
             propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max],
         ),
     )

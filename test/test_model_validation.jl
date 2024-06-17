@@ -26,6 +26,13 @@ t2 = Float64.([rand() < 0.4 for i in 1:100])
 count_g_computer = GComputation(x2, t2, y2; temporal=false)
 estimate_causal_effect!(count_g_computer)
 
+continuous_counterfactual_violations = CausalELM.simulate_counterfactual_violations(
+    randn(100), 0.25
+    )
+discrete_counterfactual_violations = CausalELM.simulate_counterfactual_violations(
+    rand(1:5, 100), 0.05
+    )
+
 # Create double machine learning estimator
 dml = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dml)
@@ -49,6 +56,10 @@ estimate_causal_effect!(s_learner)
 # Initialize a binary S-learner
 s_learner_binary = SLearner(x, t1, y1)
 estimate_causal_effect!(s_learner_binary)
+
+# Use with a continuous outcome to test validate
+s_learner_continuous = SLearner(x, t, 5 * randn(100) .+ 2)
+estimate_causal_effect!(s_learner_continuous)
 
 # Initialize a binary T-learner
 t_learner_binary = TLearner(x, t1, y1)
@@ -103,6 +114,8 @@ end
                 reduce(hcat, (reduce(vcat, (zeros(5), ones(5))), ones(10))), randn(10), 0.5
             ) <=
             1
+            @test 0 <=
+            CausalELM.p_val(randn(10, 5), rand(10), 0.5) <=1
     end
 end
 
@@ -166,6 +179,10 @@ end
     end
 
     @testset "Positivity" begin
+        @test continuous_counterfactual_violations isa Vector{<:Real}
+        @test discrete_counterfactual_violations isa Vector{<:Real}
+        @test minimum(discrete_counterfactual_violations) >= 1
+        @test maximum(discrete_counterfactual_violations) <= 5
         @test size(CausalELM.positivity(binary_g_computer), 2) ==
             size(binary_g_computer.X, 2) + 1
         @test size(CausalELM.positivity(count_g_computer), 2) ==
@@ -227,6 +244,7 @@ end
 
     @testset "All three assumptions" begin
         @test length(validate(s_learner)) == 3
+        @test length(validate(s_learner_continuous)) === 3
         @test length(validate(t_learner)) == 3
         @test length(validate(x_learner)) == 3
 
