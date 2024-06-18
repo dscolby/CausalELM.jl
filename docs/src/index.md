@@ -33,13 +33,13 @@ for estimating treatment effects.
 *   Enables using the same structs for regression and classification
 *   Includes 13 activation functions and allows user-defined activation functions
 *   Most inference and validation tests do not assume functional or distributional forms
-*   Implements the latest techniques form statistics, econometrics, and biostatistic
+*   Implements the latest techniques form statistics, econometrics, and biostatistics
 *   Works out of the box with DataFrames or arrays
 *   Codebase is high-quality, well tested, and regularly updated
 
 ### What's New?
 *   Now includes doubly robust estimator for CATE estimation
-*   USes generalized cross validation with successive halving to find the best ridge penalty
+*   Uses generalized cross validation with successive halving to find the best ridge penalty
 *   Double machine learning, R-learning, and doubly robust estimators suppot specifying confounders and covariates of interest separately
 *   Counterfactual consistency validation simulates outcomes that violate the assumption rather than the previous binning approach
 *   Standardized and improved docstrings and added doctests

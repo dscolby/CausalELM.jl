@@ -35,16 +35,17 @@
 
 <p>
 CausalELM enables estimation of causal effects in settings where a randomized control trial 
-would be impossible or infeasible. Estimation of the average treatment effect (ATE), intent
-to treat effect (ITE), and average treatment effect on the treated (ATT) can be estimated 
-via G-computation or double machine learning (DML) while the ATE or cumulative 
-treatment effect (CTE) can be estimated from an interrupted time series analysis. 
-CausalELM also supports estimation of individual treatment effects or conditional average 
-treatment effects (CATE) via S-learning, T-learning, X-learning, and R-learning. The 
-underlying machine learning model for all these estimators is an extreme learning machine or 
-L2 regularized extreme learning machine. Furthermore, once a model has been estimated, 
-CausalELM can summarize the model, including computing p-values via randomization inference, 
-and conduct sensitivity analysis. All of this can be done in foru lines of code.
+or traditional statistical models would be infeasible or unacceptable. It enables estimation 
+of the average treatment effect (ATE)/intent to treat effect (ITE) with interrupted time 
+series analysis, G-computation, and double machine learning; average treatment effect on the 
+treated (ATT) with G-computation; cumulative treatment effect with interrupted time series 
+analysis; and the conditional average treatment effect (CATE) via S-learning, T-learning, 
+X-learning, R-learning, and doubly robust estimation. Underlying all of these estimators are 
+extreme learning machines, a simple neural network that uses randomized weights instead of 
+using gradient descent. Once a model has been estimated, CausalELM can summarize the model, 
+including computing p-values via randomization inference, and conduct sensitivity analysis 
+to calidate the plausibility of modeling assumptions. Furthermore, all of this can be done 
+in four lines of code.
 </p>
 
 <h2>Extreme Learning Machines and Causal Inference</h2>
@@ -54,71 +55,55 @@ have the counterfactual, making conventional methods of statistical analysis inf
 However, it may still be possible to get an unbiased estimate of the causal effect (ATE, 
 ATE, or ITT) by predicting the counterfactual and comparing it to the observed outcomes. 
 This is the approach CausalELM takes to conduct interrupted time series analysis, 
-G-Computation, DML, and meatlearning via S-Learners, T-Learners, X-Learners, and R-learners. 
-In interrupted time series analysis, we want to estimate the effect of some intervention on 
-the outcome of a single unit that we observe during multiple time periods. For example, we 
-might want to know how the announcement of a merger affected the price of Stock A. To do 
-this, we need to know what the price of stock A would have been if the merger had not been 
-announced, which we can predict with machine learning methods. Then, we can compare this 
-predicted counterfactual to the observed price data to estimate the effect of the merger 
-announcement. In another case, we might want to know the effect of medicine X on disease Y 
-but the administration of X was not random and it might have also been administered at 
-mulitiple time periods, which would produce biased estimates. To overcome this, 
-G-computation models the observed data, uses the model to predict the outcomes if all 
-patients recieved the treatment, and compares it to the predictions of the outcomes if none 
-of the patients recieved the treatment. Double machine learning (DML) takes a similar 
-approach but also models the treatment mechanism and uses it to adjust the initial 
-estimates. This approach has three advantages. First, it is more efficient with high 
-dimensional data than conventional methods. Second, it allows one to model complex, 
-nonlinear relationships between the treatment and the outcome. Finally, it is a doubly 
-robust estimator, meaning that only the model of the outcome OR the model of the 
-treatment mechanism has to be correctly specified to yield unbiased estimates. The DML 
-implementation in CausalELM. also overcomes bias from regularization by employing cross 
-fitting. Furthermore, we might be more interested in how much an individual can benefit from 
-a treatment, as opposed to the average treatment effect. Depending on the characteristics of 
-our data, we can use metalearning methods such as S-Learning, T-Learning, X-Learning, or 
-R-Learning to do so. In all of these scenarios, how well we estimate the treatment effect 
-depends on how well we can predict the counterfactual. The most common approaches to getting 
-accurate predictions of the counterfactual are to use a super learner, which combines 
-multiple machine learning methods and requires extensive tuning, or tree-based methods, which 
-also have large hyperparameter spaces. In these cases hyperparameter tuning can be 
-computationally expensive and requires researchers to make arbitrary decisions about how 
-many and what models to use, how much regularization to apply, the depth of trees, 
-interaction effects, etc. On the other hands, ELMs are able to achieve good accuracy on a 
-variety of regression and classification tasks and generalize well. Moreover, they have a 
-much smaller hyperparameter space to tune and are fast to train becasue they do not use 
-backpropagation to update their weights like conventional neural networks.
+G-Computation, double machine learning, and metalearning via S-Learners, T-Learners, 
+X-Learners, R-learners, and doubly robust estimation. In interrupted time series analysis, 
+we want to estimate the effect of some intervention on the outcome of a single unit that we 
+observe during multiple time periods. For example, we might want to know how the 
+announcement of a merger affected the price of Stock A. To do this, we need to know what the 
+price of stock A would have been if the merger had not been announced, which we can predict 
+with machine learning methods. Then, we can compare this predicted counterfactual to the 
+observed price data to estimate the effect of the merger announcement. In another case, we 
+might want to know the effect of medicine X on disease Y but the administration of X was not 
+random and it might have also been administered at mulitiple time periods, which would 
+produce biased estimates. To overcome this, G-computation models the observed data, uses the 
+model to predict the outcomes if all patients recieved the treatment, and compares it to the 
+predictions of the outcomes if none of the patients recieved the treatment. Double machine 
+learning (DML) takes a similar approach but also models the treatment mechanism and uses it 
+to adjust the initial estimates. This approach has three advantages. First, it is more 
+efficient with high dimensional data than conventional methods. Metalearners take a similar 
+approach to estimate the CATE. While all of these models are different, they have one thing 
+in common: how well they perform depends on the underlying model they fit to the data. To 
+that end, CausalELMs use extreme learning machines because they are simple yet flexible 
+enough to be universal function approximators.
 </p>
 
 <h2>CausalELM Features</h2>
 <ul>
-  <li>Simple interface enables estimating causal effects in only a few lines of code</li>
-  <li>Validate and test sensitivity of a model to possible violations of its assumption in one line of code</li>
-  <li>Estimation of p-values and standard errors via asymptotic randomization inference</li>
-  <li>Incorporates latest research from statistics, machine learning, econometrics, and biostatistics</li>
-  <li>Analytically derived L2 penalty reduces cross validation time and multicollinearity</li>
-  <li>Fast automatic cross validation works with longitudinal, panel, and time series data</li>
+  <li>Estimate a causal effect, get a summary, and validate assumptions in just four lines of code</li>
+  <li>All models automatically select the best number of neurons and L2 penalty</li>
+  <li>Enables using the same structs for regression and classification</li>
   <li>Includes 13 activation functions and allows user-defined activation functions</li>
-  <li>Single interface for continous, binary, and categorical outcome variables</li>
-  <li>No dependencies outside of the Julia standard library</li>
+  <li>Most inference and validation tests do not assume functional or distributional forms</li>
+  <li>Implements the latest techniques form statistics, econometrics, and biostatistics</li>
+  <li>Works out of the box with DataFrames or arrays</li>
+  <li>Codebase is high-quality, well tested, and regularly updated</li>
 </ul>
 
 <h2>What's New?</h2>
 <ul>
-  <li>Added support for dataframes</li>
-  <li>Estimators can handle any array whose values are <:Real</li>
-  <li>Estimator constructors are now called with model(X, T, Y) instead of model(X, Y, T)</li>
-  <li>Eliminated unnecessary type constraints on many methods</li>
-  <li>Improved documentation</li>
-  <li>Permutation of continuous treatments draws from a continuous, instead of discrete uniform distribution
-  during randomization inference</li> 
+  <li>Now includes doubly robust estimator for CATE estimation</li>
+  <li>Uses generalized cross validation with successive halving to find the best ridge penalty</li>
+  <li>Double machine learning, R-learning, and doubly robust estimators suppot specifying confounders and covariates of interest separately</li>
+  <li>Counterfactual consistency validation simulates outcomes that violate the assumption rather than the previous binning approach</li>
+  <li>Standardized and improved docstrings and added doctests</li>
+  <li>CausalELM talk has been accepted to JuliaCon 2024!</li> 
 </ul>
 
 <h2>Next Steps</h2>
 <p>
-The priority for v0.6 will be on implementing doubly robust estimation for the average 
-effect (ATE/ATT) as well as the CATE. We will also make minor improvements for speed, 
-maintainability, etc.
+Newer versions of CausalELM will hopefully support using GPUs and provide textual 
+interpretations of the results of calling validate on a model that has been estimated. 
+However, these priorities could also change depending on feedback recieved at JuliaCon.
 </p>
 
 <h2>Disclaimer</h2>
