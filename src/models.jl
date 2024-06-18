@@ -17,7 +17,7 @@ For more details see:
     Huang, Guang-Bin, Qin-Yu Zhu, and Chee-Kheong Siew. "Extreme learning machine: theory 
     and applications." Neurocomputing 70, no. 1-3 (2006): 489-501.
 
-See also ['RegularizedExtremeLearner'](@ref).
+See also ['CausalELM.RegularizedExtremeLearner'](@ref).
 
 # Examples
 ```julia

@@ -28,7 +28,7 @@ CausalELM.Continuous
 ```@docs
 binary_step
 σ
-tanh
+Causal.tanh
 relu
 leaky_relu
 swish
@@ -53,8 +53,7 @@ CausalELM.shuffle_data
 
 ## Average Causal Effect Estimators
 ```@docs
-CausalELM.estimate_effect!
-g_formula!
+CausalELM.g_formula!
 CausalELM.causal_loss!
 CausalELM.predict_residuals
 CausalELM.make_folds
@@ -103,7 +102,7 @@ CausalELM.var_type
 mse
 mae
 accuracy
-precision
+CausalELM.precision
 recall
 F1
 CausalELM.confusion_matrix
@@ -123,10 +122,9 @@ CausalELM.set_weights_biases
 ```@docs
 CausalELM.mean
 CausalELM.var
-CausalELM.consecutive
 CausalELM.one_hot_encode
 CausalELM.clip_if_binary
-CausalELM.model_config
-CausalELM.standard_input_data
-CausalELM.double_learner_input_data
+CausalELM.@model_config
+CausalELM.@standard_input_data
+CausalELM.@double_learner_input_data
 ```
