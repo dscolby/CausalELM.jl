@@ -4,7 +4,7 @@
 
 <p align="center">
     <a href="https://github.com/dscolby/CausalELM.jl/actions">
-        <img src="https://github.com/dscolby/CausalELM/actions/workflows/CI.yml/badge.svg?branch=main"
+        <img src="https://github.com/dscolby/CausalELM.jl/actions/workflows/CI.yml/badge.svg?branch=main"
             alt="Build Status">
     </a>
     <a href="https://app.codecov.io/gh/dscolby/CausalELM.jl/tree/main/src">
