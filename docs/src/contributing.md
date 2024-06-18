@@ -27,8 +27,9 @@ code follows the guidelines below.
 
 *   Most new structs for estimating causal effects should have mostly the same fields. To 
     reduce the burden of repeatedly defining all these fields, it is advisable to use the 
-    model_config, standard_input_data, and double_learner_input_data macro to 
-    programmatically generate fields for new structs.
+    model_config, standard_input_data, and double_learner_input_data macros to 
+    programmatically generate fields for new structs. Doing so will ensure that with little 
+    to no effort the new structs will work with the summarize and validate methods.
 
 *   There are no repeated code blocks. If there are repeated codeblocks, then they should be 
     consolidated into a separate function.
@@ -69,5 +70,5 @@ code follows the guidelines below.
     conform with this standard upon being pushed to GitHub.
 
 ## Updating or Fixing Documentation
-To propose a change to the documentation please submit an [issue](https://github.com/dscolby/CausalELM.jl/issues) 
-or [pull request](https://github.com/dscolby/CausalELM.jl/pulls).
+To propose a change to the documentation please submit an [issue](https://github.com/dscolby/CausalELM/issues) 
+or [pull request](https://github.com/dscolby/CausalELM/pulls).

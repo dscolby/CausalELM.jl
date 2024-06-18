@@ -10,7 +10,9 @@ GComputation
 DoubleMachineLearning
 SLearner
 TLearner
+XLearner
 RLearner
+DoublyRobustLearner
 CausalELM.CausalEstimator
 CausalELM.Metalearner
 CausalELM.ExtremeLearningMachine
@@ -51,14 +53,18 @@ CausalELM.shuffle_data
 
 ## Average Causal Effect Estimators
 ```@docs
-XLearner
 CausalELM.estimate_effect!
+g_formula!
+CausalELM.causal_loss!
 CausalELM.predict_residuals
+CausalELM.make_folds
 CausalELM.moving_average
 ```
 
 ## Metalearners
 ```@docs
+CausalELM.causal_loss
+CausalELM.doubly_robust_formula!
 CausalELM.stage1!
 CausalELM.stage2!
 ```
@@ -83,22 +89,12 @@ CausalELM.omitted_predictor
 CausalELM.sup_wald
 CausalELM.p_val
 CausalELM.counterfactual_consistency
+CausalELM.simulate_counterfactual_violations
 CausalELM.exchangeability
 CausalELM.e_value
 CausalELM.binarize
 CausalELM.risk_ratio
 CausalELM.positivity
-CausalELM.sums_of_squares
-CausalELM.class_pointers
-CausalELM.backtrack_to_find_breaks
-CausalELM.variance
-CausalELM.best_splits
-CausalELM.group_by_class
-CausalELM.jenks_breaks
-CausalELM.fake_treatments
-CausalELM.sdam
-CausalELM.scdm
-CausalELM.gvf
 CausalELM.var_type
 ```
 
@@ -129,4 +125,8 @@ CausalELM.mean
 CausalELM.var
 CausalELM.consecutive
 CausalELM.one_hot_encode
+CausalELM.clip_if_binary
+CausalELM.model_config
+CausalELM.standard_input_data
+CausalELM.double_learner_input_data
 ```

@@ -13,38 +13,37 @@ CurrentModule = CausalELM
 
 # Overview
 
-CausalELM enables Estimation of causal quantities of interest in research designs where a 
-counterfactual must be predicted and compared to the observed outcomes. More specifically, 
-CausalELM provides a simple API to execute interupted time series analysis, G-Computation, 
-and double machine learning as well as estimation of the CATE via S-Learning, T-Learning, 
-X-Learning, R-learning, and doubly robust estimation. Once a causal model has beeen estimated, 
-CausalELM's summarize method provides basic information about the model as well as a p-value 
-and standard error estimated with approximate randomization inference. One can then validate 
-causal modeling assumptions for any model with a single call to the validate method. In all 
-of these implementations, CausalELM predicts the counterfactuals using an Extreme Learning 
-Machine that includes an L2 penalty by default. In this context, ELMs strike a good balance 
-between prediction accuracy, generalization, ease of implementation, speed, and 
-interpretability. 
+CausalELM leverages new techniques in machine learning and statistics to estimate individual 
+and aggregate treatment effects in situations where traditional methods are unsatisfactory 
+or infeasible. To enable this, CausalELM provides a simple API to initialize a model, 
+estimate a causal effect, get a summary from the model, and test the robustness of the 
+model. CausalELM includes estimators for interupted time series analysis, G-Computation, 
+double machine learning, S-Learning, T-Learning, X-Learning, R-learning, and doubly robust 
+estimation. Underlying all these estimators are extreme learning machines. Like tree-based 
+learners, which are often used in causal machine learning, extreme learning machines are 
+simple and can capture non-linear relationships. However, unlike random forests or other 
+ensemble models, they essentially only require two hyperparameters—the number of neurons, 
+and the L2 penalty (when using regularization)—which are automatically tuned when 
+estimate_causal_effect! is called. This makes CausalELM both very simple and very powerful 
+for estimating treatment effects.
 
 ### Features
-*   Simple interface enables estimating causal effects in only a few lines of code
-*   Analytically derived L2 penalty reduces cross validation time and multicollinearity
-*   Fast automatic cross validation works with longitudinal, panel, and time series data
+*   Estimate a causal effect, get a summary, and validate assumptions in just four lines of code
+*   All models automatically select the best number of neurons and L2 penalty
+*   Enables using the same structs for regression and classification
 *   Includes 13 activation functions and allows user-defined activation functions
-*   Single interface for continous, binary, and categorical outcome variables
-*   Estimation of p-values and standard errors via asymptotic randomization inference
-*   No dependencies outside of the Julia standard library
-*   Validate causal modeling assumptions with one line of code
-*   Non-parametric randomization (permutation) inference-based p-values for all models
+*   Most inference and validation tests do not assume functional or distributional forms
+*   Implements the latest techniques form statistics, econometrics, and biostatistic
+*   Works out of the box with DataFrames or arrays
+*   Codebase is high-quality, well tested, and regularly updated
 
 ### What's New?
-*   Added support for dataframes
-*   Permutation of continuous treatments draws from a continuous, instead of discrete uniform distribution
-    during randomization inference
-*   Estimators can handle any array whose values are <:Real
-*   Estimator constructors are now called with model(X, T, Y) instead of model(X, Y, T)
-*   Improved documentation
-*   CausalELM has a new logo
+*   Now includes doubly robust estimator for CATE estimation
+*   USes generalized cross validation with successive halving to find the best ridge penalty
+*   Double machine learning, R-learning, and doubly robust estimators suppot specifying confounders and covariates of interest separately
+*   Counterfactual consistency validation simulates outcomes that violate the assumption rather than the previous binning approach
+*   Standardized and improved docstrings and added doctests
+*   CausalELM talk has been accepted to JuliaCon 2024!
 
 ### What makes CausalELM different?
 Other packages, mainly EconML, DoWhy, CausalAI, and CausalML, have similar funcitonality. 
@@ -55,7 +54,7 @@ these libraries are:
     does not require you to import any other packages or initialize machine learning models, 
     pass machine learning structs to CausalELM's estimators, convert dataframes or arrays to 
     a special type, or one hot encode categorical treatments. By trading a little bit of 
-    flexibility for a simple API, all of CausalELM's functionality can be used with just 
+    flexibility for a simpler API, all of CausalELM's functionality can be used with just 
     four lines of code.
 *   As part of this design principle, CausalELM's estimators handle all of the work in 
     finding the best number of neurons during estimation. They create folds or rolling 
@@ -69,6 +68,9 @@ these libraries are:
     inference. 
 *   CausalELM strives to be lightweight while still being powerful and therefore does not 
     have external dependencies: all the functions it uses are in the Julia standard library.
+*   The other packages and many others mostly use techniques from one field. Instead, 
+    CausalELM incorporates a hodgepodge of ideas from statistics, machine learning, 
+    econometrics, and biostatistics.
 
 ### Installation
 CausalELM requires Julia version 1.7 or greater and can be installed from the REPL as shown 

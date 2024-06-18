@@ -1,20 +1,21 @@
 # Metalearners
-Instead of knowing the average cuasal effect, we might want to know which units benefit and 
+Instead of knowing the average causal effect, we might want to know which units benefit and 
 which units lose by being exposed to a treatment. For example, a cash transfer program might 
 motivate some people to work harder and incentivize others to work less. Thus, we might want 
 to know how the cash transfer program affects individuals instead of it average affect on 
 the population. To do so, we can use metalearners. Depending on the scenario, we may want to 
-use an S-learner, a T-learner, an X-learner, or an R-learner. The basic steps to use all 
-three metalearners are below. The difference between the metalearners is how they estimate 
-the CATE and what types of variables they can handle. In the case of S, T, and X learners, 
-they can only handle binary treatments. On the other hand, R-learners can handle binary, 
-categorical, count, or continuous treatments but only supports continuous outcomes.
+use an S-learner, T-learner, X-learner, R-learner, or doubly robust learner. The basic steps 
+to use all five metalearners are below. The difference between the metalearners is how they 
+estimate the CATE and what types of variables they can handle. In the case of S, T, X, and 
+doubly robust learners, they can only handle binary treatments. On the other hand, 
+R-learners can handle binary, categorical, count, or continuous treatments but only supports 
+continuous outcomes.
 
 !!! note
     If regularized is set to true then the ridge penalty will be estimated using generalized 
     cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as in 
-    the previous penalty, then the procedure will stop early.
+    halving procedure. However, if the penalty in on iteration is approximately the same as 
+    in the previous penalty, then the procedure will stop early.
 
 !!! note
     For a deeper dive on S-learning, T-learning, and X-learning see:
@@ -29,12 +30,17 @@ categorical, count, or continuous treatments but only supports continuous outcom
         Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
         effects." Biometrika 108, no. 2 (2021): 299-319.
 
+    To see the details out doubly robust estimation implemented in CausalELM see:
+        Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
+        effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
+
 # Initialize a Metalearner
-S-learners, T-learners, X-learners, and R-learners all take at least three arguments: an 
-array of covariates, a vector of outcomes, and a vector of treatment statuses. S, T, and 
-X-learners support binary treatment variables and binary, continuous, count, or time to event 
-outcomes. The R-learning estimator supports binary, continuous, or count treatment variables 
-and binary, continuous, count, or time to event outcomes.
+S-learners, T-learners, X-learners, R-learners, and doubly robust estimators all take at 
+least three arguments: an array of covariates, a vector of outcomes, and a vector of 
+treatment statuses. S, T, X, and doubly robust learners support binary treatment variables 
+and binary, continuous, count, or time to event outcomes. The R-learning estimator supports 
+binary, continuous, or count treatment variables and binary, continuous, count, or time to 
+event outcomes.
 
 !!! note
     Internally, the outcome and treatment models of the metalearners are treated as a regression 
@@ -50,6 +56,9 @@ and binary, continuous, count, or time to event outcomes.
 # Generate data to use
 X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
 
+# We can also speficy potential confounders that we are not interested in
+W = randn(1000, 6)
+
 # We could also use DataFrames
 # using DataFrames
 # X = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
@@ -58,7 +67,8 @@ X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
 s_learner = SLearner(X, Y, T)
 t_learner = TLearner(X, Y, T)
 x_learner = XLearner(X, Y, T)
-r_learner = RLearner(X, Y, T)
+r_learner = RLearner(X, Y, T, W=W)
+dr_learner = DoublyRobustLearner(X, T, Y, W=W)
 ```
 
 # Estimate the CATE
@@ -68,6 +78,7 @@ estimate_causal_effect!(s_learner)
 estimate_causal_effect!(t_learner)
 estimate_causal_effect!(x_learner)
 estimate_causal_effect!(r_learner)
+estimate_causal_effect!(dr_lwarner)
 ```
 
 # Get a Summary
@@ -86,6 +97,7 @@ summarize(s_learner)
 summarize(t_learner)
 summarize(x_learner)
 summarize(r_learner)
+summarize(dr_learner)
 ```
 
 ## Step 4: Validate the Model
@@ -139,4 +151,5 @@ validate(s_learner)
 validate(t_learner)
 validate(x_learner)
 validate(r_learner)
+validate(dr_learner)
 ```

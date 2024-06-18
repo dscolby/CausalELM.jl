@@ -678,7 +678,7 @@ function estimate_causal_effect!(DRE::DoublyRobustLearner)
 end
 
 """
-    g_formula!(DRE, X, T, Y, Z)
+    doubly_robust_formula!(DRE, X, T, Y, Z)
 
 Estimate the CATE for a single cross fitting iteration via doubly robust estimation.
 
