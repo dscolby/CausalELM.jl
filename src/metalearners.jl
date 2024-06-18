@@ -499,6 +499,7 @@ end
 
 Estimate the CATE using an S-learner.
 
+# References
 For an overview of S-learning see:
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
@@ -521,6 +522,7 @@ end
 
 Estimate the CATE using an T-learner.
 
+# References
 For an overview of T-learning see:
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
@@ -562,6 +564,7 @@ end
 
 Estimate the CATE using an X-learner.
 
+# References
 For an overview of X-learning see:
     Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
     estimating heterogeneous treatment effects using machine learning." Proceedings of the 
@@ -595,6 +598,7 @@ end
 
 Estimate the CATE using an R-learner.
 
+# References
 For an overview of R-learning see:
     Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
     effects." Biometrika 108, no. 2 (2021): 299-319.
@@ -616,6 +620,26 @@ function estimate_causal_effect!(R::RLearner)
     return R.causal_effect
 end
 
+"""
+    causal_loss(R)
+
+Minimize the causal loss function for an R-learner.
+
+# Notes
+This function should not be called directly.
+
+# References
+For an overview of R-learning see:
+    Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
+    effects." Biometrika 108, no. 2 (2021): 299-319.
+
+# Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = RLearner(X, T, Y)
+julia> causal_loss(m1)
+```
+"""
 function causal_loss(R::RLearner)
     X, T, W, Y = make_folds(R)
     predictors = Vector{RegularizedExtremeLearner}(undef, R.folds)
@@ -646,6 +670,7 @@ end
 
 Estimate the CATE using a doubly robust learner.
 
+# References
 For details on how this method estimates the CATE see:
     Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
     effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
@@ -682,6 +707,7 @@ end
 
 Estimate the CATE for a single cross fitting iteration via doubly robust estimation.
 
+# Notes
 This method should not be called directly.
 
 # Arguments
@@ -735,6 +761,7 @@ stage1!(x)
 
 Estimate the first stage models for an X-learner.
 
+# Notes
 This method should not be called by the user.
 
 # Examples
@@ -777,6 +804,7 @@ stage2!(x)
 
 Estimate the second stage models for an X-learner.
 
+# Notes
 This method should not be called by the user.
 
 # Examples

@@ -28,7 +28,7 @@ CausalELM.Continuous
 ```@docs
 binary_step
 σ
-Causal.tanh
+CausalELM.tanh
 relu
 leaky_relu
 swish

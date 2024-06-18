@@ -99,7 +99,7 @@ end
 
 Calculate the recall for a classification task
 
-See also [`CausalEM.precision`](@ref).
+See also [`CausalELM.precision`](@ref).
 
 # Examples
 ```jldoctest
