@@ -3,23 +3,23 @@
 </div>
 
 <p align="center">
-    <a href="https://github.com/dscolby/CausalELM/actions">
+    <a href="https://github.com/dscolby/CausalELM.jl/actions">
         <img src="https://github.com/dscolby/CausalELM/actions/workflows/CI.yml/badge.svg?branch=main"
             alt="Build Status">
     </a>
-    <a href="https://app.codecov.io/gh/dscolby/CausalELM/tree/main/src">
-        <img src="https://codecov.io/gh/dscolby/CausalELM/graph/badge.svg"
+    <a href="https://app.codecov.io/gh/dscolby/CausalELM.jl/tree/main/src">
+        <img src="https://codecov.io/gh/dscolby/CausalELM.jl/graph/badge.svg"
          alt="Code Coverage">
     </a>
     <a href="https://opensource.org/licenses/MIT">
         <img src="https://img.shields.io/badge/License-MIT-yelllow"
             alt="License">
     </a>
-    <a href="https://dscolby.github.io/CausalELM/stable">
+    <a href="https://dscolby.github.io/CausalELM.jl/stable">
     <img src="https://img.shields.io/badge/docs-stable-blue.svg"
          alt="Documentation">
     </a>
-    <a href="https://dscolby.github.io/CausalELM/dev/">
+    <a href="https://dscolby.github.io/CausalELM.jl/dev/">
         <img src="https://img.shields.io/badge/docs-dev-blue.svg"
              alt="Develmopmental Documentation">
     </a>
