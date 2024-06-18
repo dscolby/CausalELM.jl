@@ -33,7 +33,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/dscolby/CausalELM.jl",
+    repo="github.com/dscolby/CausalELM",
     devbranch="main",
-    versions=["stable" => "v^", "v#.#.#"],
 )
