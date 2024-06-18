@@ -99,7 +99,7 @@ enough to be universal function approximators.
   <li>CausalELM talk has been accepted to JuliaCon 2024!</li> 
 </ul>
 
-<h2>Next Steps</h2>
+<h2>What's Next?</h2>
 <p>
 Newer versions of CausalELM will hopefully support using GPUs and provide textual 
 interpretations of the results of calling validate on a model that has been estimated. 
