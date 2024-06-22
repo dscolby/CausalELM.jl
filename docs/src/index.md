@@ -57,9 +57,9 @@ these libraries are:
     flexibility for a simpler API, all of CausalELM's functionality can be used with just 
     four lines of code.
 *   As part of this design principle, CausalELM's estimators handle all of the work in 
-    finding the best number of neurons during estimation. They create folds or rolling 
-    rolling for time series data and use an extreme learning machine interpolator to find 
-    the best number of neurons.
+    finding the best number of neurons during estimation. They use a simple log heuristic 
+    for determining the number of neurons to use and automatically select the best ridge 
+    penalty via generalized cross validation.
 *   CausalELM's validate method, which is specific to each estimator, allows you to validate 
     or test the sentitivity of an estimator to possible violations of identifying assumptions.
 *   Unlike packages that do not allow you to estimate p-values and standard errors, use 

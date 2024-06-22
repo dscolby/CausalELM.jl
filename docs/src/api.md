@@ -41,16 +41,6 @@ elish
 fourier
 ```
 
-## Cross Validation
-```@docs
-CausalELM.generate_folds
-CausalELM.generate_temporal_folds
-CausalELM.validation_loss
-CausalELM.cross_validate
-CausalELM.best_size
-CausalELM.shuffle_data
-```
-
 ## Average Causal Effect Estimators
 ```@docs
 CausalELM.g_formula!
@@ -58,6 +48,7 @@ CausalELM.causal_loss!
 CausalELM.predict_residuals
 CausalELM.make_folds
 CausalELM.moving_average
+CausalELM.generate_folds
 ```
 
 ## Metalearners

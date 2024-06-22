@@ -47,9 +47,7 @@ function summarize(mod, n=1000)
         "Regularized",
         "Activation Function",
         "Time Series/Panel Data",
-        "Validation Metric",
         "Number of Neurons",
-        "Number of Neurons in Approximator",
         "Causal Effect",
         "Standard Error",
         "p-value",
@@ -63,9 +61,7 @@ function summarize(mod, n=1000)
         mod.regularized,
         mod.activation,
         mod.temporal,
-        mod.validation_metric,
         mod.num_neurons,
-        mod.approximator_neurons,
         mod.causal_effect,
         stderr,
         p,
@@ -112,9 +108,7 @@ function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
         "Task",
         "Regularized",
         "Activation Function",
-        "Validation Metric",
         "Number of Neurons",
-        "Number of Neurons in Approximator",
         "Causal Effect",
         "Standard Error",
         "p-value",
@@ -124,9 +118,7 @@ function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
         "Regression",
         its.regularized,
         its.activation,
-        its.validation_metric,
         its.num_neurons,
-        its.approximator_neurons,
         effect,
         stderr,
         p,
@@ -173,7 +165,7 @@ function generate_null_distribution(mod, n)
 
     # Generate random treatment assignments and estimate the causal effects
     for iter in 1:n
-
+        
         # Sample from a continuous distribution if the treatment is continuous
         if var_type(mod.T) isa Continuous
             m.T = (maximum(m.T) - minimum(m.T)) .* rand(nobs) .+ minimum(m.T)
