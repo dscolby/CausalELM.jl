@@ -719,12 +719,12 @@ function positivity(model::XLearner, min=1.0e-6, max=1 - min)
 end
 
 function positivity(model::Union{DoubleMachineLearning,RLearner}, min=1.0e-6, max=1 - min)
-    num_neurons = best_size(model)
-
     if model.regularized
-        ps_mod = RegularizedExtremeLearner(model.X, model.T, num_neurons, model.activation)
+        ps_mod = RegularizedExtremeLearner(
+            model.X, model.T, model.num_neurons, model.activation
+        )
     else
-        ps_mod = ExtremeLearner(model.X, model.T, num_neurons, model.activation)
+        ps_mod = ExtremeLearner(model.X, model.T, model.num_neurons, model.activation)
     end
 
     fit!(ps_mod)

@@ -66,7 +66,7 @@ r_learner_df = RLearner(x_df, t_df, y_df)
 
 # Doubly Robust Estimation
 dr_learner = DoublyRobustLearner(x, t, y; W=rand(100, 4))
-X_T, Y = generate_folds(
+X_T, Y = CausalELM.generate_folds(
     reduce(hcat, (dr_learner.X, dr_learner.T, dr_learner.W)), dr_learner.Y, 2
 )
 X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T]

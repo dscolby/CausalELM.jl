@@ -15,20 +15,15 @@ Initialize an interrupted time series estimator.
 
 # Keywords
 - `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Real`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Real`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Real`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
-    network.
+- `num_neurons::Integer`: number of neurons to use in the extreme learning machine.
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
 cross validation where the maximum number of iterations is 2 * folds for the successive 
 halving procedure. However, if the penalty in on iteration is approximately the same as in 
-the previous penalty, then the procedure will stop early.
+the previous penalty, then the procedure will stop early. If num_neurons is not specified 
+then the number of neurons will be set to log₍10₎(number of observations) * number of 
+features.
 
 # References
 For a simple linear regression-based tutorial on interrupted time series analysis see:
@@ -67,21 +62,17 @@ function InterruptedTimeSeries(
     Y₁;
     regularized::Bool=true,
     activation::Function=relu,
-    validation_metric::Function=mse,
-    min_neurons::Real=1,
-    max_neurons::Real=100,
-    folds::Real=5,
-    iterations::Real=round(size(X₀, 1) / 10),
-    approximator_neurons::Real=round(size(X₀, 1) / 10),
+    num_neurons::Integer=round(Int, log10(size(X₀, 2)) * size(X₀, 1)),
     autoregression::Bool=true,
 )
-
     # Convert to arrays
     X₀, X₁, Y₀, Y₁ = Matrix{Float64}(X₀), Matrix{Float64}(X₁), Y₀[:, 1], Y₁[:, 1]
 
     # Add autoregressive term
     X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
     X₁ = ifelse(autoregression == true, reduce(hcat, (X₁, moving_average(Y₁))), X₁)
+
+    task = var_type(Y₀) isa Binary ? "classification" : "regression"
 
     return InterruptedTimeSeries(
         X₀,
@@ -90,16 +81,10 @@ function InterruptedTimeSeries(
         Float64.(Y₁),
         "difference",
         true,
-        "regression",
+        task,
         regularized,
         activation,
-        validation_metric,
-        min_neurons,
-        max_neurons,
-        folds,
-        iterations,
-        approximator_neurons,
-        0,
+        num_neurons,
         fill(NaN, size(Y₁, 1)),
     )
 end
@@ -119,21 +104,15 @@ Initialize a G-Computation estimator.
     treatment effect on the treated.
 - `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross 
-    validation.
-- `min_neurons::Real: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Real`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Real`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
-    network.
+- `num_neurons::Integer`: number of neurons to use in the extreme learning machine.
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
 cross validation where the maximum number of iterations is 2 * folds for the successive 
 halving procedure. However, if the penalty in on iteration is approximately the same as in 
-the previous penalty, then the procedure will stop early.
+the previous penalty, then the procedure will stop early. If num_neurons is not specified 
+then the number of neurons will be set to log₍10₎(number of observations) * number of 
+features.
 
 # References
 For a good overview of G-Computation see:
@@ -173,12 +152,7 @@ mutable struct GComputation <: CausalEstimator
         regularized::Bool=true,
         activation::Function=relu,
         temporal::Bool=true,
-        validation_metric::Function=mse,
-        min_neurons::Real=1,
-        max_neurons::Real=100,
-        folds::Real=5,
-        iterations::Real=round(size(X, 1) / 10),
-        approximator_neurons::Real=round(size(X, 1) / 10),
+        num_neurons::Integer=round(Int, log10(size(X, 2)) * size(X, 1)),
     )
         if quantity_of_interest ∉ ("ATE", "ITT", "ATT")
             throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
@@ -198,13 +172,7 @@ mutable struct GComputation <: CausalEstimator
             task,
             regularized,
             activation,
-            validation_metric,
-            min_neurons,
-            max_neurons,
-            folds,
-            iterations,
-            approximator_neurons,
-            0,
+            num_neurons,
             NaN,
         )
     end
@@ -221,23 +189,19 @@ Initialize a double machine learning estimator with cross fitting.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `W::Any`: an array or dataframe of all possible confounders.
+- `W::Any`: array or dataframe of all possible confounders.
 - `regularized::Function=true`: whether to use L2 regularization
-- `activation::Function=relu`: the activation function to use.
-- `validation_metric::Function`: the validation metric to calculate during cross validation.
-- `min_neurons::Real`: the minimum number of neurons to consider for the extreme learner.
-- `max_neurons::Real`: the maximum number of neurons to consider for the extreme learner.
-- `folds::Real`: the number of cross validation folds to find the best number of neurons.
-- `iterations::Real`: the number of iterations to perform cross validation between 
-    min_neurons and max_neurons.
-- `approximator_neurons::Real`: the number of nuerons in the validation loss approximator 
-    network.
+- `activation::Function=relu`: activation function to use.
+- `num_neurons::Integer`: number of neurons to use in the extreme learning machine.
+- `folds::Integer`: number of folds to use for cross fitting.
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
 cross validation where the maximum number of iterations is 2 * folds for the successive 
 halving procedure. However, if the penalty in on iteration is approximately the same as in 
-the previous penalty, then the procedure will stop early.
+the previous penalty, then the procedure will stop early. If num_neurons is not specified 
+then the number of neurons will be set to log₍10₎(number of observations) * number of 
+features.
 
 Unlike other estimators, this method does not support time series or panel data. This method 
 also does not work as well with smaller datasets because it estimates separate outcome 
@@ -249,7 +213,6 @@ For more information see:
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
     structural parameters." (2016): C1-C68.
 
-
 For details and a derivation of the generalized cross validation estimator see:
     Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
     method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
@@ -258,16 +221,16 @@ For details and a derivation of the generalized cross validation estimator see:
 ```julia
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> m2 = DoubleMachineLearning(X, T, Y; task="regression")
 
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
 julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
-julia> m3 = DoubleMachineLearning(x_df, t_df, y_df)
+julia> m2 = DoubleMachineLearning(x_df, t_df, y_df)
 ```
 """
 mutable struct DoubleMachineLearning <: CausalEstimator
     @double_learner_input_data
     @model_config average_effect
+    folds::Integer
 end
 
 function DoubleMachineLearning(
@@ -277,14 +240,9 @@ function DoubleMachineLearning(
     W=X,
     regularized::Bool=true,
     activation::Function=relu,
-    validation_metric::Function=mse,
-    min_neurons::Real=1,
-    max_neurons::Real=100,
-    folds::Real=5,
-    iterations::Real=round(size(X, 1) / 10),
-    approximator_neurons::Real=round(size(X, 1) / 10),
+    num_neurons::Integer=round(Int, log10(size(X, 2)) * size(X, 1)),
+    folds::Integer=5,
 )
-
     # Convert to arrays
     X, T, Y, W = Matrix{Float64}(X), T[:, 1], Y[:, 1], Matrix{Float64}(W)
 
@@ -300,14 +258,9 @@ function DoubleMachineLearning(
         task,
         regularized,
         activation,
-        validation_metric,
-        min_neurons,
-        max_neurons,
-        folds,
-        iterations,
-        approximator_neurons,
-        0,
+        num_neurons,
         NaN,
+        folds,
     )
 end
 
@@ -324,11 +277,6 @@ julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(its::InterruptedTimeSeries)
-    # We will not find the best number of neurons after we have already estimated the causal
-    # effect and are getting p-values, confidence intervals, or standard errors. We will use
-    # the same number that was found when calling this method.
-    its.num_neurons = its.num_neurons === 0 ? best_size(its) : its.num_neurons
-
     if its.regularized
         learner = RegularizedExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
     else
@@ -376,8 +324,6 @@ function g_formula!(g)
         Xᵤ = hcat(covariates[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
     end
 
-    g.num_neurons = g.num_neurons === 0 ? best_size(g) : g.num_neurons
-
     if g.regularized
         g.learner = RegularizedExtremeLearner(covariates, y, g.num_neurons, g.activation)
     else
@@ -407,9 +353,6 @@ julia> estimate_causal_effect!(m2)
 ```
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
-    # Uses the same number of neurons for all phases of estimation
-    DML.num_neurons = DML.num_neurons === 0 ? best_size(DML) : DML.num_neurons
-
     causal_loss!(DML)
     DML.causal_effect /= DML.folds
 
@@ -515,6 +458,41 @@ function make_folds(D)
     W = [fl[:, (size(D.X, 2) + 2):end] for fl in X_T_W]
 
     return X, T, W, Y
+end
+
+"""
+    generate_folds(X, Y, folds)
+
+Create folds for cross validation.
+
+# Examples
+```jldoctest
+julia> xfolds, y_folds = CausalELM.generate_folds(zeros(4, 2), zeros(4), 2)
+([[0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0]], [[0.0], [0.0, 0.0, 0.0]])
+```
+"""
+function generate_folds(X, Y, folds)
+    msg = """the number of folds must be less than the number of observations"""
+    n = length(Y)
+
+    if folds >= n
+        throw(ArgumentError(msg))
+    end
+
+    fold_setx = Array{Array{Float64,2}}(undef, folds)
+    fold_sety = Array{Array{Float64,1}}(undef, folds)
+
+    # Indices to start and stop for each fold
+    stops = round.(Int, range(; start=1, stop=n, length=folds + 1))
+
+    # Indices to use for making folds
+    indices = [s:(e - (e < n) * 1) for (s, e) in zip(stops[1:(end - 1)], stops[2:end])]
+
+    for (i, idx) in enumerate(indices)
+        fold_setx[i], fold_sety[i] = X[idx, :], Y[idx]
+    end
+
+    return fold_setx, fold_sety
 end
 
 """

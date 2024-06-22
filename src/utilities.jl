@@ -105,12 +105,6 @@ macro model_config(effect_type)
         task::String
         regularized::Bool
         activation::Function
-        validation_metric::Function
-        min_neurons::Int64
-        max_neurons::Int64
-        folds::Int64
-        iterations::Int64
-        approximator_neurons::Int64
         num_neurons::Int64
         causal_effect::$field_type
     end
