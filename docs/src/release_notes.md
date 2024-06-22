@@ -1,7 +1,15 @@
 # Release Notes
 These release notes adhere to the [keep a changelog](https://keepachangelog.com/en/1.0.0/) format. Below is a list of changes since CausalELM was first released.
 
-## Version [v0.6.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.6.0) - 2024-03-23
+## Version [v0.6.1](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.6.1) - 2024-06-22
+### Added
+
+### Changed
+*   Compute the number of neurons to use with log heuristic instead of cross validation [#62](https://github.com/dscolby/CausalELM.jl/issues/62)
+### Fixed
+
+
+## Version [v0.6.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.6.0) - 2024-06-15
 ### Added
 *   Implemented doubly robust learner for CATE estimation [#31](https://github.com/dscolby/CausalELM.jl/issues/31)
 *   Provided better explanations of supported treatment and outcome variable types in the docs [#41](https://github.com/dscolby/CausalELM.jl/issues/41)
