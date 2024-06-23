@@ -34,7 +34,7 @@ for estimating treatment effects.
 *   Includes 13 activation functions and allows user-defined activation functions
 *   Most inference and validation tests do not assume functional or distributional forms
 *   Implements the latest techniques form statistics, econometrics, and biostatistics
-*   Works out of the box with DataFrames or arrays
+*   Works out of the box with arrays or any data structure that implements teh Tables.jl interface
 *   Codebase is high-quality, well tested, and regularly updated
 
 ### What's New?

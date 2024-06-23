@@ -1,17 +1,21 @@
 using Random: shuffle
 
 """
-    summarize(mod, n)
+    summarize(mod, kwargs...)
 
 Get a summary from a CausalEstimator or Metalearner.
 
 # Arguments
 - `mod::Union{CausalEstimator, Metalearner}`: a model to summarize.
+
+# Keywords
 - `n::Int=100`: the number of iterations to generate the numll distribution for 
     randomization inference.
+- `inference::Bool`=false: wheteher calculate p-values and standard errors.
 
 # Notes
-p-values and standard errors are estimated using approximate randomization inference.
+p-values and standard errors are estimated using approximate randomization inference. If set 
+to true, this procedure takes a VERY long time due to repeated matrix inversions.
 
 # References
 For a primer on randomization inference see: 
@@ -33,7 +37,7 @@ julia> estimate_causal_effect!(m3)
 julia> summarise(m3)  # British spelling works too!
 ```
 """
-function summarize(mod, n=1000)
+function summarize(mod; n=1000, inference=false)
     if all(isnan, mod.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
@@ -53,7 +57,11 @@ function summarize(mod, n=1000)
         "p-value",
     ]
 
-    p, stderr = quantities_of_interest(mod, n)
+    if inference
+        p, stderr = quantities_of_interest(mod, n)
+    else
+        p, stderr = NaN, NaN
+    end
 
     values = [
         task,
@@ -75,16 +83,23 @@ function summarize(mod, n=1000)
 end
 
 """
-    summarize(its, n, mean_effect)
+    summarize(its, kwargs...)
 
 Get a summary from an interrupted time series estimator.
 
 # Arguments
 - `its::InterruptedTimeSeries`: interrupted time series estimator
+
+# Keywords
 - `n::Int=100`: number of iterations to generate the numll distribution for randomization 
     inference.
 - `mean_effect::Bool=true`: whether to estimate the mean or cumulative effect for an 
     interrupted time series estimator.
+- `inference::Bool`=false: wheteher calculate p-values and standard errors.
+
+# Notes
+p-values and standard errors are estimated using approximate randomization inference. If set 
+to true, this procedure takes a VERY long time due to repeated matrix inversions.
 
 # Examples
 ```julia
@@ -94,14 +109,18 @@ julia> estimate_causal_effect!(m4)
 julia> summarize(m4)
 ```
 """
-function summarize(its::InterruptedTimeSeries, n=1000, mean_effect=true)
+function summarize(its::InterruptedTimeSeries; n=1000, mean_effect=true, inference=false)
     if all(isnan, its.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
 
     effect = ifelse(mean_effect, mean(its.causal_effect), sum(its.causal_effect))
 
-    p, stderr = quantities_of_interest(its, n, mean_effect)
+    if inference
+        p, stderr = quantities_of_interest(its, n, mean_effect)
+    else
+        p, stderr = NaN, NaN
+    end
 
     summary_dict = Dict()
     nicenames = [

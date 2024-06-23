@@ -27,13 +27,9 @@ continuous, time to event, and count outcome variables.
 
 !!! tip
     You can also specify the causal estimand, whether to employ L2 regularization, which 
-    activation function to use, whether the data is of a temporal nature, the metric to use when 
-    using cross validation to find the best number of neurons, the minimum number of neurons to 
-    consider, the maximum number of neurons to consider, the number of folds to use during cross 
-    caidation, and the number of neurons to use in the ELM that learns a mapping from number of 
-    neurons to validation loss. These options are specified with the following keyword 
-    arguments: quantity\_of\_interest, regularized, activation, temporal, validation\_metric, 
-    min\_neurons, max\_neurons, folds, iterations, and approximator\_neurons.
+    activation function to use, whether the data is of a temporal nature, and the number of 
+    neurons to use during estimation. These options are specified with the following keyword 
+    arguments: quantity\_of\_interest, regularized, activation, temporal, and num\_neurons.
 
 !!! note
     Internally, the outcome model is treated as a regression since extreme learning machines 
@@ -66,12 +62,12 @@ We get a summary of the model that includes a p-value and standard error estimat
 asymptotic randomization inference by passing our model to the summarize method.
 
 Calling the summarize method returns a dictionary with the estimator's task (regression or 
-classification), the quantity of interest being estimated (ATE or ATT), whether the model 
-uses an L2 penalty, the activation function used in the model's outcome predictors, whether 
-the data is temporal, the validation metric used for cross validation to find the best 
-number of neurons, the number of neurons used in the ELMs used by the estimator, the number 
-of neurons used in the ELM used to learn a mapping from number of neurons to validation 
-loss during cross validation, the causal effect, standard error, and p-value.
+classification), the quantity of interest being estimated (ATE), whether the model uses an 
+L2 penalty (always true for DML), the activation function used in the model's outcome 
+predictors, whether the data is temporal, the number of neurons used in the ELMs used by the 
+estimator, the causal effect, standard error, and p-value. Due to long running times, 
+calculation of the p-value and standard error is not conducted and set to NaN unless 
+inference is set to true.
 ```julia
 summarize(g_computer)
 ```

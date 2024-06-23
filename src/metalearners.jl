@@ -18,11 +18,8 @@ Initialize a S-Learner.
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
-cross validation where the maximum number of iterations is 2 * folds for the successive 
-halving procedure. However, if the penalty in on iteration is approximately the same as 
-in the previous penalty, then the procedure will stop early. If num_neurons is not specified 
-then the number of neurons will be set to log₍10₎(number of observations) * number of 
-features.
+cross validation. If num_neurons is not specified then the number of neurons will be set to 
+log₁₀(number of observations) * number of features.
 
 # References
 For an overview of S-Learners and other metalearners see:
@@ -98,11 +95,8 @@ Initialize a T-Learner.
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
-cross validation where the maximum number of iterations is 2 * folds for the successive 
-halving procedure. However, if the penalty in on iteration is approximately the same as 
-in the previous penalty, then the procedure will stop early. If num_neurons is not specified 
-then the number of neurons will be set to log₍10₎(number of observations) * number of 
-features.
+cross validation. If num_neurons is not specified then the number of neurons will be set to 
+log₁₀(number of observations) * number of features.
 
 # References
 For an overview of T-Learners and other metalearners see:
@@ -177,11 +171,8 @@ Initialize an X-Learner.
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
-cross validation where the maximum number of iterations is 2 * folds for the successive 
-halving procedure. However, if the penalty in on iteration is approximately the same as 
-in the previous penalty, then the procedure will stop early. If num_neurons is not specified 
-then the number of neurons will be set to log₍10₎(number of observations) * number of 
-features.
+cross validation. If num_neurons is not specified then the number of neurons will be set to 
+log₁₀(number of observations) * number of features.
 
 # References
 For an overview of X-Learners and other metalearners see:
@@ -260,10 +251,8 @@ Initialize an R-Learner.
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
 cross validation where the maximum number of iterations is 2 * folds for the successive 
-halving procedure. However, if the penalty in on iteration is approximately the same as in 
-the previous penalty, then the procedure will stop early. If num_neurons is not specified 
-then the number of neurons will be set to log₍10₎(number of observations) * number of 
-features.
+halving procedure. If num_neurons is not specified then the number of neurons will be set to 
+log₁₀(number of observations) * number of features.
 
 ## References
 For an explanation of R-Learner estimation see:
@@ -343,10 +332,8 @@ Initialize a doubly robust CATE estimator.
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
 cross validation where the maximum number of iterations is 2 * folds for the successive 
-halving procedure. However, if the penalty in on iteration is approximately the same as in 
-the previous penalty, then the procedure will stop early. If num_neurons is not specified 
-then the number of neurons will be set to log₍10₎(number of observations) * number of 
-features.
+halving procedure. If num_neurons is not specified then the number of neurons will be set to 
+log₁₀(number of observations) * number of features.
 
 # References
 For an explanation of doubly robust cate estimation see:

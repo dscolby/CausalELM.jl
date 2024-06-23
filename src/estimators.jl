@@ -19,11 +19,8 @@ Initialize an interrupted time series estimator.
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
-cross validation where the maximum number of iterations is 2 * folds for the successive 
-halving procedure. However, if the penalty in on iteration is approximately the same as in 
-the previous penalty, then the procedure will stop early. If num_neurons is not specified 
-then the number of neurons will be set to log₍10₎(number of observations) * number of 
-features.
+cross validation. If num_neurons is not specified then the number of neurons will be set to 
+log₁₀(number of observations) * number of features.
 
 # References
 For a simple linear regression-based tutorial on interrupted time series analysis see:
@@ -108,11 +105,8 @@ Initialize a G-Computation estimator.
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
-cross validation where the maximum number of iterations is 2 * folds for the successive 
-halving procedure. However, if the penalty in on iteration is approximately the same as in 
-the previous penalty, then the procedure will stop early. If num_neurons is not specified 
-then the number of neurons will be set to log₍10₎(number of observations) * number of 
-features.
+cross validation. If num_neurons is not specified then the number of neurons will be set to 
+log₁₀(number of observations) * number of features.
 
 # References
 For a good overview of G-Computation see:
@@ -197,11 +191,8 @@ Initialize a double machine learning estimator with cross fitting.
 
 # Notes
 If regularized is set to true then the ridge penalty will be estimated using generalized 
-cross validation where the maximum number of iterations is 2 * folds for the successive 
-halving procedure. However, if the penalty in on iteration is approximately the same as in 
-the previous penalty, then the procedure will stop early. If num_neurons is not specified 
-then the number of neurons will be set to log₍10₎(number of observations) * number of 
-features.
+cross validation. If num_neurons is not specified then the number of neurons will be set to 
+log₁₀(number of observations) * number of features.
 
 Unlike other estimators, this method does not support time series or panel data. This method 
 also does not work as well with smaller datasets because it estimates separate outcome 

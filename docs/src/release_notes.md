@@ -6,8 +6,8 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 
 ### Changed
 *   Compute the number of neurons to use with log heuristic instead of cross validation [#62](https://github.com/dscolby/CausalELM.jl/issues/62)
+*   Made calculation of p-values and standard errors optional and not executed by default in summarize methods [#65](https://github.com/dscolby/CausalELM.jl/issues/65)
 ### Fixed
-
 
 ## Version [v0.6.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.6.0) - 2024-06-15
 ### Added

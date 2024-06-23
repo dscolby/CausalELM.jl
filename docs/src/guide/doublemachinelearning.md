@@ -36,15 +36,10 @@ to the W argument. Otherwise, the model assumes all possible confounders are con
     variables.
 
 !!! tip
-    You can also specify the following options: whether the treatment vector is categorical ie 
-    not continuous and containing more than two classes, whether to use L2 regularization, the 
-    activation function, the validation metric to use when searching for the best number of 
-    neurons, the minimum and maximum number of neurons to consider, the number of folds to use 
-    for cross validation, the number of iterations to perform cross validation, and the number 
-    of neurons to use in the ELM used to learn the function from number of neurons to validation 
-    loss. These arguments are specified with the following keyword arguments: t\_cat, 
-    regularized, activation, validation\_metric, min\_neurons, max\_neurons, folds, iterations, 
-    and approximator\_neurons.
+    You can also specify the following options:  whether to use L2 regularization, the 
+    activation function, the number of folds to use for cross fitting, and the number of 
+    iterations to perform cross validation. These arguments are specified with the following 
+    keyword arguments: regularized, activation, folds, and num\_neurons.
 ```julia
 # Create some data with a binary treatment
 X, T, Y, W = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(100, 4)
@@ -74,11 +69,10 @@ randomization inference by passing our model to the summarize method.
 Calling the summarize method returns a dictionary with the estimator's task (regression or 
 classification), the quantity of interest being estimated (ATE), whether the model uses an 
 L2 penalty (always true for DML), the activation function used in the model's outcome 
-predictors, whether the data is temporal (always false for DML), the validation metric used 
-for cross validation to find the best number of neurons, the number of neurons used in the 
-ELMs used by the estimator, the number of neurons used in the ELM used to learn a mapping 
-from number of neurons to validation loss during cross validation, the causal effect, 
-standard error, and p-value.
+predictors, whether the data is temporal (always false for DML), the number of neurons used 
+in the ELMs used by the estimator, the causal effect, standard error, and p-value. Due to 
+long running times, calculation of the p-value and standard error is not conducted and set 
+to NaN unless inference is set to true.
 ```julia
 # Can also use the British spelling
 # summarise(dml)
