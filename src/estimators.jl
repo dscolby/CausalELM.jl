@@ -315,16 +315,19 @@ function g_formula!(g)
         Xᵤ = hcat(covariates[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
     end
 
-    if g.regularized
-        g.learner = RegularizedExtremeLearner(covariates, y, g.num_neurons, g.activation)
-    else
-        g.learner = ExtremeLearner(covariates, y, g.num_neurons, g.activation)
-    end
+    #if g.regularized
+        #g.learner = RegularizedExtremeLearner(covariates, y, g.num_neurons, g.activation)
+    #else
+        #g.learner = ExtremeLearner(covariates, y, g.num_neurons, g.activation)
+    #end
 
-    fit!(g.learner)
-    yₜ = clip_if_binary(predict(g.learner, Xₜ), var_type(g.Y))
-    yᵤ = clip_if_binary(predict(g.learner, Xᵤ), var_type(g.Y))
-    return vec(yₜ) - vec(yᵤ)
+    ensemble = ELMEnsemble(covariates, y, 1000, 100, 10)
+
+    #fit!(g.learner)
+    return fit!(ensemble)
+    #yₜ = clip_if_binary(predict(g.learner, Xₜ), var_type(g.Y))
+    #yᵤ = clip_if_binary(predict(g.learner, Xᵤ), var_type(g.Y))
+    #return vec(yₜ) - vec(yᵤ)
 end
 
 """

@@ -1,37 +1,3 @@
-"""Abstract type used to dispatch risk_ratio on nonbinary treatments"""
-abstract type Nonbinary end
-
-"""Type used to dispatch risk_ratio on binary treatments"""
-struct Binary end
-
-"""Type used to dispatch risk_ratio on count treatments"""
-struct Count <: Nonbinary end
-
-"""Type used to dispatch risk_ratio on continuous treatments"""
-struct Continuous <: Nonbinary end
-
-"""
-    var_type(x)
-
-Determine the type of variable held by a vector.
-
-# Examples
-```jldoctest
-julia> CausalELM.var_type([1, 2, 3, 2, 3, 1, 1, 3, 2])
-CausalELM.Count()
-```
-"""
-function var_type(x::Array{<:Real})
-    x_set = Set(x)
-    if x_set == Set([0, 1]) || x_set == Set([0]) || x_set == Set([1])
-        return Binary()
-    elseif x_set == Set(round.(x_set))
-        return Count()
-    else
-        return Continuous()
-    end
-end
-
 """
     validate(its; kwargs...)
 

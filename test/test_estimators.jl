@@ -45,7 +45,8 @@ g_computer_ts = GComputation(
     float.(hcat([1:10;], 11:20)), Float64.([rand() < 0.4 for i in 1:10]), rand(10)
 )
 
-dm = DoubleMachineLearning(x, t, y)
+big_x, big_t, big_y = rand(10000, 5), rand(0:1, 10000), vec(rand(1:100, 10000, 1))
+dm = DoubleMachineLearning(big_x, big_t, big_y, regularized=false)
 estimate_causal_effect!(dm)
 
 # Testing with a binary outcome

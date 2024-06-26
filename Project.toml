@@ -1,20 +1,22 @@
 name = "CausalELM"
 uuid = "26abab4e-b12e-45db-9809-c199ca6ddca8"
 authors = ["Darren Colby <dscolby17@gmail.com> and contributors"]
-version = "0.6"
+version = "0.6.0"
 
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
-LinearAlgebra = "1.7"
-Random = "1.7"
-julia = "1.7"
 Aqua = "0.8"
 DataFrames = "1.5"
 Documenter = "1.2"
+LinearAlgebra = "1.7"
+Random = "1.7"
 Test = "1.7"
+julia = "1.7"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
