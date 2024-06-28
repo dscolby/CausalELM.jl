@@ -11,16 +11,20 @@ Initialize an interrupted time series estimator.
 - `Y₁::Any`: an array or DataFrame of outcomes from the pre-treatment period.
 - `X₁::Any`: an array or DataFrame of covariates from the post-treatment period.
 - `Y₁::Any`: an array or DataFrame of outcomes from the post-treatment period.
-- `regularized::Function=true`: whether to use L2 regularization
 
 # Keywords
-- `activation::Function=relu`: the activation function to use.
-- `num_neurons::Integer`: number of neurons to use in the extreme learning machine.
+- `activation::Function=relu`: activation function to use.
+- `sample_size::Integer=size(X₀, 1)`: number of bootstrapped samples for the extreme 
+    learner.
+- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_feats::Integer=Int(round(sqrt(size(X₀, 2))))`: number of features to bootstrap for 
+    each learner in the ensemble.
+- `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 
 # Notes
-If regularized is set to true then the ridge penalty will be estimated using generalized 
-cross validation. If num_neurons is not specified then the number of neurons will be set to 
-log₁₀(number of observations) * number of features.
+To reduce computational complexity and overfitting, the model used to estimate the 
+counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
+computational complexity you can reduce sample_size, num_machines, or num_neurons.
 
 # References
 For a simple linear regression-based tutorial on interrupted time series analysis see:
@@ -57,9 +61,11 @@ function InterruptedTimeSeries(
     Y₀,
     X₁,
     Y₁;
-    regularized::Bool=true,
     activation::Function=relu,
-    num_neurons::Integer=round(Int, log10(size(X₀, 2)) * size(X₀, 1)),
+    sample_size::Integer=size(X₀, 1),
+    num_machines::Integer=100,
+    num_feats::Integer=Int(round(sqrt(size(X₀, 2)))),
+    num_neurons::Integer=round(Int, log10(size(X₀, 1)) * size(X₀, 2)),
     autoregression::Bool=true,
 )
     # Convert to arrays
@@ -73,14 +79,16 @@ function InterruptedTimeSeries(
 
     return InterruptedTimeSeries(
         X₀,
-        Float64.(Y₀),
-        Float64.(X₁),
-        Float64.(Y₁),
+        float(Y₀),
+        X₁,
+        float(Y₁),
         "difference",
         true,
         task,
-        regularized,
         activation,
+        sample_size,
+        num_machines,
+        num_feats,
         num_neurons,
         fill(NaN, size(Y₁, 1)),
     )
@@ -99,14 +107,18 @@ Initialize a G-Computation estimator.
 # Keywords
 - `quantity_of_interest::String`: ATE for average treatment effect or ATT for average 
     treatment effect on the treated.
-- `regularized::Function=true`: whether to use L2 regularization
-- `activation::Function=relu`: the activation function to use.
-- `num_neurons::Integer`: number of neurons to use in the extreme learning machine.
+- `activation::Function=relu`: activation function to use.
+- `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for the extreme 
+    learners.
+- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_feats::Integer=Int(round(sqrt(size(X, 2))))`: number of features to bootstrap for 
+    each learner in the ensemble.
+- `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 
 # Notes
-If regularized is set to true then the ridge penalty will be estimated using generalized 
-cross validation. If num_neurons is not specified then the number of neurons will be set to 
-log₁₀(number of observations) * number of features.
+To reduce computational complexity and overfitting, the model used to estimate the 
+counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
+computational complexity you can reduce sample_size, num_machines, or num_neurons.
 
 # References
 For a good overview of G-Computation see:
@@ -136,17 +148,19 @@ julia> m5 = GComputation(x_df, t_df, y_df)
 mutable struct GComputation <: CausalEstimator
     @standard_input_data
     @model_config average_effect
-    learner::ExtremeLearningMachine
+    ensemble::ELMEnsemble
 
     function GComputation(
         X,
         T,
         Y;
         quantity_of_interest::String="ATE",
-        regularized::Bool=true,
         activation::Function=relu,
+        sample_size::Integer=size(X, 1),
+        num_machines::Integer=100,
+        num_feats::Integer=Int(round(sqrt(size(X, 2)))),
+        num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
         temporal::Bool=true,
-        num_neurons::Integer=round(Int, log10(size(X, 2)) * size(X, 1)),
     )
         if quantity_of_interest ∉ ("ATE", "ITT", "ATT")
             throw(ArgumentError("quantity_of_interest must be ATE, ITT, or ATT"))
@@ -158,14 +172,16 @@ mutable struct GComputation <: CausalEstimator
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
         return new(
-            Float64.(X),
-            Float64.(T),
-            Float64.(Y),
+            X,
+            float(T),
+            float(Y),
             quantity_of_interest,
             temporal,
             task,
-            regularized,
             activation,
+            sample_size,
+            num_machines,
+            num_feats,
             num_neurons,
             NaN,
         )
@@ -184,19 +200,19 @@ Initialize a double machine learning estimator with cross fitting.
 
 # Keywords
 - `W::Any`: array or dataframe of all possible confounders.
-- `regularized::Function=true`: whether to use L2 regularization
 - `activation::Function=relu`: activation function to use.
-- `num_neurons::Integer`: number of neurons to use in the extreme learning machine.
+- `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for teh extreme 
+    learners.
+- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_feats::Integer=Int(round(sqrt(size(X, 2))))`: number of features to bootstrap for 
+    each learner in the ensemble.
+- `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 - `folds::Integer`: number of folds to use for cross fitting.
 
 # Notes
-If regularized is set to true then the ridge penalty will be estimated using generalized 
-cross validation. If num_neurons is not specified then the number of neurons will be set to 
-log₁₀(number of observations) * number of features.
-
-Unlike other estimators, this method does not support time series or panel data. This method 
-also does not work as well with smaller datasets because it estimates separate outcome 
-models for the treatment and control groups.
+To reduce computational complexity and overfitting, the model used to estimate the 
+counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
+computational complexity you can reduce sample_size, num_machines, or num_neurons.
 
 # References
 For more information see:
@@ -229,9 +245,11 @@ function DoubleMachineLearning(
     T,
     Y;
     W=X,
-    regularized::Bool=true,
     activation::Function=relu,
-    num_neurons::Integer=round(Int, log10(size(X, 2)) * size(X, 1)),
+    sample_size::Integer=size(X, 1),
+    num_machines::Integer=100,
+    num_feats::Integer=Int(round(sqrt(size(X, 2)))),
+    num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
     folds::Integer=5,
 )
     # Convert to arrays
@@ -241,14 +259,16 @@ function DoubleMachineLearning(
 
     return DoubleMachineLearning(
         X,
-        Float64.(T),
-        Float64.(Y),
-        Float64.(W),
+        float(T),
+        float(Y),
+        W,
         "ATE",
         false,
         task,
-        regularized,
         activation,
+        sample_size, 
+        num_machines, 
+        num_feats,
         num_neurons,
         NaN,
         folds,
@@ -268,21 +288,20 @@ julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(its::InterruptedTimeSeries)
-    if its.regularized
-        learner = RegularizedExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
-    else
-        learner = ExtremeLearner(its.X₀, its.Y₀, its.num_neurons, its.activation)
-    end
+    learner = ELMEnsemble(
+        its.X₀, 
+        its.Y₀, 
+        its.sample_size, 
+        its.num_machines,
+        its.num_feats, 
+        its.num_neurons, 
+        its.activation
+    )
 
     fit!(learner)
-    its.causal_effect = predict_counterfactual!(learner, its.X₁) - its.Y₁
+    its.causal_effect = predict_mean(learner, its.X₁) - its.Y₁
 
     return its.causal_effect
-end
-
-function estimate_causal_effect!(g::GComputation)
-    g.causal_effect = mean(g_formula!(g))
-    return g.causal_effect
 end
 
 """
@@ -301,10 +320,30 @@ as E[Yᵢ|T₁=1, T₂=1, ... Tₚ=1, Xₚ] - E[Yᵢ|T₁=0, T₂=0, ... Tₚ=0,
 ```julia
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
 julia> m1 = GComputation(X, T, Y)
-julia> g_formula!(m1)
+julia> estimate_causal_effect!(m1)
 ```
 """
-function g_formula!(g)
+function estimate_causal_effect!(g::GComputation)
+    g.causal_effect = mean(g_formula!(g))
+    return g.causal_effect
+end
+
+"""
+    g_formula!(g)
+
+Compute the G-formula for G-computation and S-learning.
+
+# Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
+julia> m1 = GComputation(X, T, Y)
+julia> g_formula!(m1)
+
+julia> m2 = SLearner(X, T, Y)
+julia> g_formula!(m2)
+```
+"""
+function g_formula!(g)  # Keeping this separate enables it to be reused for S-Learning
     covariates, y = hcat(g.X, g.T), g.Y
 
     if g.quantity_of_interest ∈ ("ITT", "ATE", "CATE")
@@ -315,19 +354,21 @@ function g_formula!(g)
         Xᵤ = hcat(covariates[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
     end
 
-    #if g.regularized
-        #g.learner = RegularizedExtremeLearner(covariates, y, g.num_neurons, g.activation)
-    #else
-        #g.learner = ExtremeLearner(covariates, y, g.num_neurons, g.activation)
-    #end
+    g.ensemble = ELMEnsemble(
+        covariates, 
+        y, 
+        g.sample_size, 
+        g.num_machines, 
+        g.num_feats,
+        g.num_neurons, 
+        g.activation
+    )
 
-    ensemble = ELMEnsemble(covariates, y, 1000, 100, 10)
+    fit!(g.ensemble)
+    
+    yₜ, yᵤ = predict_mean(g.ensemble, Xₜ), predict_mean(g.ensemble, Xᵤ)
 
-    #fit!(g.learner)
-    return fit!(ensemble)
-    #yₜ = clip_if_binary(predict(g.learner, Xₜ), var_type(g.Y))
-    #yᵤ = clip_if_binary(predict(g.learner, Xᵤ), var_type(g.Y))
-    #return vec(yₜ) - vec(yᵤ)
+    return vec(yₜ) - vec(yᵤ)
 end
 
 """
@@ -408,23 +449,30 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 ```
 """
 function predict_residuals(
-    D, x_train, x_test, y_train, y_test, t_train, t_test, w_train, w_test
+    D, 
+    x_train::Array{Float64}, 
+    x_test::Array{Float64}, 
+    y_train::Vector{Float64}, 
+    y_test::Vector{Float64}, 
+    t_train::Vector{Float64}, 
+    t_test::Vector{Float64}, 
+    w_train::Array{Float64}, 
+    w_test::Array{Float64},
 )
     V = x_train != w_train && x_test != w_test ? reduce(hcat, (x_train, w_train)) : x_train
     V_test = V == x_train ? x_test : reduce(hcat, (x_test, w_test))
 
-    if D.regularized
-        y = RegularizedExtremeLearner(V, y_train, D.num_neurons, D.activation)
-        t = RegularizedExtremeLearner(V, t_train, D.num_neurons, D.activation)
-    else
-        y = ExtremeLearner(V, y_train, D.num_neurons, D.activation)
-        t = ExtremeLearner(V, t_train, D.num_neurons, D.activation)
-    end
+    y = ELMEnsemble(
+        V, y_train, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
+    )
+    t = ELMEnsemble(
+        V, t_train, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
+    )
 
     fit!(y)
     fit!(t)
-    y_pred = clip_if_binary(predict(y, V_test), var_type(D.Y))
-    t_pred = clip_if_binary(predict(t, V_test), var_type(D.T))
+
+    y_pred, t_pred = predict_mean(y, V_test), predict_mean(t, V_test)
     ỹ, t̃ = y_test - y_pred, t_test - t_pred
 
     return ỹ, t̃

@@ -19,10 +19,6 @@ its_df = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 its_no_ar = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its_no_ar)
 
-# Testing without regularization
-its_noreg = InterruptedTimeSeries(x₀, y₀, x₁, y₁; regularized=false)
-estimate_causal_effect!(its_noreg)
-
 x, t, y = rand(100, 5), rand(0:1, 100), vec(rand(1:100, 100, 1))
 g_computer = GComputation(x, t, y; temporal=false)
 estimate_causal_effect!(g_computer)
@@ -37,16 +33,14 @@ t_df, y_df = DataFrame(; t=rand(0:1, 100)), DataFrame(; y=rand(100))
 g_computer_df = GComputation(x_df, t_df, y_df)
 gcomputer_att = GComputation(x, t, y; quantity_of_interest="ATT", temporal=false)
 estimate_causal_effect!(gcomputer_att)
-gcomputer_noreg = GComputation(x, t, y; regularized=false)
-estimate_causal_effect!(gcomputer_noreg)
 
 # Make sure the data isn't shuffled
 g_computer_ts = GComputation(
     float.(hcat([1:10;], 11:20)), Float64.([rand() < 0.4 for i in 1:10]), rand(10)
 )
 
-big_x, big_t, big_y = rand(10000, 5), rand(0:1, 10000), vec(rand(1:100, 10000, 1))
-dm = DoubleMachineLearning(big_x, big_t, big_y, regularized=false)
+big_x, big_t, big_y = rand(10000, 8), rand(0:1, 10000), vec(rand(1:100, 10000, 1))
+dm = DoubleMachineLearning(big_x, big_t, big_y)
 estimate_causal_effect!(dm)
 
 # Testing with a binary outcome
@@ -55,10 +49,6 @@ estimate_causal_effect!(dm_binary_out)
 
 # With dataframes instead of arrays
 dm_df = DoubleMachineLearning(x_df, t_df, y_df)
-
-# No regularization
-dm_noreg = DoubleMachineLearning(x, t, y; regularized=false)
-estimate_causal_effect!(dm_noreg)
 
 # Specifying W
 dm_w = DoubleMachineLearning(x, t, y; W=rand(100, 4))
@@ -74,10 +64,9 @@ x_fold, t_fold, w_fold, y_fold = CausalELM.make_folds(dm)
 
 # Test predicting residuals
 x_train, x_test = x[1:80, :], x[81:end, :]
-t_train, t_test = t[1:80], t[81:100]
-y_train, y_test = y[1:80], y[81:end]
-residual_predictor = DoubleMachineLearning(x, t, y)
-residual_predictor.num_neurons = 5
+t_train, t_test = float(t[1:80]), float(t[81:end])
+y_train, y_test = float(y[1:80]), float(y[81:end])
+residual_predictor = DoubleMachineLearning(x, t, y, num_neurons=5)
 residuals = CausalELM.predict_residuals(
     residual_predictor, x_train, x_test, y_train, y_test, t_train, t_test, x_train, x_test
 )
@@ -107,9 +96,6 @@ residuals = CausalELM.predict_residuals(
 
         # Without autocorrelation
         @test isa(its_no_ar.causal_effect, Array)
-
-        # Without regularization
-        @test isa(its_noreg.causal_effect, Array)
     end
 end
 
@@ -133,9 +119,6 @@ end
 
     @testset "G-Computation Estimation" begin
         @test isa(g_computer.causal_effect, Float64)
-
-        # Estimation without regularization
-        @test isa(gcomputer_noreg.causal_effect, Float64)
         @test isa(g_computer_binary_out.causal_effect, Float64)
 
         # Check that the estimats for ATE and ATT are different
@@ -148,11 +131,6 @@ end
         @test dm.X !== Nothing
         @test dm.T !== Nothing
         @test dm.Y !== Nothing
-
-        # No regularization
-        @test dm_noreg.X !== Nothing
-        @test dm_noreg.T !== Nothing
-        @test dm_noreg.Y !== Nothing
 
         # Intialized with dataframes
         @test dm_df.X !== Nothing
@@ -174,12 +152,11 @@ end
     @testset "Double Machine Learning Post-estimation Structure" begin
         @test dm.causal_effect isa Float64
         @test dm_binary_out.causal_effect isa Float64
-        @test dm_noreg.causal_effect isa Float64
         @test dm_w.causal_effect isa Float64
     end
 end
 
-@testset "Summarization and Inference" begin
+@testset "Miscellaneous Tests" begin
     @testset "Quanities of Interest Errors" begin
         @test_throws ArgumentError GComputation(x, y, t, quantity_of_interest="abc")
     end

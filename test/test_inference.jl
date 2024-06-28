@@ -56,7 +56,7 @@ rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
 summary9 = summarize(rlearner, n=10)
 
-dr_learner = DoublyRobustLearner(x, t, y, regularized=false)
+dr_learner = DoublyRobustLearner(x, t, y)
 estimate_causal_effect!(dr_learner)
 dr_learner_inference = CausalELM.generate_null_distribution(dr_learner, 10)
 p8, stderr8 = CausalELM.quantities_of_interest(dr_learner, 10)

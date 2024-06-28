@@ -18,20 +18,20 @@ export hard_tanh, elish, fourier
 export binary_step, σ, tanh, relu
 export leaky_relu, swish, softmax, softplus
 export mse, mae, accuracy, precision, recall, F1
-#export estimate_causal_effect!, summarize, summarise
-#export InterruptedTimeSeries, GComputation, DoubleMachineLearning
-#export SLearner, TLearner, XLearner, RLearner, DoublyRobustLearner
+export estimate_causal_effect!, summarize, summarise
+export InterruptedTimeSeries, GComputation, DoubleMachineLearning
+export SLearner, TLearner, XLearner, RLearner, DoublyRobustLearner
 
 include("activation.jl")
 include("utilities.jl")
 include("models.jl")
 include("metrics.jl")
-#include("estimators.jl")
-#include("metalearners.jl")
-#include("inference.jl")
-#include("model_validation.jl")
+include("estimators.jl")
+include("metalearners.jl")
+include("inference.jl")
+include("model_validation.jl")
 
 # So that it works with British spelling
-#const summarise = summarize
+const summarise = summarize
 
 end

@@ -23,6 +23,7 @@ CausalELM.Count()
 """
 function var_type(x::Array{<:Real})
     x_set = Set(x)
+    
     if x_set == Set([0, 1]) || x_set == Set([0]) || x_set == Set([1])
         return Binary()
     elseif x_set == Set(round.(x_set))
@@ -137,9 +138,11 @@ macro model_config(effect_type)
         quantity_of_interest::String
         temporal::Bool
         task::String
-        regularized::Bool
         activation::Function
-        num_neurons::Int64
+        sample_size::Integer
+        num_machines::Integer
+        num_feats::Integer
+        num_neurons::Integer
         causal_effect::$field_type
     end
     return esc(fields)

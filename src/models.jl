@@ -1,3 +1,6 @@
+using Random: shuffle
+using CausalELM: mean, clip_if_binary, var_type
+
 """
     ExtremeLearner(X, Y, hidden_neurons, activation)
 
@@ -28,14 +31,13 @@ mutable struct ExtremeLearner
     hidden_neurons::Int64
     activation::Function
     __fit::Bool
-    __estimated::Bool
     weights::Array{Float64}
     β::Array{Float64}
     H::Array{Float64}
     counterfactual::Array{Float64}
 
     function ExtremeLearner(X, Y, hidden_neurons, activation)
-        return new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
+        return new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false)
     end
 end
 
@@ -49,6 +51,7 @@ Initialize a bagging ensemble of extreme learning machines.
 - `Y::Array{Float64}`: array of labels to predict.
 - `sample_size::Integer`: how many data points to use for each extreme learning machine.
 - `num_machines::Integer`: how many extreme learning machines to use.
+- `num_feats::Integer`: how many features to consider for eac exreme learning machine.
 - `num_neurons::Integer`: how many neurons to use for each extreme learning machine.
 - `activation::Function`: activation function to use for the extreme learning machines.
 
@@ -59,29 +62,33 @@ but uses the average predicted probability, rather than voting, for classificati
 # Examples
 ```julia
 julia> X, Y =  rand(100, 5), rand(100)
-julia> m1 = ELMEnsemble(X, Y, 10, 50, 5, CausalELM.relu)
+julia> m1 = ELMEnsemble(X, Y, 10, 50, 5, 5, CausalELM.relu)
 ```
 """
 mutable struct ELMEnsemble
     X::Array{Float64}
     Y::Array{Float64}
-    elms::Array{CausalELM.ExtremeLearner}
+    elms::Array{ExtremeLearner}
+    feat_indices::Vector{Vector{Int64}}
 end
 
 function ELMEnsemble(
     X::Array{Float64}, 
     Y::Array{Float64}, 
     sample_size::Integer, 
-    num_machines::Integer, 
+    num_machines::Integer,
+    num_feats::Integer, 
     num_neurons::Integer,
     activation::Function
 )
     # Sampling from the data with replacement
     indices = [rand(1:length(Y), sample_size) for i ∈ 1:num_machines]
-    xs, ys = [X[i, :] for i ∈ indices], [Y[i] for i ∈ indices]
+    feat_indices = [shuffle(1:size(X, 2))[1:num_feats] for i ∈ 1:num_machines]
+    xs = [X[indices[i], feat_indices[i]] for i ∈ 1:num_machines]
+    ys = [Y[indices[i]] for i ∈ 1:num_machines]
     elms = [ExtremeLearner(xs[i], ys[i], num_neurons, activation) for i ∈ eachindex(xs)]
 
-    return ELMEnsemble(X, Y, elms)
+    return ELMEnsemble(X, Y, elms, feat_indices)
 end
 
 """
@@ -136,7 +143,11 @@ end
 """
     predict(model, X)
 
-Use an ExtremeLearningMachine to make predictions.
+Use an ExtremeLearningMachine or ELMEnsemble to make predictions.
+
+# Notes
+If using an ensemble to make predictions, this method returns a maxtirs where each row is a
+prediction and each column is a model.
 
 # References
 For more details see: 
@@ -147,8 +158,12 @@ For more details see:
 ```julia
 julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
 julia> m1 = ExtremeLearner(x, y, 10, σ)
-julia> f1 = fit(m1, sigmoid)
+julia> fit!(m1, sigmoid)
 julia> predict(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+
+julia> m2 = ELMEnsemble(X, Y, 10, 50, 5, CausalELM.relu)
+julia> fit!(m2)
+julia> predict(m2)
 ```
 """
 function predict(model::ExtremeLearner, X)
@@ -160,6 +175,15 @@ function predict(model::ExtremeLearner, X)
 
     return @fastmath clip_if_binary(predictions, var_type(model.Y))
 end
+
+@inline function predict(model::ELMEnsemble, X) 
+    return reduce(
+        hcat, 
+        [predict(model.elms[i], X[:, model.feat_indices[i]]) for i ∈ 1:length(model.elms)]
+    )
+end
+
+predict_mean(model::ELMEnsemble, X) = vec(mapslices(mean, predict(model, X), dims=2))
 
 """
     predict_counterfactual!(model, X)
@@ -181,7 +205,7 @@ julia> predict_counterfactual!(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
 ```
 """
 function predict_counterfactual!(model::ExtremeLearner, X)
-    model.counterfactual, model.__estimated = predict(model, X), true
+    model.counterfactual = predict(model, X)
 
     return model.counterfactual
 end
@@ -209,7 +233,7 @@ julia> placebo_test(m1)
 """
 function placebo_test(model::ExtremeLearner)
     m = "Use predict_counterfactual! to estimate a counterfactual before using placebo_test"
-    if !model.__estimated
+    if !isdefined(model, :counterfactual)
         throw(ErrorException(m))
     end
     return predict(model, model.X), model.counterfactual
@@ -245,5 +269,11 @@ end
 function Base.show(io::IO, model::ExtremeLearner)
     return print(
         io, "Extreme Learning Machine with ", model.hidden_neurons, " hidden neurons"
+    )
+end
+
+function Base.show(io::IO, model::ELMEnsemble)
+    return print(
+        io, "Extreme Learning Machine Ensemble with ", length(model.elms), " learners"
     )
 end

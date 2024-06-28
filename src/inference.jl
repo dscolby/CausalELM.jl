@@ -43,15 +43,15 @@ function summarize(mod; n=1000, inference=false)
     end
 
     summary_dict = Dict()
-    double_estimators = (DoubleMachineLearning, DoublyRobustLearner)
-    task = typeof(mod) in double_estimators ? "regression" : mod.task
     nicenames = [
         "Task",
         "Quantity of Interest",
-        "Regularized",
         "Activation Function",
-        "Time Series/Panel Data",
+        "Sample Size",
+        "Number of Machines",
+        "Number of Features",
         "Number of Neurons",
+        "Time Series/Panel Data",
         "Causal Effect",
         "Standard Error",
         "p-value",
@@ -64,12 +64,14 @@ function summarize(mod; n=1000, inference=false)
     end
 
     values = [
-        task,
+        mod.task,
         mod.quantity_of_interest,
-        mod.regularized,
         mod.activation,
-        mod.temporal,
+        mod.sample_size,
+        mod.num_machines,
+        mod.num_feats,
         mod.num_neurons,
+        mod.temporal,
         mod.causal_effect,
         stderr,
         p,
@@ -115,6 +117,7 @@ function summarize(its::InterruptedTimeSeries; n=1000, mean_effect=true, inferen
     end
 
     effect = ifelse(mean_effect, mean(its.causal_effect), sum(its.causal_effect))
+    qoi = mean_effect ? "Average Difference" : "Cumulative Difference"
 
     if inference
         p, stderr = quantities_of_interest(its, n, mean_effect)
@@ -125,19 +128,27 @@ function summarize(its::InterruptedTimeSeries; n=1000, mean_effect=true, inferen
     summary_dict = Dict()
     nicenames = [
         "Task",
-        "Regularized",
+        "Quantity of Interest",
         "Activation Function",
+        "Sample Size",
+        "Number of Machines",
+        "Number of Features",
         "Number of Neurons",
+        "Time Series/Panel Data",
         "Causal Effect",
         "Standard Error",
         "p-value",
     ]
 
     values = [
-        "Regression",
-        its.regularized,
+        its.task,
+        qoi,
         its.activation,
+        its.sample_size,
+        its.num_machines,
+        its.num_feats,
         its.num_neurons,
+        its.temporal,
         effect,
         stderr,
         p,

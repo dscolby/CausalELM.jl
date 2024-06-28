@@ -174,7 +174,7 @@ function covariate_independence(its::InterruptedTimeSeries; n=1000)
     x₀ = reduce(hcat, (its.X₀[:, 1:(end - 1)], zeros(size(its.X₀, 1))))
     x₁ = reduce(hcat, (its.X₁[:, 1:(end - 1)], ones(size(its.X₁, 1))))
     x = reduce(vcat, (x₀, x₁))
-    results = Dict{String,Float64}()
+    results = Dict{String, Float64}()
 
     # Estimate a linear regression with each covariate as a dependent variable and all other
     # covariates and time as independent variables
@@ -558,7 +558,7 @@ function risk_ratio(::Nonbinary, mod)
         # Otherwise, we convert the treatment variable to a binary variable and then 
         # dispatch based on the type of outcome variable
     else
-        original_T, binary_T = mod.T, binarize(mod.T, mean(mod.Y))
+        original_T, binary_T = mod.T, binarize(mod.T, mean(mod.T))
         mod.T = binary_T
         rr = risk_ratio(Binary(), mod)
 
@@ -575,14 +575,14 @@ function risk_ratio(::Binary, ::Binary, mod)
     Xₜ, Xᵤ = reduce(hcat, (Xₜ, ones(size(Xₜ, 1)))), reduce(hcat, (Xᵤ, ones(size(Xᵤ, 1))))
 
     # For algorithms that use one model to estimate the outcome
-    if hasfield(typeof(mod), :learner)
-        return @fastmath mean(predict(mod.learner, Xₜ)) / mean(predict(mod.learner, Xᵤ))
+    if hasfield(typeof(mod), :ensemble)
+        return @fastmath mean(predict_mean(mod.ensemble, Xₜ)) / mean(predict_mean(mod.ensemble, Xᵤ))
 
         # For models that use separate models for outcomes in the treatment and control group
     else
         hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
-        return @fastmath mean(predict(mod.μ₁, Xₜ)) / mean(predict(mod.μ₀, Xᵤ))
+        return @fastmath mean(predict_mean(mod.μ₁, Xₜ)) / mean(predict_mean(mod.μ₀, Xᵤ))
     end
 end
 
@@ -593,26 +593,27 @@ function risk_ratio(::Binary, ::Count, mod)
     Xₜ, Xᵤ = reduce(hcat, (Xₜ, ones(m))), reduce(hcat, (Xᵤ, ones(n)))
 
     # For estimators with a single model of the outcome variable
-    if hasfield(typeof(mod), :learner)
-        return @fastmath (sum(predict(mod.learner, Xₜ)) / m) /
-            (sum(predict(mod.learner, Xᵤ)) / n)
+    if hasfield(typeof(mod), :ensemble)
+        return @fastmath (sum(predict_mean(mod.ensemble, Xₜ)) / m) /
+            (sum(predict_mean(mod.ensemble, Xᵤ)) / n)
 
         # For models that use separate models for outcomes in the treatment and control group
     elseif hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
-        return @fastmath mean(predict(mod.μ₁, Xₜ)) / mean(predict(mod.μ₀, Xᵤ))
+        return @fastmath mean(predict_mean(mod.μ₁, Xₜ)) / mean(predict_mean(mod.μ₀, Xᵤ))
     else
-        if mod.regularized
-            learner = RegularizedExtremeLearner(
-                reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, mod.activation
+        learner = ELMEnsemble(
+                reduce(hcat, (mod.X, mod.T)), 
+                mod.Y, 
+                mod.sample_size, 
+                mod.num_machines, 
+                mod.num_feats, 
+                mod.num_neurons, 
+                mod.activation
             )
-        else
-            learner = ExtremeLearner(
-                reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, mod.activation
-            )
-        end
+
         fit!(learner)
-        @fastmath (sum(predict(learner, Xₜ)) / m) / (sum(predict(learner, Xᵤ)) / n)
+        @fastmath mean(predict_mean(learner, Xₜ)) / mean(predict_mean(learner, Xᵤ))
     end
 end
 
@@ -652,16 +653,18 @@ julia> positivity(g_computer)
 ```
 """
 function positivity(model, min=1.0e-6, max=1 - min)
-    if model.regularized
-        ps_mod = RegularizedExtremeLearner(
-            model.X, model.T, model.num_neurons, model.activation
-            )
-    else
-        ps_mod = ExtremeLearner(model.X, model.T, model.num_neurons, model.activation)
-    end
+    ps_mod = ELMEnsemble(
+            model.X, 
+            model.T, 
+            model.sample_size, 
+            model.num_machines, 
+            model.num_feats, 
+            model.num_neurons, 
+            model.activation
+        )
 
     fit!(ps_mod)
-    propensity_scores = predict(ps_mod, model.X)
+    propensity_scores = predict_mean(ps_mod, model.X)
 
     # Observations that have a zero probability of treatment or control assignment
     return reduce(
@@ -680,28 +683,6 @@ function positivity(model::XLearner, min=1.0e-6, max=1 - min)
         (
             model.X[model.ps .<= min .|| model.ps .>= max, :],
             model.ps[model.ps .<= min .|| model.ps .>= max],
-        ),
-    )
-end
-
-function positivity(model::Union{DoubleMachineLearning,RLearner}, min=1.0e-6, max=1 - min)
-    if model.regularized
-        ps_mod = RegularizedExtremeLearner(
-            model.X, model.T, model.num_neurons, model.activation
-        )
-    else
-        ps_mod = ExtremeLearner(model.X, model.T, model.num_neurons, model.activation)
-    end
-
-    fit!(ps_mod)
-    propensity_scores = predict(ps_mod, model.X)
-
-    # Observations that have a zero probability of treatment or control assignment
-    return reduce(
-        hcat,
-        (
-            model.X[propensity_scores .<= min .|| propensity_scores .>= max, :],
-            propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max],
         ),
     )
 end

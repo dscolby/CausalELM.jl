@@ -37,10 +37,6 @@ discrete_counterfactual_violations = CausalELM.simulate_counterfactual_violation
 dml = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dml)
 
-# Create double machine learning estimator without regularization
-dml_noreg = DoubleMachineLearning(x, t, y; regularized=false)
-estimate_causal_effect!(dml_noreg)
-
 # Testing the risk ratio with a nonbinary treatment variable
 nonbinary_dml = DoubleMachineLearning(x, rand(1:3, 100), y)
 estimate_causal_effect!(nonbinary_dml)
@@ -141,7 +137,7 @@ end
         @test_throws ErrorException CausalELM.omitted_predictor(
             InterruptedTimeSeries(x₀, y₀, x₁, y₁)
         )
-        @test ovb isa Dict{String,Float64}
+        @test ovb isa Dict{String, Float64}
         @test isa.(values(ovb), Float64) == Bool[1, 1, 1, 1]
     end
 
@@ -158,7 +154,6 @@ end
         @test CausalELM.e_value(count_g_computer) isa Real
         @test CausalELM.e_value(g_computer) isa Real
         @test CausalELM.e_value(dml) isa Real
-        @test CausalELM.e_value(dml_noreg) isa Real
         @test CausalELM.e_value(t_learner) isa Real
         @test CausalELM.e_value(x_learner) isa Real
         @test CausalELM.e_value(dr_learner) isa Real
@@ -188,7 +183,6 @@ end
         @test size(CausalELM.positivity(count_g_computer), 2) ==
             size(count_g_computer.X, 2) + 1
         @test size(CausalELM.positivity(g_computer), 2) == size(g_computer.X, 2) + 1
-        @test size(CausalELM.positivity(dm_noreg), 2) == size(dm_noreg.X, 2) + 1
     end
 
     @testset "All Assumptions for G-computation" begin
