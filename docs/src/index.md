@@ -19,22 +19,22 @@ or infeasible. To enable this, CausalELM provides a simple API to initialize a m
 estimate a causal effect, get a summary from the model, and test the robustness of the 
 model. CausalELM includes estimators for interupted time series analysis, G-Computation, 
 double machine learning, S-Learning, T-Learning, X-Learning, R-learning, and doubly robust 
-estimation. Underlying all these estimators are extreme learning machines. Like tree-based 
-learners, which are often used in causal machine learning, extreme learning machines are 
-simple and can capture non-linear relationships. However, unlike random forests or other 
-ensemble models, they essentially only require two hyperparameters—the number of neurons, 
-and the L2 penalty (when using regularization)—which are automatically tuned when 
-estimate_causal_effect! is called. This makes CausalELM both very simple and very powerful 
-for estimating treatment effects.
+estimation. Underlying all these estimators are bagged extreme learning machines. Extreme 
+learning machines are a single layer feedfoward neural network that relies on randomized 
+weights and least squares optimization, making them expressive, simple, and computationally 
+efficient. Combining them with bagging reduces the variance due to their randomized weights 
+and provides a form of regularization that does not have to be tuned through cross 
+validation.These attributes make CausalELM a very simple and powerful package for estimating 
+treatment effects.
 
 ### Features
 *   Estimate a causal effect, get a summary, and validate assumptions in just four lines of code
-*   All models automatically select the best number of neurons and L2 penalty
+*   Bagging improves performance and reduces variance without the need to tune a regularization parameter
 *   Enables using the same structs for regression and classification
 *   Includes 13 activation functions and allows user-defined activation functions
 *   Most inference and validation tests do not assume functional or distributional forms
 *   Implements the latest techniques form statistics, econometrics, and biostatistics
-*   Works out of the box with arrays or any data structure that implements teh Tables.jl interface
+*   Works out of the box with arrays or any data structure that implements the Tables.jl interface
 *   Codebase is high-quality, well tested, and regularly updated
 
 ### What's New?

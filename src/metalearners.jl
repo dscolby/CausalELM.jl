@@ -31,10 +31,6 @@ For an overview of S-Learners and other metalearners see:
     estimating heterogeneous treatment effects using machine learning." Proceedings of 
     the national academy of sciences 116, no. 10 (2019): 4156-4165.
 
-For details and a derivation of the generalized cross validation estimator see:
-    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
-
 # Examples
 ```julia
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
@@ -115,10 +111,6 @@ For an overview of T-Learners and other metalearners see:
     estimating heterogeneous treatment effects using machine learning." Proceedings of 
     the national academy of sciences 116, no. 10 (2019): 4156-4165.
 
-For details and a derivation of the generalized cross validation estimator see:
-    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
-
 # Examples
 ```julia
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
@@ -194,14 +186,9 @@ computational complexity you can reduce sample_size, num_machines, or num_neuron
 
 # References
 For an overview of X-Learners and other metalearners see:
-Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
-estimating heterogeneous treatment effects using machine learning." Proceedings of 
-the national academy of sciences 116, no. 10 (2019): 4156-4165.
-
-For details and a derivation of the generalized cross validation estimator see:
-Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 
-215-223.
+    Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
+    estimating heterogeneous treatment effects using machine learning." Proceedings of the 
+    national academy of sciences 116, no. 10 (2019): 4156-4165.
 
 # Examples
 ```julia
@@ -264,7 +251,6 @@ Initialize an R-Learner.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `W::Any` : an array of all possible confounders.
 - `activation::Function=relu`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
@@ -282,10 +268,6 @@ computational complexity you can reduce sample_size, num_machines, or num_neuron
 For an explanation of R-Learner estimation see:
     Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
     effects." Biometrika 108, no. 2 (2021): 299-319.
-    
-For details and a derivation of the generalized cross validation estimator see:
-    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 # Examples
 ```julia
@@ -295,13 +277,10 @@ julia> m1 = RLearner(X, T, Y)
 julia> x_df = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100))
 julia> t_df, y_df = DataFrame(t=rand(0:1, 100)), DataFrame(y=rand(100))
 julia> m2 = RLearner(x_df, t_df, y_df)
-
-julia> w = rand(100, 6)
-julia> m3 = RLearner(X, T, Y, W=w)
 ```
 """
 mutable struct RLearner <: Metalearner
-    @double_learner_input_data
+    @standard_input_data
     @model_config individual_effect
     folds::Integer
 end
@@ -310,7 +289,6 @@ function RLearner(
     X,
     T,
     Y;
-    W=X,
     activation::Function=relu,
     sample_size::Integer=size(X, 1),
     num_machines::Integer=100,
@@ -320,7 +298,7 @@ function RLearner(
 )
 
     # Convert to arrays
-    X, T, Y, W = Matrix{Float64}(X), T[:, 1], Y[:, 1], Matrix{Float64}(W)
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
     task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -328,7 +306,6 @@ function RLearner(
         X,
         Float64.(T),
         Float64.(Y),
-        W,
         "CATE",
         false,
         task,
@@ -353,7 +330,6 @@ Initialize a doubly robust CATE estimator.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `W::Any` : an array of all possible confounders.
 - `activation::Function=relu`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
@@ -372,10 +348,6 @@ For an explanation of doubly robust cate estimation see:
     Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
     effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
 
-For details and a derivation of the generalized cross validation estimator see:
-    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
-
 # Examples
 ```julia
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
@@ -390,7 +362,7 @@ julia> m3 = DoublyRobustLearner(X, T, Y, W=w)
 ```
 """
 mutable struct DoublyRobustLearner <: Metalearner
-    @double_learner_input_data
+    @standard_input_data
     @model_config individual_effect
     folds::Integer
 end
@@ -399,7 +371,6 @@ function DoublyRobustLearner(
     X,
     T,
     Y;
-    W=X,
     activation::Function=relu,
     sample_size::Integer=size(X, 1),
     num_machines::Integer=100,
@@ -408,7 +379,7 @@ function DoublyRobustLearner(
     folds::Integer=5,
 )
     # Convert to arrays
-    X, T, Y, W = Matrix{Float64}(X), T[:, 1], Y[:, 1], Matrix{Float64}(W)
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
     task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -416,7 +387,6 @@ function DoublyRobustLearner(
         X,
         Float64.(T),
         Float64.(Y),
-        W,
         "CATE",
         false,
         task,
@@ -537,7 +507,7 @@ julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(R::RLearner)
-    X, T, W, Y = make_folds(R)
+    X, T, Y = generate_folds(R.X, R.T, R.Y, R.folds)
     predictors = Vector{ELMEnsemble}(undef, R.folds)
 
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
@@ -545,11 +515,8 @@ function estimate_causal_effect!(R::RLearner)
         X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
         Y_train, Y_test = reduce(vcat, Y[1:end .!== fld]), Y[fld]
         T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
-        W_train, W_test = reduce(vcat, W[1:end .!== fld]), W[fld]
 
-        Ỹ, T̃ = predict_residuals(
-            R, X_train, X_test, Y_train, Y_test, T_train, T_test, W_train, W_test
-        )
+        Ỹ, T̃ = predict_residuals(R, X_train, X_test, Y_train, Y_test, T_train, T_test)
 
         # Using the weight trick to get the non-parametric CATE for an R-learner
         X[fld], Y[fld] = (T̃ .^ 2) .* X_test, (T̃ .^ 2) .* (Ỹ ./ T̃)
@@ -591,14 +558,13 @@ julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(DRE::DoublyRobustLearner)
-    X, T, W, Y = make_folds(DRE)
-    Z = DRE.W == DRE.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
+    X, T, Y = generate_folds(DRE.X, DRE.T, DRE.Y, DRE.folds)
     causal_effect = zeros(size(DRE.T, 1))
 
     # Rotating folds for cross fitting
     for i in 1:2
-        causal_effect .+= doubly_robust_formula!(DRE, X, T, Y, Z)
-        X, T, Y, Z = [X[2], X[1]], [T[2], T[1]], [Y[2], Y[1]], [Z[2], Z[1]]
+        causal_effect .+= doubly_robust_formula!(DRE, X, T, Y)
+        X, T, Y = [X[2], X[1]], [T[2], T[1]], [Y[2], Y[1]]
     end
 
     causal_effect ./= 2
@@ -608,7 +574,7 @@ function estimate_causal_effect!(DRE::DoublyRobustLearner)
 end
 
 """
-    doubly_robust_formula!(DRE, X, T, Y, Z)
+    doubly_robust_formula!(DRE, X, T, Y)
 
 Estimate the CATE for a single cross fitting iteration via doubly robust estimation.
 
@@ -620,7 +586,6 @@ This method should not be called directly.
 - `X`: a vector of three covariate folds.
 - `T`: a vector of three treatment folds.
 - `Y`: a vector of three outcome folds.
-- `Z` : a vector of three confounder folds and covariate folds.
 
 # Examples
 ```julia
@@ -632,10 +597,10 @@ julia> Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
 julia> g_formula!(m1, X, T, Y, Z)
 ```
 """
-function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y, Z)
+function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y)
     # Propensity scores
     π_e = ELMEnsemble(
-        Z[1], 
+        X[1], 
         T[1], 
         DRE.sample_size, 
         DRE.num_machines, 
@@ -646,7 +611,7 @@ function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y, Z)
 
     # Outcome predictions
     μ₀ = ELMEnsemble(
-        Z[1][T[1] .== 0, :], 
+        X[1][T[1] .== 0, :], 
         Y[1][T[1] .== 0], 
         DRE.sample_size, 
         DRE.num_machines, 
@@ -656,7 +621,7 @@ function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y, Z)
     )
 
     μ₁ = ELMEnsemble(
-        Z[1][T[1] .== 1, :], 
+        X[1][T[1] .== 1, :], 
         Y[1][T[1] .== 1], 
         DRE.sample_size, 
         DRE.num_machines, 
@@ -666,7 +631,7 @@ function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y, Z)
     )
 
     fit!.((π_e, μ₀, μ₁))
-    π̂ , μ₀̂, μ₁̂  = predict_mean(π_e, Z[2]), predict_mean(μ₀, Z[2]), predict_mean(μ₁, Z[2])
+    π̂ , μ₀̂, μ₁̂  = predict_mean(π_e, X[2]), predict_mean(μ₀, X[2]), predict_mean(μ₁, X[2])
 
     # Pseudo outcomes
     ϕ̂ =

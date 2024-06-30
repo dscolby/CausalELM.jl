@@ -50,17 +50,8 @@ estimate_causal_effect!(dm_binary_out)
 # With dataframes instead of arrays
 dm_df = DoubleMachineLearning(x_df, t_df, y_df)
 
-# Specifying W
-dm_w = DoubleMachineLearning(x, t, y; W=rand(100, 4))
-estimate_causal_effect!(dm_w)
-
-# Calling estimate_effect!
-dm_estimate_effect = DoubleMachineLearning(x, t, y)
-dm_estimate_effect.num_neurons = 5
-CausalELM.causal_loss!(dm_estimate_effect)
-
 # Generating folds
-x_fold, t_fold, w_fold, y_fold = CausalELM.make_folds(dm)
+x_fold, t_fold, y_fold = CausalELM.generate_folds(dm.X, dm.T, dm.Y, dm.folds)
 
 # Test predicting residuals
 x_train, x_test = x[1:80, :], x[81:end, :]
@@ -68,7 +59,7 @@ t_train, t_test = float(t[1:80]), float(t[81:end])
 y_train, y_test = float(y[1:80]), float(y[81:end])
 residual_predictor = DoubleMachineLearning(x, t, y, num_neurons=5)
 residuals = CausalELM.predict_residuals(
-    residual_predictor, x_train, x_test, y_train, y_test, t_train, t_test, x_train, x_test
+    residual_predictor, x_train, x_test, y_train, y_test, t_train, t_test
 )
 
 @testset "Interrupted Time Series Estimation" begin
@@ -139,9 +130,7 @@ end
     end
 
     @testset "Double Machine Learning Estimation Helpers" begin
-        @test dm_estimate_effect.causal_effect isa Float64
         @test size(x_fold[1], 2) == size(dm.X, 2)
-        @test size(w_fold[1], 2) == size(dm.W, 2)
         @test y_fold isa Vector{Vector{Float64}}
         @test t_fold isa Vector{Vector{Float64}}
         @test length(t_fold) == dm.folds
@@ -151,8 +140,6 @@ end
 
     @testset "Double Machine Learning Post-estimation Structure" begin
         @test dm.causal_effect isa Float64
-        @test dm_binary_out.causal_effect isa Float64
-        @test dm_w.causal_effect isa Float64
     end
 end
 

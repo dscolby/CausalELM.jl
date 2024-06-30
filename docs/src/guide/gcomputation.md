@@ -5,12 +5,6 @@ given at multiple times whose status depends on the health of the patient at a g
 One way to get an unbiased estimate of the causal effect is to use G-computation. The basic 
 steps for using G-computation in CausalELM are below.
 
-!!! note
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as in 
-    the previous penalty, then the procedure will stop early.
-
 !!! note 
     For a good overview of G-Computation see:
     
@@ -26,10 +20,13 @@ treatment statuses, and an outcome vector. It can support binary treatments and 
 continuous, time to event, and count outcome variables.
 
 !!! tip
-    You can also specify the causal estimand, whether to employ L2 regularization, which 
-    activation function to use, whether the data is of a temporal nature, and the number of 
+    You can also specify the causal estimand, which activation function to use, whether the 
+    data is of a temporal nature, the number of extreme learning machines to use, the 
+    number of features to consider for each extreme learning machine, the number of 
+    bootstrapped observations to include in each extreme learning machine, and the number of 
     neurons to use during estimation. These options are specified with the following keyword 
-    arguments: quantity\_of\_interest, regularized, activation, temporal, and num\_neurons.
+    arguments: quantity\_of\_interest, activation, temporal, num_machines, num_feats, 
+    sample_size, and num\_neurons.
 
 !!! note
     Internally, the outcome model is treated as a regression since extreme learning machines 
@@ -42,7 +39,7 @@ continuous, time to event, and count outcome variables.
 # Create some data with a binary treatment
 X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)
 
-# We could also use DataFrames
+# We could also use DataFrames or any other package that implements the Tables.jl API
 # using DataFrames
 # X = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
 # T, Y = DataFrame(t=[rand()<0.4 for i in 1:1000]), DataFrame(y=rand(1000))

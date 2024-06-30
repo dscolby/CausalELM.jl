@@ -11,12 +11,6 @@ post-event outcomes, which can also be aggregated to mean or cumulative effects.
 Estimating an interrupted time series design in CausalELM consists of three steps.
 
 !!! note
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as in 
-    the previous penalty, then the procedure will stop early.
-
-!!! note
     For a deeper dive on interrupted time series estimation see:
     
         Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
@@ -45,16 +39,18 @@ continuous, count, or time to event variables.
     continuous variables.
 
 !!! tip
-    You can also specify whether or not to use L2 regularization, which activation function 
-    to use, the number of neurons to use during estimation, and whether to include a rolling 
-    average autoregressive term. These options can be specified using the keyword arguments 
-    regularized, activation, num\_neurons, and autoregression.
+    You can also specify which activation function to use, whether the data is of a temporal 
+    nature, the number of extreme learning machines to use, the number of features to 
+    consider for each extreme learning machine, the number of bootstrapped observations to 
+    include in each extreme learning machine, and the number of neurons to use during 
+    estimation. These options are specified with the following keyword arguments: 
+    activation, temporal, num_machines, num_feats, sample_size, and num\_neurons.
 
 ```julia
 # Generate some data to use
 X₀, Y₀, X₁, Y₁ =  rand(1000, 5), rand(1000), rand(100, 5), rand(100)
 
-# We could also use DataFrames
+# We could also use DataFrames or any other package that implements the Tables.jl API
 # using DataFrames
 # X₀ = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
 # X₁ = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))

@@ -7,10 +7,10 @@ abstract type CausalEstimator end
 Initialize an interrupted time series estimator. 
 
 # Arguments
-- `X₀::Any`: an array or DataFrame of covariates from the pre-treatment period.
-- `Y₁::Any`: an array or DataFrame of outcomes from the pre-treatment period.
-- `X₁::Any`: an array or DataFrame of covariates from the post-treatment period.
-- `Y₁::Any`: an array or DataFrame of outcomes from the post-treatment period.
+- `X₀::Any`: array or DataFrame of covariates from the pre-treatment period.
+- `Y₁::Any`: array or DataFrame of outcomes from the pre-treatment period.
+- `X₁::Any`: array or DataFrame of covariates from the post-treatment period.
+- `Y₁::Any`: array or DataFrame of outcomes from the post-treatment period.
 
 # Keywords
 - `activation::Function=relu`: activation function to use.
@@ -31,10 +31,6 @@ For a simple linear regression-based tutorial on interrupted time series analysi
     Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
     regression for the evaluation of public health interventions: a tutorial." International 
     journal of epidemiology 46, no. 1 (2017): 348-355.
-
-For details and a derivation of the generalized cross validation estimator see:
-    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 # Examples
 ```julia
@@ -100,9 +96,9 @@ end
 Initialize a G-Computation estimator.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: array or DataFrame of covariates.
+- `T::Any`: vector or DataFrame of treatment statuses.
+- `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
 - `quantity_of_interest::String`: ATE for average treatment effect or ATT for average 
@@ -127,11 +123,6 @@ For a good overview of G-Computation see:
     Foucher. "G-computation, propensity score-based methods, and targeted maximum likelihood 
     estimator for causal inference with different covariates sets: a comparative simulation 
     study." Scientific reports 10, no. 1 (2020): 9219.
-
-
-For details and a derivation of the generalized cross validation estimator see:
-    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
 
 # Examples
 ```julia
@@ -194,12 +185,11 @@ end
 Initialize a double machine learning estimator with cross fitting.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates of interest.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: array or DataFrame of covariates of interest.
+- `T::Any`: vector or DataFrame of treatment statuses.
+- `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
-- `W::Any`: array or dataframe of all possible confounders.
 - `activation::Function=relu`: activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for teh extreme 
     learners.
@@ -220,10 +210,6 @@ For more information see:
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
     structural parameters." (2016): C1-C68.
 
-For details and a derivation of the generalized cross validation estimator see:
-    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
-
 # Examples
 ```julia
 julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
@@ -235,7 +221,7 @@ julia> m2 = DoubleMachineLearning(x_df, t_df, y_df)
 ```
 """
 mutable struct DoubleMachineLearning <: CausalEstimator
-    @double_learner_input_data
+    @standard_input_data
     @model_config average_effect
     folds::Integer
 end
@@ -244,16 +230,15 @@ function DoubleMachineLearning(
     X,
     T,
     Y;
-    W=X,
     activation::Function=relu,
     sample_size::Integer=size(X, 1),
     num_machines::Integer=100,
     num_feats::Integer=Int(round(sqrt(size(X, 2)))),
-    num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
+    num_neurons::Integer=round(Int, log10(size(X, 1)) * num_feats),
     folds::Integer=5,
 )
     # Convert to arrays
-    X, T, Y, W = Matrix{Float64}(X), T[:, 1], Y[:, 1], Matrix{Float64}(W)
+    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
     task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -261,7 +246,6 @@ function DoubleMachineLearning(
         X,
         float(T),
         float(Y),
-        W,
         "ATE",
         false,
         task,
@@ -388,7 +372,7 @@ julia> estimate_causal_effect!(m2)
 ```
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
-    X, T, W, Y = make_folds(DML)
+    X, T, Y = generate_folds(DML.X, DML.T, DML.Y, DML.folds)
     DML.causal_effect = 0
 
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
@@ -396,11 +380,8 @@ function estimate_causal_effect!(DML::DoubleMachineLearning)
         X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
         Y_train, Y_test = reduce(vcat, Y[1:end .!== fld]), Y[fld]
         T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
-        W_train, W_test = reduce(vcat, W[1:end .!== fld]), W[fld]
 
-        Ỹ, T̃ = predict_residuals(
-            DML, X_train, X_test, Y_train, Y_test, T_train, T_test, W_train, W_test
-        )
+        Ỹ, T̃ = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test)
 
         DML.causal_effect += T̃\Ỹ
     end
@@ -429,81 +410,41 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 """
 function predict_residuals(
     D, 
-    x_train::Array{Float64}, 
-    x_test::Array{Float64}, 
-    y_train::Vector{Float64}, 
-    y_test::Vector{Float64}, 
-    t_train::Vector{Float64}, 
-    t_test::Vector{Float64}, 
-    w_train::Array{Float64}, 
-    w_test::Array{Float64},
+    xₜᵣ::Array{Float64}, 
+    xₜₑ::Array{Float64}, 
+    yₜᵣ::Vector{Float64}, 
+    yₜₑ::Vector{Float64}, 
+    tₜᵣ::Vector{Float64}, 
+    tₜₑ::Vector{Float64}, 
 )
-    V = x_train != w_train && x_test != w_test ? reduce(hcat, (x_train, w_train)) : x_train
-    V_test = V == x_train ? x_test : reduce(hcat, (x_test, w_test))
-
-    y = ELMEnsemble(V, 
-        y_train, 
-        D.sample_size, 
-        D.num_machines, 
-        D.num_feats, 
-        D.num_neurons, 
-        D.activation
+    y = ELMEnsemble(
+        xₜᵣ, yₜᵣ, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
     )
 
-    t = ELMEnsemble(V, 
-        t_train, 
-        D.sample_size, 
-        D.num_machines, 
-        D.num_feats, 
-        D.num_neurons, 
-        D.activation
+    t = ELMEnsemble(
+        xₜᵣ, tₜᵣ, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
     )
 
     fit!(y)
     fit!(t)
 
-    y_pred, t_pred = predict_mean(y, V_test), predict_mean(t, V_test)
-    ỹ, t̃ = y_test - y_pred, t_test - t_pred
+    yₚᵣ, tₚᵣ = predict_mean(y, xₜₑ), predict_mean(t, xₜₑ)
 
-    return ỹ, t̃
+    return yₜₑ - yₚᵣ, tₜₑ - tₚᵣ
 end
 
 """
-    make_folds(D)
-
-Make folds for cross fitting for a double machine learning estimator.
-
-# Notes
-This method should not be called directly.
-
-# Examples
-```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> make_folds(m1)
-```
-"""
-function make_folds(D)
-    X_T_W, Y = generate_folds(reduce(hcat, (D.X, D.T, D.W)), D.Y, D.folds)
-    X = [fl[:, 1:size(D.X, 2)] for fl in X_T_W]
-    T = [fl[:, size(D.X, 2) + 1] for fl in X_T_W]
-    W = [fl[:, (size(D.X, 2) + 2):end] for fl in X_T_W]
-
-    return X, T, W, Y
-end
-
-"""
-    generate_folds(X, Y, folds)
+    generate_folds(X, T, Y, folds)
 
 Create folds for cross validation.
 
 # Examples
 ```jldoctest
-julia> xfolds, y_folds = CausalELM.generate_folds(zeros(4, 2), zeros(4), 2)
-([[0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0]], [[0.0], [0.0, 0.0, 0.0]])
+julia> xfolds, tfolds, yfolds = CausalELM.generate_folds(zeros(4, 2), zeros(4), ones(4), 2)
+([[0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0]], [[0.0], [0.0, 0.0, 0.0]], [[1.0], [1.0, 1.0, 1.0]])
 ```
 """
-function generate_folds(X, Y, folds)
+function generate_folds(X, T, Y, folds)
     msg = """the number of folds must be less than the number of observations"""
     n = length(Y)
 
@@ -511,8 +452,9 @@ function generate_folds(X, Y, folds)
         throw(ArgumentError(msg))
     end
 
-    fold_setx = Array{Array{Float64,2}}(undef, folds)
-    fold_sety = Array{Array{Float64,1}}(undef, folds)
+    x_folds = Array{Array{Float64, 2}}(undef, folds)
+    t_folds = Array{Array{Float64, 1}}(undef, folds)
+    y_folds = Array{Array{Float64, 1}}(undef, folds)
 
     # Indices to start and stop for each fold
     stops = round.(Int, range(; start=1, stop=n, length=folds + 1))
@@ -521,10 +463,10 @@ function generate_folds(X, Y, folds)
     indices = [s:(e - (e < n) * 1) for (s, e) in zip(stops[1:(end - 1)], stops[2:end])]
 
     for (i, idx) in enumerate(indices)
-        fold_setx[i], fold_sety[i] = X[idx, :], Y[idx]
+        x_folds[i], t_folds[i], y_folds[i] = X[idx, :], T[idx], Y[idx]
     end
 
-    return fold_setx, fold_sety
+    return x_folds, t_folds, y_folds
 end
 
 """

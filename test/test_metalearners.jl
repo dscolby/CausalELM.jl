@@ -52,22 +52,15 @@ estimate_causal_effect!(x_learner_binary)
 rlearner = RLearner(x, t, y)
 estimate_causal_effect!(rlearner)
 
-# Testing with a W arguments
-r_learner_w = RLearner(x, t, y; W=rand(100, 4))
-estimate_causal_effect!(r_learner_w)
-
 # Testing initialization with DataFrames
 r_learner_df = RLearner(x_df, t_df, y_df)
 
 # Doubly Robust Estimation
-dr_learner = DoublyRobustLearner(x, t, y; W=rand(100, 4))
-X_T, Y = CausalELM.generate_folds(
-    reduce(hcat, (dr_learner.X, dr_learner.T, dr_learner.W)), dr_learner.Y, 2
-)
-X = [fl[:, 1:size(dr_learner.X, 2)] for fl in X_T]
-T = [fl[:, size(dr_learner.X, 2) + 1] for fl in X_T]
-W = [fl[:, (size(dr_learner.W, 2) + 2):end] for fl in X_T]
-τ̂ = CausalELM.doubly_robust_formula!(dr_learner, X, T, Y, reduce(hcat, (W, X)))
+dr_learner = DoublyRobustLearner(x, t, y)
+X, T, Y = CausalELM.generate_folds(
+    dr_learner.X, dr_learner.T, dr_learner.Y, dr_learner.folds
+    )
+τ̂ = CausalELM.doubly_robust_formula!(dr_learner, X, T, Y)
 estimate_causal_effect!(dr_learner)
 
 # Testing Doubly Robust Estimation with a binary outcome
@@ -151,20 +144,15 @@ end
         @test rlearner.X isa Array{Float64}
         @test rlearner.T isa Array{Float64}
         @test rlearner.Y isa Array{Float64}
-        @test rlearner.W isa Array{Float64}
         @test r_learner_df.X isa Array{Float64}
         @test r_learner_df.T isa Array{Float64}
         @test r_learner_df.Y isa Array{Float64}
-        @test r_learner_df.W isa Array{Float64}
     end
 
     @testset "R-learner estimation" begin
         @test rlearner.causal_effect isa Vector
         @test length(rlearner.causal_effect) == length(y)
         @test eltype(rlearner.causal_effect) == Float64
-        @test r_learner_w.causal_effect isa Vector
-        @test length(r_learner_w.causal_effect) == length(y)
-        @test eltype(r_learner_w.causal_effect) == Float64
     end
 end
 

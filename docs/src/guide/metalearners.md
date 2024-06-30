@@ -50,15 +50,18 @@ event outcomes.
     variables.
 
 !!! tip
-    Additional options can be specified for each type of metalearner using its keyword arguments.
+    You can also specify the the number of folds to use for cross-fitting, the number of 
+    extreme learning machines to incorporate in the ensemble, the number of features to 
+    consider for each extreme learning machine, the activation function to use, the number 
+    of observations to bootstrap in each extreme learning machine, and the number of neurons 
+    in each extreme learning machine. These arguments are specified with the folds, 
+    num_machines, num_features, activation, sample_size, and num\_neurons keywords.
+
 ```julia
 # Generate data to use
 X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
 
-# We can also speficy potential confounders that we are not interested in
-W = randn(1000, 6)
-
-# We could also use DataFrames
+# We could also use DataFrames or any other package that implements the Tables.jl API
 # using DataFrames
 # X = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
 # T, Y = DataFrame(t=[rand()<0.4 for i in 1:1000]), DataFrame(y=rand(1000))
@@ -66,8 +69,8 @@ W = randn(1000, 6)
 s_learner = SLearner(X, Y, T)
 t_learner = TLearner(X, Y, T)
 x_learner = XLearner(X, Y, T)
-r_learner = RLearner(X, Y, T, W=W)
-dr_learner = DoublyRobustLearner(X, T, Y, W=W)
+r_learner = RLearner(X, Y, T)
+dr_learner = DoublyRobustLearner(X, T, Y)
 ```
 
 # Estimate the CATE

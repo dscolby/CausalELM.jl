@@ -169,25 +169,3 @@ macro standard_input_data()
     end
     return esc(inputs)
 end
-
-"""
-    double_learner_input_data()
-
-Generate fields common to DoubleMachineLearning, RLearner, and DoublyRobustLearner.
-
-# Examples
-```julia
-julia> struct TestStruct CausalELM.@double_learner_input_data end
-julia> TestStruct([5.2], [0.8], [0.96], [0.87 1.8])
-TestStruct([5.2], [0.8], [0.96], [0.87 1.8])
-```
-"""
-macro double_learner_input_data()
-    inputs = quote
-        X::Array{Float64}
-        T::Array{Float64}
-        Y::Array{Float64}
-        W::Array{Float64}
-    end
-    return esc(inputs)
-end
