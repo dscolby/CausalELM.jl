@@ -259,8 +259,7 @@ julia> set_weights_biases(m1)
 ```
 """
 function set_weights_biases(model::ExtremeLearner)
-    n_in, n_out = size(model.X, 2), model.hidden_neurons
-    a, b = -sqrt(6) / sqrt(n_in + n_out), sqrt(6) / sqrt(n_in + n_out)
+    a, b = -1, 1
     model.weights = @fastmath a .+ ((b - a) .* rand(model.features, model.hidden_neurons))
 
     return model.H = @fastmath model.activation((model.X * model.weights))

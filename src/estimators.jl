@@ -388,31 +388,6 @@ julia> estimate_causal_effect!(m2)
 ```
 """
 function estimate_causal_effect!(DML::DoubleMachineLearning)
-    causal_loss!(DML)
-    DML.causal_effect /= DML.folds
-
-    return DML.causal_effect
-end
-
-"""
-    causal_loss!(DML, [,cate])
-
-Minimize the causal loss function for double machine learning.
-
-# Notes
-This method should not be called directly.
-
-# Arguments
-- `DML::DoubleMachineLearning`: the DoubleMachineLearning struct to estimate the effect for.
-
-# Examples
-```julia
-julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100)
-julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> causal_loss!(m1)
-```
-"""
-function causal_loss!(DML::DoubleMachineLearning)
     X, T, W, Y = make_folds(DML)
     DML.causal_effect = 0
 
@@ -426,8 +401,12 @@ function causal_loss!(DML::DoubleMachineLearning)
         Ỹ, T̃ = predict_residuals(
             DML, X_train, X_test, Y_train, Y_test, T_train, T_test, W_train, W_test
         )
-        DML.causal_effect += (vec(sum(T̃ .* X_test; dims=2)) \ Ỹ)[1]
+
+        DML.causal_effect += T̃\Ỹ
     end
+    DML.causal_effect /= DML.folds
+
+    return DML.causal_effect
 end
 
 """
@@ -462,11 +441,22 @@ function predict_residuals(
     V = x_train != w_train && x_test != w_test ? reduce(hcat, (x_train, w_train)) : x_train
     V_test = V == x_train ? x_test : reduce(hcat, (x_test, w_test))
 
-    y = ELMEnsemble(
-        V, y_train, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
+    y = ELMEnsemble(V, 
+        y_train, 
+        D.sample_size, 
+        D.num_machines, 
+        D.num_feats, 
+        D.num_neurons, 
+        D.activation
     )
-    t = ELMEnsemble(
-        V, t_train, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
+
+    t = ELMEnsemble(V, 
+        t_train, 
+        D.sample_size, 
+        D.num_machines, 
+        D.num_feats, 
+        D.num_neurons, 
+        D.activation
     )
 
     fit!(y)
