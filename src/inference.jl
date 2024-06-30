@@ -194,7 +194,7 @@ function generate_null_distribution(mod, n)
     results = Vector{Float64}(undef, n)
 
     # Generate random treatment assignments and estimate the causal effects
-    for iter in 1:n
+    Threads.@threads for iter in 1:n
         
         # Sample from a continuous distribution if the treatment is continuous
         if var_type(mod.T) isa Continuous
@@ -234,7 +234,7 @@ function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
     data = reduce(hcat, (reduce(vcat, (its.X₀, its.X₁)), reduce(vcat, (its.Y₀, its.Y₁))))
 
     # Generate random treatment assignments and estimate the causal effects
-    for iter in 1:n
+    Threads.@threads for iter in 1:n
         permuted_data = data[shuffle(1:end), :]
         permuted_x₀ = permuted_data[1:split_idx, 1:(end - 1)]
         permuted_x₁ = permuted_data[(split_idx + 1):end, 1:(end - 1)]
