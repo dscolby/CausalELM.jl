@@ -1,3 +1,5 @@
+using LinearAlgebra: Diagonal
+
 """Abstract type for metalearners"""
 abstract type Metalearner end
 
@@ -449,7 +451,7 @@ function estimate_causal_effect!(t::TLearner)
 
     fit!(t.μ₀)
     fit!(t.μ₁)
-    predictionsₜ, predictionsᵪ = predict_mean(t.μ₁, t.X), predict_mean(t.μ₀, t.X)
+    predictionsₜ, predictionsᵪ = predict(t.μ₁, t.X), predict(t.μ₀, t.X)
     t.causal_effect = @fastmath vec(predictionsₜ - predictionsᵪ)
 
     return t.causal_effect
@@ -478,7 +480,7 @@ function estimate_causal_effect!(x::XLearner)
     μχ₀, μχ₁ = stage2!(x)
 
     x.causal_effect = @fastmath vec((
-        (x.ps .* predict_mean(μχ₀, x.X)) .+ ((1 .- x.ps) .* predict_mean(μχ₁, x.X))
+        (x.ps .* predict(μχ₀, x.X)) .+ ((1 .- x.ps) .* predict(μχ₁, x.X))
     ))
 
     return x.causal_effect
@@ -502,35 +504,28 @@ julia> estimate_causal_effect!(m1)
 ```
 """
 function estimate_causal_effect!(R::RLearner)
-    X, T, Y = generate_folds(R.X, R.T, R.Y, R.folds)
-    predictors = Vector{ELMEnsemble}(undef, R.folds)
+    X, T̃, Ỹ = generate_folds(R.X, R.T, R.Y, R.folds)
+    R.X, R.T, R.Y = reduce(vcat, X), reduce(vcat, T̃), reduce(vcat, Ỹ)
 
-    # Cross fitting by training on the main folds and predicting residuals on the auxillary
-    for fld in 1:(R.folds)
-        X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
-        Y_train, Y_test = reduce(vcat, Y[1:end .!== fld]), Y[fld]
-        T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
-
-        Ỹ, T̃ = predict_residuals(R, X_train, X_test, Y_train, Y_test, T_train, T_test)
-
-        # Using the weight trick to get the non-parametric CATE for an R-learner
-        X[fld], Y[fld] = (T̃ .^ 2) .* X_test, (T̃ .^ 2) .* (Ỹ ./ T̃)
-        mod = ELMEnsemble(
-            X[fld], 
-            Y[fld], 
-            R.sample_size, 
-            R.num_machines, 
-            R.num_feats, 
-            R.num_neurons, 
-            R.activation
-        )
-
-        fit!(mod)
-        predictors[fld] = mod
+    # Get residuals from out-of-fold predictions
+    for f in 1:(R.folds)
+        X_train, X_test = reduce(vcat, X[1:end .!== f]), X[f]
+        Y_train, Y_test = reduce(vcat, Ỹ[1:end .!== f]), Ỹ[f]
+        T_train, T_test = reduce(vcat, T̃[1:end .!== f]), T̃[f]
+        Ỹ[f], T̃[f] = predict_residuals(R, X_train, X_test, Y_train, Y_test, T_train, T_test)
     end
 
-    final_predictions = [predict_mean(m, reduce(vcat, X)) for m in predictors]
-    R.causal_effect = vec(mapslices(mean, reduce(hcat, final_predictions); dims=2))
+    # Using target transformation and the weight trick to minimize the causal loss
+    T̃², target = reduce(vcat, T̃).^2, reduce(vcat, T̃) ./ reduce(vcat, Ỹ)
+    W⁻⁵ᵉ⁻¹ = Diagonal(sqrt.(T̃²))
+    Xʷ, Yʷ = W⁻⁵ᵉ⁻¹ * R.X, W⁻⁵ᵉ⁻¹ * target
+
+    # Fit a weighted residual-on-residual model
+    final_model = ELMEnsemble(
+        Xʷ, Yʷ, R.sample_size, R.num_machines, R.num_feats, R.num_neurons, R.activation
+    )
+    fit!(final_model)
+    R.causal_effect = predict(final_model, R.X)
 
     return R.causal_effect
 end
@@ -585,7 +580,7 @@ This method should not be called directly.
 # Examples
 ```julia
 julia> X, T, Y, W =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
-julia> m1 = DoublyRobustLearner(X, T, Y, W=W)
+julia> m1 = DoublyRobustLearner(X, T, Y)
 
 julia> X, T, W, Y = make_folds(m1)
 julia> Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
@@ -604,7 +599,7 @@ function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y)
         DRE.activation
     )
 
-    # Outcome predictions
+    # Outcome models
     μ₀ = ELMEnsemble(
         X[1][T[1] .== 0, :], 
         Y[1][T[1] .== 0], 
@@ -626,7 +621,7 @@ function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y)
     )
 
     fit!.((π_e, μ₀, μ₁))
-    π̂ , μ₀̂, μ₁̂  = predict_mean(π_e, X[2]), predict_mean(μ₀, X[2]), predict_mean(μ₁, X[2])
+    π̂ , μ₀̂, μ₁̂  = predict(π_e, X[2]), predict(μ₀, X[2]), predict(μ₁, X[2])
 
     # Pseudo outcomes
     ϕ̂ =
@@ -644,8 +639,7 @@ function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y)
         DRE.activation
     )
     fit!(τ_est)
-
-    return predict_mean(τ_est, DRE.X)
+    return predict(τ_est, DRE.X)
 end
 
 """
@@ -690,7 +684,7 @@ function stage1!(x::XLearner)
 
     # Get propensity scores
     fit!(g)
-    x.ps = predict_mean(g, x.X)
+    x.ps = predict(g, x.X)
 
     # Fit first stage outcome models
     fit!(x.μ₀)
@@ -714,7 +708,7 @@ julia> stage2!(m1)
 ```
 """
 function stage2!(x::XLearner)
-    m₁, m₀ = predict_mean(x.μ₁, x.X .- x.Y), predict_mean(x.μ₀, x.X)
+    m₁, m₀ = predict(x.μ₁, x.X .- x.Y), predict(x.μ₀, x.X)
     d = ifelse(x.T === 0, m₁, x.Y .- m₀)
     
     μχ₀ = ELMEnsemble(

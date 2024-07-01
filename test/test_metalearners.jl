@@ -153,6 +153,7 @@ end
         @test rlearner.causal_effect isa Vector
         @test length(rlearner.causal_effect) == length(y)
         @test eltype(rlearner.causal_effect) == Float64
+        @test all(isnan, rlearner.causal_effect) == false
     end
 end
 
@@ -175,6 +176,7 @@ end
         @test dr_learner.causal_effect isa Vector
         @test length(dr_learner.causal_effect) === length(y)
         @test eltype(dr_learner.causal_effect) == Float64
+        @test all(isnan, dr_learner.causal_effect) == false
         @test dr_learner_df.causal_effect isa Vector
         @test length(dr_learner_df.causal_effect) === length(y)
         @test eltype(dr_learner_df.causal_effect) == Float64
