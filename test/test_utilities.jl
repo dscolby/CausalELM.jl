@@ -50,6 +50,12 @@ double_model_input_ground_truth = quote
     W::Array{Float64}
 end
 
+# Generating folds
+big_x, big_t, big_y = rand(10000, 8), rand(0:1, 10000), vec(rand(1:100, 10000, 1))
+dm = DoubleMachineLearning(big_x, big_t, big_y)
+estimate_causal_effect!(dm)
+x_fold, t_fold, y_fold = CausalELM.generate_folds(dm.X, dm.T, dm.Y, dm.folds)
+
 @testset "Moments" begin
     @test mean([1, 2, 3]) == 2
     @test CausalELM.var([1, 2, 3]) == 1
@@ -95,4 +101,11 @@ end
         double_model_input_expr.args[double_model_input_idx] ==
         double_model_input_ground_truth.args[double_model_input_idx]
     )
+end
+
+@testset "Generating Folds" begin
+    @test size(x_fold[1], 2) == size(dm.X, 2)
+    @test y_fold isa Vector{Vector{Float64}}
+    @test t_fold isa Vector{Vector{Float64}}
+    @test length(t_fold) == dm.folds
 end

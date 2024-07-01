@@ -50,9 +50,6 @@ estimate_causal_effect!(dm_binary_out)
 # With dataframes instead of arrays
 dm_df = DoubleMachineLearning(x_df, t_df, y_df)
 
-# Generating folds
-x_fold, t_fold, y_fold = CausalELM.generate_folds(dm.X, dm.T, dm.Y, dm.folds)
-
 # Test predicting residuals
 x_train, x_test = x[1:80, :], x[81:end, :]
 t_train, t_test = float(t[1:80]), float(t[81:end])
@@ -129,11 +126,7 @@ end
         @test dm_df.Y !== Nothing
     end
 
-    @testset "Double Machine Learning Estimation Helpers" begin
-        @test size(x_fold[1], 2) == size(dm.X, 2)
-        @test y_fold isa Vector{Vector{Float64}}
-        @test t_fold isa Vector{Vector{Float64}}
-        @test length(t_fold) == dm.folds
+    @testset "Generating Residuals" begin
         @test residuals[1] isa Vector
         @test residuals[2] isa Vector
     end

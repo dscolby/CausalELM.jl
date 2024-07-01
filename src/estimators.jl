@@ -22,9 +22,8 @@ Initialize an interrupted time series estimator.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 
 # Notes
-To reduce computational complexity and overfitting, the model used to estimate the 
-counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
-computational complexity you can reduce sample_size, num_machines, or num_neurons.
+To reduce the computational complexity you can reduce sample_size, num_machines, or 
+num_neurons.
 
 # References
 For a simple linear regression-based tutorial on interrupted time series analysis see:
@@ -112,9 +111,8 @@ Initialize a G-Computation estimator.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 
 # Notes
-To reduce computational complexity and overfitting, the model used to estimate the 
-counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
-computational complexity you can reduce sample_size, num_machines, or num_neurons.
+To reduce the computational complexity you can reduce sample_size, num_machines, or 
+num_neurons.
 
 # References
 For a good overview of G-Computation see:
@@ -200,9 +198,8 @@ Initialize a double machine learning estimator with cross fitting.
 - `folds::Integer`: number of folds to use for cross fitting.
 
 # Notes
-To reduce computational complexity and overfitting, the model used to estimate the 
-counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
-computational complexity you can reduce sample_size, num_machines, or num_neurons.
+To reduce the computational complexity you can reduce sample_size, num_machines, or 
+num_neurons.
 
 # References
 For more information see:
@@ -431,42 +428,6 @@ function predict_residuals(
     yₚᵣ, tₚᵣ = predict_mean(y, xₜₑ), predict_mean(t, xₜₑ)
 
     return yₜₑ - yₚᵣ, tₜₑ - tₚᵣ
-end
-
-"""
-    generate_folds(X, T, Y, folds)
-
-Create folds for cross validation.
-
-# Examples
-```jldoctest
-julia> xfolds, tfolds, yfolds = CausalELM.generate_folds(zeros(4, 2), zeros(4), ones(4), 2)
-([[0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0]], [[0.0], [0.0, 0.0, 0.0]], [[1.0], [1.0, 1.0, 1.0]])
-```
-"""
-function generate_folds(X, T, Y, folds)
-    msg = """the number of folds must be less than the number of observations"""
-    n = length(Y)
-
-    if folds >= n
-        throw(ArgumentError(msg))
-    end
-
-    x_folds = Array{Array{Float64, 2}}(undef, folds)
-    t_folds = Array{Array{Float64, 1}}(undef, folds)
-    y_folds = Array{Array{Float64, 1}}(undef, folds)
-
-    # Indices to start and stop for each fold
-    stops = round.(Int, range(; start=1, stop=n, length=folds + 1))
-
-    # Indices to use for making folds
-    indices = [s:(e - (e < n) * 1) for (s, e) in zip(stops[1:(end - 1)], stops[2:end])]
-
-    for (i, idx) in enumerate(indices)
-        x_folds[i], t_folds[i], y_folds[i] = X[idx, :], T[idx], Y[idx]
-    end
-
-    return x_folds, t_folds, y_folds
 end
 
 """

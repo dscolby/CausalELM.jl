@@ -169,3 +169,39 @@ macro standard_input_data()
     end
     return esc(inputs)
 end
+
+"""
+    generate_folds(X, T, Y, folds)
+
+Create folds for cross validation.
+
+# Examples
+```jldoctest
+julia> xfolds, tfolds, yfolds = CausalELM.generate_folds(zeros(4, 2), zeros(4), ones(4), 2)
+([[0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0]], [[0.0], [0.0, 0.0, 0.0]], [[1.0], [1.0, 1.0, 1.0]])
+```
+"""
+function generate_folds(X, T, Y, folds)
+    msg = """the number of folds must be less than the number of observations"""
+    n = length(Y)
+
+    if folds >= n
+        throw(ArgumentError(msg))
+    end
+
+    x_folds = Array{Array{Float64, 2}}(undef, folds)
+    t_folds = Array{Array{Float64, 1}}(undef, folds)
+    y_folds = Array{Array{Float64, 1}}(undef, folds)
+
+    # Indices to start and stop for each fold
+    stops = round.(Int, range(; start=1, stop=n, length=folds + 1))
+
+    # Indices to use for making folds
+    indices = [s:(e - (e < n) * 1) for (s, e) in zip(stops[1:(end - 1)], stops[2:end])]
+
+    for (i, idx) in enumerate(indices)
+        x_folds[i], t_folds[i], y_folds[i] = X[idx, :], T[idx], Y[idx]
+    end
+
+    return x_folds, t_folds, y_folds
+end

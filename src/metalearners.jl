@@ -21,9 +21,8 @@ Initialize a S-Learner.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 
 # Notes
-To reduce computational complexity and overfitting, the model used to estimate the 
-counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
-computational complexity you can reduce sample_size, num_machines, or num_neurons.
+To reduce the computational complexity you can reduce sample_size, num_machines, or 
+num_neurons.
 
 # References
 For an overview of S-Learners and other metalearners see:
@@ -101,9 +100,8 @@ Initialize a T-Learner.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 
 # Notes
-To reduce computational complexity and overfitting, the model used to estimate the 
-counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
-computational complexity you can reduce sample_size, num_machines, or num_neurons.
+To reduce the computational complexity you can reduce sample_size, num_machines, or 
+num_neurons.
 
 # References
 For an overview of T-Learners and other metalearners see:
@@ -180,9 +178,8 @@ Initialize an X-Learner.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 
 # Notes
-To reduce computational complexity and overfitting, the model used to estimate the 
-counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
-computational complexity you can reduce sample_size, num_machines, or num_neurons.
+To reduce the computational complexity you can reduce sample_size, num_machines, or 
+num_neurons.
 
 # References
 For an overview of X-Learners and other metalearners see:
@@ -260,9 +257,8 @@ Initialize an R-Learner.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 
 # Notes
-To reduce computational complexity and overfitting, the model used to estimate the 
-counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
-computational complexity you can reduce sample_size, num_machines, or num_neurons.
+To reduce the computational complexity you can reduce sample_size, num_machines, or 
+num_neurons.
 
 ## References
 For an explanation of R-Learner estimation see:
@@ -339,9 +335,8 @@ Initialize a doubly robust CATE estimator.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
 
 # Notes
-To reduce computational complexity and overfitting, the model used to estimate the 
-counterfactual is a bagged ensemble extreme learning machines. To further reduce the 
-computational complexity you can reduce sample_size, num_machines, or num_neurons.
+To reduce the computational complexity you can reduce sample_size, num_machines, or 
+num_neurons.
 
 # References
 For an explanation of doubly robust cate estimation see:
