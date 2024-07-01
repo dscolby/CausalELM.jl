@@ -6,6 +6,7 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 *   Implemented bagged ensemble of extreme learning machines to use with estimators [#67](https://github.com/dscolby/CausalELM.jl/issues/67)
 ### Changed
 *   Compute the number of neurons to use with log heuristic instead of cross validation [#62](https://github.com/dscolby/CausalELM.jl/issues/62)
+*   Calculate probabilities as the average label predicted by the ensemble instead of clipping [#71](https://github.com/dscolby/CausalELM.jl/issues/71)
 *   Made calculation of p-values and standard errors optional and not executed by default in summarize methods [#65](https://github.com/dscolby/CausalELM.jl/issues/65)
 *   Removed redundant W argument for double machine learning, R-learning, and doubly robust estimation [#68](https://github.com/dscolby/CausalELM.jl/issues/68)
 ### Fixed

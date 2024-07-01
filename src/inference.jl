@@ -189,7 +189,7 @@ julia> generate_null_distribution(g_computer, 500)
 ```
 """
 function generate_null_distribution(mod, n)
-    local m = deepcopy(mod)
+    m = deepcopy(mod)
     nobs = size(m.T, 1)
     results = Vector{Float64}(undef, n)
 

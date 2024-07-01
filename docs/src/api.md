@@ -46,7 +46,6 @@ fourier
 CausalELM.g_formula!
 CausalELM.causal_loss!
 CausalELM.predict_residuals
-CausalELM.make_folds
 CausalELM.moving_average
 CausalELM.generate_folds
 ```
@@ -117,5 +116,4 @@ CausalELM.one_hot_encode
 CausalELM.clip_if_binary
 CausalELM.@model_config
 CausalELM.@standard_input_data
-CausalELM.@double_learner_input_data
 ```

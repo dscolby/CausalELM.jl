@@ -66,7 +66,7 @@ end
 end
 
 @testset "Clipping" begin
-    @test CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Binary()) == [0.9999999, 1.0e-7]
+    @test CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Binary()) == [1.0, 0.0]
     @test CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Count()) == [1.2, -0.02]
 end
 

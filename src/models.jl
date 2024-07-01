@@ -1,5 +1,5 @@
 using Random: shuffle
-using CausalELM: mean, clip_if_binary, var_type
+using CausalELM: mean, var_type, clip_if_binary
 
 """
     ExtremeLearner(X, Y, hidden_neurons, activation)
@@ -173,17 +173,17 @@ function predict(model::ExtremeLearner, X)
 
     predictions = model.activation(X * model.weights) * model.β
 
-    return @fastmath clip_if_binary(predictions, var_type(model.Y))
+    return clip_if_binary(predictions, var_type(model.Y))
 end
 
 @inline function predict(model::ELMEnsemble, X) 
-    return reduce(
+    predictions = reduce(
         hcat, 
         [predict(model.elms[i], X[:, model.feat_indices[i]]) for i ∈ 1:length(model.elms)]
     )
-end
 
-predict_mean(model::ELMEnsemble, X) = vec(mapslices(mean, predict(model, X), dims=2))
+    return vec(mapslices(mean, predictions, dims=2))
+end
 
 """
     predict_counterfactual!(model, X)

@@ -280,7 +280,7 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     )
 
     fit!(learner)
-    its.causal_effect = predict_mean(learner, its.X₁) - its.Y₁
+    its.causal_effect = predict(learner, its.X₁) - its.Y₁
 
     return its.causal_effect
 end
@@ -347,7 +347,7 @@ function g_formula!(g)  # Keeping this separate enables it to be reused for S-Le
 
     fit!(g.ensemble)
     
-    yₜ, yᵤ = predict_mean(g.ensemble, Xₜ), predict_mean(g.ensemble, Xᵤ)
+    yₜ, yᵤ = predict(g.ensemble, Xₜ), predict(g.ensemble, Xᵤ)
 
     return vec(yₜ) - vec(yᵤ)
 end
@@ -425,7 +425,7 @@ function predict_residuals(
     fit!(y)
     fit!(t)
 
-    yₚᵣ, tₚᵣ = predict_mean(y, xₜₑ), predict_mean(t, xₜₑ)
+    yₚᵣ, tₚᵣ = predict(y, xₜₑ), predict(t, xₜₑ)
 
     return yₜₑ - yₚᵣ, tₜₑ - tₚᵣ
 end

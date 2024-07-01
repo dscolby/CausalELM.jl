@@ -36,7 +36,6 @@ set_weights_biases(nofit)
 ensemble = ELMEnsemble(big_x, big_y, 10000, 100, 5, 10, relu)
 fit!(ensemble)
 predictions = predict(ensemble, big_x)
-mean_predictions = predict_mean(ensemble, big_x)
 
 @testset "Extreme Learning Machines" begin
     @testset "Extreme Learning Machine Structure" begin
@@ -96,10 +95,8 @@ end
     
     @testset "Ensemble Fitting and Prediction" begin
         @test all([elm.__fit for elm in ensemble.elms]) == true
-        @test predictions isa Matrix{Float64}
-        @test size(predictions) == (10000, 100)
-        @test mean_predictions isa Vector{Float64}
-        @test length(mean_predictions) == 10000
+        @test predictions isa Vector{Float64}
+        @test length(predictions) == 10000
     end
 
     @testset "Print Models" begin

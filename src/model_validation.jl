@@ -576,13 +576,13 @@ function risk_ratio(::Binary, ::Binary, mod)
 
     # For algorithms that use one model to estimate the outcome
     if hasfield(typeof(mod), :ensemble)
-        return @fastmath mean(predict_mean(mod.ensemble, Xₜ)) / mean(predict_mean(mod.ensemble, Xᵤ))
+        return @fastmath (mean(predict(mod.ensemble, Xₜ)) / mean(predict(mod.ensemble, Xᵤ)))
 
         # For models that use separate models for outcomes in the treatment and control group
     else
         hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
-        return @fastmath mean(predict_mean(mod.μ₁, Xₜ)) / mean(predict_mean(mod.μ₀, Xᵤ))
+        return @fastmath mean(predict(mod.μ₁, Xₜ)) / mean(predict(mod.μ₀, Xᵤ))
     end
 end
 
@@ -594,13 +594,13 @@ function risk_ratio(::Binary, ::Count, mod)
 
     # For estimators with a single model of the outcome variable
     if hasfield(typeof(mod), :ensemble)
-        return @fastmath (sum(predict_mean(mod.ensemble, Xₜ)) / m) /
-            (sum(predict_mean(mod.ensemble, Xᵤ)) / n)
+        return @fastmath (sum(predict(mod.ensemble, Xₜ)) / m) /
+            (sum(predict(mod.ensemble, Xᵤ)) / n)
 
         # For models that use separate models for outcomes in the treatment and control group
     elseif hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
-        return @fastmath mean(predict_mean(mod.μ₁, Xₜ)) / mean(predict_mean(mod.μ₀, Xᵤ))
+        return @fastmath mean(predict(mod.μ₁, Xₜ)) / mean(predict(mod.μ₀, Xᵤ))
     else
         learner = ELMEnsemble(
                 reduce(hcat, (mod.X, mod.T)), 
@@ -613,7 +613,7 @@ function risk_ratio(::Binary, ::Count, mod)
             )
 
         fit!(learner)
-        @fastmath mean(predict_mean(learner, Xₜ)) / mean(predict_mean(learner, Xᵤ))
+        @fastmath mean(predict(learner, Xₜ)) / mean(predict(learner, Xᵤ))
     end
 end
 
@@ -664,7 +664,7 @@ function positivity(model, min=1.0e-6, max=1 - min)
         )
 
     fit!(ps_mod)
-    propensity_scores = predict_mean(ps_mod, model.X)
+    propensity_scores = predict(ps_mod, model.X)
 
     # Observations that have a zero probability of treatment or control assignment
     return reduce(

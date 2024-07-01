@@ -95,8 +95,8 @@ See also [`var_type`](@ref).
 ```jldoctest
 julia> CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Binary())
 2-element Vector{Float64}:
- 0.9999999
- 1.0e-7
+ 1.0
+ 0.0
 
 julia> CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Count())
 2-element Vector{Float64}:
@@ -104,7 +104,7 @@ julia> CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Count())
  -0.02
 ```
 """
-clip_if_binary(x::Array{<:Real}, var) = var isa Binary ? clamp.(x, 1e-7, 1 - 1e-7) : x
+clip_if_binary(x::Array{<:Real}, var) = var isa Binary ? clamp.(x, 0.0, 1.0) : x
 
 """
     model_config(effect_type)
