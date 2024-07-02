@@ -164,7 +164,7 @@ end
     @testset "Counterfactual Consistency" begin
         @test CausalELM.counterfactual_consistency(
             g_computer, (0.25, 0.5, 0.75, 1.0), 10
-        ) isa Dict{Float64,Float64}
+        ) isa Dict{String,Float64}
     end
 
     @testset "Exchangeability" begin
@@ -194,7 +194,7 @@ end
 
 @testset "Double Machine Learning Assumptions" begin
     @test CausalELM.counterfactual_consistency(dml, (0.25, 0.5, 0.75, 1.0), 10) isa
-        Dict{Float64,Float64}
+        Dict{String, Float64}
     @test CausalELM.exchangeability(dml) isa Real
     @test size(CausalELM.positivity(dml), 2) == size(dml.X, 2) + 1
     @test length(validate(dml)) == 3
@@ -204,19 +204,19 @@ end
     @testset "Counterfactual Consistency" begin
         @test CausalELM.counterfactual_consistency(
             s_learner, (0.25, 0.5, 0.75, 1.0), 10
-        ) isa Dict{Float64,Float64}
+        ) isa Dict{String, Float64}
 
         @test CausalELM.counterfactual_consistency(
             t_learner, (0.25, 0.5, 0.75, 1.0), 10
-        ) isa Dict{Float64,Float64}
+        ) isa Dict{String, Float64}
 
         @test CausalELM.counterfactual_consistency(
             x_learner, (0.25, 0.5, 0.75, 1.0), 10
-        ) isa Dict{Float64,Float64}
+        ) isa Dict{String, Float64}
 
         @test CausalELM.counterfactual_consistency(
             dr_learner, (0.25, 0.5, 0.75, 1.0), 10
-        ) isa Dict{Float64,Float64}
+        ) isa Dict{String, Float64}
     end
 
     @testset "Exchangeability" begin

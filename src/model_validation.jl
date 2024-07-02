@@ -390,10 +390,11 @@ julia> counterfactual_consistency(g_computer)
 """
 function counterfactual_consistency(model, devs, iterations)
     counterfactual_model = deepcopy(model)
-    avg_counterfactual_effects = Dict{Float64,Float64}()
+    avg_counterfactual_effects = Dict{String,Float64}()
 
     for dev in devs
-        avg_counterfactual_effects[dev] = 0.0
+        key = string(dev) * " Standard Deviations from Observed Outcomes"
+        avg_counterfactual_effects[key] = 0.0
 
         # Averaging multiple iterations of random violatons for each std dev
         for iteration in 1:iterations
@@ -401,12 +402,12 @@ function counterfactual_consistency(model, devs, iterations)
             estimate_causal_effect!(counterfactual_model)
 
             if counterfactual_model isa Metalearner
-                avg_counterfactual_effects[dev] += mean(counterfactual_model.causal_effect)
+                avg_counterfactual_effects[key] += mean(counterfactual_model.causal_effect)
             else
-                avg_counterfactual_effects[dev] += counterfactual_model.causal_effect
+                avg_counterfactual_effects[key] += counterfactual_model.causal_effect
             end
         end
-        avg_counterfactual_effects[dev] /= iterations
+        avg_counterfactual_effects[key] /= iterations
     end
     return avg_counterfactual_effects
 end
