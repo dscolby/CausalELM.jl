@@ -1,5 +1,3 @@
-using LinearAlgebra: Diagonal
-
 """Abstract type for metalearners"""
 abstract type Metalearner end
 
@@ -516,9 +514,8 @@ function estimate_causal_effect!(R::RLearner)
     end
 
     # Using target transformation and the weight trick to minimize the causal loss
-    T̃², target = reduce(vcat, T̃).^2, reduce(vcat, T̃) ./ reduce(vcat, Ỹ)
-    W⁻⁵ᵉ⁻¹ = Diagonal(sqrt.(T̃²))
-    Xʷ, Yʷ = W⁻⁵ᵉ⁻¹ * R.X, W⁻⁵ᵉ⁻¹ * target
+    T̃², target = reduce(vcat, T̃).^2, reduce(vcat, Ỹ) ./ reduce(vcat, T̃)
+    Xʷ, Yʷ = R.X .* T̃², target .* T̃²
 
     # Fit a weighted residual-on-residual model
     final_model = ELMEnsemble(
