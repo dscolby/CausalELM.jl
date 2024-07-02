@@ -5,12 +5,6 @@ given at multiple times whose status depends on the health of the patient at a g
 One way to get an unbiased estimate of the causal effect is to use G-computation. The basic 
 steps for using G-computation in CausalELM are below.
 
-!!! note
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as in 
-    the previous penalty, then the procedure will stop early.
-
 !!! note 
     For a good overview of G-Computation see:
     
@@ -26,14 +20,13 @@ treatment statuses, and an outcome vector. It can support binary treatments and 
 continuous, time to event, and count outcome variables.
 
 !!! tip
-    You can also specify the causal estimand, whether to employ L2 regularization, which 
-    activation function to use, whether the data is of a temporal nature, the metric to use when 
-    using cross validation to find the best number of neurons, the minimum number of neurons to 
-    consider, the maximum number of neurons to consider, the number of folds to use during cross 
-    caidation, and the number of neurons to use in the ELM that learns a mapping from number of 
-    neurons to validation loss. These options are specified with the following keyword 
-    arguments: quantity\_of\_interest, regularized, activation, temporal, validation\_metric, 
-    min\_neurons, max\_neurons, folds, iterations, and approximator\_neurons.
+    You can also specify the causal estimand, which activation function to use, whether the 
+    data is of a temporal nature, the number of extreme learning machines to use, the 
+    number of features to consider for each extreme learning machine, the number of 
+    bootstrapped observations to include in each extreme learning machine, and the number of 
+    neurons to use during estimation. These options are specified with the following keyword 
+    arguments: quantity\_of\_interest, activation, temporal, num_machines, num_feats, 
+    sample_size, and num\_neurons.
 
 !!! note
     Internally, the outcome model is treated as a regression since extreme learning machines 
@@ -46,7 +39,7 @@ continuous, time to event, and count outcome variables.
 # Create some data with a binary treatment
 X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)
 
-# We could also use DataFrames
+# We could also use DataFrames or any other package that implements the Tables.jl API
 # using DataFrames
 # X = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
 # T, Y = DataFrame(t=[rand()<0.4 for i in 1:1000]), DataFrame(y=rand(1000))
@@ -66,12 +59,12 @@ We get a summary of the model that includes a p-value and standard error estimat
 asymptotic randomization inference by passing our model to the summarize method.
 
 Calling the summarize method returns a dictionary with the estimator's task (regression or 
-classification), the quantity of interest being estimated (ATE or ATT), whether the model 
-uses an L2 penalty, the activation function used in the model's outcome predictors, whether 
-the data is temporal, the validation metric used for cross validation to find the best 
-number of neurons, the number of neurons used in the ELMs used by the estimator, the number 
-of neurons used in the ELM used to learn a mapping from number of neurons to validation 
-loss during cross validation, the causal effect, standard error, and p-value.
+classification), the quantity of interest being estimated (ATE), whether the model uses an 
+L2 penalty (always true for DML), the activation function used in the model's outcome 
+predictors, whether the data is temporal, the number of neurons used in the ELMs used by the 
+estimator, the causal effect, standard error, and p-value. Due to long running times, 
+calculation of the p-value and standard error is not conducted and set to NaN unless 
+inference is set to true.
 ```julia
 summarize(g_computer)
 ```

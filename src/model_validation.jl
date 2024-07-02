@@ -1,37 +1,3 @@
-"""Abstract type used to dispatch risk_ratio on nonbinary treatments"""
-abstract type Nonbinary end
-
-"""Type used to dispatch risk_ratio on binary treatments"""
-struct Binary end
-
-"""Type used to dispatch risk_ratio on count treatments"""
-struct Count <: Nonbinary end
-
-"""Type used to dispatch risk_ratio on continuous treatments"""
-struct Continuous <: Nonbinary end
-
-"""
-    var_type(x)
-
-Determine the type of variable held by a vector.
-
-# Examples
-```jldoctest
-julia> CausalELM.var_type([1, 2, 3, 2, 3, 1, 1, 3, 2])
-CausalELM.Count()
-```
-"""
-function var_type(x::Array{<:Real})
-    x_set = Set(x)
-    if x_set == Set([0, 1]) || x_set == Set([0]) || x_set == Set([1])
-        return Binary()
-    elseif x_set == Set(round.(x_set))
-        return Count()
-    else
-        return Continuous()
-    end
-end
-
 """
     validate(its; kwargs...)
 
@@ -208,7 +174,7 @@ function covariate_independence(its::InterruptedTimeSeries; n=1000)
     x₀ = reduce(hcat, (its.X₀[:, 1:(end - 1)], zeros(size(its.X₀, 1))))
     x₁ = reduce(hcat, (its.X₁[:, 1:(end - 1)], ones(size(its.X₁, 1))))
     x = reduce(vcat, (x₀, x₁))
-    results = Dict{String,Float64}()
+    results = Dict{String, Float64}()
 
     # Estimate a linear regression with each covariate as a dependent variable and all other
     # covariates and time as independent variables
@@ -424,10 +390,11 @@ julia> counterfactual_consistency(g_computer)
 """
 function counterfactual_consistency(model, devs, iterations)
     counterfactual_model = deepcopy(model)
-    avg_counterfactual_effects = Dict{Float64,Float64}()
+    avg_counterfactual_effects = Dict{String,Float64}()
 
     for dev in devs
-        avg_counterfactual_effects[dev] = 0.0
+        key = string(dev) * " Standard Deviations from Observed Outcomes"
+        avg_counterfactual_effects[key] = 0.0
 
         # Averaging multiple iterations of random violatons for each std dev
         for iteration in 1:iterations
@@ -435,12 +402,12 @@ function counterfactual_consistency(model, devs, iterations)
             estimate_causal_effect!(counterfactual_model)
 
             if counterfactual_model isa Metalearner
-                avg_counterfactual_effects[dev] += mean(counterfactual_model.causal_effect)
+                avg_counterfactual_effects[key] += mean(counterfactual_model.causal_effect)
             else
-                avg_counterfactual_effects[dev] += counterfactual_model.causal_effect
+                avg_counterfactual_effects[key] += counterfactual_model.causal_effect
             end
         end
-        avg_counterfactual_effects[dev] /= iterations
+        avg_counterfactual_effects[key] /= iterations
     end
     return avg_counterfactual_effects
 end
@@ -592,7 +559,7 @@ function risk_ratio(::Nonbinary, mod)
         # Otherwise, we convert the treatment variable to a binary variable and then 
         # dispatch based on the type of outcome variable
     else
-        original_T, binary_T = mod.T, binarize(mod.T, mean(mod.Y))
+        original_T, binary_T = mod.T, binarize(mod.T, mean(mod.T))
         mod.T = binary_T
         rr = risk_ratio(Binary(), mod)
 
@@ -609,8 +576,8 @@ function risk_ratio(::Binary, ::Binary, mod)
     Xₜ, Xᵤ = reduce(hcat, (Xₜ, ones(size(Xₜ, 1)))), reduce(hcat, (Xᵤ, ones(size(Xᵤ, 1))))
 
     # For algorithms that use one model to estimate the outcome
-    if hasfield(typeof(mod), :learner)
-        return @fastmath mean(predict(mod.learner, Xₜ)) / mean(predict(mod.learner, Xᵤ))
+    if hasfield(typeof(mod), :ensemble)
+        return @fastmath (mean(predict(mod.ensemble, Xₜ)) / mean(predict(mod.ensemble, Xᵤ)))
 
         # For models that use separate models for outcomes in the treatment and control group
     else
@@ -627,26 +594,27 @@ function risk_ratio(::Binary, ::Count, mod)
     Xₜ, Xᵤ = reduce(hcat, (Xₜ, ones(m))), reduce(hcat, (Xᵤ, ones(n)))
 
     # For estimators with a single model of the outcome variable
-    if hasfield(typeof(mod), :learner)
-        return @fastmath (sum(predict(mod.learner, Xₜ)) / m) /
-            (sum(predict(mod.learner, Xᵤ)) / n)
+    if hasfield(typeof(mod), :ensemble)
+        return @fastmath (sum(predict(mod.ensemble, Xₜ)) / m) /
+            (sum(predict(mod.ensemble, Xᵤ)) / n)
 
         # For models that use separate models for outcomes in the treatment and control group
     elseif hasfield(typeof(mod), :μ₀)
         Xₜ, Xᵤ = mod.X[mod.T .== 1, :], mod.X[mod.T .== 0, :]
         return @fastmath mean(predict(mod.μ₁, Xₜ)) / mean(predict(mod.μ₀, Xᵤ))
     else
-        if mod.regularized
-            learner = RegularizedExtremeLearner(
-                reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, mod.activation
+        learner = ELMEnsemble(
+                reduce(hcat, (mod.X, mod.T)), 
+                mod.Y, 
+                mod.sample_size, 
+                mod.num_machines, 
+                mod.num_feats, 
+                mod.num_neurons, 
+                mod.activation
             )
-        else
-            learner = ExtremeLearner(
-                reduce(hcat, (mod.X, mod.T)), mod.Y, mod.num_neurons, mod.activation
-            )
-        end
+
         fit!(learner)
-        @fastmath (sum(predict(learner, Xₜ)) / m) / (sum(predict(learner, Xᵤ)) / n)
+        @fastmath mean(predict(learner, Xₜ)) / mean(predict(learner, Xᵤ))
     end
 end
 
@@ -686,13 +654,15 @@ julia> positivity(g_computer)
 ```
 """
 function positivity(model, min=1.0e-6, max=1 - min)
-    if model.regularized
-        ps_mod = RegularizedExtremeLearner(
-            model.X, model.T, model.num_neurons, model.activation
-            )
-    else
-        ps_mod = ExtremeLearner(model.X, model.T, model.num_neurons, model.activation)
-    end
+    ps_mod = ELMEnsemble(
+            model.X, 
+            model.T, 
+            model.sample_size, 
+            model.num_machines, 
+            model.num_feats, 
+            model.num_neurons, 
+            model.activation
+        )
 
     fit!(ps_mod)
     propensity_scores = predict(ps_mod, model.X)
@@ -714,28 +684,6 @@ function positivity(model::XLearner, min=1.0e-6, max=1 - min)
         (
             model.X[model.ps .<= min .|| model.ps .>= max, :],
             model.ps[model.ps .<= min .|| model.ps .>= max],
-        ),
-    )
-end
-
-function positivity(model::Union{DoubleMachineLearning,RLearner}, min=1.0e-6, max=1 - min)
-    num_neurons = best_size(model)
-
-    if model.regularized
-        ps_mod = RegularizedExtremeLearner(model.X, model.T, num_neurons, model.activation)
-    else
-        ps_mod = ExtremeLearner(model.X, model.T, num_neurons, model.activation)
-    end
-
-    fit!(ps_mod)
-    propensity_scores = predict(ps_mod, model.X)
-
-    # Observations that have a zero probability of treatment or control assignment
-    return reduce(
-        hcat,
-        (
-            model.X[propensity_scores .<= min .|| propensity_scores .>= max, :],
-            propensity_scores[propensity_scores .<= min .|| propensity_scores .>= max],
         ),
     )
 end

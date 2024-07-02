@@ -1,7 +1,18 @@
 # Release Notes
 These release notes adhere to the [keep a changelog](https://keepachangelog.com/en/1.0.0/) format. Below is a list of changes since CausalELM was first released.
 
-## Version [v0.6.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.6.0) - 2024-03-23
+## Version [v0.7.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.6.1) - 2024-06-22
+### Added
+*   Implemented bagged ensemble of extreme learning machines to use with estimators [#67](https://github.com/dscolby/CausalELM.jl/issues/67)
+### Changed
+*   Compute the number of neurons to use with log heuristic instead of cross validation [#62](https://github.com/dscolby/CausalELM.jl/issues/62)
+*   Calculate probabilities as the average label predicted by the ensemble instead of clipping [#71](https://github.com/dscolby/CausalELM.jl/issues/71)
+*   Made calculation of p-values and standard errors optional and not executed by default in summarize methods [#65](https://github.com/dscolby/CausalELM.jl/issues/65)
+*   Removed redundant W argument for double machine learning, R-learning, and doubly robust estimation [#68](https://github.com/dscolby/CausalELM.jl/issues/68)
+### Fixed
+*   Applying the weight trick for R-learning [#70](https://github.com/dscolby/CausalELM.jl/issues/70)
+
+## Version [v0.6.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.6.0) - 2024-06-15
 ### Added
 *   Implemented doubly robust learner for CATE estimation [#31](https://github.com/dscolby/CausalELM.jl/issues/31)
 *   Provided better explanations of supported treatment and outcome variable types in the docs [#41](https://github.com/dscolby/CausalELM.jl/issues/41)

@@ -1,3 +1,38 @@
+"""Abstract type used to dispatch risk_ratio on nonbinary treatments"""
+abstract type Nonbinary end
+
+"""Type used to dispatch risk_ratio on binary treatments"""
+struct Binary end
+
+"""Type used to dispatch risk_ratio on count treatments"""
+struct Count <: Nonbinary end
+
+"""Type used to dispatch risk_ratio on continuous treatments"""
+struct Continuous <: Nonbinary end
+
+"""
+    var_type(x)
+
+Determine the type of variable held by a vector.
+
+# Examples
+```jldoctest
+julia> CausalELM.var_type([1, 2, 3, 2, 3, 1, 1, 3, 2])
+CausalELM.Count()
+```
+"""
+function var_type(x::Array{<:Real})
+    x_set = Set(x)
+    
+    if x_set == Set([0, 1]) || x_set == Set([0]) || x_set == Set([1])
+        return Binary()
+    elseif x_set == Set(round.(x_set))
+        return Count()
+    else
+        return Continuous()
+    end
+end
+
 """
     mean(x)
 
@@ -60,8 +95,8 @@ See also [`var_type`](@ref).
 ```jldoctest
 julia> CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Binary())
 2-element Vector{Float64}:
- 0.9999999
- 1.0e-7
+ 1.0
+ 0.0
 
 julia> CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Count())
 2-element Vector{Float64}:
@@ -69,7 +104,7 @@ julia> CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Count())
  -0.02
 ```
 """
-clip_if_binary(x::Array{<:Real}, var) = var isa Binary ? clamp.(x, 1e-7, 1 - 1e-7) : x
+clip_if_binary(x::Array{<:Real}, var) = var isa Binary ? clamp.(x, 0.0, 1.0) : x
 
 """
     model_config(effect_type)
@@ -103,15 +138,11 @@ macro model_config(effect_type)
         quantity_of_interest::String
         temporal::Bool
         task::String
-        regularized::Bool
         activation::Function
-        validation_metric::Function
-        min_neurons::Int64
-        max_neurons::Int64
-        folds::Int64
-        iterations::Int64
-        approximator_neurons::Int64
-        num_neurons::Int64
+        sample_size::Integer
+        num_machines::Integer
+        num_feats::Integer
+        num_neurons::Integer
         causal_effect::$field_type
     end
     return esc(fields)
@@ -140,23 +171,37 @@ macro standard_input_data()
 end
 
 """
-    double_learner_input_data()
+    generate_folds(X, T, Y, folds)
 
-Generate fields common to DoubleMachineLearning, RLearner, and DoublyRobustLearner.
+Create folds for cross validation.
 
 # Examples
-```julia
-julia> struct TestStruct CausalELM.@double_learner_input_data end
-julia> TestStruct([5.2], [0.8], [0.96], [0.87 1.8])
-TestStruct([5.2], [0.8], [0.96], [0.87 1.8])
+```jldoctest
+julia> xfolds, tfolds, yfolds = CausalELM.generate_folds(zeros(4, 2), zeros(4), ones(4), 2)
+([[0.0 0.0], [0.0 0.0; 0.0 0.0; 0.0 0.0]], [[0.0], [0.0, 0.0, 0.0]], [[1.0], [1.0, 1.0, 1.0]])
 ```
 """
-macro double_learner_input_data()
-    inputs = quote
-        X::Array{Float64}
-        T::Array{Float64}
-        Y::Array{Float64}
-        W::Array{Float64}
+function generate_folds(X, T, Y, folds)
+    msg = """the number of folds must be less than the number of observations"""
+    n = length(Y)
+
+    if folds >= n
+        throw(ArgumentError(msg))
     end
-    return esc(inputs)
+
+    x_folds = Array{Array{Float64, 2}}(undef, folds)
+    t_folds = Array{Array{Float64, 1}}(undef, folds)
+    y_folds = Array{Array{Float64, 1}}(undef, folds)
+
+    # Indices to start and stop for each fold
+    stops = round.(Int, range(; start=1, stop=n, length=folds + 1))
+
+    # Indices to use for making folds
+    indices = [s:(e - (e < n) * 1) for (s, e) in zip(stops[1:(end - 1)], stops[2:end])]
+
+    for (i, idx) in enumerate(indices)
+        x_folds[i], t_folds[i], y_folds[i] = X[idx, :], T[idx], Y[idx]
+    end
+
+    return x_folds, t_folds, y_folds
 end

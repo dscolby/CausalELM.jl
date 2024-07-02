@@ -22,11 +22,10 @@ export estimate_causal_effect!, summarize, summarise
 export InterruptedTimeSeries, GComputation, DoubleMachineLearning
 export SLearner, TLearner, XLearner, RLearner, DoublyRobustLearner
 
-include("utilities.jl")
 include("activation.jl")
+include("utilities.jl")
 include("models.jl")
 include("metrics.jl")
-include("crossval.jl")
 include("estimators.jl")
 include("metalearners.jl")
 include("inference.jl")

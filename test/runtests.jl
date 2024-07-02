@@ -1,9 +1,10 @@
-using Test, Documenter, CausalELM
+using Test
+using Documenter
+using CausalELM
 
 include("test_activation.jl")
 include("test_models.jl")
 include("test_metrics.jl")
-include("test_crossval.jl")
 include("test_estimators.jl")
 include("test_metalearners.jl")
 include("test_inference.jl")

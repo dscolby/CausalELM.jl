@@ -1,27 +1,19 @@
 using Test
-
-include("../src/utilities.jl")
-
-struct Binary end
-struct Count end
+using CausalELM
 
 # Variables for checking the output of the model_config macro because it is difficult
-model_config_avg_expr = @macroexpand @model_config average_effect
-model_config_ind_expr = @macroexpand @model_config individual_effect
-model_config_avg_idx = Int64.(collect(range(2, 26, 13)))
-model_config_ind_idx = Int64.(collect(range(2, 26, 13)))
+model_config_avg_expr = @macroexpand CausalELM.@model_config average_effect
+model_config_ind_expr = @macroexpand CausalELM.@model_config individual_effect
+model_config_avg_idx = Int64.(collect(range(2, 18, 9)))
+model_config_ind_idx = Int64.(collect(range(2, 18, 9)))
 model_config_avg_ground_truth = quote
     quantity_of_interest::String
     temporal::Bool
     task::String
-    regularized::Bool
     activation::Function
-    validation_metric::Function
-    min_neurons::Int64
-    max_neurons::Int64
-    folds::Int64
-    iterations::Int64
-    approximator_neurons::Int64
+    sample_size::Integer
+    num_machines::Integer
+    num_feats::Integer
     num_neurons::Int64
     causal_effect::Float64
 end
@@ -32,18 +24,15 @@ model_config_ind_ground_truth = quote
     task::String
     regularized::Bool
     activation::Function
-    validation_metric::Function
-    min_neurons::Int64
-    max_neurons::Int64
-    folds::Int64
-    iterations::Int64
-    approximator_neurons::Int64
+    sample_size::Integer
+    num_machines::Integer
+    num_feats::Integer
     num_neurons::Int64
     causal_effect::Array{Float64}
 end
 
 # Fields for the user supplied data
-standard_input_expr = @macroexpand @standard_input_data
+standard_input_expr = @macroexpand CausalELM.@standard_input_data
 standard_input_idx = [2, 4, 6]
 standard_input_ground_truth = quote
     X::Array{Float64}
@@ -52,7 +41,7 @@ standard_input_ground_truth = quote
 end
 
 # Fields for the user supplied data
-double_model_input_expr = @macroexpand @standard_input_data
+double_model_input_expr = @macroexpand CausalELM.@standard_input_data
 double_model_input_idx = [2, 4, 6]
 double_model_input_ground_truth = quote
     X::Array{Float64}
@@ -61,18 +50,24 @@ double_model_input_ground_truth = quote
     W::Array{Float64}
 end
 
+# Generating folds
+big_x, big_t, big_y = rand(10000, 8), rand(0:1, 10000), vec(rand(1:100, 10000, 1))
+dm = DoubleMachineLearning(big_x, big_t, big_y)
+estimate_causal_effect!(dm)
+x_fold, t_fold, y_fold = CausalELM.generate_folds(dm.X, dm.T, dm.Y, dm.folds)
+
 @testset "Moments" begin
     @test mean([1, 2, 3]) == 2
-    @test var([1, 2, 3]) == 1
+    @test CausalELM.var([1, 2, 3]) == 1
 end
 
 @testset "One Hot Encoding" begin
-    @test one_hot_encode([1, 2, 3]) == [1 0 0; 0 1 0; 0 0 1]
+    @test CausalELM.one_hot_encode([1, 2, 3]) == [1 0 0; 0 1 0; 0 0 1]
 end
 
 @testset "Clipping" begin
-    @test clip_if_binary([1.2, -0.02], Binary()) == [0.9999999, 1.0e-7]
-    @test clip_if_binary([1.2, -0.02], Count()) == [1.2, -0.02]
+    @test CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Binary()) == [1.0, 0.0]
+    @test CausalELM.clip_if_binary([1.2, -0.02], CausalELM.Count()) == [1.2, -0.02]
 end
 
 @testset "Generating Fields with Macros" begin
@@ -91,7 +86,7 @@ end
         model_config_ind_ground_truth.args[model_config_avg_idx]
     )
 
-    @test_throws ArgumentError @macroexpand @model_config mean
+    @test_throws ArgumentError @macroexpand CausalELM.@model_config mean
 
     @test standard_input_expr.head == standard_input_ground_truth.head
 
@@ -106,4 +101,11 @@ end
         double_model_input_expr.args[double_model_input_idx] ==
         double_model_input_ground_truth.args[double_model_input_idx]
     )
+end
+
+@testset "Generating Folds" begin
+    @test size(x_fold[1], 2) == size(dm.X, 2)
+    @test y_fold isa Vector{Vector{Float64}}
+    @test t_fold isa Vector{Vector{Float64}}
+    @test length(t_fold) == dm.folds
 end

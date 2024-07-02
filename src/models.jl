@@ -1,7 +1,5 @@
-using LinearAlgebra: pinv, I, norm, tr
-
-"""Abstract type that includes vanilla and L2 regularized Extreme Learning Machines"""
-abstract type ExtremeLearningMachine end
+using Random: shuffle
+using CausalELM: mean, var_type, clip_if_binary
 
 """
     ExtremeLearner(X, Y, hidden_neurons, activation)
@@ -25,7 +23,7 @@ julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
 julia> m1 = ExtremeLearner(x, y, 10, σ)
 ```
 """
-mutable struct ExtremeLearner <: ExtremeLearningMachine
+mutable struct ExtremeLearner
     X::Array{Float64}
     Y::Array{Float64}
     training_samples::Int64
@@ -33,52 +31,70 @@ mutable struct ExtremeLearner <: ExtremeLearningMachine
     hidden_neurons::Int64
     activation::Function
     __fit::Bool
-    __estimated::Bool
     weights::Array{Float64}
     β::Array{Float64}
     H::Array{Float64}
     counterfactual::Array{Float64}
 
     function ExtremeLearner(X, Y, hidden_neurons, activation)
-        return new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
+        return new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false)
     end
 end
 
 """
-    RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
+    ELMEnsemble(X, Y, sample_size, num_machines, num_neurons)
 
-Construct a RegularizedExtremeLearner for fitting and prediction.
+Initialize a bagging ensemble of extreme learning machines. 
+
+# Arguments
+- `X::Array{Float64}`: array of features for predicting labels.
+- `Y::Array{Float64}`: array of labels to predict.
+- `sample_size::Integer`: how many data points to use for each extreme learning machine.
+- `num_machines::Integer`: how many extreme learning machines to use.
+- `num_feats::Integer`: how many features to consider for eac exreme learning machine.
+- `num_neurons::Integer`: how many neurons to use for each extreme learning machine.
+- `activation::Function`: activation function to use for the extreme learning machines.
+
+# Notes
+ELMEnsemble uses the same bagging approach as random forests when the labels are continuous 
+but uses the average predicted probability, rather than voting, for classification.
 
 # Examples
 ```julia
-julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
+julia> X, Y =  rand(100, 5), rand(100)
+julia> m1 = ELMEnsemble(X, Y, 10, 50, 5, 5, CausalELM.relu)
 ```
 """
-mutable struct RegularizedExtremeLearner <: ExtremeLearningMachine
+mutable struct ELMEnsemble
     X::Array{Float64}
     Y::Array{Float64}
-    training_samples::Int64
-    features::Int64
-    hidden_neurons::Int64
-    activation::Function
-    __fit::Bool
-    __estimated::Bool
-    weights::Array{Float64}
-    β::Array{Float64}
-    k::Float64
-    H::Array{Float64}
-    counterfactual::Array{Float64}
+    elms::Array{ExtremeLearner}
+    feat_indices::Vector{Vector{Int64}}
+end
 
-    function RegularizedExtremeLearner(X, Y, hidden_neurons, activation)
-        return new(X, Y, size(X, 1), size(X, 2), hidden_neurons, activation, false, false)
-    end
+function ELMEnsemble(
+    X::Array{Float64}, 
+    Y::Array{Float64}, 
+    sample_size::Integer, 
+    num_machines::Integer,
+    num_feats::Integer, 
+    num_neurons::Integer,
+    activation::Function
+)
+    # Sampling from the data with replacement
+    indices = [rand(1:length(Y), sample_size) for i ∈ 1:num_machines]
+    feat_indices = [shuffle(1:size(X, 2))[1:num_feats] for i ∈ 1:num_machines]
+    xs = [X[indices[i], feat_indices[i]] for i ∈ 1:num_machines]
+    ys = [Y[indices[i]] for i ∈ 1:num_machines]
+    elms = [ExtremeLearner(xs[i], ys[i], num_neurons, activation) for i ∈ eachindex(xs)]
+
+    return ELMEnsemble(X, Y, elms, feat_indices)
 end
 
 """
     fit!(model)
 
-Make predictions with an ExtremeLearner.
+Fit an ExtremeLearner to the data.
 
 # References
 For more details see: 
@@ -95,45 +111,43 @@ function fit!(model::ExtremeLearner)
     set_weights_biases(model)
 
     model.__fit = true
-    model.β = @fastmath pinv(model.H) * model.Y
+    model.β = model.H\model.Y
     return model.β
 end
 
 """
     fit!(model)
 
-Fit a Regularized Extreme Learner.
+Fit an ensemble of ExtremeLearners to the data. 
 
-# References
-For more details see: 
-    Li, Guoqiang, and Peifeng Niu. "An enhanced extreme learning machine based on ridge 
-    regression for regression." Neural Computing and Applications 22, no. 3 (2013): 
-    803-810.
+# Arguments
+- `model::ELMEnsemble`: ensemble of ExtremeLearners to fit.
+
+# Notes
+This uses the same bagging approach as random forests when the labels are continuous but 
+uses the average predicted probability, rather than voting, for classification.
 
 # Examples
 ```julia
-julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
-julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
-julia> f1 = fit!(m1)
+julia> X, Y =  rand(100, 5), rand(100)
+julia> m1 = ELMEnsemble(X, Y, 10, 50, 5, CausalELM.relu)
+julia> fit!(m1)
 ```
 """
-function fit!(model::RegularizedExtremeLearner)
-    set_weights_biases(model)
-    k = ridge_constant(model)
-    Id = Matrix(I, size(model.H, 2), size(model.H, 2))
-
-    model.β = @fastmath pinv(transpose(model.H) * model.H + k * Id) *
-        transpose(model.H) *
-        model.Y
-    model.__fit = true  # Enables running predict
-
-    return model.β
+function fit!(model::ELMEnsemble)
+    Threads.@threads for elm in model.elms
+        fit!(elm)
+    end
 end
 
 """
     predict(model, X)
 
-Use an ExtremeLearningMachine to make predictions.
+Use an ExtremeLearningMachine or ELMEnsemble to make predictions.
+
+# Notes
+If using an ensemble to make predictions, this method returns a maxtirs where each row is a
+prediction and each column is a model.
 
 # References
 For more details see: 
@@ -144,16 +158,31 @@ For more details see:
 ```julia
 julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
 julia> m1 = ExtremeLearner(x, y, 10, σ)
-julia> f1 = fit(m1, sigmoid)
+julia> fit!(m1, sigmoid)
 julia> predict(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
+
+julia> m2 = ELMEnsemble(X, Y, 10, 50, 5, CausalELM.relu)
+julia> fit!(m2)
+julia> predict(m2)
 ```
 """
-function predict(model::ExtremeLearningMachine, X)
+function predict(model::ExtremeLearner, X)
     if !model.__fit
         throw(ErrorException("run fit! before calling predict"))
     end
 
-    return @fastmath model.activation(X * model.weights) * model.β
+    predictions = model.activation(X * model.weights) * model.β
+
+    return clip_if_binary(predictions, var_type(model.Y))
+end
+
+@inline function predict(model::ELMEnsemble, X) 
+    predictions = reduce(
+        hcat, 
+        [predict(model.elms[i], X[:, model.feat_indices[i]]) for i ∈ 1:length(model.elms)]
+    )
+
+    return vec(mapslices(mean, predictions, dims=2))
 end
 
 """
@@ -175,8 +204,8 @@ julia> f1 = fit(m1, sigmoid)
 julia> predict_counterfactual!(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
 ```
 """
-function predict_counterfactual!(model::ExtremeLearningMachine, X)
-    model.counterfactual, model.__estimated = predict(model, X), true
+function predict_counterfactual!(model::ExtremeLearner, X)
+    model.counterfactual = predict(model, X)
 
     return model.counterfactual
 end
@@ -202,69 +231,18 @@ julia> predict_counterfactual(m1, [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0])
 julia> placebo_test(m1)
 ```
 """
-function placebo_test(model::ExtremeLearningMachine)
+function placebo_test(model::ExtremeLearner)
     m = "Use predict_counterfactual! to estimate a counterfactual before using placebo_test"
-    if !model.__estimated
+    if !isdefined(model, :counterfactual)
         throw(ErrorException(m))
     end
     return predict(model, model.X), model.counterfactual
 end
 
 """
-    ridge_constant(model, [,iterations])
-
-Calculate the L2 penalty for a regularized extreme learning machine using generalized cross 
-validation with successive halving.
-
-# Arguments
-- `model::RegularizedExtremeLearner`: regularized extreme learning machine.
-- `iterations::Int`: number of iterations to perform for successive halving.
-
-# References
-For more information see: 
-    Golub, Gene H., Michael Heath, and Grace Wahba. "Generalized cross-validation as a 
-    method for choosing a good ridge parameter." Technometrics 21, no. 2 (1979): 215-223.
-
-# Examples
-```julia
-julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
-julia> ridge_constant(m1)
-julia> ridge_constant(m1, iterations=20)
-```
-"""
-function ridge_constant(model::RegularizedExtremeLearner, iterations::Int=10)
-    S(λ, X, X̂, n) = X * pinv(X̂ .+ (n * λ * Matrix(I, n, n))) * transpose(X)
-    set_weights_biases(model)
-    Ĥ = transpose(model.H) * model.H
-
-    function gcv(H, Y, λ)  # Estimates the generalized cross validation function for given λ
-        S̃, n = S(λ, H, Ĥ, size(H, 2)), size(H, 1)
-        return ((norm((ones(n) .- S̃) * Y)^2) / n) / ((tr(Matrix(I, n, n) .- S̃) / n)^2)
-    end
-
-    k₁, k₂, Λ = 1e-9, 1 - 1e-9, sum((1e-9, 1 - 1e-9)) / 2  # Initial window to search
-    for i in 1:iterations
-        gcv₁, gcv₂ = @fastmath gcv(model.H, model.Y, k₁), gcv(model.H, model.Y, k₂)
-
-        # Divide the search space in half
-        if gcv₁ < gcv₂
-            k₂ /= 2
-        elseif gcv₁ > gcv₂
-            k₁ *= 2
-        elseif gcv₁ ≈ gcv₂
-            return (k₁ + k₂) / 2  # Early stopping
-        end
-
-        Λ = (k₁ + k₂) / 2
-    end
-    return Λ
-end
-
-"""
     set_weights_biases(model)
 
-Calculate the weights and biases for an extreme learning machine or regularized extreme 
-learning machine.
+Calculate the weights and biases for an extreme learning machine.
 
 # Notes
 Initialization is done using uniform Xavier initialization.
@@ -280,9 +258,8 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
 julia> set_weights_biases(m1)
 ```
 """
-function set_weights_biases(model::ExtremeLearningMachine)
-    n_in, n_out = size(model.X, 2), model.hidden_neurons
-    a, b = -sqrt(6) / sqrt(n_in + n_out), sqrt(6) / sqrt(n_in + n_out)
+function set_weights_biases(model::ExtremeLearner)
+    a, b = -1, 1
     model.weights = @fastmath a .+ ((b - a) .* rand(model.features, model.hidden_neurons))
 
     return model.H = @fastmath model.activation((model.X * model.weights))
@@ -294,11 +271,8 @@ function Base.show(io::IO, model::ExtremeLearner)
     )
 end
 
-function Base.show(io::IO, model::RegularizedExtremeLearner)
+function Base.show(io::IO, model::ELMEnsemble)
     return print(
-        io,
-        "Regularized Extreme Learning Machine with ",
-        model.hidden_neurons,
-        " hidden neurons",
+        io, "Extreme Learning Machine Ensemble with ", length(model.elms), " learners"
     )
 end

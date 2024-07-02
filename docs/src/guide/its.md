@@ -11,12 +11,6 @@ post-event outcomes, which can also be aggregated to mean or cumulative effects.
 Estimating an interrupted time series design in CausalELM consists of three steps.
 
 !!! note
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as in 
-    the previous penalty, then the procedure will stop early.
-
-!!! note
     For a deeper dive on interrupted time series estimation see:
     
         Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
@@ -45,20 +39,18 @@ continuous, count, or time to event variables.
     continuous variables.
 
 !!! tip
-    You can also specify whether or not to use L2 regularization, which activation function to 
-    use, the metric to use when using cross validation to find the best number of neurons, the 
-    minimum number of neurons to consider, the maximum number of neurons to consider, the number 
-    of folds to use during cross caidation, the number of neurons to use in the ELM that learns 
-    a mapping from number of neurons to validation loss, and whether to include a rolling 
-    average autoregressive term. These options can be specified using the keyword arguments 
-    regularized, activation, validation\_metric, min\_neurons, max\_neurons, folds, iterations, 
-    approximator\_neurons, and autoregression.
+    You can also specify which activation function to use, whether the data is of a temporal 
+    nature, the number of extreme learning machines to use, the number of features to 
+    consider for each extreme learning machine, the number of bootstrapped observations to 
+    include in each extreme learning machine, and the number of neurons to use during 
+    estimation. These options are specified with the following keyword arguments: 
+    activation, temporal, num_machines, num_feats, sample_size, and num\_neurons.
 
 ```julia
 # Generate some data to use
 X₀, Y₀, X₁, Y₁ =  rand(1000, 5), rand(1000), rand(100, 5), rand(100)
 
-# We could also use DataFrames
+# We could also use DataFrames or any other package that implements the Tables.jl API
 # using DataFrames
 # X₀ = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
 # X₁ = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
@@ -78,13 +70,13 @@ estimate_causal_effect!(its)
 We can get a summary of the model, including a p-value and statndard via asymptotic 
 randomization inference, by pasing the model to the summarize method.
 
-Calling the summarize method returns a dictionary with the estimator's task (always 
-regression for interrupted time series analysis), whether the model uses an L2 penalty, 
-the activation function used in the model's outcome predictors, the validation metric used 
-for cross validation to find the best number of neurons, the number of neurons used in the 
-ELMs used by the estimator, the number of neurons used in the ELM used to learn a mapping 
-from number of neurons to validation loss during cross validation, the causal effect, 
-standard error, and p-value.
+Calling the summarize method returns a dictionary with the estimator's task (regression or 
+classification), the quantity of interest being estimated (ATE), whether the model uses an 
+L2 penalty (always true for DML), the activation function used in the model's outcome 
+predictors, whether the data is temporal (always true for ITS), the number of neurons used 
+in the ELMs used by the estimator, the causal effect, standard error, and p-value. Due to 
+long running times, calculation of the p-value and standard error is not conducted and set 
+to NaN unless inference is set to true.
 ```julia
 summarize(its)
 ```
