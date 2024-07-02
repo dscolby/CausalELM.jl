@@ -296,6 +296,10 @@ function RLearner(
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
 
+    # Shuffle data with random indices
+    indices = shuffle(1:length(Y))
+    X, T, Y = X[indices, :], T[indices], Y[indices]
+
     task = var_type(Y) isa Binary ? "classification" : "regression"
 
     return RLearner(
@@ -371,10 +375,13 @@ function DoublyRobustLearner(
     num_machines::Integer=100,
     num_feats::Integer=Int(round(0.75 * size(X, 2))),
     num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
-    folds::Integer=5,
 )
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+
+    # Shuffle data with random indices
+    indices = shuffle(1:length(Y))
+    X, T, Y = X[indices, :], T[indices], Y[indices]
 
     task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -391,7 +398,7 @@ function DoublyRobustLearner(
         num_feats,
         num_neurons,
         fill(NaN, size(T, 1)),
-        folds,
+        2,
     )
 end
 

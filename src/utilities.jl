@@ -1,3 +1,5 @@
+using Random: shuffle
+
 """Abstract type used to dispatch risk_ratio on nonbinary treatments"""
 abstract type Nonbinary end
 
@@ -185,9 +187,7 @@ function generate_folds(X, T, Y, folds)
     msg = """the number of folds must be less than the number of observations"""
     n = length(Y)
 
-    if folds >= n
-        throw(ArgumentError(msg))
-    end
+    if folds >= n throw(ArgumentError(msg))end
 
     x_folds = Array{Array{Float64, 2}}(undef, folds)
     t_folds = Array{Array{Float64, 1}}(undef, folds)

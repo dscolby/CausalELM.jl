@@ -236,6 +236,10 @@ function DoubleMachineLearning(
 )
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+    
+    # Shuffle data with random indices
+    indices = shuffle(1:length(Y))
+    X, T, Y = X[indices, :], T[indices], Y[indices]
 
     task = var_type(Y) isa Binary ? "classification" : "regression"
 
