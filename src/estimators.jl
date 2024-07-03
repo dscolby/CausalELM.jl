@@ -13,7 +13,7 @@ Initialize an interrupted time series estimator.
 - `Y₁::Any`: array or DataFrame of outcomes from the post-treatment period.
 
 # Keywords
-- `activation::Function=relu`: activation function to use.
+- `activation::Function=swish`: activation function to use.
 - `sample_size::Integer=size(X₀, 1)`: number of bootstrapped samples for the extreme 
     learner.
 - `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
@@ -56,7 +56,7 @@ function InterruptedTimeSeries(
     Y₀,
     X₁,
     Y₁;
-    activation::Function=relu,
+    activation::Function=swish,
     sample_size::Integer=size(X₀, 1),
     num_machines::Integer=100,
     num_feats::Integer=Int(round(0.75 * size(X₀, 2))),
@@ -102,7 +102,7 @@ Initialize a G-Computation estimator.
 # Keywords
 - `quantity_of_interest::String`: ATE for average treatment effect or ATT for average 
     treatment effect on the treated.
-- `activation::Function=relu`: activation function to use.
+- `activation::Function=swish`: activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for the extreme 
     learners.
 - `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
@@ -144,7 +144,7 @@ mutable struct GComputation <: CausalEstimator
         T,
         Y;
         quantity_of_interest::String="ATE",
-        activation::Function=relu,
+        activation::Function=swish,
         sample_size::Integer=size(X, 1),
         num_machines::Integer=100,
         num_feats::Integer=Int(round(0.75 * size(X, 2))),
@@ -188,7 +188,7 @@ Initialize a double machine learning estimator with cross fitting.
 - `Y::Any`: array or DataFrame of outcomes.
 
 # Keywords
-- `activation::Function=relu`: activation function to use.
+- `activation::Function=swish`: activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for teh extreme 
     learners.
 - `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
@@ -227,7 +227,7 @@ function DoubleMachineLearning(
     X,
     T,
     Y;
-    activation::Function=relu,
+    activation::Function=swish,
     sample_size::Integer=size(X, 1),
     num_machines::Integer=100,
     num_feats::Integer=Int(round(0.75 * size(X, 2))),
@@ -236,7 +236,7 @@ function DoubleMachineLearning(
 )
     # Convert to arrays
     X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
-    
+
     # Shuffle data with random indices
     indices = shuffle(1:length(Y))
     X, T, Y = X[indices, :], T[indices], Y[indices]

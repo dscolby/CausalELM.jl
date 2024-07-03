@@ -12,7 +12,7 @@ Initialize a S-Learner.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `activation::Function=relu`: the activation function to use.
+- `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
 - `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
@@ -51,7 +51,7 @@ mutable struct SLearner <: Metalearner
         X,
         T,
         Y;
-        activation::Function=relu,
+        activation::Function=swish,
         sample_size::Integer=size(X, 1),
         num_machines::Integer=100,
         num_feats::Integer=Int(round(0.75 * size(X, 2))),
@@ -91,7 +91,7 @@ Initialize a T-Learner.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `activation::Function=relu`: the activation function to use.
+- `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
 - `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
@@ -130,7 +130,7 @@ mutable struct TLearner <: Metalearner
         X,
         T,
         Y;
-        activation::Function=relu,
+        activation::Function=swish,
         sample_size::Integer=size(X, 1),
         num_machines::Integer=100,
         num_feats::Integer=Int(round(0.75 * size(X, 2))),
@@ -169,7 +169,7 @@ Initialize an X-Learner.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `activation::Function=relu`: the activation function to use.
+- `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
 - `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
@@ -209,7 +209,7 @@ mutable struct XLearner <: Metalearner
         X,
         T,
         Y;
-        activation::Function=relu,
+        activation::Function=swish,
         sample_size::Integer=size(X, 1),
         num_machines::Integer=100,
         num_feats::Integer=Int(round(0.75 * size(X, 2))),
@@ -248,7 +248,7 @@ Initialize an R-Learner.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `activation::Function=relu`: the activation function to use.
+- `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
 - `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
@@ -285,7 +285,7 @@ function RLearner(
     X,
     T,
     Y;
-    activation::Function=relu,
+    activation::Function=swish,
     sample_size::Integer=size(X, 1),
     num_machines::Integer=100,
     num_feats::Integer=Int(round(0.75 * size(X, 2))),
@@ -330,7 +330,7 @@ Initialize a doubly robust CATE estimator.
 - `Y::Any`: an array or DataFrame of outcomes.
 
 # Keywords
-- `activation::Function=relu`: the activation function to use.
+- `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
 - `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
@@ -370,7 +370,7 @@ function DoublyRobustLearner(
     X,
     T,
     Y;
-    activation::Function=relu,
+    activation::Function=swish,
     sample_size::Integer=size(X, 1),
     num_machines::Integer=100,
     num_feats::Integer=Int(round(0.75 * size(X, 2))),

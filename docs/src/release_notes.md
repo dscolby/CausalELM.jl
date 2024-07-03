@@ -9,6 +9,7 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 *   Calculate probabilities as the average label predicted by the ensemble instead of clipping [#71](https://github.com/dscolby/CausalELM.jl/issues/71)
 *   Made calculation of p-values and standard errors optional and not executed by default in summarize methods [#65](https://github.com/dscolby/CausalELM.jl/issues/65)
 *   Removed redundant W argument for double machine learning, R-learning, and doubly robust estimation [#68](https://github.com/dscolby/CausalELM.jl/issues/68)
+*   Use swish as the default activation function [#72](https://github.com/dscolby/CausalELM.jl/issues/72)
 ### Fixed
 *   Applying the weight trick for R-learning [#70](https://github.com/dscolby/CausalELM.jl/issues/70)
 
