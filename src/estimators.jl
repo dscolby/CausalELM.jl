@@ -16,7 +16,7 @@ Initialize an interrupted time series estimator.
 - `activation::Function=swish`: activation function to use.
 - `sample_size::Integer=size(X₀, 1)`: number of bootstrapped samples for the extreme 
     learner.
-- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_machines::Integer=50`: number of extreme learning machines for the ensemble.
 - `num_feats::Integer=Int(round(0.75 * size(X₀, 2)))`: number of features to bootstrap for 
     each learner in the ensemble.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
@@ -58,7 +58,7 @@ function InterruptedTimeSeries(
     Y₁;
     activation::Function=swish,
     sample_size::Integer=size(X₀, 1),
-    num_machines::Integer=100,
+    num_machines::Integer=50,
     num_feats::Integer=Int(round(0.75 * size(X₀, 2))),
     num_neurons::Integer=round(Int, log10(size(X₀, 1)) * size(X₀, 2)),
     autoregression::Bool=true,
@@ -105,7 +105,7 @@ Initialize a G-Computation estimator.
 - `activation::Function=swish`: activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for the extreme 
     learners.
-- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_machines::Integer=50`: number of extreme learning machines for the ensemble.
 - `num_feats::Integer=Int(round(0.75 * size(X, 2)))`: number of features to bootstrap for 
     each learner in the ensemble.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
@@ -146,7 +146,7 @@ mutable struct GComputation <: CausalEstimator
         quantity_of_interest::String="ATE",
         activation::Function=swish,
         sample_size::Integer=size(X, 1),
-        num_machines::Integer=100,
+        num_machines::Integer=50,
         num_feats::Integer=Int(round(0.75 * size(X, 2))),
         num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
         temporal::Bool=true,
@@ -191,7 +191,7 @@ Initialize a double machine learning estimator with cross fitting.
 - `activation::Function=swish`: activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for teh extreme 
     learners.
-- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_machines::Integer=50`: number of extreme learning machines for the ensemble.
 - `num_feats::Integer=Int(round(0.75, * size(X, 2)))`: number of features to bootstrap for 
     each learner in the ensemble.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
@@ -229,7 +229,7 @@ function DoubleMachineLearning(
     Y;
     activation::Function=swish,
     sample_size::Integer=size(X, 1),
-    num_machines::Integer=100,
+    num_machines::Integer=50,
     num_feats::Integer=Int(round(0.75 * size(X, 2))),
     num_neurons::Integer=round(Int, log10(size(X, 1)) * num_feats),
     folds::Integer=5,

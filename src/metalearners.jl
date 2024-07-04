@@ -15,7 +15,7 @@ Initialize a S-Learner.
 - `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
-- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_machines::Integer=50`: number of extreme learning machines for the ensemble.
 - `num_feats::Integer=Int(round(0.75 * size(X, 2)))`: number of features to bootstrap for 
     each learner in the ensemble.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
@@ -53,7 +53,7 @@ mutable struct SLearner <: Metalearner
         Y;
         activation::Function=swish,
         sample_size::Integer=size(X, 1),
-        num_machines::Integer=100,
+        num_machines::Integer=50,
         num_feats::Integer=Int(round(0.75 * size(X, 2))),
         num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
     )
@@ -94,7 +94,7 @@ Initialize a T-Learner.
 - `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
-- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_machines::Integer=50`: number of extreme learning machines for the ensemble.
 - `num_feats::Integer=Int(round(0.75 * size(X, 2)))`: number of features to bootstrap for 
     each learner in the ensemble.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
@@ -132,7 +132,7 @@ mutable struct TLearner <: Metalearner
         Y;
         activation::Function=swish,
         sample_size::Integer=size(X, 1),
-        num_machines::Integer=100,
+        num_machines::Integer=50,
         num_feats::Integer=Int(round(0.75 * size(X, 2))),
         num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
     )
@@ -172,7 +172,7 @@ Initialize an X-Learner.
 - `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
-- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_machines::Integer=50`: number of extreme learning machines for the ensemble.
 - `num_feats::Integer=Int(round(0.75 * size(X, 2)))`: number of features to bootstrap for 
     each learner in the ensemble.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
@@ -211,7 +211,7 @@ mutable struct XLearner <: Metalearner
         Y;
         activation::Function=swish,
         sample_size::Integer=size(X, 1),
-        num_machines::Integer=100,
+        num_machines::Integer=50,
         num_feats::Integer=Int(round(0.75 * size(X, 2))),
         num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
     )
@@ -251,7 +251,7 @@ Initialize an R-Learner.
 - `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
-- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_machines::Integer=50`: number of extreme learning machines for the ensemble.
 - `num_feats::Integer=Int(round(0.75 * size(X, 2)))`: number of features to bootstrap for 
     each learner in the ensemble.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
@@ -287,7 +287,7 @@ function RLearner(
     Y;
     activation::Function=swish,
     sample_size::Integer=size(X, 1),
-    num_machines::Integer=100,
+    num_machines::Integer=50,
     num_feats::Integer=Int(round(0.75 * size(X, 2))),
     num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
     folds::Integer=5,
@@ -333,7 +333,7 @@ Initialize a doubly robust CATE estimator.
 - `activation::Function=swish`: the activation function to use.
 - `sample_size::Integer=size(X, 1)`: number of bootstrapped samples for eth extreme 
     learners.
-- `num_machines::Integer=100`: number of extreme learning machines for the ensemble.
+- `num_machines::Integer=50`: number of extreme learning machines for the ensemble.
 - `num_feats::Integer=Int(round(0.75 * size(X, 2)))`: number of features to bootstrap for 
     each learner in the ensemble.
 - `num_neurons::Integer`: number of neurons to use in the extreme learning machines.
@@ -372,7 +372,7 @@ function DoublyRobustLearner(
     Y;
     activation::Function=swish,
     sample_size::Integer=size(X, 1),
-    num_machines::Integer=100,
+    num_machines::Integer=50,
     num_feats::Integer=Int(round(0.75 * size(X, 2))),
     num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
 )
