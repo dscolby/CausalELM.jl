@@ -189,22 +189,26 @@ julia> generate_null_distribution(g_computer, 500)
 ```
 """
 function generate_null_distribution(mod, n)
-    m = deepcopy(mod)
-    nobs = size(m.T, 1)
+    nobs, mods = size(mod.T, 1), [deepcopy(mod) for i ∈ 1:n]
     results = Vector{Float64}(undef, n)
 
     # Generate random treatment assignments and estimate the causal effects
-    Threads.@threads for iter in 1:n
-        
+    Threads.@threads for i ∈ 1:n
+
         # Sample from a continuous distribution if the treatment is continuous
         if var_type(mod.T) isa Continuous
-            m.T = (maximum(m.T) - minimum(m.T)) .* rand(nobs) .+ minimum(m.T)
+            mods[i].T = (maximum(mod.T) - minimum(mod.T)) .* rand(nobs) .+ minimum(mod.T)
         else
-            m.T = float(rand(unique(m.T), nobs))
+            mods[i].T = float(rand(unique(mod.T), nobs))
         end
 
-        estimate_causal_effect!(m)
-        results[iter] = mod isa Metalearner ? mean(m.causal_effect) : m.causal_effect
+        estimate_causal_effect!(mods[i])
+
+        results[i] = if mod isa Metalearner
+            mean(mods[i].causal_effect)
+        else 
+            mods[i].causal_effect
+        end
     end
     return results
 end
@@ -228,28 +232,28 @@ julia> generate_null_distribution(its, 10)
 ```
 """
 function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
-    model = deepcopy(its)
+    mods = [deepcopy(its) for i ∈ 1:n]
     split_idx = size(model.Y₀, 1)
     results = Vector{Float64}(undef, n)
     data = reduce(hcat, (reduce(vcat, (its.X₀, its.X₁)), reduce(vcat, (its.Y₀, its.Y₁))))
 
     # Generate random treatment assignments and estimate the causal effects
-    Threads.@threads for iter in 1:n
-        permuted_data = data[shuffle(1:end), :]
-        permuted_x₀ = permuted_data[1:split_idx, 1:(end - 1)]
-        permuted_x₁ = permuted_data[(split_idx + 1):end, 1:(end - 1)]
-        permuted_y₀ = permuted_data[1:split_idx, end]
-        permuted_y₁ = permuted_data[(split_idx + 1):end, end]
+    Threads.@thread for iter in 1:n
+        local permuted_data = data[shuffle(1:end), :]
+        local permuted_x₀ = permuted_data[1:split_idx, 1:(end - 1)]
+        local permuted_x₁ = permuted_data[(split_idx + 1):end, 1:(end - 1)]
+        local permuted_y₀ = permuted_data[1:split_idx, end]
+        local permuted_y₁ = permuted_data[(split_idx + 1):end, end]
 
         # Reestimate the model with the intervention now at the nth interval
-        model.X₀, model.Y₀ = permuted_x₀, permuted_y₀
-        model.X₁, model.Y₁ = permuted_x₁, permuted_y₁
-        estimate_causal_effect!(model)
+        local model.X₀, model.Y₀ = permuted_x₀, permuted_y₀
+        local model.X₁, model.Y₁ = permuted_x₁, permuted_y₁
+        estimate_causal_effect!(mods[iter])
 
         results[iter] = if mean_effect
-            mean(model.causal_effect)
+            mean(mods[iter].causal_effect)
         else
-            sum(model.causal_effect)
+            sum(mods[iter].causal_effect)
         end
     end
     return results
