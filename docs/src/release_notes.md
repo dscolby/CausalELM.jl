@@ -10,6 +10,7 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 *   Made calculation of p-values and standard errors optional and not executed by default in summarize methods [#65](https://github.com/dscolby/CausalELM.jl/issues/65)
 *   Removed redundant W argument for double machine learning, R-learning, and doubly robust estimation [#68](https://github.com/dscolby/CausalELM.jl/issues/68)
 *   Use swish as the default activation function [#72](https://github.com/dscolby/CausalELM.jl/issues/72)
+*   Implemented noise as a function of each observation instead of the variance of the outcome when testing the sensitivity of the counterfactual consistency assumption [#74](https://github.com/dscolby/CausalELM.jl/issues/74)
 ### Fixed
 *   Applying the weight trick for R-learning [#70](https://github.com/dscolby/CausalELM.jl/issues/70)
 

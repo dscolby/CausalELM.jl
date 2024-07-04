@@ -432,10 +432,10 @@ function simulate_counterfactual_violations(y::Vector{<:Real}, dev::Float64)
     min_y, max_y = minimum(y), maximum(y)
 
     if var_type(y) isa Continuous
-        violations = (sqrt(var(y)) * dev) * randn(length(y))
-        counterfactual_Y = y .+ violations
+        violations = dev .* randn(length(y))
+        counterfactual_Y = y .+ (violations .* y)
     else
-        counterfactual_Y = ifelse.(rand() > dev, Float64(rand(min_y:max_y)), y)
+        counterfactual_Y = ifelse.(rand() < dev, Float64(rand(min_y:max_y)), y)
     end
     return counterfactual_Y
 end
