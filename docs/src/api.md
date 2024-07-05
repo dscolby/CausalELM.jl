@@ -44,15 +44,12 @@ fourier
 ## Average Causal Effect Estimators
 ```@docs
 CausalELM.g_formula!
-CausalELM.causal_loss!
 CausalELM.predict_residuals
 CausalELM.moving_average
-CausalELM.generate_folds
 ```
 
 ## Metalearners
 ```@docs
-CausalELM.causal_loss
 CausalELM.doubly_robust_formula!
 CausalELM.stage1!
 CausalELM.stage2!
@@ -84,7 +81,6 @@ CausalELM.e_value
 CausalELM.binarize
 CausalELM.risk_ratio
 CausalELM.positivity
-CausalELM.var_type
 ```
 
 ## Validation Metrics
@@ -110,10 +106,12 @@ CausalELM.set_weights_biases
 
 ## Utility Functions
 ```@docs
+CausalELM.var_type
 CausalELM.mean
 CausalELM.var
 CausalELM.one_hot_encode
 CausalELM.clip_if_binary
 CausalELM.@model_config
 CausalELM.@standard_input_data
+CausalEL.generate_folds
 ```

@@ -12,11 +12,6 @@ R-learners can handle binary, categorical, count, or continuous treatments but o
 continuous outcomes.
 
 !!! note
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross. However, if the penalty in on iteration is approximately the same as in the 
-    previous penalty, then the procedure will stop early.
-
-!!! note
     For a deeper dive on S-learning, T-learning, and X-learning see:
     
         Künzel, Sören R., Jasjeet S. Sekhon, Peter J. Bickel, and Bin Yu. "Metalearners for 
@@ -29,25 +24,22 @@ continuous outcomes.
         Nie, Xinkun, and Stefan Wager. "Quasi-oracle estimation of heterogeneous treatment 
         effects." Biometrika 108, no. 2 (2021): 299-319.
 
+
     To see the details out doubly robust estimation implemented in CausalELM see:
+
         Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
         effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
 
 # Initialize a Metalearner
 S-learners, T-learners, X-learners, R-learners, and doubly robust estimators all take at 
-least three arguments: an array of covariates, a vector of outcomes, and a vector of 
-treatment statuses. S, T, X, and doubly robust learners support binary treatment variables 
-and binary, continuous, count, or time to event outcomes. The R-learning estimator supports 
-binary, continuous, or count treatment variables and binary, continuous, count, or time to 
-event outcomes.
+least three arguments—covariates, treatment statuses, and outcomes, all of which can be 
+either an array or any struct that implements the Tables.jl interface (e.g. DataFrames). S, 
+T, X, and doubly robust learners support binary treatment variables and binary, continuous, 
+count, or time to event outcomes. The R-learning estimator supports binary, continuous, or 
+count treatment variables and binary, continuous, count, or time to event outcomes.
 
 !!! note
-    Internally, the outcome and treatment models of the metalearners are treated as a regression 
-    since extreme learning machines minimize the MSE. This means that predicted treatments and 
-    outcomes under treatment and control groups could fall outside [0, 1], although this is not 
-    likely in practice. To deal with this, predicted binary variables are automatically clipped to 
-    [0.0000001, 0.9999999].This also means that count outcomes will be predicted as continuous 
-    variables.
+    Non-binary categorical outcomes are treated as continuous.
 
 !!! tip
     You can also specify the the number of folds to use for cross-fitting, the number of 
@@ -65,7 +57,6 @@ X, Y, T =  rand(1000, 5), rand(1000), [rand()<0.4 for i in 1:1000]
 # using DataFrames
 # X = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
 # T, Y = DataFrame(t=[rand()<0.4 for i in 1:1000]), DataFrame(y=rand(1000))
-
 s_learner = SLearner(X, Y, T)
 t_learner = TLearner(X, Y, T)
 x_learner = XLearner(X, Y, T)
@@ -84,16 +75,14 @@ estimate_causal_effect!(dr_lwarner)
 ```
 
 # Get a Summary
-We can get a summary of the models that includes p0values and standard errors for the 
-average treatment effect by passing the models to the summarize method.
+We can get a summary of the model by pasing the model to the summarize method.
 
-Calling the summarize methodd returns a dictionary with the estimator's task (regression or 
-classification), the quantity of interest being estimated (CATE), whether the model 
-uses an L2 penalty, the activation function used in the model's outcome predictors, whether 
-the data is temporal, the validation metric used for cross validation to find the best 
-number of neurons, the number of neurons used in the ELMs used by the estimator, the number 
-of neurons used in the ELM used to learn a mapping from number of neurons to validation 
-loss during cross validation, the causal effect, standard error, and p-value for the ATE.
+!!!note
+    To calculate the p-value and standard error for the treatmetn effect, you can set the 
+    inference argument to false. However, p-values and standard errors are calculated via 
+    randomization inference, which will take a long time. But can be sped up by launching 
+    Julia with a higher number of threads.
+
 ```julia
 summarize(s_learner)
 summarize(t_learner)
@@ -110,12 +99,12 @@ tests do not provide definitive evidence of a violation of these assumptions. To
 counterfactual consistency assumption, we simulate counterfactual outcomes that are 
 different from the observed outcomes, estimate models with the simulated counterfactual 
 outcomes, and take the averages. If the outcome is continuous, the noise for the simulated 
-counterfactuals is drawn from N(0, dev) for each element in devs, otherwise the default is 
-0.25, 0.5, 0.75, and 1.0 standard deviations from the mean outcome. For discrete variables, 
-each outcome is replaced with a different value in the range of outcomes with probability ϵ 
-for each ϵ in devs, otherwise the default is 0.025, 0.05, 0.075, 0.1. If the average 
-estimate for a given level of violation differs greatly from the effect estimated on the 
-actual data, then the model is very sensitive to violations of the counterfactual 
+counterfactuals is drawn from N(0, dev) for each element in devs and each outcome, 
+multiplied by the original outcome, and added to the original outcome. For discrete 
+variables, each outcome is replaced with a different value in the range of outcomes with 
+probability ϵ for each ϵ in devs, otherwise the default is 0.025, 0.05, 0.075, 0.1. If the 
+average estimate for a given level of violation differs greatly from the effect estimated on 
+the actual data, then the model is very sensitive to violations of the counterfactual 
 consistency assumption for that level of violation. Next, this method tests the model's 
 sensitivity to a violation of the exchangeability assumption by calculating the E-value, 
 which is the minimum strength of association, on the risk ratio scale, that an unobserved 

@@ -1,17 +1,17 @@
 # Interrupted Time Series Analysis
 Sometimes we want to know how an outcome variable for a single unit changed after an event 
 or intervention. For example, if regulators announce sanctions against company A, we might 
-want to know how the price of stock A changed after the announcement. Since we do not know
-what the price of Company A's stock would have been if the santions were not announced, we
-need some way to predict those values. An interrupted time series analysis does this by 
-using some covariates that are related to the oucome variable but not related to whether the 
-event happened to predict what would have happened. The estimated effects are the 
-differences between the predicted post-event counterfactual outcomes and the observed 
+want to know how the price of company A's stock changed after the announcement. Since we do 
+not know what the price of Company A's stock would have been if the santions were not 
+announced, we need some way to predict those values. An interrupted time series analysis 
+does this by using some covariates that are related to the outcome but not related to 
+whether the event happened to predict what would have happened. The estimated effects are 
+the differences between the predicted post-event counterfactual outcomes and the observed 
 post-event outcomes, which can also be aggregated to mean or cumulative effects. 
 Estimating an interrupted time series design in CausalELM consists of three steps.
 
 !!! note
-    For a deeper dive on interrupted time series estimation see:
+    For a general overview of interrupted time series estimation see:
     
         Bernal, James Lopez, Steven Cummins, and Antonio Gasparrini. "Interrupted time series 
         regression for the evaluation of public health interventions: a tutorial." International 
@@ -29,33 +29,32 @@ Estimating an interrupted time series design in CausalELM consists of three step
     opposed to the commonly used segment linear regression.
 
 ## Step 1: Initialize an interrupted time series estimator
-The InterruptedTimeSeries method takes at least four agruments: an array of pre-event 
-covariates, a vector of pre-event outcomes, an array of post-event covariates, and a vector 
-of post-event outcomes. The interrupted time series estimator assumes outcomes are either 
-continuous, count, or time to event variables.
+The InterruptedTimeSeries constructor takes at least four agruments: pre-event covariates, 
+pre-event outcomes, post-event covariates, and post-event outcomes, all of which can be 
+either an array or any data structure that implements the Tables.jl interface (e.g. 
+DataFrames). The interrupted time series estimator assumes outcomes are either continuous, 
+count, or time to event variables.
 
 !!! note
-    Since extreme learning machines minimize the MSE, count outcomes will be predicted as 
-    continuous variables.
+    Non-binary categorical outcomes are treated as continuous.
 
 !!! tip
-    You can also specify which activation function to use, whether the data is of a temporal 
-    nature, the number of extreme learning machines to use, the number of features to 
-    consider for each extreme learning machine, the number of bootstrapped observations to 
-    include in each extreme learning machine, and the number of neurons to use during 
-    estimation. These options are specified with the following keyword arguments: 
-    activation, temporal, num_machines, num_feats, sample_size, and num\_neurons.
+    You can also specify which activation function to use, the number of extreme learning 
+    machines to use, the number of features to consider for each extreme learning machine, 
+    the number of bootstrapped observations to include in each extreme learning machine, and 
+    the number of neurons to use during estimation. These options are specified with the 
+    following keyword arguments: activation, num_machines, num_feats, sample_size, and 
+    num\_neurons.
 
 ```julia
 # Generate some data to use
 X₀, Y₀, X₁, Y₁ =  rand(1000, 5), rand(1000), rand(100, 5), rand(100)
 
-# We could also use DataFrames or any other package that implements the Tables.jl API
+# We could also use DataFrames or any other package that implements the Tables.jl interface
 # using DataFrames
 # X₀ = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
 # X₁ = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
 # Y₀, Y₁ = DataFrame(y=rand(1000)), DataFrame(y=rand(1000))
-
 its = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 ```
 
@@ -67,16 +66,14 @@ estimate_causal_effect!(its)
 ```
 
 ## Step 3: Get a Summary
-We can get a summary of the model, including a p-value and statndard via asymptotic 
-randomization inference, by pasing the model to the summarize method.
+We can get a summary of the model by pasing the model to the summarize method.
 
-Calling the summarize method returns a dictionary with the estimator's task (regression or 
-classification), the quantity of interest being estimated (ATE), whether the model uses an 
-L2 penalty (always true for DML), the activation function used in the model's outcome 
-predictors, whether the data is temporal (always true for ITS), the number of neurons used 
-in the ELMs used by the estimator, the causal effect, standard error, and p-value. Due to 
-long running times, calculation of the p-value and standard error is not conducted and set 
-to NaN unless inference is set to true.
+!!!note
+    To calculate the p-value and standard error for the treatmetn effect, you can set the 
+    inference argument to false. However, p-values and standard errors are calculated via 
+    randomization inference, which will take a long time. But can be sped up by launching 
+    Julia with a higher number of threads.
+
 ```julia
 summarize(its)
 ```

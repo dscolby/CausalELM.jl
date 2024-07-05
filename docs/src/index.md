@@ -16,16 +16,16 @@ CurrentModule = CausalELM
 CausalELM leverages new techniques in machine learning and statistics to estimate individual 
 and aggregate treatment effects in situations where traditional methods are unsatisfactory 
 or infeasible. To enable this, CausalELM provides a simple API to initialize a model, 
-estimate a causal effect, get a summary from the model, and test the robustness of the 
-model. CausalELM includes estimators for interupted time series analysis, G-Computation, 
-double machine learning, S-Learning, T-Learning, X-Learning, R-learning, and doubly robust 
-estimation. Underlying all these estimators are bagged extreme learning machines. Extreme 
-learning machines are a single layer feedfoward neural network that relies on randomized 
-weights and least squares optimization, making them expressive, simple, and computationally 
-efficient. Combining them with bagging reduces the variance due to their randomized weights 
-and provides a form of regularization that does not have to be tuned through cross 
-validation.These attributes make CausalELM a very simple and powerful package for estimating 
-treatment effects.
+estimate a causal effect, get a summary of the model, and test its robustness. CausalELM 
+includes estimators for interupted time series analysis, G-Computation, double machine 
+learning, S-Learning, T-Learning, X-Learning, R-learning, and doubly robust estimation. 
+Underlying all these estimators are bagged extreme learning machines. Extreme learning 
+machines are a single layer feedfoward neural network that relies on randomized weights and 
+least squares optimization, making them expressive, simple, and computationally 
+efficient. Combining them with bagging reduces the variance caused by the randomization of 
+weights and provides a form of regularization that does not have to be tuned through cross 
+validation. These attributes make CausalELM a very simple and powerful package for 
+estimating treatment effects.
 
 ### Features
 *   Estimate a causal effect, get a summary, and validate assumptions in just four lines of code
@@ -33,16 +33,16 @@ treatment effects.
 *   Enables using the same structs for regression and classification
 *   Includes 13 activation functions and allows user-defined activation functions
 *   Most inference and validation tests do not assume functional or distributional forms
-*   Implements the latest techniques form statistics, econometrics, and biostatistics
+*   Implements the latest techniques from statistics, econometrics, and biostatistics
 *   Works out of the box with arrays or any data structure that implements the Tables.jl interface
 *   Codebase is high-quality, well tested, and regularly updated
 
 ### What's New?
 *   Now includes doubly robust estimator for CATE estimation
-*   Uses generalized cross validation with successive halving to find the best ridge penalty
-*   Double machine learning, R-learning, and doubly robust estimators suppot specifying confounders and covariates of interest separately
-*   Counterfactual consistency validation simulates outcomes that violate the assumption rather than the previous binning approach
-*   Standardized and improved docstrings and added doctests
+*   All estimators now implement bagging to reduce predictive performance and reduce variance
+*   Counterfactual consistency validation simulates more realistic violations of the counterfactual consistency assumption
+*   Uses a simple heuristic to choose the number of neurons, which reduces training time and still works well in practice
+*   Probability clipping for classifier predictions and residuals is no longer necessary due to the bagging procedure
 *   CausalELM talk has been accepted to JuliaCon 2024!
 
 ### What makes CausalELM different?
@@ -50,16 +50,16 @@ Other packages, mainly EconML, DoWhy, CausalAI, and CausalML, have similar funci
 Beides being written in Julia rather than Python, the main differences between CausalELM and 
 these libraries are:
 *   Simplicity is core to casualELM's design philosophy. CausalELM only uses one type of
-    machine learning model, extreme learning machines (with optional L2 regularization) and 
-    does not require you to import any other packages or initialize machine learning models, 
-    pass machine learning structs to CausalELM's estimators, convert dataframes or arrays to 
-    a special type, or one hot encode categorical treatments. By trading a little bit of 
-    flexibility for a simpler API, all of CausalELM's functionality can be used with just 
-    four lines of code.
-*   As part of this design principle, CausalELM's estimators handle all of the work in 
-    finding the best number of neurons during estimation. They use a simple log heuristic 
-    for determining the number of neurons to use and automatically select the best ridge 
-    penalty via generalized cross validation.
+    machine learning model, extreme learning machines (with bagging) and does not require 
+    you to import any other packages or initialize machine learning models, pass machine 
+    learning structs to CausalELM's estimators, convert dataframes or arrays to a special 
+    type, or one hot encode categorical treatments. By trading a little bit of flexibility 
+    for a simpler API, all of CausalELM's functionality can be used with just four lines of 
+    code.
+*   As part of this design principle, CausalELM's estimators decide whether to use regression 
+    or classification based on the type of outcome variable. This is in contrast to most 
+    machine learning packages, which have separate classes or structs fro regressors and 
+    classifiers of the same model.
 *   CausalELM's validate method, which is specific to each estimator, allows you to validate 
     or test the sentitivity of an estimator to possible violations of identifying assumptions.
 *   Unlike packages that do not allow you to estimate p-values and standard errors, use 

@@ -41,11 +41,11 @@ series analysis, G-computation, and double machine learning; average treatment e
 treated (ATT) with G-computation; cumulative treatment effect with interrupted time series 
 analysis; and the conditional average treatment effect (CATE) via S-learning, T-learning, 
 X-learning, R-learning, and doubly robust estimation. Underlying all of these estimators are 
-extreme learning machines, a simple neural network that uses randomized weights instead of 
-using gradient descent. Once a model has been estimated, CausalELM can summarize the model, 
-including computing p-values via randomization inference, and conduct sensitivity analysis 
-to calidate the plausibility of modeling assumptions. Furthermore, all of this can be done 
-in four lines of code.
+ensembles of extreme learning machines, a simple neural network that uses randomized weights 
+and least squares optimization instead of gradient descent. Once a model has been estimated, 
+CausalELM can summarize the model and conduct sensitivity analysis to validate the 
+plausibility of modeling assumptions. Furthermore, all of this can be done in four lines of 
+code.
 </p>
 
 <h2>Extreme Learning Machines and Causal Inference</h2>
@@ -73,37 +73,39 @@ to adjust the initial estimates. This approach has three advantages. First, it i
 efficient with high dimensional data than conventional methods. Metalearners take a similar 
 approach to estimate the CATE. While all of these models are different, they have one thing 
 in common: how well they perform depends on the underlying model they fit to the data. To 
-that end, CausalELMs use extreme learning machines because they are simple yet flexible 
-enough to be universal function approximators.
+that end, CausalELMs use bagged ensembles of extreme learning machines because they are 
+simple yet flexible enough to be universal function approximators with lower varaince than 
+single extreme learning machines.
 </p>
 
 <h2>CausalELM Features</h2>
 <ul>
   <li>Estimate a causal effect, get a summary, and validate assumptions in just four lines of code</li>
-  <li>All models automatically select the best number of neurons and L2 penalty</li>
+  <li>Bagging improves performance and reduces variance without the need to tune a regularization parameter</li>
   <li>Enables using the same structs for regression and classification</li>
   <li>Includes 13 activation functions and allows user-defined activation functions</li>
   <li>Most inference and validation tests do not assume functional or distributional forms</li>
   <li>Implements the latest techniques form statistics, econometrics, and biostatistics</li>
-  <li>Works out of the box with DataFrames or arrays</li>
+  <li>Works out of the box with arrays or any data structure that implements the Tables.jl interface</li>
   <li>Codebase is high-quality, well tested, and regularly updated</li>
 </ul>
 
 <h2>What's New?</h2>
 <ul>
   <li>Now includes doubly robust estimator for CATE estimation</li>
-  <li>Uses generalized cross validation with successive halving to find the best ridge penalty</li>
-  <li>Double machine learning, R-learning, and doubly robust estimators suppot specifying confounders and covariates of interest separately</li>
-  <li>Counterfactual consistency validation simulates outcomes that violate the assumption rather than the previous binning approach</li>
-  <li>Standardized and improved docstrings and added doctests</li>
+  <li>All estimators now implement bagging to reduce predictive performance and reduce variance</li>
+  <li>Counterfactual consistency validation simulates more realistic violations of the counterfactual consistency assumption</li>
+  <li>Uses a simple heuristic to choose the number of neurons, which reduces training time and still works well in practice</li>
+  <li>Probability clipping for classifier predictions and residuals is no longer necessary due to the bagging procedure</li>
   <li>CausalELM talk has been accepted to JuliaCon 2024!</li> 
 </ul>
 
 <h2>What's Next?</h2>
 <p>
-Newer versions of CausalELM will hopefully support using GPUs and provide textual 
-interpretations of the results of calling validate on a model that has been estimated. 
-However, these priorities could also change depending on feedback recieved at JuliaCon.
+Newer versions of CausalELM will hopefully support using GPUs and provide interpretations of 
+the results of calling validate on a model that has been estimated. In addition, some 
+estimators will also support using instrumental variables. However, these priorities could 
+also change depending on feedback recieved at JuliaCon.
 </p>
 
 <h2>Disclaimer</h2>
