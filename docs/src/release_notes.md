@@ -4,6 +4,7 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 ## Version [v0.7.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.6.1) - 2024-06-22
 ### Added
 *   Implemented bagged ensemble of extreme learning machines to use with estimators [#67](https://github.com/dscolby/CausalELM.jl/issues/67)
+*   Implemented multithreading for testing the sensitivity of estimators to the counterfactual consistency assumption
 ### Changed
 *   Compute the number of neurons to use with log heuristic instead of cross validation [#62](https://github.com/dscolby/CausalELM.jl/issues/62)
 *   Calculate probabilities as the average label predicted by the ensemble instead of clipping [#71](https://github.com/dscolby/CausalELM.jl/issues/71)

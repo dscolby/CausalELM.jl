@@ -233,12 +233,12 @@ julia> generate_null_distribution(its, 10)
 """
 function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
     mods = [deepcopy(its) for i ∈ 1:n]
-    split_idx = size(model.Y₀, 1)
+    split_idx = size(its.Y₀, 1)
     results = Vector{Float64}(undef, n)
     data = reduce(hcat, (reduce(vcat, (its.X₀, its.X₁)), reduce(vcat, (its.Y₀, its.Y₁))))
 
     # Generate random treatment assignments and estimate the causal effects
-    Threads.@thread for iter in 1:n
+    Threads.@threads for iter in 1:n
         local permuted_data = data[shuffle(1:end), :]
         local permuted_x₀ = permuted_data[1:split_idx, 1:(end - 1)]
         local permuted_x₁ = permuted_data[(split_idx + 1):end, 1:(end - 1)]
@@ -246,8 +246,8 @@ function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
         local permuted_y₁ = permuted_data[(split_idx + 1):end, end]
 
         # Reestimate the model with the intervention now at the nth interval
-        local model.X₀, model.Y₀ = permuted_x₀, permuted_y₀
-        local model.X₁, model.Y₁ = permuted_x₁, permuted_y₁
+        mods[iter].X₀, mods[iter].Y₀ = permuted_x₀, permuted_y₀
+        mods[iter].X₁, mods[iter].Y₁ = permuted_x₁, permuted_y₁
         estimate_causal_effect!(mods[iter])
 
         results[iter] = if mean_effect
