@@ -5,12 +5,6 @@ given at multiple times whose status depends on the health of the patient at a g
 One way to get an unbiased estimate of the causal effect is to use G-computation. The basic 
 steps for using G-computation in CausalELM are below.
 
-!!! note
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as in 
-    the previous penalty, then the procedure will stop early.
-
 !!! note 
     For a good overview of G-Computation see:
     
@@ -21,57 +15,50 @@ steps for using G-computation in CausalELM are below.
         study." Scientific reports 10, no. 1 (2020): 9219.
 
 ## Step 1: Initialize a Model
-The GComputation method takes at least three arguments: an array of covariates, a vector of 
-treatment statuses, and an outcome vector. It can support binary treatments and binary, 
-continuous, time to event, and count outcome variables.
-
-!!! tip
-    You can also specify the causal estimand, whether to employ L2 regularization, which 
-    activation function to use, whether the data is of a temporal nature, the metric to use when 
-    using cross validation to find the best number of neurons, the minimum number of neurons to 
-    consider, the maximum number of neurons to consider, the number of folds to use during cross 
-    caidation, and the number of neurons to use in the ELM that learns a mapping from number of 
-    neurons to validation loss. These options are specified with the following keyword 
-    arguments: quantity\_of\_interest, regularized, activation, temporal, validation\_metric, 
-    min\_neurons, max\_neurons, folds, iterations, and approximator\_neurons.
+The GComputation constructor takes at least three arguments: covariates, treatment statuses, 
+outcomes, all of which can be either an array or any data structure that implements the 
+Tables.jl interface (e.g. DataFrames). This implementation supports binary treatments and 
+binary, continuous, time to event, and count outcome variables.
 
 !!! note
-    Internally, the outcome model is treated as a regression since extreme learning machines 
-    minimize the MSE. This means that predicted outcomes under treatment and control groups 
-    could fall outside [0, 1], although this is not likely in practice. To deal with this, 
-    predicted binary variables are automatically clipped to [0.0000001, 0.9999999]. This also 
-    means that count outcomes will be predicted as continuous variables.
+    Non-binary categorical outcomes are treated as continuous.
+
+!!! tip
+    You can also specify the causal estimand, which activation function to use, whether the 
+    data is of a temporal nature, the number of extreme learning machines to use, the 
+    number of features to consider for each extreme learning machine, the number of 
+    bootstrapped observations to include in each extreme learning machine, and the number of 
+    neurons to use during estimation. These options are specified with the following keyword 
+    arguments: quantity\_of\_interest, activation, temporal, num_machines, num_feats, 
+    sample_size, and num\_neurons.
 
 ```julia
 # Create some data with a binary treatment
 X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)
 
-# We could also use DataFrames
+# We could also use DataFrames or any other package that implements the Tables.jl API
 # using DataFrames
 # X = DataFrame(x1=rand(1000), x2=rand(1000), x3=rand(1000), x4=rand(1000), x5=rand(1000))
 # T, Y = DataFrame(t=[rand()<0.4 for i in 1:1000]), DataFrame(y=rand(1000))
-
 g_computer = GComputation(X, T, Y)
 ```
 
 ## Step 2: Estimate the Causal Effect
-To estimate the causal effect, we pass the model above to estimatecausaleffect!.
+To estimate the causal effect, we pass the model above to estimate_causal_effect!.
 ```julia
 # Note that we could also estimate the ATT by setting quantity_of_interest="ATT"
 estimate_causal_effect!(g_computer)
 ```
 
 ## Step 3: Get a Summary
-We get a summary of the model that includes a p-value and standard error estimated via 
-asymptotic randomization inference by passing our model to the summarize method.
+We can get a summary of the model by pasing the model to the summarize method.
 
-Calling the summarize method returns a dictionary with the estimator's task (regression or 
-classification), the quantity of interest being estimated (ATE or ATT), whether the model 
-uses an L2 penalty, the activation function used in the model's outcome predictors, whether 
-the data is temporal, the validation metric used for cross validation to find the best 
-number of neurons, the number of neurons used in the ELMs used by the estimator, the number 
-of neurons used in the ELM used to learn a mapping from number of neurons to validation 
-loss during cross validation, the causal effect, standard error, and p-value.
+!!!note
+    To calculate the p-value and standard error for the treatmetn effect, you can set the 
+    inference argument to false. However, p-values and standard errors are calculated via 
+    randomization inference, which will take a long time. But can be sped up by launching 
+    Julia with a higher number of threads.
+
 ```julia
 summarize(g_computer)
 ```
@@ -84,12 +71,12 @@ tests do not provide definitive evidence of a violation of these assumptions. To
 counterfactual consistency assumption, we simulate counterfactual outcomes that are 
 different from the observed outcomes, estimate models with the simulated counterfactual 
 outcomes, and take the averages. If the outcome is continuous, the noise for the simulated 
-counterfactuals is drawn from N(0, dev) for each element in devs, otherwise the default is 
-0.25, 0.5, 0.75, and 1.0 standard deviations from the mean outcome. For discrete variables, 
-each outcome is replaced with a different value in the range of outcomes with probability ϵ 
-for each ϵ in devs, otherwise the default is 0.025, 0.05, 0.075, 0.1. If the average 
-estimate for a given level of violation differs greatly from the effect estimated on the 
-actual data, then the model is very sensitive to violations of the counterfactual 
+counterfactuals is drawn from N(0, dev) for each element in devs and each outcome, 
+multiplied by the original outcome, and added to the original outcome. For discrete 
+variables, each outcome is replaced with a different value in the range of outcomes with 
+probability ϵ for each ϵ in devs, otherwise the default is 0.025, 0.05, 0.075, 0.1. If the 
+average estimate for a given level of violation differs greatly from the effect estimated on 
+the actual data, then the model is very sensitive to violations of the counterfactual 
 consistency assumption for that level of violation. Next, this method tests the model's 
 sensitivity to a violation of the exchangeability assumption by calculating the E-value, 
 which is the minimum strength of association, on the risk ratio scale, that an unobserved 
@@ -102,8 +89,7 @@ an estimated zero probability of treatment, which implies the positivity assumpt
 satisfied.
 
 !!! tip
-    One can also specify the maxium number of possible treatments to consider for the causal 
-    consistency assumption and the minimum and maximum probabilities of treatment for the 
+    One can also specify the minimum and maximum probabilities of treatment for the 
     positivity assumption with the num\_treatments, min, and max keyword arguments.
 
 !!! danger

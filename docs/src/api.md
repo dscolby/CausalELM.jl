@@ -1,7 +1,7 @@
 # CausalELM
-Most of the methods and structs here are private, not exported, should not be called by the 
-user, and are documented for the purpose of developing CausalELM or to facilitate 
-understanding of the implementation.
+```@docs
+CausalELM.CausalELM
+```
 
 ## Types
 ```@docs
@@ -15,9 +15,8 @@ RLearner
 DoublyRobustLearner
 CausalELM.CausalEstimator
 CausalELM.Metalearner
-CausalELM.ExtremeLearningMachine
 CausalELM.ExtremeLearner
-CausalELM.RegularizedExtremeLearner
+CausalELM.ELMEnsemble
 CausalELM.Nonbinary
 CausalELM.Binary
 CausalELM.Count
@@ -41,28 +40,15 @@ elish
 fourier
 ```
 
-## Cross Validation
-```@docs
-CausalELM.generate_folds
-CausalELM.generate_temporal_folds
-CausalELM.validation_loss
-CausalELM.cross_validate
-CausalELM.best_size
-CausalELM.shuffle_data
-```
-
 ## Average Causal Effect Estimators
 ```@docs
 CausalELM.g_formula!
-CausalELM.causal_loss!
 CausalELM.predict_residuals
-CausalELM.make_folds
 CausalELM.moving_average
 ```
 
 ## Metalearners
 ```@docs
-CausalELM.causal_loss
 CausalELM.doubly_robust_formula!
 CausalELM.stage1!
 CausalELM.stage2!
@@ -94,7 +80,6 @@ CausalELM.e_value
 CausalELM.binarize
 CausalELM.risk_ratio
 CausalELM.positivity
-CausalELM.var_type
 ```
 
 ## Validation Metrics
@@ -114,17 +99,17 @@ CausalELM.fit!
 CausalELM.predict
 CausalELM.predict_counterfactual!
 CausalELM.placebo_test
-CausalELM.ridge_constant
 CausalELM.set_weights_biases
 ```
 
 ## Utility Functions
 ```@docs
+CausalELM.var_type
 CausalELM.mean
 CausalELM.var
 CausalELM.one_hot_encode
 CausalELM.clip_if_binary
 CausalELM.@model_config
 CausalELM.@standard_input_data
-CausalELM.@double_learner_input_data
+CausalELM.generate_folds
 ```

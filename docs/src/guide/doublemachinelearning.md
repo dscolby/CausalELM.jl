@@ -4,13 +4,8 @@ estimating causal effects when the dimensionality of the covariates is too high 
 regression or the treatment or outcomes cannot be easily modeled parametrically. Double 
 machine learning estimates models of the treatment assignment and outcome and then combines 
 them in a final model. This is a semiparametric model in the sense that the first stage 
-models can take on any functional form but the final stage model is linear.
-
-!!! note
-    If regularized is set to true then the ridge penalty will be estimated using generalized 
-    cross validation where the maximum number of iterations is 2 * folds for the successive 
-    halving procedure. However, if the penalty in on iteration is approximately the same as in 
-    the previous penalty, then the procedure will stop early.
+models can take on any functional form but the final stage model is a linear combination of 
+the residuals from the first stage models.
 
 !!! note
     For more information see:
@@ -19,70 +14,53 @@ models can take on any functional form but the final stage model is linear.
     Whitney Newey, and James Robins. "Double/debiased machine learning for treatment and 
     structural parameters." (2018): C1-C68.
 
-
 ## Step 1: Initialize a Model
-The DoubleMachineLearning constructor takes at least three arguments, an array of 
-covariates, a treatment vector, and an outcome vector. This estimator supports binary, count, 
-or continuous treatments and binary, count, continuous, or time to event outcomes. You can 
-also specify confounders that you do not want to estimate the CATE for by passing a parameter 
-to the W argument. Otherwise, the model assumes all possible confounders are contained in X.
+The DoubleMachineLearning constructor takes at least three arguments—covariates, a 
+treatment statuses, and outcomes, all of which may be either an array or any struct that 
+implements the Tables.jl interface (e.g. DataFrames). This estimator supports binary, count, 
+or continuous treatments and binary, count, continuous, or time to event outcomes.
 
 !!! note
-    Internally, the outcome and treatment models are treated as a regression since extreme 
-    learning machines minimize the MSE. This means that predicted treatments and outcomes 
-    under treatment and control groups could fall outside [0, 1], although this is not likely 
-    in practice. To deal with this, predicted binary variables are automatically clipped to 
-    [0.0000001, 0.9999999]. This also means that count outcomes will be predicted as continuous 
-    variables.
+    Non-binary categorical outcomes are treated as continuous.
 
 !!! tip
-    You can also specify the following options: whether the treatment vector is categorical ie 
-    not continuous and containing more than two classes, whether to use L2 regularization, the 
-    activation function, the validation metric to use when searching for the best number of 
-    neurons, the minimum and maximum number of neurons to consider, the number of folds to use 
-    for cross validation, the number of iterations to perform cross validation, and the number 
-    of neurons to use in the ELM used to learn the function from number of neurons to validation 
-    loss. These arguments are specified with the following keyword arguments: t\_cat, 
-    regularized, activation, validation\_metric, min\_neurons, max\_neurons, folds, iterations, 
-    and approximator\_neurons.
+    You can also specify the the number of folds to use for cross-fitting, the number of 
+    extreme learning machines to incorporate in the ensemble, the number of features to 
+    consider for each extreme learning machine, the activation function to use, the number 
+    of observations to bootstrap in each extreme learning machine, and the number of neurons 
+    in each extreme learning machine. These arguments are specified with the folds, 
+    num_machines, num_features, activation, sample_size, and num\_neurons keywords.
+
 ```julia
 # Create some data with a binary treatment
 X, T, Y, W = rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(100, 4)
 
-# We could also use DataFrames
+# We could also use DataFrames or any other package implementing the Tables.jl API
 # using DataFrames
 # X = DataFrame(x1=rand(100), x2=rand(100), x3=rand(100), x4=rand(100), x5=rand(100))
 # T, Y = DataFrame(t=[rand()<0.4 for i in 1:100]), DataFrame(y=rand(100))
-# W = DataFrame(w1=rand(100), w2=rand(100), w3=rand(100), w4=rand(100))
-
-# W is optional and means there are confounders that you are not interested in estimating
-# the CATE for
-dml = DoubleMachineLearning(X, T, Y, W=W)
+dml = DoubleMachineLearning(X, T, Y)
 ```
 
 ## Step 2: Estimate the Causal Effect
-To estimate the causal effect, we call estimatecausaleffect! on the model above.
+To estimate the causal effect, we call estimate_causal_effect! on the model above.
 ```julia
 # we could also estimate the ATT by passing quantity_of_interest="ATT"
 estimate_causal_effect!(dml)
 ```
 
 # Get a Summary
-We can get a summary that includes a p-value and standard error estimated via asymptotic 
-randomization inference by passing our model to the summarize method.
+We can get a summary of the model by pasing the model to the summarize method.
 
-Calling the summarize method returns a dictionary with the estimator's task (regression or 
-classification), the quantity of interest being estimated (ATE), whether the model uses an 
-L2 penalty (always true for DML), the activation function used in the model's outcome 
-predictors, whether the data is temporal (always false for DML), the validation metric used 
-for cross validation to find the best number of neurons, the number of neurons used in the 
-ELMs used by the estimator, the number of neurons used in the ELM used to learn a mapping 
-from number of neurons to validation loss during cross validation, the causal effect, 
-standard error, and p-value.
+!!!note
+    To calculate the p-value and standard error for the treatmetn effect, you can set the 
+    inference argument to false. However, p-values and standard errors are calculated via 
+    randomization inference, which will take a long time. But can be sped up by launching 
+    Julia with a higher number of threads.
+
 ```julia
 # Can also use the British spelling
 # summarise(dml)
-
 summarize(dml)
 ```
 
@@ -94,12 +72,12 @@ tests do not provide definitive evidence of a violation of these assumptions. To
 counterfactual consistency assumption, we simulate counterfactual outcomes that are 
 different from the observed outcomes, estimate models with the simulated counterfactual 
 outcomes, and take the averages. If the outcome is continuous, the noise for the simulated 
-counterfactuals is drawn from N(0, dev) for each element in devs, otherwise the default is 
-0.25, 0.5, 0.75, and 1.0 standard deviations from the mean outcome. For discrete variables, 
-each outcome is replaced with a different value in the range of outcomes with probability ϵ 
-for each ϵ in devs, otherwise the default is 0.025, 0.05, 0.075, 0.1. If the average 
-estimate for a given level of violation differs greatly from the effect estimated on the 
-actual data, then the model is very sensitive to violations of the counterfactual 
+counterfactuals is drawn from N(0, dev) for each element in devs and each outcome, 
+multiplied by the original outcome, and added to the original outcome. For discrete 
+variables, each outcome is replaced with a different value in the range of outcomes with 
+probability ϵ for each ϵ in devs, otherwise the default is 0.025, 0.05, 0.075, 0.1. If the 
+average estimate for a given level of violation differs greatly from the effect estimated on 
+the actual data, then the model is very sensitive to violations of the counterfactual 
 consistency assumption for that level of violation. Next, this method tests the model's 
 sensitivity to a violation of the exchangeability assumption by calculating the E-value, 
 which is the minimum strength of association, on the risk ratio scale, that an unobserved 

@@ -27,15 +27,15 @@ code follows the guidelines below.
 
 *   Most new structs for estimating causal effects should have mostly the same fields. To 
     reduce the burden of repeatedly defining all these fields, it is advisable to use the 
-    model_config, standard_input_data, and double_learner_input_data macros to 
-    programmatically generate fields for new structs. Doing so will ensure that with little 
-    to no effort the new structs will work with the summarize and validate methods.
+    model_config and standard_input_data macros to programmatically generate fields for new 
+    structs. Doing so will ensure that with little to no effort the new structs will work 
+    with the summarize and validate methods.
 
 *   There are no repeated code blocks. If there are repeated codeblocks, then they should be 
     consolidated into a separate function.
 
-*   Methods should generally include types and be type stable. If there is a strong reason 
-    to deviate from this point, there should be a comment in the code explaining why.
+*   Interanl methods can contain types and be parametric but public methods should be as 
+    general as possible.
 
 *   Minimize use of new constants and macros. If they must be included, the reason for their 
     inclusion should be obvious or included in the docstring.
