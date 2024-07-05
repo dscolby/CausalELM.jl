@@ -1,7 +1,7 @@
 # CausalELM
-Most of the methods and structs here are private, not exported, should not be called by the 
-user, and are documented for the purpose of developing CausalELM or to facilitate 
-understanding of the implementation.
+```@docs
+CausalELM.CausalELM
+```
 
 ## Types
 ```@docs
@@ -15,9 +15,8 @@ RLearner
 DoublyRobustLearner
 CausalELM.CausalEstimator
 CausalELM.Metalearner
-CausalELM.ExtremeLearningMachine
 CausalELM.ExtremeLearner
-CausalELM.RegularizedExtremeLearner
+CausalELM.ELMEnsemble
 CausalELM.Nonbinary
 CausalELM.Binary
 CausalELM.Count
@@ -100,7 +99,6 @@ CausalELM.fit!
 CausalELM.predict
 CausalELM.predict_counterfactual!
 CausalELM.placebo_test
-CausalELM.ridge_constant
 CausalELM.set_weights_biases
 ```
 
@@ -113,5 +111,5 @@ CausalELM.one_hot_encode
 CausalELM.clip_if_binary
 CausalELM.@model_config
 CausalELM.@standard_input_data
-CausalEL.generate_folds
+CausalELM.generate_folds
 ```
