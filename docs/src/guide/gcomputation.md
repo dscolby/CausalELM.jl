@@ -29,8 +29,8 @@ binary, continuous, time to event, and count outcome variables.
     number of features to consider for each extreme learning machine, the number of 
     bootstrapped observations to include in each extreme learning machine, and the number of 
     neurons to use during estimation. These options are specified with the following keyword 
-    arguments: quantity\_of\_interest, activation, temporal, num_machines, num_feats, 
-    sample_size, and num\_neurons.
+    arguments: `quantity_of_interest`, `activation`, `temporal`, `num_machines`, `num_feats`, 
+    `sample_size`, and `num_neurons`.
 
 ```julia
 # Create some data with a binary treatment
@@ -54,7 +54,7 @@ estimate_causal_effect!(g_computer)
 We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
-    To calculate the p-value and standard error for the treatmetn effect, you can set the 
+    To calculate the p-value and standard error for the treatment effect, you can set the 
     inference argument to false. However, p-values and standard errors are calculated via 
     randomization inference, which will take a long time. But can be sped up by launching 
     Julia with a higher number of threads.
@@ -90,7 +90,7 @@ satisfied.
 
 !!! tip
     One can also specify the minimum and maximum probabilities of treatment for the 
-    positivity assumption with the num\_treatments, min, and max keyword arguments.
+    positivity assumption with the `num_treatments`, `min`, and `max` keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for G-computation. 

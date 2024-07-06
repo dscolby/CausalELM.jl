@@ -43,8 +43,8 @@ count, or time to event variables.
     machines to use, the number of features to consider for each extreme learning machine, 
     the number of bootstrapped observations to include in each extreme learning machine, and 
     the number of neurons to use during estimation. These options are specified with the 
-    following keyword arguments: activation, num_machines, num_feats, sample_size, and 
-    num\_neurons.
+    following keyword arguments: `activation`, `num_machines`, `num_feats`, `sample_size`, 
+    and `num_neurons`.
 
 ```julia
 # Generate some data to use
@@ -69,7 +69,7 @@ estimate_causal_effect!(its)
 We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
-    To calculate the p-value and standard error for the treatmetn effect, you can set the 
+    To calculate the p-value and standard error for the treatment effect, you can set the 
     inference argument to false. However, p-values and standard errors are calculated via 
     randomization inference, which will take a long time. But can be sped up by launching 
     Julia with a higher number of threads.
@@ -96,7 +96,7 @@ tests in one line of code.
 !!! tip
     One can also specify the number of simulated confounders to generate to test the sensitivity 
     of the model to confounding and the minimum and maximum proportion of data to use in the 
-    Wald supremum test by including the n, low, and high keyword arguments.
+    Wald supremum test by including the `n`, `low`, and `high` keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for interrupted time 

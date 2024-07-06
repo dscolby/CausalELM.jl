@@ -28,8 +28,8 @@ or continuous treatments and binary, count, continuous, or time to event outcome
     extreme learning machines to incorporate in the ensemble, the number of features to 
     consider for each extreme learning machine, the activation function to use, the number 
     of observations to bootstrap in each extreme learning machine, and the number of neurons 
-    in each extreme learning machine. These arguments are specified with the folds, 
-    num_machines, num_features, activation, sample_size, and num\_neurons keywords.
+    in each extreme learning machine. These arguments are specified with the `folds`, 
+    `num_machines`, `num_features`, `activation`, `sample_size`, and `num_neurons` keywords.
 
 ```julia
 # Create some data with a binary treatment
@@ -90,9 +90,8 @@ an estimated zero probability of treatment, which implies the positivity assumpt
 satisfied.
 
 !!! tip
-    One can also specify the maxium number of possible treatments to consider for the causal 
-    consistency assumption and the minimum and maximum probabilities of treatment for the 
-    positivity assumption with the num\_treatments, min, and max keyword arguments.
+    One can also specify the minimum and maximum probabilities of treatment for the 
+    positivity assumption with the `num_treatments`, `min`, and `max` keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for double machine 

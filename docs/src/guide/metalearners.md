@@ -46,8 +46,8 @@ count treatment variables and binary, continuous, count, or time to event outcom
     extreme learning machines to incorporate in the ensemble, the number of features to 
     consider for each extreme learning machine, the activation function to use, the number 
     of observations to bootstrap in each extreme learning machine, and the number of neurons 
-    in each extreme learning machine. These arguments are specified with the folds, 
-    num_machines, num_features, activation, sample_size, and num\_neurons keywords.
+    in each extreme learning machine. These arguments are specified with the `folds`, 
+    `num_machines`, `num_features`, `activation`, `sample_size`, and `num_neurons` keywords.
 
 ```julia
 # Generate data to use
@@ -78,7 +78,7 @@ estimate_causal_effect!(dr_lwarner)
 We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
-    To calculate the p-value and standard error for the treatmetn effect, you can set the 
+    To calculate the p-value and standard error for the treatment effect, you can set the 
     inference argument to false. However, p-values and standard errors are calculated via 
     randomization inference, which will take a long time. But can be sped up by launching 
     Julia with a higher number of threads.
@@ -117,9 +117,8 @@ an estimated zero probability of treatment, which implies the positivity assumpt
 satisfied.
 
 !!! tip
-    One can also specify the maxium number of possible treatments to consider for the causal 
-    consistency assumption and the minimum and maximum probabilities of treatment for the 
-    positivity assumption with the num\_treatments, min, and max keyword arguments.
+    One can also specify the minimum and maximum probabilities of treatment for the 
+    positivity assumption with the `num_treatments`, `min`, and `max` keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for interrupted time 
