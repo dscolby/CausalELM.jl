@@ -57,7 +57,7 @@ estimate_causal_effect!(dm)
 x_fold, t_fold, y_fold = CausalELM.generate_folds(dm.X, dm.T, dm.Y, dm.folds)
 
 @testset "Moments" begin
-    @test mean([1, 2, 3]) == 2
+    @test CausalELM.mean([1, 2, 3]) == 2
     @test CausalELM.var([1, 2, 3]) == 1
 end
 

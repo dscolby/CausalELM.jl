@@ -2,8 +2,6 @@ using CausalELM
 using Test
 using DataFrames
 
-include("../src/models.jl")
-
 x, t, y = rand(100, 5), Float64.([rand() < 0.4 for i in 1:100]), vec(rand(1:100, 100, 1))
 slearner1 = SLearner(x, t, y)
 estimate_causal_effect!(slearner1)
