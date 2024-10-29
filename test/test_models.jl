@@ -1,8 +1,6 @@
 using Test
 using CausalELM
 
-include("../src/models.jl")
-
 # Test classification functionality using a simple XOR test borrowed from 
 # ExtremeLearning.jl
 x = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0]
@@ -15,27 +13,27 @@ x1 = rand(20, 5)
 y1 = rand(20)
 x1test = rand(30, 5)
 
-mock_model = ExtremeLearner(x, y, 10, σ)
+mock_model = CausalELM.ExtremeLearner(x, y, 10, σ)
 
-m1 = ExtremeLearner(x, y, 10, σ)
-f1 = fit!(m1)
-predictions1 = predict(m1, x_test)
-predict_counterfactual!(m1, x_test)
-placebo1 = placebo_test(m1)
+m1 = CausalELM.ExtremeLearner(x, y, 10, σ)
+f1 = CausalELM.fit!(m1)
+predictions1 = CausalELM.predict(m1, x_test)
+CausalELM.predict_counterfactual!(m1, x_test)
+placebo1 = CausalELM.placebo_test(m1)
 
-m3 = ExtremeLearner(x1, y1, 10, σ)
-fit!(m3)
-predictions3 = predict(m3, x1test)
+m3 = CausalELM.ExtremeLearner(x1, y1, 10, σ)
+CausalELM.fit!(m3)
+predictions3 = CausalELM.predict(m3, x1test)
 
-m4 = ExtremeLearner(rand(100, 5), rand(100), 5, relu)
-fit!(m4)
+m4 = CausalELM.ExtremeLearner(rand(100, 5), rand(100), 5, relu)
+CausalELM.fit!(m4)
 
-nofit = ExtremeLearner(x1, y1, 10, σ)
-set_weights_biases(nofit)
+nofit = CausalELM.ExtremeLearner(x1, y1, 10, σ)
+CausalELM.set_weights_biases(nofit)
 
-ensemble = ELMEnsemble(big_x, big_y, 10000, 100, 5, 10, relu)
-fit!(ensemble)
-predictions = predict(ensemble, big_x)
+ensemble = CausalELM.ELMEnsemble(big_x, big_y, 10000, 100, 5, 10, relu)
+CausalELM.fit!(ensemble)
+predictions = CausalELM.predict(ensemble, big_x)
 
 @testset "Extreme Learning Machines" begin
     @testset "Extreme Learning Machine Structure" begin
@@ -71,8 +69,8 @@ predictions = predict(ensemble, big_x)
 
     @testset "Predict Before Fit" begin
         @test isdefined(nofit, :H) == true
-        @test_throws ErrorException predict(nofit, x1test)
-        @test_throws ErrorException placebo_test(nofit)
+        @test_throws ErrorException CausalELM.predict(nofit, x1test)
+        @test_throws ErrorException CausalELM.placebo_test(nofit)
     end
 
     @testset "Print Models" begin
@@ -84,10 +82,10 @@ end
 
 @testset "Extreme Learning Machine Ensembles" begin
     @testset "Initializing Ensembles" begin
-        @test ensemble isa ELMEnsemble
+        @test ensemble isa CausalELM.ELMEnsemble
         @test ensemble.X isa Array{Float64}
         @test ensemble.Y isa Array{Float64}
-        @test ensemble.elms isa Array{ExtremeLearner}
+        @test ensemble.elms isa Array{CausalELM.ExtremeLearner}
         @test length(ensemble.elms) == 100
         @test ensemble.feat_indices isa Vector{Vector{Int64}}
         @test length(ensemble.feat_indices) == 100

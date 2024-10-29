@@ -1,5 +1,4 @@
 using Random: shuffle
-using CausalELM: mean, var_type, clip_if_binary
 
 """
     ExtremeLearner(X, Y, hidden_neurons, activation)
