@@ -47,7 +47,7 @@ count treatment variables and binary, continuous, count, or time to event outcom
     consider for each extreme learning machine, the activation function to use, the number 
     of observations to bootstrap in each extreme learning machine, and the number of neurons 
     in each extreme learning machine. These arguments are specified with the folds, 
-    num_machines, num_features, activation, sample_size, and num\_neurons keywords.
+    num\_machines, num\_features, activation, sample\_size, and num\_neurons keywords.
 
 ```julia
 # Generate data to use

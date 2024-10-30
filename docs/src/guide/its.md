@@ -43,7 +43,7 @@ count, or time to event variables.
     machines to use, the number of features to consider for each extreme learning machine, 
     the number of bootstrapped observations to include in each extreme learning machine, and 
     the number of neurons to use during estimation. These options are specified with the 
-    following keyword arguments: activation, num_machines, num_feats, sample_size, and 
+    following keyword arguments: activation, num\_machines, num\_feats, sample\_size, and 
     num\_neurons.
 
 ```julia
@@ -71,8 +71,9 @@ We can get a summary of the model by pasing the model to the summarize method.
 !!!note
     To calculate the p-value and standard error for the treatmetn effect, you can set the 
     inference argument to false. However, p-values and standard errors are calculated via 
-    randomization inference, which will take a long time. But can be sped up by launching 
-    Julia with a higher number of threads.
+    randomization inference, which will take a long time. This can be greatly sped up by 
+    launching Julia with more threads and setting the number of iterations lower via the n 
+    keyword.
 
 ```julia
 summarize(its)

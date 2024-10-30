@@ -4,6 +4,7 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 ## Version [0.8.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.8.0) - 2024-10-28
 ### Fixed
 *   Removed unnecessary include and using statements
+*   Slightly sped up the randomizatioin inference implementation and clarified it in the docs [#77](https://github.com/dscolby/CausalELM.jl/issues/77)
 
 ## Version [v0.7.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.7.0) - 2024-06-22
 ### Added

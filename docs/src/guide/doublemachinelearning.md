@@ -29,7 +29,7 @@ or continuous treatments and binary, count, continuous, or time to event outcome
     consider for each extreme learning machine, the activation function to use, the number 
     of observations to bootstrap in each extreme learning machine, and the number of neurons 
     in each extreme learning machine. These arguments are specified with the folds, 
-    num_machines, num_features, activation, sample_size, and num\_neurons keywords.
+    num\_machines, num\_features, activation, sample\_size, and num\_neurons keywords.
 
 ```julia
 # Create some data with a binary treatment
@@ -53,10 +53,11 @@ estimate_causal_effect!(dml)
 We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
-    To calculate the p-value and standard error for the treatmetn effect, you can set the 
-    inference argument to false. However, p-values and standard errors are calculated via 
-    randomization inference, which will take a long time. But can be sped up by launching 
-    Julia with a higher number of threads.
+    To calculate the p-value and standard error for the treatment effect, you can set the 
+    inference keyword to false. However, p-values and standard errors are calculated via 
+    randomization inference, which will take a long time. This can be greatly sped up by 
+    launching Julia with more threads and lowering the number of iterations using the n 
+    keyword.
 
 ```julia
 # Can also use the British spelling

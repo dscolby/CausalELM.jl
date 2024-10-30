@@ -9,13 +9,16 @@ Get a summary from a CausalEstimator or Metalearner.
 - `mod::Union{CausalEstimator, Metalearner}`: a model to summarize.
 
 # Keywords
-- `n::Int=100`: the number of iterations to generate the numll distribution for 
-    randomization inference.
+- `n::Int=1000`: the number of iterations to generate the numll distribution for 
+    randomization inference if inference is true.
 - `inference::Bool`=false: wheteher calculate p-values and standard errors.
+- `mean_effect::Bool=true`: whether to estimate the mean or cumulative effect for an 
+    interrupted time series estimator.
 
 # Notes
 p-values and standard errors are estimated using approximate randomization inference. If set 
-to true, this procedure takes a VERY long time due to repeated matrix inversions.
+to true, this procedure takes a long time due to repeated matrix inversions. You can greatly 
+speed this up by setting to a lower number and launching Julia with more threads.
 
 # References
 For a primer on randomization inference see: 
@@ -37,7 +40,7 @@ julia> estimate_causal_effect!(m3)
 julia> summarise(m3)  # British spelling works too!
 ```
 """
-function summarize(mod; n=1000, inference=false)
+function summarize(mod; kwargs...)
     if all(isnan, mod.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
@@ -57,8 +60,9 @@ function summarize(mod; n=1000, inference=false)
         "p-value",
     ]
 
-    if inference
-        p, stderr = quantities_of_interest(mod, n)
+    if haskey(kwargs, :inference) && kwargs[:inference] == true
+        iters = haskey(kwargs, :n) ? kwargs[:n] : 1000
+        p, stderr = quantities_of_interest(mod, iters)
     else
         p, stderr = NaN, NaN
     end
@@ -84,43 +88,20 @@ function summarize(mod; n=1000, inference=false)
     return summary_dict
 end
 
-"""
-    summarize(its, kwargs...)
-
-Get a summary from an interrupted time series estimator.
-
-# Arguments
-- `its::InterruptedTimeSeries`: interrupted time series estimator
-
-# Keywords
-- `n::Int=100`: number of iterations to generate the numll distribution for randomization 
-    inference.
-- `mean_effect::Bool=true`: whether to estimate the mean or cumulative effect for an 
-    interrupted time series estimator.
-- `inference::Bool`=false: wheteher calculate p-values and standard errors.
-
-# Notes
-p-values and standard errors are estimated using approximate randomization inference. If set 
-to true, this procedure takes a VERY long time due to repeated matrix inversions.
-
-# Examples
-```julia
-julia> X₀, Y₀, X₁, Y₁ =  rand(100, 5), rand(100), rand(10, 5), rand(10)
-julia> m4 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
-julia> estimate_causal_effect!(m4)
-julia> summarize(m4)
-```
-"""
-function summarize(its::InterruptedTimeSeries; n=1000, mean_effect=true, inference=false)
+function summarize(its::InterruptedTimeSeries; kwargs...)
     if all(isnan, its.causal_effect)
         throw(ErrorException("call estimate_causal_effect! before calling summarize"))
     end
 
-    effect = ifelse(mean_effect, mean(its.causal_effect), sum(its.causal_effect))
-    qoi = mean_effect ? "Average Difference" : "Cumulative Difference"
+    if haskey(kwargs, "mean_effect") && kwargs[:mean_effect] == true
+        effect, qoi = mean(its.causal_effect), "Mean Difference"
+    else
+        effect, qoi = sum(its.causal_effect), "Cumulative Difference"
+    end
 
-    if inference
-        p, stderr = quantities_of_interest(its, n, mean_effect)
+    if haskey(kwargs, :inference) && kwargs[:inference] == true
+        iters = haskey(kwargs, :n) ? kwargs[:n] : 100
+        p, stderr = quantities_of_interest(its, iters, effect == "Mean Difference")
     else
         p, stderr = NaN, NaN
     end
@@ -163,6 +144,7 @@ end
 
 """
     generate_null_distribution(mod, n)
+    generate_null_distribution(mod, n, mean_effect)
 
 Generate a null distribution for the treatment effect of G-computation, double machine 
 learning, or metalearning.
@@ -171,6 +153,8 @@ learning, or metalearning.
 - `mod::Any`: model to summarize.
 - `n::Int=100`: number of iterations to generate the null distribution for randomization 
     inference.
+- `mean_effect::Bool=true`: whether to estimate the mean or cumulative effect for an 
+    interrupted time series estimator.
 
 # Notes
 This method estimates the same model that is provided using random permutations of the 
@@ -186,81 +170,61 @@ julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
 julia> g_computer = GComputation(x, t, y)
 julia> estimate_causal_effect!(g_computer)
 julia> generate_null_distribution(g_computer, 500)
-```
-"""
-function generate_null_distribution(mod, n)
-    nobs, mods = size(mod.T, 1), [deepcopy(mod) for i ∈ 1:n]
-    results = Vector{Float64}(undef, n)
-
-    # Generate random treatment assignments and estimate the causal effects
-    Threads.@threads for i ∈ 1:n
-
-        # Sample from a continuous distribution if the treatment is continuous
-        if var_type(mod.T) isa Continuous
-            mods[i].T = (maximum(mod.T) - minimum(mod.T)) .* rand(nobs) .+ minimum(mod.T)
-        else
-            mods[i].T = float(rand(unique(mod.T), nobs))
-        end
-
-        estimate_causal_effect!(mods[i])
-
-        results[i] = if mod isa Metalearner
-            mean(mods[i].causal_effect)
-        else 
-            mods[i].causal_effect
-        end
-    end
-    return results
-end
-
-"""
-    generate_null_distribution(its, n, mean_effect)
-
-# Arguments
-- `its::InterruptedTimeSeries`: interrupted time series estimator
-- `n::Int=100`: number of iterations to generate the numll distribution for randomization 
-    inference.
-- `mean_effect::Bool=true`: whether to estimate the mean or cumulative effect for an 
-    interrupted time series estimator.
-
-# Examples
-```julia
 julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
 julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 julia> estimate_causal_effect!(its)
 julia> generate_null_distribution(its, 10)
 ```
 """
+function generate_null_distribution(mod, n)
+    nobs = size(mod.T, 1)
+    t_min, t_max = minimum(mod.T), maximum(mod.T)
+    t_range = t_max - t_min
+    results = Vector{Float64}(undef, n)
+
+    # Generate random treatment assignments and estimate their causal effects
+    Threads.@threads for i ∈ 1:n
+        model = deepcopy(mod)
+
+        # Sample from a continuous distribution if the treatment is continuous
+        if var_type(mod.T) isa Continuous
+            model.T = t_range .* rand(nobs) .+ t_min
+        else
+            model.T = float(rand(unique(mod.T), nobs))
+        end
+
+        estimate_causal_effect!(model)
+        results[i] = mod isa Metalearner ? mean(model.causal_effect) : model.causal_effect
+    end
+    return results
+end
+
 function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
-    mods = [deepcopy(its) for i ∈ 1:n]
     split_idx = size(its.Y₀, 1)
     results = Vector{Float64}(undef, n)
     data = reduce(hcat, (reduce(vcat, (its.X₀, its.X₁)), reduce(vcat, (its.Y₀, its.Y₁))))
 
     # Generate random treatment assignments and estimate the causal effects
     Threads.@threads for iter in 1:n
-        local permuted_data = data[shuffle(1:end), :]
-        local permuted_x₀ = permuted_data[1:split_idx, 1:(end - 1)]
-        local permuted_x₁ = permuted_data[(split_idx + 1):end, 1:(end - 1)]
-        local permuted_y₀ = permuted_data[1:split_idx, end]
-        local permuted_y₁ = permuted_data[(split_idx + 1):end, end]
+        permuted_data = data[shuffle(1:end), :]
+        permuted_x₀ = permuted_data[1:split_idx, 1:(end - 1)]
+        permuted_x₁ = permuted_data[(split_idx + 1):end, 1:(end - 1)]
+        permuted_y₀ = permuted_data[1:split_idx, end]
+        permuted_y₁ = permuted_data[(split_idx + 1):end, end]
+        model = deepcopy(its)
 
         # Reestimate the model with the intervention now at the nth interval
-        mods[iter].X₀, mods[iter].Y₀ = permuted_x₀, permuted_y₀
-        mods[iter].X₁, mods[iter].Y₁ = permuted_x₁, permuted_y₁
-        estimate_causal_effect!(mods[iter])
-
-        results[iter] = if mean_effect
-            mean(mods[iter].causal_effect)
-        else
-            sum(mods[iter].causal_effect)
-        end
+        model.X₀, model.Y₀ = permuted_x₀, permuted_y₀
+        model.X₁, model.Y₁ = permuted_x₁, permuted_y₁
+        estimate_causal_effect!(model)
+        results[iter] = mean_effect ? mean(model.causal_effect) : sum(model.causal_effect)
     end
     return results
 end
 
 """
     quantities_of_interest(mod, n)
+    quantities_of_interest(mod, n, mean_effect)
 
 Generate a p-value and standard error through randomization inference
 
@@ -280,6 +244,10 @@ julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
 julia> g_computer = GComputation(x, t, y)
 julia> estimate_causal_effect!(g_computer)
 julia> quantities_of_interest(g_computer, 1000)
+julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
+julia> estimate_causal_effect!(its)
+julia> quantities_of_interest(its, 10)
 ```
 """
 function quantities_of_interest(mod, n)
@@ -294,30 +262,6 @@ function quantities_of_interest(mod, n)
     return pvalue, stderr
 end
 
-"""
-    quantities_of_interest(mod, n)
-
-Generate a p-value and standard error through randomization inference
-
-This method generates a null distribution of treatment effects by reestimating treatment 
-effects from permutations of the treatment vector and estimates a p-value and standard from 
-the generated distribution. Randomization for event studies is done by creating time splits 
-at even intervals and reestimating the causal effect.
-
-Note that lowering the number of iterations increases the probability of failing to reject
-the null hypothesis.
-
-For a primer on randomization inference see:
-    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
-
-# Examples
-```julia
-julia> x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
-julia> its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
-julia> estimate_causal_effect!(its)
-julia> quantities_of_interest(its, 10)
-```
-"""
 function quantities_of_interest(mod::InterruptedTimeSeries, n, mean_effect)
     local null_dist = generate_null_distribution(mod, n, mean_effect)
     local metric = ifelse(mean_effect, mean, sum)
