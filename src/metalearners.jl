@@ -420,7 +420,7 @@ julia> m4 = SLearner(X, T, Y)
 julia> estimate_causal_effect!(m4)
 ```
 """
-function estimate_causal_effect!(s::SLearner)
+@inline function estimate_causal_effect!(s::SLearner)
     s.causal_effect = g_formula!(s)
     return s.causal_effect
 end
@@ -443,7 +443,7 @@ julia> m5 = TLearner(X, T, Y)
 julia> estimate_causal_effect!(m5)
 ```
 """
-function estimate_causal_effect!(t::TLearner)
+@inline function estimate_causal_effect!(t::TLearner)
     x₀, x₁, y₀, y₁ = t.X[t.T .== 0, :], t.X[t.T .== 1, :], t.Y[t.T .== 0], t.Y[t.T .== 1]
 
     t.μ₀ = ELMEnsemble(
@@ -480,7 +480,7 @@ julia> m1 = XLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(x::XLearner)
+@inline function estimate_causal_effect!(x::XLearner)
     stage1!(x)
     μχ₀, μχ₁ = stage2!(x)
 
@@ -508,7 +508,7 @@ julia> m1 = RLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(R::RLearner)
+@inline function estimate_causal_effect!(R::RLearner)
     X, T̃, Ỹ = generate_folds(R.X, R.T, R.Y, R.folds)
     R.X, R.T, R.Y = reduce(vcat, X), reduce(vcat, T̃), reduce(vcat, Ỹ)
 
@@ -551,7 +551,7 @@ julia> m1 = DoublyRobustLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(DRE::DoublyRobustLearner)
+@inline function estimate_causal_effect!(DRE::DoublyRobustLearner)
     X, T, Y = generate_folds(DRE.X, DRE.T, DRE.Y, DRE.folds)
     causal_effect = zeros(size(DRE.T, 1))
 
@@ -591,7 +591,7 @@ julia> Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
 julia> g_formula!(m1, X, T, Y, Z)
 ```
 """
-function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y)
+@inline function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y)
     # Propensity scores
     π_e = ELMEnsemble(
         X[1], 

@@ -13,7 +13,7 @@ lb1, ub1 = CausalELM.confidence_interval(g_inference)
 p11, stderr11, lb11, ub11 = CausalELM.quantities_of_interest(g_computer, 1000)
 summary1 = summarize(g_computer, n=100, inference=true)
 
-dm = DoubleMachineLearning(x, 5 * randn(100) .+ 2, y)
+dm = DoubleMachineLearning(x, 5 * randn(1000) .+ 2, y)
 estimate_causal_effect!(dm)
 dm_inference = CausalELM.generate_null_distribution(dm, 1000)
 p2, stderr2 = CausalELM.p_value_and_std_err(dm_inference, CausalELM.mean(dm_inference))

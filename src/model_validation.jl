@@ -180,8 +180,8 @@ function covariate_independence(its::InterruptedTimeSeries; n=1000)
     # covariates and time as independent variables
     for i in axes(x, 2)
         new_x, y = x[:, 1:end .!= i], x[:, i]
-        β = last(new_x \ y)
-        p = p_val(new_x, y, β; n=n)
+        @inline β = last(new_x \ y)
+        @inline p = p_val(new_x, y, β; n=n)
         results["Column " * string(i) * " p-value"] = p
     end
     return results
@@ -298,7 +298,7 @@ function sup_wald(its::InterruptedTimeSeries; low=0.15, high=0.85, n=1000)
     for idx in low_idx:high_idx
         t = reduce(vcat, (zeros(idx), ones(size(x, 1) - idx)))
         new_x = reduce(hcat, (x, t))
-        β, ŷ = @fastmath new_x \ y, new_x * (new_x \ y)
+        @inline β, ŷ = @fastmath new_x \ y, new_x * (new_x \ y)
         se = @fastmath sqrt(1 / (size(x, 1) - 2)) * (sum(y .- ŷ)^2 / sum(t .- mean(t))^2)
         wald_candidate = last(β) / se
 

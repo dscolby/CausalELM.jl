@@ -272,7 +272,7 @@ julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(its::InterruptedTimeSeries)
+@inline function estimate_causal_effect!(its::InterruptedTimeSeries)
     learner = ELMEnsemble(
         its.X₀, 
         its.Y₀, 
@@ -308,7 +308,7 @@ julia> m1 = GComputation(X, T, Y)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(g::GComputation)
+@inline function estimate_causal_effect!(g::GComputation)
     g.causal_effect = mean(g_formula!(g))
     return g.causal_effect
 end
@@ -328,7 +328,7 @@ julia> m2 = SLearner(X, T, Y)
 julia> g_formula!(m2)
 ```
 """
-function g_formula!(g)  # Keeping this separate enables it to be reused for S-Learning
+@inline function g_formula!(g)  # Keeping this separate for reuse with S-Learning
     covariates, y = hcat(g.X, g.T), g.Y
 
     if g.quantity_of_interest ∈ ("ITT", "ATE", "CATE")
@@ -372,7 +372,7 @@ julia> m2 = DoubleMachineLearning(X, T, Y, W=W)
 julia> estimate_causal_effect!(m2)
 ```
 """
-function estimate_causal_effect!(DML::DoubleMachineLearning)
+@inline function estimate_causal_effect!(DML::DoubleMachineLearning)
     X, T, Y = generate_folds(DML.X, DML.T, DML.Y, DML.folds)
     DML.causal_effect = 0
 
@@ -409,7 +409,7 @@ julia> m1 = DoubleMachineLearning(X, T, Y)
 julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
 ```
 """
-function predict_residuals(
+@inline function predict_residuals(
     D, 
     xₜᵣ::Array{Float64}, 
     xₜₑ::Array{Float64}, 

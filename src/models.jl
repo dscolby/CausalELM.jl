@@ -104,7 +104,7 @@ julia> x, y = [1.0 1.0; 0.0 1.0; 0.0 0.0; 1.0 0.0], [0.0, 1.0, 0.0, 1.0]
 julia> m1 = ExtremeLearner(x, y, 10, σ)
 ```
 """
-function fit!(model::ExtremeLearner)
+@inline function fit!(model::ExtremeLearner)
     set_weights_biases(model)
 
     model.__fit = true
@@ -131,7 +131,7 @@ julia> m1 = ELMEnsemble(X, Y, 10, 50, 5, CausalELM.relu)
 julia> fit!(m1)
 ```
 """
-function fit!(model::ELMEnsemble)
+@inline function fit!(model::ELMEnsemble)
     Threads.@threads for elm in model.elms
         fit!(elm)
     end
@@ -163,7 +163,7 @@ julia> fit!(m2)
 julia> predict(m2)
 ```
 """
-function predict(model::ExtremeLearner, X)
+@inline function predict(model::ExtremeLearner, X)
     if !model.__fit
         throw(ErrorException("run fit! before calling predict"))
     end
@@ -255,7 +255,7 @@ julia> m1 = RegularizedExtremeLearner(x, y, 10, σ)
 julia> set_weights_biases(m1)
 ```
 """
-function set_weights_biases(model::ExtremeLearner)
+@inline function set_weights_biases(model::ExtremeLearner)
     a, b = -1, 1
     model.weights = @fastmath a .+ ((b - a) .* rand(model.features, model.hidden_neurons))
 
