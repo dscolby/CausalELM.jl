@@ -1,9 +1,9 @@
 using Test
 using CausalELM
 
-x, t, y = rand(100, 5),
-[rand() < 0.4 for i in 1:100],
-Float64.([rand() < 0.4 for i in 1:100])
+x, t, y = rand(1000, 5),
+[rand() < 0.4 for i in 1:1000],
+Float64.([rand() < 0.4 for i in 1:1000])
 
 g_computer = GComputation(x, t, y)
 estimate_causal_effect!(g_computer)
@@ -30,7 +30,7 @@ p3, stderr3 = CausalELM.p_value_and_std_err(
 lb3, ub3 = CausalELM.confidence_interval(dm_continuous_inference)
 summary3 = summarize(dm_continuous, n=100)
 
-x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+x₀, y₀, x₁, y₁ = rand(1:100, 1000, 5), rand(1000), rand(10, 5), rand(10)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
 summary4 = summarize(its, n=100)
