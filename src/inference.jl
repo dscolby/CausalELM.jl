@@ -58,13 +58,15 @@ function summarize(mod; kwargs...)
         "Causal Effect",
         "Standard Error",
         "p-value",
+        "Lower 2.5% CI",
+        "Upper 97.5% CI"
     ]
 
     if haskey(kwargs, :inference) && kwargs[:inference] == true
         iters = haskey(kwargs, :n) ? kwargs[:n] : 1000
-        p, stderr = quantities_of_interest(mod, iters)
+        p, stderr, lower_ci, upper_ci = quantities_of_interest(mod, iters)
     else
-        p, stderr = NaN, NaN
+        p, stderr, lower_ci, upper_ci = NaN, NaN, NaN, NaN
     end
 
     values = [
@@ -79,6 +81,8 @@ function summarize(mod; kwargs...)
         mod.causal_effect,
         stderr,
         p,
+        lower_ci,
+        upper_ci
     ]
 
     for (nicename, value) in zip(nicenames, values)
@@ -101,9 +105,9 @@ function summarize(its::InterruptedTimeSeries; kwargs...)
 
     if haskey(kwargs, :inference) && kwargs[:inference] == true
         iters = haskey(kwargs, :n) ? kwargs[:n] : 100
-        p, stderr = quantities_of_interest(its, iters, effect == "Mean Difference")
+        p, stderr, l, u = quantities_of_interest(its, iters, effect == "Mean Difference")
     else
-        p, stderr = NaN, NaN
+        p, stderr, l, u = NaN, NaN, NaN, NaN
     end
 
     summary_dict = Dict()
@@ -119,6 +123,8 @@ function summarize(its::InterruptedTimeSeries; kwargs...)
         "Causal Effect",
         "Standard Error",
         "p-value",
+        "Lower 2.5% CI",
+        "Upper 97.5% CI"
     ]
 
     values = [
@@ -133,6 +139,8 @@ function summarize(its::InterruptedTimeSeries; kwargs...)
         effect,
         stderr,
         p,
+        l,
+        u
     ]
 
     for (nicename, value) in zip(nicenames, values)
@@ -200,22 +208,18 @@ function generate_null_distribution(mod, n)
 end
 
 function generate_null_distribution(its::InterruptedTimeSeries, n, mean_effect)
-    split_idx = size(its.Y₀, 1)
-    results = Vector{Float64}(undef, n)
     data = reduce(hcat, (reduce(vcat, (its.X₀, its.X₁)), reduce(vcat, (its.Y₀, its.Y₁))))
-
-    # Generate random treatment assignments and estimate the causal effects
+    min_idx, max_idx = 2, size(data, 1) - 1
+    indices = rand(min_idx:max_idx, n)
+    results = Vector{Float64}(undef, n)
+    
+    # Reestimate the model with the intervention now at the nth time period
     Threads.@threads for iter in 1:n
-        permuted_data = data[shuffle(1:end), :]
-        permuted_x₀ = permuted_data[1:split_idx, 1:(end - 1)]
-        permuted_x₁ = permuted_data[(split_idx + 1):end, 1:(end - 1)]
-        permuted_y₀ = permuted_data[1:split_idx, end]
-        permuted_y₁ = permuted_data[(split_idx + 1):end, end]
+        x₀, y₀ = data[1:indices[iter], 1:(end - 1)], data[1:indices[iter], end]
+        x₁ = data[(indices[iter] + 1):end, 1:(end - 1)]
+        y₁ = data[(indices[iter] + 1):end, end]
         model = deepcopy(its)
-
-        # Reestimate the model with the intervention now at the nth interval
-        model.X₀, model.Y₀ = permuted_x₀, permuted_y₀
-        model.X₁, model.Y₁ = permuted_x₁, permuted_y₁
+        model.X₀, model.Y₀, model.X₁, model.Y₁ = x₀, y₀, x₁, y₁
         estimate_causal_effect!(model)
         results[iter] = mean_effect ? mean(model.causal_effect) : sum(model.causal_effect)
     end
@@ -253,24 +257,76 @@ julia> quantities_of_interest(its, 10)
 function quantities_of_interest(mod, n)
     null_dist = generate_null_distribution(mod, n)
     avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
+    pvalue, stderr = p_value_and_std_err(null_dist, avg_effect)
+    lb, ub = confidence_interval(null_dist)
 
-    extremes = length(null_dist[abs(avg_effect) .< abs.(null_dist)])
-    pvalue = extremes / n
-
-    stderr = sqrt(sum([(avg_effect .- x)^2 for x in null_dist]) / (n - 1)) / sqrt(n)
-
-    return pvalue, stderr
+    return pvalue, stderr, lb, ub
 end
 
 function quantities_of_interest(mod::InterruptedTimeSeries, n, mean_effect)
-    local null_dist = generate_null_distribution(mod, n, mean_effect)
-    local metric = ifelse(mean_effect, mean, sum)
-    local effect = metric(mod.causal_effect)
+    null_dist = generate_null_distribution(mod, n, mean_effect)
+    metric = ifelse(mean_effect, mean, sum)
+    effect = metric(mod.causal_effect)
+    pvalue, stderr = p_value_and_std_err(null_dist, effect)
+    lb, ub = confidence_interval(null_dist)
 
-    extremes = length(null_dist[effect .< abs.(null_dist)])
+    return pvalue, stderr, lb, ub
+end
+
+"""
+    confidence_interval(null_dist)
+
+Compute 95% confidence intervals via randomization inference.
+
+This function should not be called directly by the user.
+
+For a primer on randomization inference see:
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
+# Examples
+```julia
+julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+julia> g_computer = GComputation(x, t, y)
+julia> estimate_causal_effect!(g_computer)
+julia> null_dist = CausalELM.generate_null_distribution(g_computer, 1000)
+julia> confidence_interval(null_dist)
+(-0.45147664642089147, 0.45147664642089147)
+```
+"""
+function confidence_interval(null_dist)
+    sorted_null_dist, n = sort(null_dist), length(null_dist)
+    low_idx, high_idx = round(Int, 0.025 * (n + 1)), round(Int, 0.975 * (n + 1))
+    lb, ub = sorted_null_dist[low_idx], sorted_null_dist[high_idx]
+
+    return lb, ub
+end
+
+"""
+    p_value_and_std_err(null_dist, test_stat)
+
+Compute the p-value for a given test statistic and null distribution.
+
+This is an approximate method based on randomization inference that does not assume any 
+parametric form of the null distribution.
+
+For a primer on randomization inference see:
+    https://www.mattblackwell.org/files/teaching/s05-fisher.pdf
+
+# Examples
+```julia
+julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
+julia> g_computer = GComputation(x, t, y)
+julia> estimate_causal_effect!(g_computer)
+julia> null_dist = CausalELM.generate_null_distribution(g_computer, 1000)
+julia> p_value_and_std_err(null_dist, CausalELM.mean(null_dist))
+(0.3758916871866841, 0.1459779344550146)
+```
+"""
+function p_value_and_std_err(null_dist, test_stat)
+    n = length(null_dist)
+    extremes = length(null_dist[abs(test_stat) .<= null_dist])
     pvalue = extremes / n
-
-    stderr = (sum([(effect .- x)^2 for x in null_dist]) / (n - 1)) / sqrt(n)
+    stderr = (sum([(test_stat .- x)^2 for x in null_dist]) / (n - 1)) / sqrt(n)
 
     return pvalue, stderr
 end

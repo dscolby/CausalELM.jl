@@ -284,7 +284,7 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     )
 
     fit!(learner)
-    its.causal_effect = predict(learner, its.X₁) - its.Y₁
+    its.causal_effect = predict(learner, its.X₁) .- its.Y₁
 
     return its.causal_effect
 end
