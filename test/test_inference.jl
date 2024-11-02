@@ -1,9 +1,9 @@
 using Test
 using CausalELM
 
-x, t, y = rand(1000, 5),
-[rand() < 0.4 for i in 1:1000],
-Float64.([rand() < 0.4 for i in 1:1000])
+x = -5 .+ (5 - -5) .* rand(1000, 5)
+t = Float64.([rand() < 0.5 for i in 1:1000])
+y = [(sum(1.5 .* x[i, :]) + randn()) + (t[i] + 1 .+ (25 - 1) .* rand()) for i in axes(x, 1)]
 
 g_computer = GComputation(x, t, y)
 estimate_causal_effect!(g_computer)
@@ -13,7 +13,7 @@ lb1, ub1 = CausalELM.confidence_interval(g_inference)
 p11, stderr11, lb11, ub11 = CausalELM.quantities_of_interest(g_computer, 1000)
 summary1 = summarize(g_computer, n=100, inference=true)
 
-dm = DoubleMachineLearning(x, 5 * randn(1000) .+ 2, y)
+dm = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dm)
 dm_inference = CausalELM.generate_null_distribution(dm, 1000)
 p2, stderr2 = CausalELM.p_value_and_std_err(dm_inference, CausalELM.mean(dm_inference))
@@ -21,16 +21,16 @@ lb2, ub2 = CausalELM.confidence_interval(dm_inference)
 summary2 = summarize(dm, n=100)
 
 # With a continuous treatment variable
-dm_continuous = DoubleMachineLearning(x, t, rand(1:4, 100))
+dm_continuous = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dm_continuous)
-dm_continuous_inference = CausalELM.generate_null_distribution(dm_continuous, 100)
+dm_continuous_inference = CausalELM.generate_null_distribution(dm_continuous, 1000)
 p3, stderr3 = CausalELM.p_value_and_std_err(
     dm_continuous_inference, CausalELM.mean(dm_continuous_inference)
 )
 lb3, ub3 = CausalELM.confidence_interval(dm_continuous_inference)
 summary3 = summarize(dm_continuous, n=100)
 
-x₀, y₀, x₁, y₁ = rand(1:100, 1000, 5), rand(1000), rand(10, 5), rand(10)
+x₀, y₀, x₁, y₁ = rand(1:30, 700, 5), rand(700), rand(100, 5), rand(100)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
 summary4 = summarize(its, n=100)
@@ -49,7 +49,7 @@ summary5 = summarize(slearner, n=100)
 
 tlearner = TLearner(x, t, y)
 estimate_causal_effect!(tlearner)
-tlearner_inference = CausalELM.generate_null_distribution(tlearner, 100)
+tlearner_inference = CausalELM.generate_null_distribution(tlearner, 1000)
 lb6, ub6 = CausalELM.confidence_interval(tlearner_inference)
 p6, stderr6 = CausalELM.p_value_and_std_err(
     tlearner_inference, CausalELM.mean(tlearner_inference)
@@ -73,7 +73,7 @@ summary9 = summarize(rlearner, n=100)
 
 dr_learner = DoublyRobustLearner(x, t, y)
 estimate_causal_effect!(dr_learner)
-dr_learner_inference = CausalELM.generate_null_distribution(dr_learner, 100)
+dr_learner_inference = CausalELM.generate_null_distribution(dr_learner, 1000)
 lb8, ub8 = CausalELM.confidence_interval(dr_learner_inference)
 p8, stderr8 = CausalELM.p_value_and_std_err(
     dr_learner_inference, CausalELM.mean(dr_learner_inference)
@@ -85,17 +85,17 @@ summary10 = summarize(dr_learner, n=100)
     @test g_inference isa Array{Float64}
     @test size(dm_inference, 1) === 1000
     @test dm_inference isa Array{Float64}
-    @test size(dm_continuous_inference, 1) === 100
+    @test size(dm_continuous_inference, 1) === 1000
     @test dm_continuous_inference isa Array{Float64}
     @test size(its_inference1, 1) === 1000
     @test its_inference1 isa Array{Float64}
     @test size(its_inference2, 1) === 10
     @test its_inference2 isa Array{Float64}
-    @test size(tlearner_inference, 1) === 100
+    @test size(tlearner_inference, 1) === 1000
     @test tlearner_inference isa Array{Float64}
     @test size(xlearner_inference, 1) === 1000
     @test xlearner_inference isa Array{Float64}
-    @test size(dr_learner_inference, 1) === 100
+    @test size(dr_learner_inference, 1) === 1000
     @test dr_learner_inference isa Array{Float64}
 end
 

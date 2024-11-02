@@ -295,8 +295,19 @@ julia> confidence_interval(null_dist)
 """
 function confidence_interval(null_dist)
     sorted_null_dist, n = sort(null_dist), length(null_dist)
-    low_idx, high_idx = round(Int, 0.025 * (n + 1)), round(Int, 0.975 * (n + 1))
-    lb, ub = sorted_null_dist[low_idx], sorted_null_dist[high_idx]
+    low_idx, high_idx = 0.025 * (n - 1), 0.975 * (n - 1)
+
+    lb = if isinteger(low_idx)
+        sorted_null_dist[Int(low_idx)]
+    else
+        mean(sorted_null_dist[floor(Int, low_idx):ceil(Int, low_idx)])
+    end
+
+    ub = if isinteger(high_idx)
+        sorted_null_dist[Int(high_idx)]
+    else
+        mean(sorted_null_dist[floor(Int, high_idx):ceil(Int, high_idx)])
+    end
 
     return lb, ub
 end
