@@ -32,7 +32,7 @@ lb3, ub3 = CausalELM.confidence_interval(
 )
 summary3 = summarize(dm_continuous, n=100)
 
-x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
+x₀, y₀, x₁, y₁ = rand(1:100, 500, 5), randn(500), randn(100, 5), randn(100)
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
 summary4 = summarize(its, n=100)
