@@ -258,7 +258,7 @@ function quantities_of_interest(mod, n)
     null_dist = generate_null_distribution(mod, n)
     avg_effect = mod isa Metalearner ? mean(mod.causal_effect) : mod.causal_effect
     pvalue, stderr = p_value_and_std_err(null_dist, avg_effect)
-    lb, ub = confidence_interval(null_dist)
+    lb, ub = confidence_interval(null_dist, avg_effect)
 
     return pvalue, stderr, lb, ub
 end
@@ -268,13 +268,13 @@ function quantities_of_interest(mod::InterruptedTimeSeries, n, mean_effect)
     metric = ifelse(mean_effect, mean, sum)
     effect = metric(mod.causal_effect)
     pvalue, stderr = p_value_and_std_err(null_dist, effect)
-    lb, ub = confidence_interval(null_dist)
+    lb, ub = confidence_interval(null_dist, effect)
 
     return pvalue, stderr, lb, ub
 end
 
 """
-    confidence_interval(null_dist)
+    confidence_interval(null_dist, effect)
 
 Compute 95% confidence intervals via randomization inference.
 
@@ -289,24 +289,33 @@ julia> x, t, y = rand(100, 5), [rand()<0.4 for i in 1:100], rand(1:100, 100, 1)
 julia> g_computer = GComputation(x, t, y)
 julia> estimate_causal_effect!(g_computer)
 julia> null_dist = CausalELM.generate_null_distribution(g_computer, 1000)
-julia> confidence_interval(null_dist)
+julia> confidence_interval(null_dist, g_computer.causal_effect)
 (-0.45147664642089147, 0.45147664642089147)
 ```
 """
-function confidence_interval(null_dist)
-    sorted_null_dist, n = sort(null_dist), length(null_dist)
-    low_idx, high_idx = 0.025 * (n - 1), 0.975 * (n - 1)
+function confidence_interval(null_dist, effect)
+    # Grid to search that probably includes the lower and upper bounds and is pretty precise
+    max_magnitude_val = maximum(abs.(null_dist))
+    grid = range(
+        start=effect - 2max_magnitude_val, 
+        stop=effect + 2max_magnitude_val, 
+        length=4length(null_dist)
+    )
+    lb, ub = Inf, -Inf
+    low_idx, high_idx = 1, length(grid)
 
-    lb = if isinteger(low_idx)
-        sorted_null_dist[Int(low_idx)]
-    else
-        mean(sorted_null_dist[floor(Int, low_idx):ceil(Int, low_idx)])
-    end
+    # Start from the smallest and largest values until we get p > 0.05 and break out
+    while (isinf(lb) || isinf(ub)) && (low_idx < high_idx)
+        left_p_val, _ = p_value_and_std_err(null_dist, grid[low_idx])
+        right_p_val, _ = p_value_and_std_err(null_dist, grid[high_idx])
 
-    ub = if isinteger(high_idx)
-        sorted_null_dist[Int(high_idx)]
-    else
-        mean(sorted_null_dist[floor(Int, high_idx):ceil(Int, high_idx)])
+        lb = left_p_val > 0.05 && isinf(lb) ? grid[low_idx] : lb
+        ub = right_p_val > 0.05 && isinf(ub) ? grid[high_idx] : ub
+
+        (isinf(lb) == false && isinf(ub) == false) && break
+
+        low_idx += 1
+        high_idx -= 1
     end
 
     return lb, ub

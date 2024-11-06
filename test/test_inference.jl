@@ -9,7 +9,7 @@ g_computer = GComputation(x, t, y)
 estimate_causal_effect!(g_computer)
 g_inference = CausalELM.generate_null_distribution(g_computer, 1000)
 p1, stderr1 = CausalELM.p_value_and_std_err(g_inference, CausalELM.mean(g_inference))
-lb1, ub1 = CausalELM.confidence_interval(g_inference)
+lb1, ub1 = CausalELM.confidence_interval(g_inference, g_computer.causal_effect)
 p11, stderr11, lb11, ub11 = CausalELM.quantities_of_interest(g_computer, 100)
 summary1 = summarize(g_computer, n=100, inference=true)
 
@@ -17,7 +17,7 @@ dm = DoubleMachineLearning(x, t, y)
 estimate_causal_effect!(dm)
 dm_inference = CausalELM.generate_null_distribution(dm, 1000)
 p2, stderr2 = CausalELM.p_value_and_std_err(dm_inference, CausalELM.mean(dm_inference))
-lb2, ub2 = CausalELM.confidence_interval(dm_inference)
+lb2, ub2 = CausalELM.confidence_interval(dm_inference, dm.causal_effect)
 summary2 = summarize(dm, n=100)
 
 # With a continuous treatment variable
@@ -27,7 +27,9 @@ dm_continuous_inference = CausalELM.generate_null_distribution(dm_continuous, 10
 p3, stderr3 = CausalELM.p_value_and_std_err(
     dm_continuous_inference, CausalELM.mean(dm_continuous_inference)
 )
-lb3, ub3 = CausalELM.confidence_interval(dm_continuous_inference)
+lb3, ub3 = CausalELM.confidence_interval(
+    dm_continuous_inference, dm_continuous.causal_effect
+)
 summary3 = summarize(dm_continuous, n=100)
 
 x₀, y₀, x₁, y₁ = rand(1:100, 100, 5), rand(100), rand(10, 5), rand(10)
@@ -39,7 +41,9 @@ summary4_inference = summarize(its, n=100, inference=true)
 # Null distributions for the mean and cummulative changes
 its_inference1 = CausalELM.generate_null_distribution(its, 1000, true)
 its_inference2 = CausalELM.generate_null_distribution(its, 10, false)
-lb4, ub4 = CausalELM.confidence_interval(its_inference1)
+lb4, ub4 = CausalELM.confidence_interval(
+    its_inference1, CausalELM.mean(its.causal_effect)
+)
 p4, stderr4 = CausalELM.p_value_and_std_err(its_inference1, CausalELM.mean(its_inference1))
 p44, stderr44, lb44, ub44 = CausalELM.quantities_of_interest(its, 100, true)
 
@@ -50,7 +54,9 @@ summary5 = summarize(slearner, n=100)
 tlearner = TLearner(x, t, y)
 estimate_causal_effect!(tlearner)
 tlearner_inference = CausalELM.generate_null_distribution(tlearner, 1000)
-lb6, ub6 = CausalELM.confidence_interval(tlearner_inference)
+lb6, ub6 = CausalELM.confidence_interval(
+    tlearner_inference, CausalELM.mean(tlearner.causal_effect)
+)
 p6, stderr6 = CausalELM.p_value_and_std_err(
     tlearner_inference, CausalELM.mean(tlearner_inference)
 )
@@ -60,7 +66,9 @@ summary6 = summarize(tlearner, n=100)
 xlearner = XLearner(x, t, y)
 estimate_causal_effect!(xlearner)
 xlearner_inference = CausalELM.generate_null_distribution(xlearner, 1000)
-lb7, ub7 = CausalELM.confidence_interval(xlearner_inference)
+lb7, ub7 = CausalELM.confidence_interval(
+    xlearner_inference, CausalELM.mean(xlearner.causal_effect)
+)
 p7, stderr7 = CausalELM.p_value_and_std_err(
     xlearner_inference, CausalELM.mean(xlearner_inference)
 )
@@ -74,7 +82,9 @@ summary9 = summarize(rlearner, n=100)
 dr_learner = DoublyRobustLearner(x, t, y)
 estimate_causal_effect!(dr_learner)
 dr_learner_inference = CausalELM.generate_null_distribution(dr_learner, 1000)
-lb8, ub8 = CausalELM.confidence_interval(dr_learner_inference)
+lb8, ub8 = CausalELM.confidence_interval(
+    dr_learner_inference, CausalELM.mean(dr_learner.causal_effect)
+)
 p8, stderr8 = CausalELM.p_value_and_std_err(
     dr_learner_inference, CausalELM.mean(dr_learner_inference)
 )
