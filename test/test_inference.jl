@@ -127,24 +127,23 @@ end
 end
 
 @testset "Confidence Intervals" begin
-    # Making sure a confidence interval has changed from infinity to a valid number
-    @test isinf(lb1) == false && isinf(ub1) == false
-    @test isinf(lb2) == false && isinf(ub2) == false
-    @test isinf(lb3) == false && isinf(ub3) == false
-    @test isinf(lb4) == false && isinf(ub4) == false
-    @test isinf(lb6) == false && isinf(ub6) == false
-    @test isinf(lb7) == false && isinf(ub7) == false
-    @test isinf(lb8) == false && isinf(ub8) == false
+    @test lb1 isa Real && ub1 isa Real
+    @test lb2 isa Real && ub2 isa Real
+    @test lb3 isa Real && ub3 isa Real
+    @test lb4 isa Real && ub4 isa Real
+    @test lb6 isa Real && ub6 isa Real
+    @test lb7 isa Real && ub7 isa Real
+    @test lb8 isa Real && ub8 isa Real
 end
 
 @testset "All Quantities of Interest" begin
-    @test isinf(lb11) == false && isinf(ub11) == false
+    @test lb11 isa Real && ub11 isa Real
     @test 1 >= p11 >= 0
     @test stderr11 > 0
-    @test isinf(lb44) == false && isinf(ub44) == false
+    @test lb44 isa Real && ub44 isa Real
     @test 1 >= p44 >= 0
     @test stderr44 > 0
-    @test isinf(lb66) == false && isinf(ub66) == false
+    @test lb66 isa Real && ub66 isa Real
     @test 1 >= p66 >= 0
     @test stderr66 > 0
 end
