@@ -335,7 +335,7 @@ julia> p_value_and_std_err(null_dist, CausalELM.mean(null_dist))
 """
 function p_value_and_std_err(null_dist, test_stat)
     n = length(null_dist)
-    extremes = length(null_dist[abs(test_stat) .<= null_dist])
+    extremes = length(null_dist[abs(test_stat) .<= abs.(null_dist)])
     pvalue = extremes / n
     stderr = (sum([(test_stat .- x)^2 for x in null_dist]) / (n - 1)) / sqrt(n)
 
