@@ -59,7 +59,8 @@ function summarize(mod; kwargs...)
         "Standard Error",
         "p-value",
         "Lower 2.5% CI",
-        "Upper 97.5% CI"
+        "Upper 97.5% CI",
+        "Marginal Effect"
     ]
 
     if haskey(kwargs, :inference) && kwargs[:inference] == true
@@ -82,7 +83,8 @@ function summarize(mod; kwargs...)
         stderr,
         p,
         lower_ci,
-        upper_ci
+        upper_ci,
+        mod.marginal_effect
     ]
 
     for (nicename, value) in zip(nicenames, values)
@@ -124,7 +126,8 @@ function summarize(its::InterruptedTimeSeries; kwargs...)
         "Standard Error",
         "p-value",
         "Lower 2.5% CI",
-        "Upper 97.5% CI"
+        "Upper 97.5% CI",
+        "Marginal Effect"
     ]
 
     values = [
@@ -140,7 +143,8 @@ function summarize(its::InterruptedTimeSeries; kwargs...)
         stderr,
         p,
         l,
-        u
+        u,
+        its.marginal_effect
     ]
 
     for (nicename, value) in zip(nicenames, values)

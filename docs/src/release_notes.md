@@ -4,11 +4,12 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 ## Version [0.8.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.8.0) - 2024-10-31
 ### Added
 *   Implemented randomization inference-based confidence intervals [#78](https://github.com/dscolby/CausalELM.jl/issues/78)
+*   Added marginal effects to model summaries [#78](https://github.com/dscolby/CausalELM.jl/issues/78)
 ### Fixed
 *   Removed unnecessary include and using statements
 *   Slightly sped up the randomization inference implementation and clarified it in the docs [#77](https://github.com/dscolby/CausalELM.jl/issues/77)
 *   Fixed the randomization inference index selection procedure for interrupted time series estimators
-*   Inlined certain methods to slightly improve performance [#79](https://github.com/dscolby/CausalELM.jl/issues/79)
+*   Inlined certain methods to slightly improve performance [#76](https://github.com/dscolby/CausalELM.jl/issues/76)
 
 ## Version [v0.7.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.7.0) - 2024-06-22
 ### Added

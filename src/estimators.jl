@@ -48,6 +48,7 @@ mutable struct InterruptedTimeSeries
     Y₀::Array{Float64}
     X₁::Array{Float64}
     Y₁::Array{Float64}
+    marginal_effect::Float64
     @model_config individual_effect
 end
 
@@ -77,6 +78,7 @@ function InterruptedTimeSeries(
         float(Y₀),
         X₁,
         float(Y₁),
+        NaN,
         "difference",
         true,
         task,
@@ -137,6 +139,7 @@ julia> m5 = GComputation(x_df, t_df, y_df)
 mutable struct GComputation <: CausalEstimator
     @standard_input_data
     @model_config average_effect
+    marginal_effect::Float64
     ensemble::ELMEnsemble
 
     function GComputation(
@@ -172,6 +175,7 @@ mutable struct GComputation <: CausalEstimator
             num_machines,
             num_feats,
             num_neurons,
+            NaN,
             NaN,
         )
     end
@@ -220,6 +224,7 @@ julia> m2 = DoubleMachineLearning(x_df, t_df, y_df)
 mutable struct DoubleMachineLearning <: CausalEstimator
     @standard_input_data
     @model_config average_effect
+    marginal_effect::Float64
     folds::Integer
 end
 
@@ -256,6 +261,7 @@ function DoubleMachineLearning(
         num_feats,
         num_neurons,
         NaN,
+        NaN,
         folds,
     )
 end
@@ -285,6 +291,7 @@ julia> estimate_causal_effect!(m1)
 
     fit!(learner)
     its.causal_effect = predict(learner, its.X₁) .- its.Y₁
+    its.marginal_effect = mean(its.causal_effect)
 
     return its.causal_effect
 end
@@ -309,7 +316,9 @@ julia> estimate_causal_effect!(m1)
 ```
 """
 @inline function estimate_causal_effect!(g::GComputation)
-    g.causal_effect = mean(g_formula!(g))
+    causal_effect, marginal_effect = g_formula!(g)
+    g.causal_effect, g.marginal_effect = mean(causal_effect), mean(marginal_effect)
+
     return g.causal_effect
 end
 
@@ -330,6 +339,7 @@ julia> g_formula!(m2)
 """
 @inline function g_formula!(g)  # Keeping this separate for reuse with S-Learning
     covariates, y = hcat(g.X, g.T), g.Y
+    x₁, x₀ = hcat(g.X, ones(size(g.X, 1))), hcat(g.X, zeros(size(g.X, 1)))
 
     if g.quantity_of_interest ∈ ("ITT", "ATE", "CATE")
         Xₜ = hcat(covariates[:, 1:(end - 1)], ones(size(covariates, 1)))
@@ -350,10 +360,9 @@ julia> g_formula!(m2)
     )
 
     fit!(g.ensemble)
-    
     yₜ, yᵤ = predict(g.ensemble, Xₜ), predict(g.ensemble, Xᵤ)
 
-    return vec(yₜ) - vec(yᵤ)
+    return vec(yₜ) - vec(yᵤ), predict(g.ensemble, x₁) - predict(g.ensemble, x₀)
 end
 
 """
@@ -374,27 +383,35 @@ julia> estimate_causal_effect!(m2)
 """
 @inline function estimate_causal_effect!(DML::DoubleMachineLearning)
     X, T, Y = generate_folds(DML.X, DML.T, DML.Y, DML.folds)
-    DML.causal_effect = 0
+    DML.causal_effect, DML.marginal_effect = 0, 0
+    Δ = var_type(DML.T) isa Binary ? 1.0 : 1.5e-8mean(DML.T)
 
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
-    for fld in 1:(DML.folds)
-        X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
-        Y_train, Y_test = reduce(vcat, Y[1:end .!== fld]), Y[fld]
-        T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
+    for fold in 1:(DML.folds)
+        X_train, X_test = reduce(vcat, X[1:end .!== fold]), X[fold]
+        Y_train, Y_test = reduce(vcat, Y[1:end .!== fold]), Y[fold]
+        T_train, T_test = reduce(vcat, T[1:end .!== fold]), T[fold]
+        T_train₊ = var_type(DML.T) isa Binary ? T_train .* 0 : T_train .+ Δ
 
-        Ỹ, T̃ = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test)
+        Ỹ, T̃, T̃₊ = predict_residuals(
+            DML, X_train, X_test, Y_train, Y_test, T_train, T_test, T_train₊
+        )
 
         DML.causal_effect += T̃\Ỹ
+        DML.marginal_effect += (T̃₊\Ỹ - DML.causal_effect) / Δ
     end
+    
     DML.causal_effect /= DML.folds
+    DML.marginal_effect /= DML.folds
 
     return DML.causal_effect
 end
 
 """
-    predict_residuals(D, x_train, x_test, y_train, y_test, t_train, t_test)
+    predict_residuals(D, x_train, x_test, y_train, y_test, t_train, t_test, t_train₊)
 
-Predict treatment and outcome residuals for double machine learning or R-learning.
+Predict treatment, outcome, and marginal effect residuals for double machine learning or 
+R-learning.
 
 # Notes
 This method should not be called directly.
@@ -406,7 +423,7 @@ julia> x_train, x_test = X[1:80, :], X[81:end, :]
 julia> y_train, y_test = Y[1:80], Y[81:end]
 julia> t_train, t_test = T[1:80], T[81:100]
 julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
+julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test, zeros(100))
 ```
 """
 @inline function predict_residuals(
@@ -417,6 +434,7 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
     yₜₑ::Vector{Float64}, 
     tₜᵣ::Vector{Float64}, 
     tₜₑ::Vector{Float64}, 
+    tₜᵣ₊::Vector{Float64}
 )
     y = ELMEnsemble(
         xₜᵣ, yₜᵣ, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
@@ -426,12 +444,17 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
         xₜᵣ, tₜᵣ, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
     )
 
+    t₊ = ELMEnsemble(
+        xₜᵣ, tₜᵣ₊, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
+    )
+
     fit!(y)
     fit!(t)
+    fit!(t₊)  # Estimate a model with T + a finite difference
 
-    yₚᵣ, tₚᵣ = predict(y, xₜₑ), predict(t, xₜₑ)
+    yₚᵣ, tₚᵣ, tₚᵣ₊ = predict(y, xₜₑ), predict(t, xₜₑ), predict(t₊, xₜₑ)
 
-    return yₜₑ - yₚᵣ, tₜₑ - tₚᵣ
+    return yₜₑ - yₚᵣ, tₜₑ - tₚᵣ, tₜₑ - tₚᵣ₊
 end
 
 """

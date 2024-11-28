@@ -82,7 +82,9 @@ estimate_causal_effect!(dr_learner_df)
 
     @testset "S-Learner Estimation" begin
         @test isa(slearner1.causal_effect, Array{Float64})
+        @test all(isnan, slearner1.marginal_effect) == false
         @test isa(s_learner_binary.causal_effect, Array{Float64})
+        @test all(isnan, s_learner_binary.marginal_effect) == false
     end
 end
 
@@ -98,7 +100,9 @@ end
 
     @testset "T-Learner Estimation" begin
         @test isa(tlearner1.causal_effect, Array{Float64})
+        @test all(isnan, tlearner1.marginal_effect) == false
         @test isa(t_learner_binary.causal_effect, Array{Float64})
+        @test all(isnan, t_learner_binary.marginal_effect) == false
     end
 end
 
@@ -133,7 +137,9 @@ end
         @test typeof(xlearner3.μ₁) <: CausalELM.ELMEnsemble
         @test xlearner3.ps isa Array{Float64}
         @test xlearner3.causal_effect isa Array{Float64}
+        @test all(isnan, xlearner3.marginal_effect) == false
         @test x_learner_binary.causal_effect isa Array{Float64}
+        @test all(isnan, x_learner_binary.marginal_effect) == false
     end
 end
 
@@ -152,6 +158,7 @@ end
         @test length(rlearner.causal_effect) == length(y)
         @test eltype(rlearner.causal_effect) == Float64
         @test all(isnan, rlearner.causal_effect) == false
+        @test all(isnan, rlearner.marginal_effect) == false
     end
 end
 
@@ -175,6 +182,7 @@ end
         @test length(dr_learner.causal_effect) === length(y)
         @test eltype(dr_learner.causal_effect) == Float64
         @test all(isnan, dr_learner.causal_effect) == false
+        @test all(isnan, dr_learner.marginal_effect) == false
         @test dr_learner_df.causal_effect isa Vector
         @test length(dr_learner_df.causal_effect) === length(y)
         @test eltype(dr_learner_df.causal_effect) == Float64

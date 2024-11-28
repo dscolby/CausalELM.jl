@@ -45,6 +45,7 @@ julia> m4 = SLearner(x_df, t_df, y_df)
 mutable struct SLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     ensemble::ELMEnsemble
 
     function SLearner(
@@ -75,6 +76,7 @@ mutable struct SLearner <: Metalearner
             num_machines,
             num_feats,
             num_neurons,
+            fill(NaN, size(T, 1)),
             fill(NaN, size(T, 1)),
         )
     end
@@ -123,6 +125,7 @@ julia> m3 = TLearner(x_df, t_df, y_df)
 mutable struct TLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     μ₀::ELMEnsemble
     μ₁::ELMEnsemble
 
@@ -153,6 +156,7 @@ mutable struct TLearner <: Metalearner
             num_machines,
             num_feats,
             num_neurons,
+            fill(NaN, size(T, 1)),
             fill(NaN, size(T, 1)),
         )
     end
@@ -201,6 +205,7 @@ julia> m3 = XLearner(x_df, t_df, y_df)
 mutable struct XLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     μ₀::ELMEnsemble
     μ₁::ELMEnsemble
     ps::Array{Float64}
@@ -232,6 +237,7 @@ mutable struct XLearner <: Metalearner
             num_machines,
             num_feats,
             num_neurons,
+            fill(NaN, size(T, 1)),
             fill(NaN, size(T, 1)),
         )
     end
@@ -278,6 +284,7 @@ julia> m2 = RLearner(x_df, t_df, y_df)
 mutable struct RLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     folds::Integer
 end
 
@@ -314,6 +321,7 @@ function RLearner(
         num_machines,
         num_feats,
         num_neurons,
+        fill(NaN, size(T, 1)),
         fill(NaN, size(T, 1)),
         folds,
     )
@@ -363,6 +371,7 @@ julia> m3 = DoublyRobustLearner(X, T, Y, W=w)
 mutable struct DoublyRobustLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     folds::Integer
 end
 
@@ -398,6 +407,7 @@ function DoublyRobustLearner(
         num_feats,
         num_neurons,
         fill(NaN, size(T, 1)),
+        fill(NaN, size(T, 1)),
         2,
     )
 end
@@ -421,7 +431,7 @@ julia> estimate_causal_effect!(m4)
 ```
 """
 @inline function estimate_causal_effect!(s::SLearner)
-    s.causal_effect = g_formula!(s)
+    s.causal_effect, s.marginal_effect = g_formula!(s)
     return s.causal_effect
 end
 
@@ -458,6 +468,7 @@ julia> estimate_causal_effect!(m5)
     fit!(t.μ₁)
     predictionsₜ, predictionsᵪ = predict(t.μ₁, t.X), predict(t.μ₀, t.X)
     t.causal_effect = @fastmath vec(predictionsₜ - predictionsᵪ)
+    t.marginal_effect = t.causal_effect
 
     return t.causal_effect
 end
@@ -488,6 +499,8 @@ julia> estimate_causal_effect!(m1)
         (x.ps .* predict(μχ₀, x.X)) .+ ((1 .- x.ps) .* predict(μχ₁, x.X))
     ))
 
+    x.marginal_effect = x.causal_effect  # Works since T is binary
+
     return x.causal_effect
 end
 
@@ -510,6 +523,7 @@ julia> estimate_causal_effect!(m1)
 """
 @inline function estimate_causal_effect!(R::RLearner)
     X, T̃, Ỹ = generate_folds(R.X, R.T, R.Y, R.folds)
+    T̃₊, Δ = similar(T̃), var_type(R.T) isa Binary ? 1.0 : 1.5e-8mean(R.T)
     R.X, R.T, R.Y = reduce(vcat, X), reduce(vcat, T̃), reduce(vcat, Ỹ)
 
     # Get residuals from out-of-fold predictions
@@ -517,19 +531,26 @@ julia> estimate_causal_effect!(m1)
         X_train, X_test = reduce(vcat, X[1:end .!== f]), X[f]
         Y_train, Y_test = reduce(vcat, Ỹ[1:end .!== f]), Ỹ[f]
         T_train, T_test = reduce(vcat, T̃[1:end .!== f]), T̃[f]
-        Ỹ[f], T̃[f] = predict_residuals(R, X_train, X_test, Y_train, Y_test, T_train, T_test)
+        T_train₊ = var_type(R.T) isa Binary ? T_train .* 0 : T_train .+ Δ
+        Ỹ[f], T̃[f], T̃₊[f] = predict_residuals(
+            R, X_train, X_test, Y_train, Y_test, T_train, T_test, T_train₊
+        )
     end
 
     # Using target transformation and the weight trick to minimize the causal loss
     T̃², target = reduce(vcat, T̃).^2, reduce(vcat, Ỹ) ./ reduce(vcat, T̃)
     Xʷ, Yʷ = R.X .* T̃², target .* T̃²
-
-    # Fit a weighted residual-on-residual model
+    T̃²₊, target₊ = reduce(vcat, T̃₊).^2, reduce(vcat, Ỹ) ./ reduce(vcat, T̃₊)
     final_model = ELMEnsemble(
         Xʷ, Yʷ, R.sample_size, R.num_machines, R.num_feats, R.num_neurons, R.activation
     )
-    fit!(final_model)
+
+    # Using finite differences to calculate marginal effects
+    final_model₊ = deepcopy(final_model)
+    final_model₊.X, final_model₊.Y = R.X .* T̃²₊, target₊ .* T̃²₊
+    fit!(final_model); fit!(final_model₊)
     R.causal_effect = predict(final_model, R.X)
+    R.marginal_effect = (predict(final_model₊, final_model.X) - R.causal_effect) ./ Δ
 
     return R.causal_effect
 end
@@ -563,6 +584,7 @@ julia> estimate_causal_effect!(m1)
 
     causal_effect ./= 2
     DRE.causal_effect = causal_effect
+    DRE.marginal_effect = causal_effect
 
     return DRE.causal_effect
 end

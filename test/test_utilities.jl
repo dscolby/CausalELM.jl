@@ -16,6 +16,7 @@ model_config_avg_ground_truth = quote
     num_feats::Integer
     num_neurons::Int64
     causal_effect::Float64
+    average_marginal_effect::Float64
 end
 
 model_config_ind_ground_truth = quote
@@ -29,6 +30,7 @@ model_config_ind_ground_truth = quote
     num_feats::Integer
     num_neurons::Int64
     causal_effect::Array{Float64}
+    average_marginal_effect::Float64
 end
 
 # Fields for the user supplied data
