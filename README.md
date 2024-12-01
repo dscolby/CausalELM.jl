@@ -53,29 +53,29 @@ code.
 In some cases we would like to know the causal effect of some intervention but we do not 
 have the counterfactual, making conventional methods of statistical analysis infeasible. 
 However, it may still be possible to get an unbiased estimate of the causal effect (ATE, 
-ATE, or ITT) by predicting the counterfactual and comparing it to the observed outcomes. 
-This is the approach CausalELM takes to conduct interrupted time series analysis, 
-G-Computation, double machine learning, and metalearning via S-Learners, T-Learners, 
-X-Learners, R-learners, and doubly robust estimation. In interrupted time series analysis, 
-we want to estimate the effect of some intervention on the outcome of a single unit that we 
-observe during multiple time periods. For example, we might want to know how the 
-announcement of a merger affected the price of Stock A. To do this, we need to know what the 
-price of stock A would have been if the merger had not been announced, which we can predict 
-with machine learning methods. Then, we can compare this predicted counterfactual to the 
-observed price data to estimate the effect of the merger announcement. In another case, we 
-might want to know the effect of medicine X on disease Y but the administration of X was not 
-random and it might have also been administered at mulitiple time periods, which would 
-produce biased estimates. To overcome this, G-computation models the observed data, uses the 
-model to predict the outcomes if all patients recieved the treatment, and compares it to the 
-predictions of the outcomes if none of the patients recieved the treatment. Double machine 
-learning (DML) takes a similar approach but also models the treatment mechanism and uses it 
-to adjust the initial estimates. This approach has three advantages. First, it is more 
-efficient with high dimensional data than conventional methods. Metalearners take a similar 
-approach to estimate the CATE. While all of these models are different, they have one thing 
-in common: how well they perform depends on the underlying model they fit to the data. To 
-that end, CausalELMs use bagged ensembles of extreme learning machines because they are 
-simple yet flexible enough to be universal function approximators with lower varaince than 
-single extreme learning machines.
+ATE, or ITT) by predicting the counterfactual and comparing it to the observed outcomes if 
+we are able to observe all potential confounders. This is the approach CausalELM takes to 
+conduct interrupted time series analysis, G-Computation, double machine learning, and 
+metalearning via S-Learners, T-Learners, X-Learners, R-learners, and doubly robust 
+estimation. In interrupted time series analysis, we want to estimate the effect of some 
+intervention on the outcome of a single unit that we observe during multiple time periods. 
+For example, we might want to know how the announcement of a merger affected the price of 
+Stock A. To do this, we need to know what the price of stock A would have been if the merger 
+had not been announced, which we can predict with machine learning methods. Then, we can 
+compare this predicted counterfactual to the observed price data to estimate the effect of 
+the merger announcement. In another case, we might want to know the effect of medicine X on 
+disease Y but the administration of X was not random and it might have also been 
+administered at mulitiple time periods, which would produce biased estimates. To overcome 
+this, G-computation models the observed data, uses the model to predict the outcomes if all 
+patients recieved the treatment, and compares it to the predictions of the outcomes if none 
+of the patients recieved the treatment. Double machine learning (DML) takes a similar 
+approach but also models the treatment mechanism and uses it to adjust the initial estimates. 
+This approach has three advantages. First, it is more efficient with high dimensional data 
+than conventional methods. Metalearners take a similar approach to estimate the CATE. While 
+all of these models are different, they have one thing in common: how well they perform 
+depends on the underlying model they fit to the data. To that end, CausalELMs use bagged 
+ensembles of extreme learning machines because they are simple yet flexible enough to be 
+universal function approximators with lower varaince than single extreme learning machines.
 </p>
 
 <h2>CausalELM Features</h2>
@@ -92,20 +92,20 @@ single extreme learning machines.
 
 <h2>What's New?</h2>
 <ul>
+  <li>See the JuliaCon 2024 CausalELM demonstration <a href="https://www.youtube.com/watch?v=hh_cyj8feu8&t=26s">here.
+  <li>Model summaries include confidence intervals and marginal effects<li>
   <li>Now includes doubly robust estimator for CATE estimation</li>
   <li>All estimators now implement bagging to reduce predictive performance and reduce variance</li>
   <li>Counterfactual consistency validation simulates more realistic violations of the counterfactual consistency assumption</li>
   <li>Uses a simple heuristic to choose the number of neurons, which reduces training time and still works well in practice</li>
   <li>Probability clipping for classifier predictions and residuals is no longer necessary due to the bagging procedure</li>
-  <li>CausalELM talk has been accepted to JuliaCon 2024!</li> 
 </ul>
 
 <h2>What's Next?</h2>
 <p>
 Newer versions of CausalELM will hopefully support using GPUs and provide interpretations of 
-the results of calling validate on a model that has been estimated. In addition, some 
-estimators will also support using instrumental variables. However, these priorities could 
-also change depending on feedback recieved at JuliaCon.
+the results of calling validate on a model that has been estimated. We may also add some other
+features depending on demand and feedback.
 </p>
 
 <h2>Disclaimer</h2>

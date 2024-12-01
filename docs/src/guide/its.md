@@ -70,7 +70,7 @@ We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
     To calculate the p-value, standard error, and confidence interval for the treatment 
-    effect, you can set the inference keyword to false. However, these values are calculated 
+    effect, you can set the inference keyword to true. However, these values are calculated 
     via randomization inference, which will take a long time. This can be greatly sped up by 
     launching Julia with more threads and lowering the number of iterations using the n 
     keyword (at the expense of accuracy).

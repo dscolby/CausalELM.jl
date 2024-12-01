@@ -27,6 +27,8 @@ weights and provides a form of regularization that does not have to be tuned thr
 validation. These attributes make CausalELM a very simple and powerful package for 
 estimating treatment effects.
 
+For a more interactive overview, see our JuliaCon 2024 talk[here](https://www.youtube.com/watch?v=hh_cyj8feu8&t=26s)
+
 ### Features
 *   Estimate a causal effect, get a summary, and validate assumptions in just four lines of code
 *   Bagging improves performance and reduces variance without the need to tune a regularization parameter
@@ -38,12 +40,12 @@ estimating treatment effects.
 *   Codebase is high-quality, well tested, and regularly updated
 
 ### What's New?
+*   Model summaries contain confidence intervals and marginal effects
 *   Now includes doubly robust estimator for CATE estimation
 *   All estimators now implement bagging to reduce predictive performance and reduce variance
 *   Counterfactual consistency validation simulates more realistic violations of the counterfactual consistency assumption
 *   Uses a simple heuristic to choose the number of neurons, which reduces training time and still works well in practice
 *   Probability clipping for classifier predictions and residuals is no longer necessary due to the bagging procedure
-*   CausalELM talk has been accepted to JuliaCon 2024!
 
 ### What makes CausalELM different?
 Other packages, mainly EconML, DoWhy, CausalAI, and CausalML, have similar funcitonality. 
