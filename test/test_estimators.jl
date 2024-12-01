@@ -54,7 +54,7 @@ t_train, t_test = float(t[1:80]), float(t[81:end])
 y_train, y_test = float(y[1:80]), float(y[81:end])
 residual_predictor = DoubleMachineLearning(x, t, y, num_neurons=5)
 residuals = CausalELM.predict_residuals(
-    residual_predictor, x_train, x_test, y_train, y_test, t_train, t_test, zeros(80)
+    residual_predictor, x_train, x_test, y_train, y_test, t_train, t_test, 1e-8
 )
 
 @testset "Interrupted Time Series Estimation" begin

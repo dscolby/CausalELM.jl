@@ -338,25 +338,19 @@ julia> g_formula!(m2)
 ```
 """
 @inline function g_formula!(g)  # Keeping this separate for reuse with S-Learning
-    covariates, y = hcat(g.X, g.T), g.Y
+    vars, y = hcat(g.X, g.T), g.Y
     x₁, x₀ = hcat(g.X, ones(size(g.X, 1))), hcat(g.X, zeros(size(g.X, 1)))
 
     if g.quantity_of_interest ∈ ("ITT", "ATE", "CATE")
-        Xₜ = hcat(covariates[:, 1:(end - 1)], ones(size(covariates, 1)))
-        Xᵤ = hcat(covariates[:, 1:(end - 1)], zeros(size(covariates, 1)))
+        Xₜ = hcat(vars[:, 1:(end - 1)], ones(size(vars, 1)))
+        Xᵤ = hcat(vars[:, 1:(end - 1)], zeros(size(vars, 1)))
     else
-        Xₜ = hcat(covariates[g.T .== 1, 1:(end - 1)], ones(size(g.T[g.T .== 1], 1)))
-        Xᵤ = hcat(covariates[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
+        Xₜ = hcat(vars[g.T .== 1, 1:(end - 1)], ones(size(g.T[g.T .== 1], 1)))
+        Xᵤ = hcat(vars[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
     end
 
     g.ensemble = ELMEnsemble(
-        covariates, 
-        y, 
-        g.sample_size, 
-        g.num_machines, 
-        g.num_feats,
-        g.num_neurons, 
-        g.activation
+        vars, y, g.sample_size, g.num_machines, g.num_feats, g.num_neurons, g.activation
     )
 
     fit!(g.ensemble)
@@ -383,22 +377,20 @@ julia> estimate_causal_effect!(m2)
 """
 @inline function estimate_causal_effect!(DML::DoubleMachineLearning)
     X, T, Y = generate_folds(DML.X, DML.T, DML.Y, DML.folds)
-    DML.causal_effect, DML.marginal_effect = 0, 0
-    Δ = var_type(DML.T) isa Binary ? 1.0 : 1.5e-8mean(DML.T)
+    DML.causal_effect, DML.marginal_effect, Δ = 0, 0, 1.5e-8mean(DML.T)
 
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
     for fold in 1:(DML.folds)
         X_train, X_test = reduce(vcat, X[1:end .!== fold]), X[fold]
         Y_train, Y_test = reduce(vcat, Y[1:end .!== fold]), Y[fold]
         T_train, T_test = reduce(vcat, T[1:end .!== fold]), T[fold]
-        T_train₊ = var_type(DML.T) isa Binary ? T_train .* 0 : T_train .+ Δ
 
-        Ỹ, T̃, T̃₊ = predict_residuals(
-            DML, X_train, X_test, Y_train, Y_test, T_train, T_test, T_train₊
+        Ỹ, T̃, T̃₊, T̃₋ = predict_residuals(
+            DML, X_train, X_test, Y_train, Y_test, T_train, T_test, Δ
         )
 
         DML.causal_effect += T̃\Ỹ
-        DML.marginal_effect += (T̃₊\Ỹ - DML.causal_effect) / Δ
+        DML.marginal_effect += (T̃₊\Ỹ - T̃₋\Ỹ) / 2Δ
     end
     
     DML.causal_effect /= DML.folds
@@ -408,7 +400,7 @@ julia> estimate_causal_effect!(m2)
 end
 
 """
-    predict_residuals(D, x_train, x_test, y_train, y_test, t_train, t_test, t_train₊)
+    predict_residuals(D, x_train, x_test, y_train, y_test, t_train, t_test, Δ)
 
 Predict treatment, outcome, and marginal effect residuals for double machine learning or 
 R-learning.
@@ -423,7 +415,7 @@ julia> x_train, x_test = X[1:80, :], X[81:end, :]
 julia> y_train, y_test = Y[1:80], Y[81:end]
 julia> t_train, t_test = T[1:80], T[81:100]
 julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test, zeros(100))
+julia> predict_residuals(m1, x_tr, x_te, y_tr, y_te, t_tr, t_te, zeros(100), 1e-5)
 ```
 """
 @inline function predict_residuals(
@@ -433,28 +425,19 @@ julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test, 
     yₜᵣ::Vector{Float64}, 
     yₜₑ::Vector{Float64}, 
     tₜᵣ::Vector{Float64}, 
-    tₜₑ::Vector{Float64}, 
-    tₜᵣ₊::Vector{Float64}
+    tₜₑ::Vector{Float64},
+    Δ::Float64
 )
-    y = ELMEnsemble(
-        xₜᵣ, yₜᵣ, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
-    )
+    args = D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
+    y = ELMEnsemble(xₜᵣ, yₜᵣ, args...)
+    t = ELMEnsemble(xₜᵣ, tₜᵣ, args...)
 
-    t = ELMEnsemble(
-        xₜᵣ, tₜᵣ, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
-    )
+    fit!(y); fit!(t)
+    yₚᵣ, tₚᵣ = predict(y, xₜₑ), predict(t, xₜₑ)
+    tₜₑ₊ = var_type(tₜₑ) isa Binary ? ones(size(tₜₑ)) : tₜₑ .+ Δ
+    tₜₑ₋ = var_type(tₜₑ) isa Binary ? ones(size(tₜₑ)) : tₜₑ .- Δ
 
-    t₊ = ELMEnsemble(
-        xₜᵣ, tₜᵣ₊, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
-    )
-
-    fit!(y)
-    fit!(t)
-    fit!(t₊)  # Estimate a model with T + a finite difference
-
-    yₚᵣ, tₚᵣ, tₚᵣ₊ = predict(y, xₜₑ), predict(t, xₜₑ), predict(t₊, xₜₑ)
-
-    return yₜₑ - yₚᵣ, tₜₑ - tₚᵣ, tₜₑ - tₚᵣ₊
+    return yₜₑ - yₚᵣ, tₜₑ - tₚᵣ, tₜₑ₊ - tₚᵣ, tₜₑ₋ - tₚᵣ
 end
 
 """

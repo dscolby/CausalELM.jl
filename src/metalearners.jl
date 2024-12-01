@@ -432,6 +432,7 @@ julia> estimate_causal_effect!(m4)
 """
 @inline function estimate_causal_effect!(s::SLearner)
     s.causal_effect, s.marginal_effect = g_formula!(s)
+
     return s.causal_effect
 end
 
@@ -456,13 +457,9 @@ julia> estimate_causal_effect!(m5)
 @inline function estimate_causal_effect!(t::TLearner)
     x₀, x₁, y₀, y₁ = t.X[t.T .== 0, :], t.X[t.T .== 1, :], t.Y[t.T .== 0], t.Y[t.T .== 1]
 
-    t.μ₀ = ELMEnsemble(
-        x₀, y₀, t.sample_size, t.num_machines, t.num_feats, t.num_neurons, t.activation
-    )
-
-    t.μ₁ = ELMEnsemble(
-        x₁, y₁, t.sample_size, t.num_machines, t.num_feats, t.num_neurons, t.activation
-    )
+    args = t.sample_size, t.num_machines, t.num_feats, t.num_neurons, t.activation
+    t.μ₀ = ELMEnsemble(x₀, y₀, args...)
+    t.μ₁ = ELMEnsemble(x₁, y₁, args...)
 
     fit!(t.μ₀)
     fit!(t.μ₁)
@@ -496,7 +493,7 @@ julia> estimate_causal_effect!(m1)
     μχ₀, μχ₁ = stage2!(x)
 
     x.causal_effect = @fastmath vec((
-        (x.ps .* predict(μχ₀, x.X)) .+ ((1 .- x.ps) .* predict(μχ₁, x.X))
+        (x.ps .* predict(μχ₀, x.X)) + ((1 .- x.ps) .* predict(μχ₁, x.X))
     ))
 
     x.marginal_effect = x.causal_effect  # Works since T is binary
@@ -523,7 +520,7 @@ julia> estimate_causal_effect!(m1)
 """
 @inline function estimate_causal_effect!(R::RLearner)
     X, T̃, Ỹ = generate_folds(R.X, R.T, R.Y, R.folds)
-    T̃₊, Δ = similar(T̃), var_type(R.T) isa Binary ? 1.0 : 1.5e-8mean(R.T)
+    T̃₊, T̃₋, Δ = similar(T̃), similar(T̃), 1.5e-8mean(R.T)
     R.X, R.T, R.Y = reduce(vcat, X), reduce(vcat, T̃), reduce(vcat, Ỹ)
 
     # Get residuals from out-of-fold predictions
@@ -531,26 +528,14 @@ julia> estimate_causal_effect!(m1)
         X_train, X_test = reduce(vcat, X[1:end .!== f]), X[f]
         Y_train, Y_test = reduce(vcat, Ỹ[1:end .!== f]), Ỹ[f]
         T_train, T_test = reduce(vcat, T̃[1:end .!== f]), T̃[f]
-        T_train₊ = var_type(R.T) isa Binary ? T_train .* 0 : T_train .+ Δ
-        Ỹ[f], T̃[f], T̃₊[f] = predict_residuals(
-            R, X_train, X_test, Y_train, Y_test, T_train, T_test, T_train₊
+        
+        Ỹ[f], T̃[f], T̃₊[f], T̃₋[f] = predict_residuals(
+            R, X_train, X_test, Y_train, Y_test, T_train, T_test, Δ
         )
     end
 
-    # Using target transformation and the weight trick to minimize the causal loss
-    T̃², target = reduce(vcat, T̃).^2, reduce(vcat, Ỹ) ./ reduce(vcat, T̃)
-    Xʷ, Yʷ = R.X .* T̃², target .* T̃²
-    T̃²₊, target₊ = reduce(vcat, T̃₊).^2, reduce(vcat, Ỹ) ./ reduce(vcat, T̃₊)
-    final_model = ELMEnsemble(
-        Xʷ, Yʷ, R.sample_size, R.num_machines, R.num_feats, R.num_neurons, R.activation
-    )
-
-    # Using finite differences to calculate marginal effects
-    final_model₊ = deepcopy(final_model)
-    final_model₊.X, final_model₊.Y = R.X .* T̃²₊, target₊ .* T̃²₊
-    fit!(final_model); fit!(final_model₊)
-    R.causal_effect = predict(final_model, R.X)
-    R.marginal_effect = (predict(final_model₊, final_model.X) - R.causal_effect) ./ Δ
+    R.causal_effect = weight_trick(R, T̃, Ỹ)
+    R.marginal_effect = (weight_trick(R, T̃₊, Ỹ) - weight_trick(R, T̃₋, Ỹ)) / 2Δ
 
     return R.causal_effect
 end
@@ -574,19 +559,58 @@ julia> estimate_causal_effect!(m1)
 """
 @inline function estimate_causal_effect!(DRE::DoublyRobustLearner)
     X, T, Y = generate_folds(DRE.X, DRE.T, DRE.Y, DRE.folds)
-    causal_effect = zeros(size(DRE.T, 1))
+    DRE.causal_effect, DRE.marginal_effect = zeros(size(DRE.T, 1)), zeros(size(DRE.T, 1))
 
     # Rotating folds for cross fitting
     for i in 1:2
-        causal_effect .+= doubly_robust_formula!(DRE, X, T, Y)
+        causal_effect, marginal_effect = doubly_robust_formula!(DRE, X, T, Y)
+        DRE.causal_effect .+= causal_effect
+        DRE.marginal_effect .+= marginal_effect
         X, T, Y = [X[2], X[1]], [T[2], T[1]], [Y[2], Y[1]]
     end
 
-    causal_effect ./= 2
-    DRE.causal_effect = causal_effect
-    DRE.marginal_effect = causal_effect
+    DRE.causal_effect ./= 2
+    DRE.marginal_effect ./= 2
 
     return DRE.causal_effect
+end
+
+"""
+    weight_trick(R, T̃, Ỹ)
+
+Use the weight trick to estimate the causal effect in the final stage of an R-learner.
+
+# Notes
+This method should not be called directly.
+
+# Arguments
+- `R::RLearner`: the RLearner struct to estimate the effect for.
+- `T̃`: a vector of residuals from predicting the treatment assignment.
+- `Ỹ`: a vector of residuals from predicting the outcome.
+
+# Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
+julia> r_learner = RLearner(X, T, Y)
+julia> X, T̃, Ỹ = generate_folds(r_learner.X, DRE.T, DRE.Y, DRE.folds)
+julia> X_train, X_test = reduce(vcat, X[1:end .!== f]), X[f]
+julia> Y_train, Y_test = reduce(vcat, Ỹ[1:end .!== f]), Ỹ[f]
+julia> T_train, T_test = reduce(vcat, T̃[1:end .!== f]), T̃[f]
+julia> Ỹ[f], T̃[f], _, _ = predict_residuals(
+julia>      r_learner, X_train, X_test, Y_train, Y_test, T_train, T_test, Δ
+        )
+julia> weight_trick(r_learner, T̃, Ỹ)
+```
+"""
+function weight_trick(R, T̃, Ỹ)
+    T̃², target = reduce(vcat, T̃).^2, reduce(vcat, Ỹ) ./ reduce(vcat, T̃)
+    Xʷ, Yʷ = R.X .* T̃², target .* T̃²
+    final_model = ELMEnsemble(
+        Xʷ, Yʷ, R.sample_size, R.num_machines, R.num_feats, R.num_neurons, R.activation
+    )
+
+    fit!(final_model)
+    return predict(final_model, R.X)
 end
 
 """
@@ -605,67 +629,31 @@ This method should not be called directly.
 
 # Examples
 ```julia
-julia> X, T, Y, W =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(6, 100)
 julia> m1 = DoublyRobustLearner(X, T, Y)
-
-julia> X, T, W, Y = make_folds(m1)
-julia> Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
-julia> g_formula!(m1, X, T, Y, Z)
+julia> doubly_robust_formula!(m1, X, T, Y)
 ```
 """
 @inline function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y)
+    args = DRE.sample_size, DRE.num_machines, DRE.num_feats, DRE.num_neurons, DRE.activation
     # Propensity scores
-    π_e = ELMEnsemble(
-        X[1], 
-        T[1], 
-        DRE.sample_size, 
-        DRE.num_machines, 
-        DRE.num_feats, 
-        DRE.num_neurons, 
-        DRE.activation
-    )
+    πₑ = ELMEnsemble(X[1], T[1], args...)
 
     # Outcome models
-    μ₀ = ELMEnsemble(
-        X[1][T[1] .== 0, :], 
-        Y[1][T[1] .== 0], 
-        DRE.sample_size, 
-        DRE.num_machines, 
-        DRE.num_feats,
-        DRE.num_neurons, 
-        DRE.activation
-    )
+    μ₀ = ELMEnsemble(X[1][T[1] .== 0, :], Y[1][T[1] .== 0], args...)
+    μ₁ = ELMEnsemble(X[1][T[1] .== 1, :], Y[1][T[1] .== 1], args...)
 
-    μ₁ = ELMEnsemble(
-        X[1][T[1] .== 1, :], 
-        Y[1][T[1] .== 1], 
-        DRE.sample_size, 
-        DRE.num_machines, 
-        DRE.num_feats,
-        DRE.num_neurons, 
-        DRE.activation
-    )
-
-    fit!.((π_e, μ₀, μ₁))
-    π̂ , μ₀̂, μ₁̂  = predict(π_e, X[2]), predict(μ₀, X[2]), predict(μ₁, X[2])
+    fit!.((πₑ, μ₀, μ₁))
+    π̂ , μ̂₀, μ̂₁  = predict(πₑ, X[2]), predict(μ₀, X[2]), predict(μ₁, X[2])
 
     # Pseudo outcomes
-    ϕ̂ =
-        ((T[2] .- π̂) ./ (π̂ .* (1 .- π̂))) .*
-        (Y[2] .- T[2] .* μ₁̂ .- (1 .- T[2]) .* μ₀̂) .+ μ₁̂ .- μ₀̂
+    ϕ̂  = ((T[2] - π̂) ./ (π̂ .* (1 .- π̂))) .* (Y[2] - T[2] .* μ̂₁- (1 .- T[2]) .* μ̂₀) + μ̂₁ - μ̂₀
 
     # Final model
-    τ_est = ELMEnsemble(
-        X[2], 
-        ϕ̂, 
-        DRE.sample_size, 
-        DRE.num_machines, 
-        DRE.num_feats, 
-        DRE.num_neurons, 
-        DRE.activation
-    )
-    fit!(τ_est)
-    return predict(τ_est, DRE.X)
+    τₑ = ELMEnsemble(X[2], ϕ̂, args...)
+    fit!(τₑ)
+
+    return predict(τₑ, DRE.X), predict(μ₁, DRE.X) - predict(μ₀, DRE.X)
 end
 
 """
@@ -684,29 +672,10 @@ julia> stage1!(m1)
 ```
 """
 function stage1!(x::XLearner)
-    g = ELMEnsemble(
-        x.X, x.T, x.sample_size, x.num_machines, x.num_feats, x.num_neurons, x.activation
-    )
-
-    x.μ₀ = ELMEnsemble(
-        x.X[x.T .== 0, :], 
-        x.Y[x.T .== 0], 
-        x.sample_size, 
-        x.num_machines, 
-        x.num_feats,
-        x.num_neurons, 
-        x.activation
-    )
-
-    x.μ₁ = ELMEnsemble(
-        x.X[x.T .== 1, :], 
-        x.Y[x.T .== 1], 
-        x.sample_size, 
-        x.num_machines, 
-        x.num_feats,
-        x.num_neurons, 
-        x.activation
-    )
+    args = x.sample_size, x.num_machines, x.num_feats, x.num_neurons, x.activation
+    g = ELMEnsemble(x.X, x.T, args...)
+    x.μ₀ = ELMEnsemble(x.X[x.T .== 0, :], x.Y[x.T .== 0], args...)
+    x.μ₁ = ELMEnsemble(x.X[x.T .== 1, :], x.Y[x.T .== 1], args...)
 
     # Get propensity scores
     fit!(g)
@@ -736,29 +705,11 @@ julia> stage2!(m1)
 function stage2!(x::XLearner)
     m₁, m₀ = predict(x.μ₁, x.X .- x.Y), predict(x.μ₀, x.X)
     d = ifelse(x.T === 0, m₁, x.Y .- m₀)
-    
-    μχ₀ = ELMEnsemble(
-        x.X[x.T .== 0, :], 
-        d[x.T .== 0], 
-        x.sample_size, 
-        x.num_machines, 
-        x.num_feats,
-        x.num_neurons, 
-        x.activation
-    )
+    args = x.sample_size, x.num_machines, x.num_feats, x.num_neurons, x.activation
 
-    μχ₁ = ELMEnsemble(
-        x.X[x.T .== 1, :], 
-        d[x.T .== 1], 
-        x.sample_size, 
-        x.num_machines, 
-        x.num_feats,
-        x.num_neurons, 
-        x.activation
-    )
-
-    fit!(μχ₀)
-    fit!(μχ₁)
+    μχ₀ = ELMEnsemble(x.X[x.T .== 0, :], d[x.T .== 0], args...)
+    μχ₁ = ELMEnsemble(x.X[x.T .== 1, :], d[x.T .== 1], args...)
+    fit!(μχ₀); fit!(μχ₁)
 
     return μχ₀, μχ₁
 end

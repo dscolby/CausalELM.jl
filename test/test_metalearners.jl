@@ -48,6 +48,7 @@ x_learner_binary = XLearner(x, t, Float64.([rand() < 0.4 for i in 1:100]))
 estimate_causal_effect!(x_learner_binary)
 
 rlearner = RLearner(x, t, y)
+residuals = CausalELM.weight_trick(rlearner, t, y)
 estimate_causal_effect!(rlearner)
 
 # Testing initialization with DataFrames
@@ -57,8 +58,8 @@ r_learner_df = RLearner(x_df, t_df, y_df)
 dr_learner = DoublyRobustLearner(x, t, y)
 X, T, Y = CausalELM.generate_folds(
     dr_learner.X, dr_learner.T, dr_learner.Y, dr_learner.folds
-    )
-τ̂ = CausalELM.doubly_robust_formula!(dr_learner, X, T, Y)
+)
+causal_effect, marginal_effect = CausalELM.doubly_robust_formula!(dr_learner, X, T, Y)
 estimate_causal_effect!(dr_learner)
 
 # Testing Doubly Robust Estimation with a binary outcome
@@ -155,6 +156,7 @@ end
 
     @testset "R-learner estimation" begin
         @test rlearner.causal_effect isa Vector
+        @test length(residuals) == length(y)
         @test length(rlearner.causal_effect) == length(y)
         @test eltype(rlearner.causal_effect) == Float64
         @test all(isnan, rlearner.causal_effect) == false
@@ -174,7 +176,8 @@ end
     end
 
     @testset "Calling estimate_effect!" begin
-        @test length(τ̂) === length(dr_learner.Y)
+        @test length(causal_effect) === length(dr_learner.Y)
+        @test length(marginal_effect) === length(dr_learner.Y)
     end
 
     @testset "Doubly Robust Learner Estimation" begin
