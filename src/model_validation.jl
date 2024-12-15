@@ -180,8 +180,8 @@ function covariate_independence(its::InterruptedTimeSeries; n=1000)
     # covariates and time as independent variables
     for i in axes(x, 2)
         new_x, y = x[:, 1:end .!= i], x[:, i]
-        @inline β = last(new_x \ y)
-        @inline p = p_val(new_x, y, β; n=n)
+        β = last(new_x \ y)
+        p = p_val(new_x, y, β; n=n)
         results["Column " * string(i) * " p-value"] = p
     end
     return results
