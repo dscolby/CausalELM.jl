@@ -5,11 +5,13 @@ These release notes adhere to the [keep a changelog](https://keepachangelog.com/
 ### Added
 *   Implemented randomization inference-based confidence intervals [#78](https://github.com/dscolby/CausalELM.jl/issues/78)
 *   Added marginal effects to model summaries [#78](https://github.com/dscolby/CausalELM.jl/issues/78)
+*   CausalELM models now support any AbstractArray data type, including support for using GPUs with CuArrays or similar structures for Mac, Intel, and AMD hardware[#37](https://github.com/dscolby/CausalELM.jl/issues/37)
 ### Fixed
 *   Removed unnecessary include and using statements
 *   Slightly sped up the randomization inference implementation and clarified it in the docs [#77](https://github.com/dscolby/CausalELM.jl/issues/77)
 *   Fixed the randomization inference index selection procedure for interrupted time series estimators
 *   Inlined certain methods to slightly improve performance [#76](https://github.com/dscolby/CausalELM.jl/issues/76)
+*   CausalELM models now support any data structure that implements the Tables.jl API, not just DataFrames
 
 ## Version [v0.7.0](https://github.com/dscolby/CausalELM.jl/releases/tag/v0.7.0) - 2024-06-22
 ### Added

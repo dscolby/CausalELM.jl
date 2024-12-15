@@ -31,7 +31,7 @@ Estimating an interrupted time series design in CausalELM consists of three step
 ## Step 1: Initialize an interrupted time series estimator
 The InterruptedTimeSeries constructor takes at least four agruments: pre-event covariates, 
 pre-event outcomes, post-event covariates, and post-event outcomes, all of which can be 
-either an array or any data structure that implements the Tables.jl interface (e.g. 
+either an AbstractArray or any data structure that implements the Tables.jl interface (e.g. 
 DataFrames). The interrupted time series estimator assumes outcomes are either continuous, 
 count, or time to event variables.
 

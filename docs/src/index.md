@@ -75,7 +75,7 @@ these libraries are:
     econometrics, and biostatistics.
 
 ### Installation
-CausalELM requires Julia version 1.7 or greater and can be installed from the REPL as shown 
+CausalELM requires Julia version 1.8 or greater and can be installed from the REPL as shown 
 below. 
 ```julia
 using Pkg 

@@ -7,9 +7,9 @@ abstract type Metalearner end
 Initialize a S-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -60,7 +60,7 @@ mutable struct SLearner <: Metalearner
     )
 
         # Convert to arrays
-        X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+        X, T, Y = convert_if_table.((X, T, Y))
 
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -88,9 +88,9 @@ end
 Initialize a T-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -140,7 +140,7 @@ mutable struct TLearner <: Metalearner
         num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
     )
         # Convert to arrays
-        X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+        X, T, Y = convert_if_table.((X, T, Y))
 
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -168,9 +168,9 @@ end
 Initialize an X-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -221,7 +221,7 @@ mutable struct XLearner <: Metalearner
         num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
     )
         # Convert to arrays
-        X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+        X, T, Y = convert_if_table.((X, T, Y))
 
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -249,9 +249,10 @@ end
 Initialize an R-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates of interest.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates of 
+    interest.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -301,7 +302,7 @@ function RLearner(
 )
 
     # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+    X, T, Y = convert_if_table.((X, T, Y))
 
     # Shuffle data with random indices
     indices = shuffle(1:length(Y))
@@ -333,9 +334,10 @@ end
 Initialize a doubly robust CATE estimator.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates of interest.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates of 
+    interest.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -386,7 +388,7 @@ function DoublyRobustLearner(
     num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
 )
     # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+    X, T, Y = convert_if_table.((X, T, Y))
 
     # Shuffle data with random indices
     indices = shuffle(1:length(Y))

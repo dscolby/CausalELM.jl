@@ -1,5 +1,6 @@
 using Test
 using CausalELM
+using DataFrames
 
 # Variables for checking the output of the model_config macro because it is difficult
 model_config_avg_expr = @macroexpand CausalELM.@model_config average_effect
@@ -29,7 +30,7 @@ model_config_ind_ground_truth = quote
     num_machines::Integer
     num_feats::Integer
     num_neurons::Int64
-    causal_effect::Array{Float64}
+    causal_effect::AbstractArray{AbstractFloat}
     average_marginal_effect::Float64
 end
 
@@ -37,19 +38,18 @@ end
 standard_input_expr = @macroexpand CausalELM.@standard_input_data
 standard_input_idx = [2, 4, 6]
 standard_input_ground_truth = quote
-    X::Array{Float64}
-    T::Array{Float64}
-    Y::Array{Float64}
+    X::AbstractArray{<: Real}
+    T::AbstractArray{<: Real}
+    Y::AbstractArray{<: Real}
 end
 
 # Fields for the user supplied data
 double_model_input_expr = @macroexpand CausalELM.@standard_input_data
 double_model_input_idx = [2, 4, 6]
 double_model_input_ground_truth = quote
-    X::Array{Float64}
-    T::Array{Float64}
-    Y::Array{Float64}
-    W::Array{Float64}
+    X::AbstractArray{<: Real}
+    T::AbstractArray{<: Real}
+    Y::AbstractArray{<: Real}
 end
 
 # Generating folds
@@ -110,4 +110,9 @@ end
     @test y_fold isa Vector{Vector{Float64}}
     @test t_fold isa Vector{Vector{Float64}}
     @test length(t_fold) == dm.folds
+end
+
+@testset "Converting Tables API Objects to Matrices" begin
+    @test CausalELM.convert_if_table([1 1; 1 1]) == [1 1; 1 1]
+    @test CausalELM.convert_if_table(DataFrame(; x1=[1, 1], x2=[1, 1])) == [1 1; 1 1]
 end

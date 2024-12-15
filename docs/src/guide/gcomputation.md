@@ -16,9 +16,9 @@ steps for using G-computation in CausalELM are below.
 
 ## Step 1: Initialize a Model
 The GComputation constructor takes at least three arguments: covariates, treatment statuses, 
-outcomes, all of which can be either an array or any data structure that implements the 
-Tables.jl interface (e.g. DataFrames). This implementation supports binary treatments and 
-binary, continuous, time to event, and count outcome variables.
+outcomes, all of which can be either an AbstractArray or any data structure that implements 
+the Tables.jl interface (e.g. DataFrames). This implementation supports binary treatments 
+and binary, continuous, time to event, and count outcome variables.
 
 !!! note
     Non-binary categorical outcomes are treated as continuous.

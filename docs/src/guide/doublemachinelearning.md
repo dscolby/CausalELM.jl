@@ -16,9 +16,9 @@ the residuals from the first stage models.
 
 ## Step 1: Initialize a Model
 The DoubleMachineLearning constructor takes at least three arguments—covariates, a 
-treatment statuses, and outcomes, all of which may be either an array or any struct that 
-implements the Tables.jl interface (e.g. DataFrames). This estimator supports binary, count, 
-or continuous treatments and binary, count, continuous, or time to event outcomes.
+treatment statuses, and outcomes, all of which may be either an AbstractArray or any struct 
+that implements the Tables.jl interface (e.g. DataFrames). This estimator supports binary, 
+count, or continuous treatments and binary, count, continuous, or time to event outcomes.
 
 !!! note
     Non-binary categorical outcomes are treated as continuous.

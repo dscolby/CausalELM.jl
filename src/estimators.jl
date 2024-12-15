@@ -7,10 +7,14 @@ abstract type CausalEstimator end
 Initialize an interrupted time series estimator. 
 
 # Arguments
-- `X₀::Any`: array or DataFrame of covariates from the pre-treatment period.
-- `Y₁::Any`: array or DataFrame of outcomes from the pre-treatment period.
-- `X₁::Any`: array or DataFrame of covariates from the post-treatment period.
-- `Y₁::Any`: array or DataFrame of outcomes from the post-treatment period.
+- `X₀::Any`: AbstractArray or Tables.jl API compliant data structure of covariates from the 
+    pre-treatment period.
+- `Y₁::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes from the 
+    pre-treatment period.
+- `X₁::Any`: AbstractArray or Tables.jl API compliant data structure of covariates from the 
+    post-treatment period.
+- `Y₁::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes from the 
+    post-treatment period.
 
 # Keywords
 - `activation::Function=swish`: activation function to use.
@@ -44,10 +48,10 @@ julia> m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 ```
 """
 mutable struct InterruptedTimeSeries
-    X₀::Array{Float64}
-    Y₀::Array{Float64}
-    X₁::Array{Float64}
-    Y₁::Array{Float64}
+    X₀::AbstractArray{<: Real}
+    Y₀::AbstractArray{<: Real}
+    X₁::AbstractArray{<: Real}
+    Y₁::AbstractArray{<: Real}
     marginal_effect::Float64
     @model_config individual_effect
 end
@@ -65,7 +69,7 @@ function InterruptedTimeSeries(
     autoregression::Bool=true,
 )
     # Convert to arrays
-    X₀, X₁, Y₀, Y₁ = Matrix{Float64}(X₀), Matrix{Float64}(X₁), Y₀[:, 1], Y₁[:, 1]
+    X₀, X₁, Y₀, Y₁ = convert_if_table.((X₀, X₁, Y₀, Y₁))
 
     # Add autoregressive term
     X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
@@ -97,9 +101,9 @@ end
 Initialize a G-Computation estimator.
 
 # Arguments
-- `X::Any`: array or DataFrame of covariates.
-- `T::Any`: vector or DataFrame of treatment statuses.
-- `Y::Any`: array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `quantity_of_interest::String`: ATE for average treatment effect or ATT for average 
@@ -159,7 +163,7 @@ mutable struct GComputation <: CausalEstimator
         end
 
         # Convert to arrays
-        X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+        X, T, Y = convert_if_table.((X, T, Y))
 
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -187,9 +191,10 @@ end
 Initialize a double machine learning estimator with cross fitting.
 
 # Arguments
-- `X::Any`: array or DataFrame of covariates of interest.
-- `T::Any`: vector or DataFrame of treatment statuses.
-- `Y::Any`: array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates of
+    interest.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: activation function to use.
@@ -240,7 +245,7 @@ function DoubleMachineLearning(
     folds::Integer=5,
 )
     # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+    X, T, Y = convert_if_table.((X, T, Y))
 
     # Shuffle data with random indices
     indices = shuffle(1:length(Y))
