@@ -298,7 +298,7 @@ function sup_wald(its::InterruptedTimeSeries; low=0.15, high=0.85, n=1000)
     for idx in low_idx:high_idx
         t = reduce(vcat, (zeros(idx), ones(size(x, 1) - idx)))
         new_x = reduce(hcat, (x, t))
-        @inline β, ŷ = @fastmath new_x \ y, new_x * (new_x \ y)
+        β, ŷ = @fastmath new_x \ y, new_x * (new_x \ y)
         se = @fastmath sqrt(1 / (size(x, 1) - 2)) * (sum(y .- ŷ)^2 / sum(t .- mean(t))^2)
         wald_candidate = last(β) / se
 
