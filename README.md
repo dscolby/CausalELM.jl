@@ -66,7 +66,7 @@ individualized e.g. conditional average treatment effect (CATE) quantities of in
     <li>Doubly Robust Estimator</li>
 </ul>
 
-<h2>CausalELM Features</h2>
+<h2>Features</h2>
 <ul>
   <li>Estimate a causal effect, get a summary, and validate assumptions in just four lines of code</li>
   <li>Bagging improves performance and reduces variance without the need to tune a regularization parameter</li>
