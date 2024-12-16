@@ -34,22 +34,6 @@
 </p>
 
 <p>
-CausalELM enables estimation of causal effects in settings where a randomized control trial 
-or traditional statistical models would be infeasible or unacceptable. It enables estimation 
-of the average treatment effect (ATE)/intent to treat effect (ITE) with interrupted time 
-series analysis, G-computation, and double machine learning; average treatment effect on the 
-treated (ATT) with G-computation; cumulative treatment effect with interrupted time series 
-analysis; and the conditional average treatment effect (CATE) via S-learning, T-learning, 
-X-learning, R-learning, and doubly robust estimation. Underlying all of these estimators are 
-ensembles of extreme learning machines, a simple neural network that uses randomized weights 
-and least squares optimization instead of gradient descent. Once a model has been estimated, 
-CausalELM can summarize the model and conduct sensitivity analysis to validate the 
-plausibility of modeling assumptions. Furthermore, all of this can be done in four lines of 
-code.
-</p>
-
-<h2>Extreme Learning Machines and Causal Inference</h2>
-<p>
 CausalELM provides easy-to-use implementations of modern causal inference methods. While
 CausalELM implements a variety of estimators, they all have one thing in common—the use of 
 machine learning models to flexibly estimate causal effects. This is where the ELM in 
