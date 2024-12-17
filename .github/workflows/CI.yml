@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - development
     tags: '*'
   pull_request:
     branches:
@@ -25,6 +26,7 @@ jobs:
           - '1.8'
           - '1.9'
           - '1.10'
+          - '1.11'
           - 'nightly'
         os:
           - ubuntu-latest

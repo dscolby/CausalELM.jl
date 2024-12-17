@@ -7,10 +7,14 @@ abstract type CausalEstimator end
 Initialize an interrupted time series estimator. 
 
 # Arguments
-- `X₀::Any`: array or DataFrame of covariates from the pre-treatment period.
-- `Y₁::Any`: array or DataFrame of outcomes from the pre-treatment period.
-- `X₁::Any`: array or DataFrame of covariates from the post-treatment period.
-- `Y₁::Any`: array or DataFrame of outcomes from the post-treatment period.
+- `X₀::Any`: AbstractArray or Tables.jl API compliant data structure of covariates from the 
+    pre-treatment period.
+- `Y₁::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes from the 
+    pre-treatment period.
+- `X₁::Any`: AbstractArray or Tables.jl API compliant data structure of covariates from the 
+    post-treatment period.
+- `Y₁::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes from the 
+    post-treatment period.
 
 # Keywords
 - `activation::Function=swish`: activation function to use.
@@ -44,10 +48,11 @@ julia> m3 = InterruptedTimeSeries(x₀_df, y₀_df, x₁_df, y₁_df)
 ```
 """
 mutable struct InterruptedTimeSeries
-    X₀::Array{Float64}
-    Y₀::Array{Float64}
-    X₁::Array{Float64}
-    Y₁::Array{Float64}
+    X₀::AbstractArray{<: Real}
+    Y₀::AbstractArray{<: Real}
+    X₁::AbstractArray{<: Real}
+    Y₁::AbstractArray{<: Real}
+    marginal_effect::Float64
     @model_config individual_effect
 end
 
@@ -64,7 +69,7 @@ function InterruptedTimeSeries(
     autoregression::Bool=true,
 )
     # Convert to arrays
-    X₀, X₁, Y₀, Y₁ = Matrix{Float64}(X₀), Matrix{Float64}(X₁), Y₀[:, 1], Y₁[:, 1]
+    X₀, X₁, Y₀, Y₁ = convert_if_table.((X₀, X₁, Y₀, Y₁))
 
     # Add autoregressive term
     X₀ = ifelse(autoregression == true, reduce(hcat, (X₀, moving_average(Y₀))), X₀)
@@ -77,6 +82,7 @@ function InterruptedTimeSeries(
         float(Y₀),
         X₁,
         float(Y₁),
+        NaN,
         "difference",
         true,
         task,
@@ -95,9 +101,9 @@ end
 Initialize a G-Computation estimator.
 
 # Arguments
-- `X::Any`: array or DataFrame of covariates.
-- `T::Any`: vector or DataFrame of treatment statuses.
-- `Y::Any`: array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `quantity_of_interest::String`: ATE for average treatment effect or ATT for average 
@@ -137,6 +143,7 @@ julia> m5 = GComputation(x_df, t_df, y_df)
 mutable struct GComputation <: CausalEstimator
     @standard_input_data
     @model_config average_effect
+    marginal_effect::Float64
     ensemble::ELMEnsemble
 
     function GComputation(
@@ -156,7 +163,7 @@ mutable struct GComputation <: CausalEstimator
         end
 
         # Convert to arrays
-        X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+        X, T, Y = convert_if_table.((X, T, Y))
 
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -173,6 +180,7 @@ mutable struct GComputation <: CausalEstimator
             num_feats,
             num_neurons,
             NaN,
+            NaN,
         )
     end
 end
@@ -183,9 +191,10 @@ end
 Initialize a double machine learning estimator with cross fitting.
 
 # Arguments
-- `X::Any`: array or DataFrame of covariates of interest.
-- `T::Any`: vector or DataFrame of treatment statuses.
-- `Y::Any`: array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates of
+    interest.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: activation function to use.
@@ -220,6 +229,7 @@ julia> m2 = DoubleMachineLearning(x_df, t_df, y_df)
 mutable struct DoubleMachineLearning <: CausalEstimator
     @standard_input_data
     @model_config average_effect
+    marginal_effect::Float64
     folds::Integer
 end
 
@@ -235,7 +245,7 @@ function DoubleMachineLearning(
     folds::Integer=5,
 )
     # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+    X, T, Y = convert_if_table.((X, T, Y))
 
     # Shuffle data with random indices
     indices = shuffle(1:length(Y))
@@ -256,6 +266,7 @@ function DoubleMachineLearning(
         num_feats,
         num_neurons,
         NaN,
+        NaN,
         folds,
     )
 end
@@ -272,7 +283,7 @@ julia> m1 = InterruptedTimeSeries(X₀, Y₀, X₁, Y₁)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(its::InterruptedTimeSeries)
+@inline function estimate_causal_effect!(its::InterruptedTimeSeries)
     learner = ELMEnsemble(
         its.X₀, 
         its.Y₀, 
@@ -284,7 +295,8 @@ function estimate_causal_effect!(its::InterruptedTimeSeries)
     )
 
     fit!(learner)
-    its.causal_effect = predict(learner, its.X₁) - its.Y₁
+    its.causal_effect = predict(learner, its.X₁) .- its.Y₁
+    its.marginal_effect = mean(its.causal_effect)
 
     return its.causal_effect
 end
@@ -308,8 +320,10 @@ julia> m1 = GComputation(X, T, Y)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(g::GComputation)
-    g.causal_effect = mean(g_formula!(g))
+@inline function estimate_causal_effect!(g::GComputation)
+    causal_effect, marginal_effect = g_formula!(g)
+    g.causal_effect, g.marginal_effect = mean(causal_effect), mean(marginal_effect)
+
     return g.causal_effect
 end
 
@@ -328,32 +342,26 @@ julia> m2 = SLearner(X, T, Y)
 julia> g_formula!(m2)
 ```
 """
-function g_formula!(g)  # Keeping this separate enables it to be reused for S-Learning
-    covariates, y = hcat(g.X, g.T), g.Y
+@inline function g_formula!(g)  # Keeping this separate for reuse with S-Learning
+    vars, y = hcat(g.X, g.T), g.Y
+    x₁, x₀ = hcat(g.X, ones(size(g.X, 1))), hcat(g.X, zeros(size(g.X, 1)))
 
     if g.quantity_of_interest ∈ ("ITT", "ATE", "CATE")
-        Xₜ = hcat(covariates[:, 1:(end - 1)], ones(size(covariates, 1)))
-        Xᵤ = hcat(covariates[:, 1:(end - 1)], zeros(size(covariates, 1)))
+        Xₜ = hcat(vars[:, 1:(end - 1)], ones(size(vars, 1)))
+        Xᵤ = hcat(vars[:, 1:(end - 1)], zeros(size(vars, 1)))
     else
-        Xₜ = hcat(covariates[g.T .== 1, 1:(end - 1)], ones(size(g.T[g.T .== 1], 1)))
-        Xᵤ = hcat(covariates[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
+        Xₜ = hcat(vars[g.T .== 1, 1:(end - 1)], ones(size(g.T[g.T .== 1], 1)))
+        Xᵤ = hcat(vars[g.T .== 1, 1:(end - 1)], zeros(size(g.T[g.T .== 1], 1)))
     end
 
     g.ensemble = ELMEnsemble(
-        covariates, 
-        y, 
-        g.sample_size, 
-        g.num_machines, 
-        g.num_feats,
-        g.num_neurons, 
-        g.activation
+        vars, y, g.sample_size, g.num_machines, g.num_feats, g.num_neurons, g.activation
     )
 
     fit!(g.ensemble)
-    
     yₜ, yᵤ = predict(g.ensemble, Xₜ), predict(g.ensemble, Xᵤ)
 
-    return vec(yₜ) - vec(yᵤ)
+    return vec(yₜ) - vec(yᵤ), predict(g.ensemble, x₁) - predict(g.ensemble, x₀)
 end
 
 """
@@ -372,29 +380,35 @@ julia> m2 = DoubleMachineLearning(X, T, Y, W=W)
 julia> estimate_causal_effect!(m2)
 ```
 """
-function estimate_causal_effect!(DML::DoubleMachineLearning)
+@inline function estimate_causal_effect!(DML::DoubleMachineLearning)
     X, T, Y = generate_folds(DML.X, DML.T, DML.Y, DML.folds)
-    DML.causal_effect = 0
+    DML.causal_effect, DML.marginal_effect, Δ = 0, 0, 1.5e-8mean(DML.T)
 
     # Cross fitting by training on the main folds and predicting residuals on the auxillary
-    for fld in 1:(DML.folds)
-        X_train, X_test = reduce(vcat, X[1:end .!== fld]), X[fld]
-        Y_train, Y_test = reduce(vcat, Y[1:end .!== fld]), Y[fld]
-        T_train, T_test = reduce(vcat, T[1:end .!== fld]), T[fld]
+    for fold in 1:(DML.folds)
+        X_train, X_test = reduce(vcat, X[1:end .!== fold]), X[fold]
+        Y_train, Y_test = reduce(vcat, Y[1:end .!== fold]), Y[fold]
+        T_train, T_test = reduce(vcat, T[1:end .!== fold]), T[fold]
 
-        Ỹ, T̃ = predict_residuals(DML, X_train, X_test, Y_train, Y_test, T_train, T_test)
+        Ỹ, T̃, T̃₊, T̃₋ = predict_residuals(
+            DML, X_train, X_test, Y_train, Y_test, T_train, T_test, Δ
+        )
 
         DML.causal_effect += T̃\Ỹ
+        DML.marginal_effect += (T̃₊\Ỹ - T̃₋\Ỹ) / 2Δ
     end
+    
     DML.causal_effect /= DML.folds
+    DML.marginal_effect /= DML.folds
 
     return DML.causal_effect
 end
 
 """
-    predict_residuals(D, x_train, x_test, y_train, y_test, t_train, t_test)
+    predict_residuals(D, x_train, x_test, y_train, y_test, t_train, t_test, Δ)
 
-Predict treatment and outcome residuals for double machine learning or R-learning.
+Predict treatment, outcome, and marginal effect residuals for double machine learning or 
+R-learning.
 
 # Notes
 This method should not be called directly.
@@ -406,32 +420,29 @@ julia> x_train, x_test = X[1:80, :], X[81:end, :]
 julia> y_train, y_test = Y[1:80], Y[81:end]
 julia> t_train, t_test = T[1:80], T[81:100]
 julia> m1 = DoubleMachineLearning(X, T, Y)
-julia> predict_residuals(m1, x_train, x_test, y_train, y_test, t_train, t_test)
+julia> predict_residuals(m1, x_tr, x_te, y_tr, y_te, t_tr, t_te, zeros(100), 1e-5)
 ```
 """
-function predict_residuals(
+@inline function predict_residuals(
     D, 
     xₜᵣ::Array{Float64}, 
     xₜₑ::Array{Float64}, 
     yₜᵣ::Vector{Float64}, 
     yₜₑ::Vector{Float64}, 
     tₜᵣ::Vector{Float64}, 
-    tₜₑ::Vector{Float64}, 
+    tₜₑ::Vector{Float64},
+    Δ::Float64
 )
-    y = ELMEnsemble(
-        xₜᵣ, yₜᵣ, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
-    )
+    args = D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
+    y = ELMEnsemble(xₜᵣ, yₜᵣ, args...)
+    t = ELMEnsemble(xₜᵣ, tₜᵣ, args...)
 
-    t = ELMEnsemble(
-        xₜᵣ, tₜᵣ, D.sample_size, D.num_machines, D.num_feats, D.num_neurons, D.activation
-    )
-
-    fit!(y)
-    fit!(t)
-
+    fit!(y); fit!(t)
     yₚᵣ, tₚᵣ = predict(y, xₜₑ), predict(t, xₜₑ)
+    tₜₑ₊ = var_type(tₜₑ) isa Binary ? ones(size(tₜₑ)) : tₜₑ .+ Δ
+    tₜₑ₋ = var_type(tₜₑ) isa Binary ? ones(size(tₜₑ)) : tₜₑ .- Δ
 
-    return yₜₑ - yₚᵣ, tₜₑ - tₚᵣ
+    return yₜₑ - yₚᵣ, tₜₑ - tₚᵣ, tₜₑ₊ - tₚᵣ, tₜₑ₋ - tₚᵣ
 end
 
 """

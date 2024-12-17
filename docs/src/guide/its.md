@@ -31,7 +31,7 @@ Estimating an interrupted time series design in CausalELM consists of three step
 ## Step 1: Initialize an interrupted time series estimator
 The InterruptedTimeSeries constructor takes at least four agruments: pre-event covariates, 
 pre-event outcomes, post-event covariates, and post-event outcomes, all of which can be 
-either an array or any data structure that implements the Tables.jl interface (e.g. 
+either an AbstractArray or any data structure that implements the Tables.jl interface (e.g. 
 DataFrames). The interrupted time series estimator assumes outcomes are either continuous, 
 count, or time to event variables.
 
@@ -43,8 +43,8 @@ count, or time to event variables.
     machines to use, the number of features to consider for each extreme learning machine, 
     the number of bootstrapped observations to include in each extreme learning machine, and 
     the number of neurons to use during estimation. These options are specified with the 
-    following keyword arguments: `activation`, `num_machines`, `num_feats`, `sample_size`, 
-    and `num_neurons`.
+    following keyword arguments: activation, num\_machines, num\_feats, sample\_size, and 
+    num\_neurons.
 
 ```julia
 # Generate some data to use
@@ -69,10 +69,11 @@ estimate_causal_effect!(its)
 We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
-    To calculate the p-value and standard error for the treatment effect, you can set the 
-    inference argument to false. However, p-values and standard errors are calculated via 
-    randomization inference, which will take a long time. But can be sped up by launching 
-    Julia with a higher number of threads.
+    To calculate the p-value, standard error, and confidence interval for the treatment 
+    effect, you can set the inference keyword to true. However, these values are calculated 
+    via randomization inference, which will take a long time. This can be greatly sped up by 
+    launching Julia with more threads and lowering the number of iterations using the n 
+    keyword (at the expense of accuracy).
 
 ```julia
 summarize(its)

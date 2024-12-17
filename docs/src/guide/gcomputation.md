@@ -16,9 +16,9 @@ steps for using G-computation in CausalELM are below.
 
 ## Step 1: Initialize a Model
 The GComputation constructor takes at least three arguments: covariates, treatment statuses, 
-outcomes, all of which can be either an array or any data structure that implements the 
-Tables.jl interface (e.g. DataFrames). This implementation supports binary treatments and 
-binary, continuous, time to event, and count outcome variables.
+outcomes, all of which can be either an AbstractArray or any data structure that implements 
+the Tables.jl interface (e.g. DataFrames). This implementation supports binary treatments 
+and binary, continuous, time to event, and count outcome variables.
 
 !!! note
     Non-binary categorical outcomes are treated as continuous.
@@ -29,9 +29,8 @@ binary, continuous, time to event, and count outcome variables.
     number of features to consider for each extreme learning machine, the number of 
     bootstrapped observations to include in each extreme learning machine, and the number of 
     neurons to use during estimation. These options are specified with the following keyword 
-    arguments: `quantity_of_interest`, `activation`, `temporal`, `num_machines`, `num_feats`, 
-    `sample_size`, and `num_neurons`.
-
+    arguments: quantity\_of\_interest, activation, temporal, num\_machines, num\_feats, 
+    sample\_size, and num\_neurons.
 ```julia
 # Create some data with a binary treatment
 X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)
@@ -54,10 +53,11 @@ estimate_causal_effect!(g_computer)
 We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
-    To calculate the p-value and standard error for the treatment effect, you can set the 
-    inference argument to false. However, p-values and standard errors are calculated via 
-    randomization inference, which will take a long time. But can be sped up by launching 
-    Julia with a higher number of threads.
+    To calculate the p-value, standard error, and confidence interval for the treatment 
+    effect, you can set the inference keyword to true. However, these values are calculated 
+    via randomization inference, which will take a long time. This can be greatly sped up by 
+    launching Julia with more threads and lowering the number of iterations using the n 
+    keyword (at the expense of accuracy).
 
 ```julia
 summarize(g_computer)

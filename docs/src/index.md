@@ -13,39 +13,51 @@ CurrentModule = CausalELM
 
 # Overview
 
-CausalELM leverages new techniques in machine learning and statistics to estimate individual 
-and aggregate treatment effects in situations where traditional methods are unsatisfactory 
-or infeasible. To enable this, CausalELM provides a simple API to initialize a model, 
-estimate a causal effect, get a summary of the model, and test its robustness. CausalELM 
-includes estimators for interupted time series analysis, G-Computation, double machine 
-learning, S-Learning, T-Learning, X-Learning, R-learning, and doubly robust estimation. 
-Underlying all these estimators are bagged extreme learning machines. Extreme learning 
-machines are a single layer feedfoward neural network that relies on randomized weights and 
-least squares optimization, making them expressive, simple, and computationally 
-efficient. Combining them with bagging reduces the variance caused by the randomization of 
-weights and provides a form of regularization that does not have to be tuned through cross 
-validation. These attributes make CausalELM a very simple and powerful package for 
-estimating treatment effects.
+CausalELM provides easy-to-use implementations of modern causal inference methods. While
+CausalELM implements a variety of estimators, they all have one thing in common—the use of 
+machine learning models to flexibly estimate causal effects. This is where the ELM in 
+CausalELM comes from—the machine learning model underlying all the estimators is an extreme 
+learning machine (ELM). ELMs are a simple neural network that use randomized weights and 
+offer a good tradeoff between learning non-linear dependencies and simplicity. Furthermore, 
+CausalELM implements bagged ensembles of ELMs to reduce the variance resulting from 
+randomized weights.
 
-### Features
+## Estimators
+CausalELM implements estimators for aggreate e.g. average treatment effect (ATE) and 
+individualized e.g. conditional average treatment effect (CATE) quantities of interest.
+
+### Estimators for Aggregate Effects
+*   Interrupted Time Series Estimator
+*   G-computation
+*   Double machine Learning
+
+### Individualized Treatment Effect (CATE) Estimators
+*   S-learner
+*   T-learner
+*   X-learner
+*   R-learner
+*   Doubly Robust Estimator
+
+## Features
 *   Estimate a causal effect, get a summary, and validate assumptions in just four lines of code
-*   Bagging improves performance and reduces variance without the need to tune a regularization parameter
 *   Enables using the same structs for regression and classification
 *   Includes 13 activation functions and allows user-defined activation functions
 *   Most inference and validation tests do not assume functional or distributional forms
 *   Implements the latest techniques from statistics, econometrics, and biostatistics
-*   Works out of the box with arrays or any data structure that implements the Tables.jl interface
+*   Works out of the box with AbstractArrays or any data structure that implements the Tables.jl interface
+*   Works with CuArrays, ROCArrays, and any other GPU-specific arrays that are AbstractArrays
+*   CausalELM is lightweight—its only dependency is Tables.jl
 *   Codebase is high-quality, well tested, and regularly updated
 
-### What's New?
-*   Now includes doubly robust estimator for CATE estimation
-*   All estimators now implement bagging to reduce predictive performance and reduce variance
-*   Counterfactual consistency validation simulates more realistic violations of the counterfactual consistency assumption
-*   Uses a simple heuristic to choose the number of neurons, which reduces training time and still works well in practice
-*   Probability clipping for classifier predictions and residuals is no longer necessary due to the bagging procedure
-*   CausalELM talk has been accepted to JuliaCon 2024!
+## What's New?
+*   Includes support for GPU-specific arrays and data structures that implement the Tables.jl API
+*   Only performs randomization inference when the inference argument is set to true in summarize methods
+*   Summaries support calculating marginal effects and confidence intervals
+*   Randomization inference now uses multithreading
+*   CausalELM was presented at JuliaCon 2024 in Eindhoven
+*   Refactored code to be easier to extend and understand
 
-### What makes CausalELM different?
+## What makes CausalELM different?
 Other packages, mainly EconML, DoWhy, CausalAI, and CausalML, have similar funcitonality. 
 Beides being written in Julia rather than Python, the main differences between CausalELM and 
 these libraries are:
@@ -67,15 +79,24 @@ these libraries are:
     estimators provide p-values and standard errors generated via approximate randomization 
     inference. 
 *   CausalELM strives to be lightweight while still being powerful and therefore does not 
-    have external dependencies: all the functions it uses are in the Julia standard library.
+    have external dependencies: all the functions it uses are in the Julia standard library
+    with the exception of model constructors, which use Tables.matrix to ensure integration 
+    with a wide variety of data structures.
 *   The other packages and many others mostly use techniques from one field. Instead, 
     CausalELM incorporates a hodgepodge of ideas from statistics, machine learning, 
     econometrics, and biostatistics.
+*   CausalELM doesn't use any unnecessary abstractions. The only structs are the actual 
+    models. Estimated effects are returned as arrays, summaries are returned in a dictionary, 
+    and the results of validating an estimator are returned as tuples. This is in contrast 
+    to other packages that utilize separate structs (classes) for summaries and inference 
+    results.
 
-### Installation
-CausalELM requires Julia version 1.7 or greater and can be installed from the REPL as shown 
+## Installation
+CausalELM requires Julia version 1.8 or greater and can be installed from the REPL as shown 
 below. 
 ```julia
 using Pkg 
 Pkg.add("CausalELM")
 ```
+## More Information
+For a more interactive overview, see our JuliaCon 2024 talk[here](https://www.youtube.com/watch?v=hh_cyj8feu8&t=26s)

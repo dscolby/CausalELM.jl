@@ -7,9 +7,9 @@ abstract type Metalearner end
 Initialize a S-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -45,6 +45,7 @@ julia> m4 = SLearner(x_df, t_df, y_df)
 mutable struct SLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     ensemble::ELMEnsemble
 
     function SLearner(
@@ -59,7 +60,7 @@ mutable struct SLearner <: Metalearner
     )
 
         # Convert to arrays
-        X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+        X, T, Y = convert_if_table.((X, T, Y))
 
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -76,6 +77,7 @@ mutable struct SLearner <: Metalearner
             num_feats,
             num_neurons,
             fill(NaN, size(T, 1)),
+            fill(NaN, size(T, 1)),
         )
     end
 end
@@ -86,9 +88,9 @@ end
 Initialize a T-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -123,6 +125,7 @@ julia> m3 = TLearner(x_df, t_df, y_df)
 mutable struct TLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     μ₀::ELMEnsemble
     μ₁::ELMEnsemble
 
@@ -137,7 +140,7 @@ mutable struct TLearner <: Metalearner
         num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
     )
         # Convert to arrays
-        X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+        X, T, Y = convert_if_table.((X, T, Y))
 
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -154,6 +157,7 @@ mutable struct TLearner <: Metalearner
             num_feats,
             num_neurons,
             fill(NaN, size(T, 1)),
+            fill(NaN, size(T, 1)),
         )
     end
 end
@@ -164,9 +168,9 @@ end
 Initialize an X-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -201,6 +205,7 @@ julia> m3 = XLearner(x_df, t_df, y_df)
 mutable struct XLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     μ₀::ELMEnsemble
     μ₁::ELMEnsemble
     ps::Array{Float64}
@@ -216,7 +221,7 @@ mutable struct XLearner <: Metalearner
         num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
     )
         # Convert to arrays
-        X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+        X, T, Y = convert_if_table.((X, T, Y))
 
         task = var_type(Y) isa Binary ? "classification" : "regression"
 
@@ -233,6 +238,7 @@ mutable struct XLearner <: Metalearner
             num_feats,
             num_neurons,
             fill(NaN, size(T, 1)),
+            fill(NaN, size(T, 1)),
         )
     end
 end
@@ -243,9 +249,10 @@ end
 Initialize an R-Learner.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates of interest.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates of 
+    interest.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -278,6 +285,7 @@ julia> m2 = RLearner(x_df, t_df, y_df)
 mutable struct RLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     folds::Integer
 end
 
@@ -294,7 +302,7 @@ function RLearner(
 )
 
     # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+    X, T, Y = convert_if_table.((X, T, Y))
 
     # Shuffle data with random indices
     indices = shuffle(1:length(Y))
@@ -315,6 +323,7 @@ function RLearner(
         num_feats,
         num_neurons,
         fill(NaN, size(T, 1)),
+        fill(NaN, size(T, 1)),
         folds,
     )
 end
@@ -325,9 +334,10 @@ end
 Initialize a doubly robust CATE estimator.
 
 # Arguments
-- `X::Any`: an array or DataFrame of covariates of interest.
-- `T::Any`: an vector or DataFrame of treatment statuses.
-- `Y::Any`: an array or DataFrame of outcomes.
+- `X::Any`: AbstractArray or Tables.jl API compliant data structure of covariates of 
+    interest.
+- `T::Any`: AbstractArray or Tables.jl API compliant data structure of treatment statuses.
+- `Y::Any`: AbstractArray or Tables.jl API compliant data structure of outcomes.
 
 # Keywords
 - `activation::Function=swish`: the activation function to use.
@@ -363,6 +373,7 @@ julia> m3 = DoublyRobustLearner(X, T, Y, W=w)
 mutable struct DoublyRobustLearner <: Metalearner
     @standard_input_data
     @model_config individual_effect
+    marginal_effect::Vector{Float64}
     folds::Integer
 end
 
@@ -377,7 +388,7 @@ function DoublyRobustLearner(
     num_neurons::Integer=round(Int, log10(size(X, 1)) * size(X, 2)),
 )
     # Convert to arrays
-    X, T, Y = Matrix{Float64}(X), T[:, 1], Y[:, 1]
+    X, T, Y = convert_if_table.((X, T, Y))
 
     # Shuffle data with random indices
     indices = shuffle(1:length(Y))
@@ -397,6 +408,7 @@ function DoublyRobustLearner(
         num_machines,
         num_feats,
         num_neurons,
+        fill(NaN, size(T, 1)),
         fill(NaN, size(T, 1)),
         2,
     )
@@ -420,8 +432,9 @@ julia> m4 = SLearner(X, T, Y)
 julia> estimate_causal_effect!(m4)
 ```
 """
-function estimate_causal_effect!(s::SLearner)
-    s.causal_effect = g_formula!(s)
+@inline function estimate_causal_effect!(s::SLearner)
+    s.causal_effect, s.marginal_effect = g_formula!(s)
+
     return s.causal_effect
 end
 
@@ -443,21 +456,18 @@ julia> m5 = TLearner(X, T, Y)
 julia> estimate_causal_effect!(m5)
 ```
 """
-function estimate_causal_effect!(t::TLearner)
+@inline function estimate_causal_effect!(t::TLearner)
     x₀, x₁, y₀, y₁ = t.X[t.T .== 0, :], t.X[t.T .== 1, :], t.Y[t.T .== 0], t.Y[t.T .== 1]
 
-    t.μ₀ = ELMEnsemble(
-        x₀, y₀, t.sample_size, t.num_machines, t.num_feats, t.num_neurons, t.activation
-    )
-
-    t.μ₁ = ELMEnsemble(
-        x₁, y₁, t.sample_size, t.num_machines, t.num_feats, t.num_neurons, t.activation
-    )
+    args = t.sample_size, t.num_machines, t.num_feats, t.num_neurons, t.activation
+    t.μ₀ = ELMEnsemble(x₀, y₀, args...)
+    t.μ₁ = ELMEnsemble(x₁, y₁, args...)
 
     fit!(t.μ₀)
     fit!(t.μ₁)
     predictionsₜ, predictionsᵪ = predict(t.μ₁, t.X), predict(t.μ₀, t.X)
     t.causal_effect = @fastmath vec(predictionsₜ - predictionsᵪ)
+    t.marginal_effect = t.causal_effect
 
     return t.causal_effect
 end
@@ -480,13 +490,15 @@ julia> m1 = XLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(x::XLearner)
+@inline function estimate_causal_effect!(x::XLearner)
     stage1!(x)
     μχ₀, μχ₁ = stage2!(x)
 
     x.causal_effect = @fastmath vec((
-        (x.ps .* predict(μχ₀, x.X)) .+ ((1 .- x.ps) .* predict(μχ₁, x.X))
+        (x.ps .* predict(μχ₀, x.X)) + ((1 .- x.ps) .* predict(μχ₁, x.X))
     ))
+
+    x.marginal_effect = x.causal_effect  # Works since T is binary
 
     return x.causal_effect
 end
@@ -508,8 +520,9 @@ julia> m1 = RLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(R::RLearner)
+@inline function estimate_causal_effect!(R::RLearner)
     X, T̃, Ỹ = generate_folds(R.X, R.T, R.Y, R.folds)
+    T̃₊, T̃₋, Δ = similar(T̃), similar(T̃), 1.5e-8mean(R.T)
     R.X, R.T, R.Y = reduce(vcat, X), reduce(vcat, T̃), reduce(vcat, Ỹ)
 
     # Get residuals from out-of-fold predictions
@@ -517,19 +530,14 @@ function estimate_causal_effect!(R::RLearner)
         X_train, X_test = reduce(vcat, X[1:end .!== f]), X[f]
         Y_train, Y_test = reduce(vcat, Ỹ[1:end .!== f]), Ỹ[f]
         T_train, T_test = reduce(vcat, T̃[1:end .!== f]), T̃[f]
-        Ỹ[f], T̃[f] = predict_residuals(R, X_train, X_test, Y_train, Y_test, T_train, T_test)
+        
+        Ỹ[f], T̃[f], T̃₊[f], T̃₋[f] = predict_residuals(
+            R, X_train, X_test, Y_train, Y_test, T_train, T_test, Δ
+        )
     end
 
-    # Using target transformation and the weight trick to minimize the causal loss
-    T̃², target = reduce(vcat, T̃).^2, reduce(vcat, Ỹ) ./ reduce(vcat, T̃)
-    Xʷ, Yʷ = R.X .* T̃², target .* T̃²
-
-    # Fit a weighted residual-on-residual model
-    final_model = ELMEnsemble(
-        Xʷ, Yʷ, R.sample_size, R.num_machines, R.num_feats, R.num_neurons, R.activation
-    )
-    fit!(final_model)
-    R.causal_effect = predict(final_model, R.X)
+    R.causal_effect = weight_trick(R, T̃, Ỹ)
+    R.marginal_effect = (weight_trick(R, T̃₊, Ỹ) - weight_trick(R, T̃₋, Ỹ)) / 2Δ
 
     return R.causal_effect
 end
@@ -551,20 +559,60 @@ julia> m1 = DoublyRobustLearner(X, T, Y)
 julia> estimate_causal_effect!(m1)
 ```
 """
-function estimate_causal_effect!(DRE::DoublyRobustLearner)
+@inline function estimate_causal_effect!(DRE::DoublyRobustLearner)
     X, T, Y = generate_folds(DRE.X, DRE.T, DRE.Y, DRE.folds)
-    causal_effect = zeros(size(DRE.T, 1))
+    DRE.causal_effect, DRE.marginal_effect = zeros(size(DRE.T, 1)), zeros(size(DRE.T, 1))
 
     # Rotating folds for cross fitting
     for i in 1:2
-        causal_effect .+= doubly_robust_formula!(DRE, X, T, Y)
+        causal_effect, marginal_effect = doubly_robust_formula!(DRE, X, T, Y)
+        DRE.causal_effect .+= causal_effect
+        DRE.marginal_effect .+= marginal_effect
         X, T, Y = [X[2], X[1]], [T[2], T[1]], [Y[2], Y[1]]
     end
 
-    causal_effect ./= 2
-    DRE.causal_effect = causal_effect
+    DRE.causal_effect ./= 2
+    DRE.marginal_effect ./= 2
 
     return DRE.causal_effect
+end
+
+"""
+    weight_trick(R, T̃, Ỹ)
+
+Use the weight trick to estimate the causal effect in the final stage of an R-learner.
+
+# Notes
+This method should not be called directly.
+
+# Arguments
+- `R::RLearner`: the RLearner struct to estimate the effect for.
+- `T̃`: a vector of residuals from predicting the treatment assignment.
+- `Ỹ`: a vector of residuals from predicting the outcome.
+
+# Examples
+```julia
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
+julia> r_learner = RLearner(X, T, Y)
+julia> X, T̃, Ỹ = generate_folds(r_learner.X, DRE.T, DRE.Y, DRE.folds)
+julia> X_train, X_test = reduce(vcat, X[1:end .!== f]), X[f]
+julia> Y_train, Y_test = reduce(vcat, Ỹ[1:end .!== f]), Ỹ[f]
+julia> T_train, T_test = reduce(vcat, T̃[1:end .!== f]), T̃[f]
+julia> Ỹ[f], T̃[f], _, _ = predict_residuals(
+julia>      r_learner, X_train, X_test, Y_train, Y_test, T_train, T_test, Δ
+        )
+julia> weight_trick(r_learner, T̃, Ỹ)
+```
+"""
+function weight_trick(R, T̃, Ỹ)
+    T̃², target = reduce(vcat, T̃).^2, reduce(vcat, Ỹ) ./ reduce(vcat, T̃)
+    Xʷ, Yʷ = R.X .* T̃², target .* T̃²
+    final_model = ELMEnsemble(
+        Xʷ, Yʷ, R.sample_size, R.num_machines, R.num_feats, R.num_neurons, R.activation
+    )
+
+    fit!(final_model)
+    return predict(final_model, R.X)
 end
 
 """
@@ -583,67 +631,31 @@ This method should not be called directly.
 
 # Examples
 ```julia
-julia> X, T, Y, W =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(100), rand(6, 100)
+julia> X, T, Y =  rand(100, 5), [rand()<0.4 for i in 1:100], rand(6, 100)
 julia> m1 = DoublyRobustLearner(X, T, Y)
-
-julia> X, T, W, Y = make_folds(m1)
-julia> Z = m1.W == m1.X ? X : [reduce(hcat, (z)) for z in zip(X, W)]
-julia> g_formula!(m1, X, T, Y, Z)
+julia> doubly_robust_formula!(m1, X, T, Y)
 ```
 """
-function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y)
+@inline function doubly_robust_formula!(DRE::DoublyRobustLearner, X, T, Y)
+    args = DRE.sample_size, DRE.num_machines, DRE.num_feats, DRE.num_neurons, DRE.activation
     # Propensity scores
-    π_e = ELMEnsemble(
-        X[1], 
-        T[1], 
-        DRE.sample_size, 
-        DRE.num_machines, 
-        DRE.num_feats, 
-        DRE.num_neurons, 
-        DRE.activation
-    )
+    πₑ = ELMEnsemble(X[1], T[1], args...)
 
     # Outcome models
-    μ₀ = ELMEnsemble(
-        X[1][T[1] .== 0, :], 
-        Y[1][T[1] .== 0], 
-        DRE.sample_size, 
-        DRE.num_machines, 
-        DRE.num_feats,
-        DRE.num_neurons, 
-        DRE.activation
-    )
+    μ₀ = ELMEnsemble(X[1][T[1] .== 0, :], Y[1][T[1] .== 0], args...)
+    μ₁ = ELMEnsemble(X[1][T[1] .== 1, :], Y[1][T[1] .== 1], args...)
 
-    μ₁ = ELMEnsemble(
-        X[1][T[1] .== 1, :], 
-        Y[1][T[1] .== 1], 
-        DRE.sample_size, 
-        DRE.num_machines, 
-        DRE.num_feats,
-        DRE.num_neurons, 
-        DRE.activation
-    )
-
-    fit!.((π_e, μ₀, μ₁))
-    π̂ , μ₀̂, μ₁̂  = predict(π_e, X[2]), predict(μ₀, X[2]), predict(μ₁, X[2])
+    fit!.((πₑ, μ₀, μ₁))
+    π̂ , μ̂₀, μ̂₁  = predict(πₑ, X[2]), predict(μ₀, X[2]), predict(μ₁, X[2])
 
     # Pseudo outcomes
-    ϕ̂ =
-        ((T[2] .- π̂) ./ (π̂ .* (1 .- π̂))) .*
-        (Y[2] .- T[2] .* μ₁̂ .- (1 .- T[2]) .* μ₀̂) .+ μ₁̂ .- μ₀̂
+    ϕ̂  = ((T[2] - π̂) ./ (π̂ .* (1 .- π̂))) .* (Y[2] - T[2] .* μ̂₁- (1 .- T[2]) .* μ̂₀) + μ̂₁ - μ̂₀
 
     # Final model
-    τ_est = ELMEnsemble(
-        X[2], 
-        ϕ̂, 
-        DRE.sample_size, 
-        DRE.num_machines, 
-        DRE.num_feats, 
-        DRE.num_neurons, 
-        DRE.activation
-    )
-    fit!(τ_est)
-    return predict(τ_est, DRE.X)
+    τₑ = ELMEnsemble(X[2], ϕ̂, args...)
+    fit!(τₑ)
+
+    return predict(τₑ, DRE.X), predict(μ₁, DRE.X) - predict(μ₀, DRE.X)
 end
 
 """
@@ -662,29 +674,10 @@ julia> stage1!(m1)
 ```
 """
 function stage1!(x::XLearner)
-    g = ELMEnsemble(
-        x.X, x.T, x.sample_size, x.num_machines, x.num_feats, x.num_neurons, x.activation
-    )
-
-    x.μ₀ = ELMEnsemble(
-        x.X[x.T .== 0, :], 
-        x.Y[x.T .== 0], 
-        x.sample_size, 
-        x.num_machines, 
-        x.num_feats,
-        x.num_neurons, 
-        x.activation
-    )
-
-    x.μ₁ = ELMEnsemble(
-        x.X[x.T .== 1, :], 
-        x.Y[x.T .== 1], 
-        x.sample_size, 
-        x.num_machines, 
-        x.num_feats,
-        x.num_neurons, 
-        x.activation
-    )
+    args = x.sample_size, x.num_machines, x.num_feats, x.num_neurons, x.activation
+    g = ELMEnsemble(x.X, x.T, args...)
+    x.μ₀ = ELMEnsemble(x.X[x.T .== 0, :], x.Y[x.T .== 0], args...)
+    x.μ₁ = ELMEnsemble(x.X[x.T .== 1, :], x.Y[x.T .== 1], args...)
 
     # Get propensity scores
     fit!(g)
@@ -714,29 +707,11 @@ julia> stage2!(m1)
 function stage2!(x::XLearner)
     m₁, m₀ = predict(x.μ₁, x.X .- x.Y), predict(x.μ₀, x.X)
     d = ifelse(x.T === 0, m₁, x.Y .- m₀)
-    
-    μχ₀ = ELMEnsemble(
-        x.X[x.T .== 0, :], 
-        d[x.T .== 0], 
-        x.sample_size, 
-        x.num_machines, 
-        x.num_feats,
-        x.num_neurons, 
-        x.activation
-    )
+    args = x.sample_size, x.num_machines, x.num_feats, x.num_neurons, x.activation
 
-    μχ₁ = ELMEnsemble(
-        x.X[x.T .== 1, :], 
-        d[x.T .== 1], 
-        x.sample_size, 
-        x.num_machines, 
-        x.num_feats,
-        x.num_neurons, 
-        x.activation
-    )
-
-    fit!(μχ₀)
-    fit!(μχ₁)
+    μχ₀ = ELMEnsemble(x.X[x.T .== 0, :], d[x.T .== 0], args...)
+    μχ₁ = ELMEnsemble(x.X[x.T .== 1, :], d[x.T .== 1], args...)
+    fit!(μχ₀); fit!(μχ₁)
 
     return μχ₀, μχ₁
 end

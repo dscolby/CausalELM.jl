@@ -1,4 +1,5 @@
 using Random: shuffle
+using Tables: matrix
 
 """Abstract type used to dispatch risk_ratio on nonbinary treatments"""
 abstract type Nonbinary end
@@ -165,9 +166,9 @@ TestStruct([5.2], [0.8], [0.96])
 """
 macro standard_input_data()
     inputs = quote
-        X::Array{Float64}
-        T::Array{Float64}
-        Y::Array{Float64}
+        X::AbstractArray{<: Real}
+        T::AbstractArray{<: Real}
+        Y::AbstractArray{<: Real}
     end
     return esc(inputs)
 end
@@ -205,3 +206,19 @@ function generate_folds(X, T, Y, folds)
 
     return x_folds, t_folds, y_folds
 end
+
+"""
+    convert_if_table(t)
+
+Convert a data structure that implements the Tables.jl API to a matrix, otherwise return the 
+    original data.
+
+# Examples
+```jldoctest
+julia> CausalELM.convert_if_table([1 1; 1 1])
+2×2 Matrix{Int64}:
+ 1  1
+ 1  1
+```
+"""
+convert_if_table(t) = t isa AbstractArray ? t : matrix(t)

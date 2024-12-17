@@ -16,9 +16,9 @@ the residuals from the first stage models.
 
 ## Step 1: Initialize a Model
 The DoubleMachineLearning constructor takes at least three arguments—covariates, a 
-treatment statuses, and outcomes, all of which may be either an array or any struct that 
-implements the Tables.jl interface (e.g. DataFrames). This estimator supports binary, count, 
-or continuous treatments and binary, count, continuous, or time to event outcomes.
+treatment statuses, and outcomes, all of which may be either an AbstractArray or any struct 
+that implements the Tables.jl interface (e.g. DataFrames). This estimator supports binary, 
+count, or continuous treatments and binary, count, continuous, or time to event outcomes.
 
 !!! note
     Non-binary categorical outcomes are treated as continuous.
@@ -28,8 +28,8 @@ or continuous treatments and binary, count, continuous, or time to event outcome
     extreme learning machines to incorporate in the ensemble, the number of features to 
     consider for each extreme learning machine, the activation function to use, the number 
     of observations to bootstrap in each extreme learning machine, and the number of neurons 
-    in each extreme learning machine. These arguments are specified with the `folds`, 
-    `num_machines`, `num_features`, `activation`, `sample_size`, and `num_neurons` keywords.
+    in each extreme learning machine. These arguments are specified with the folds, 
+    num\_machines, num\_features, activation, sample\_size, and num\_neurons keywords.
 
 ```julia
 # Create some data with a binary treatment
@@ -53,10 +53,11 @@ estimate_causal_effect!(dml)
 We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
-    To calculate the p-value and standard error for the treatmetn effect, you can set the 
-    inference argument to false. However, p-values and standard errors are calculated via 
-    randomization inference, which will take a long time. But can be sped up by launching 
-    Julia with a higher number of threads.
+    To calculate the p-value, standard error, and confidence interval for the treatment 
+    effect, you can set the inference keyword to true. However, these values are calculated 
+    via randomization inference, which will take a long time. This can be greatly sped up by 
+    launching Julia with more threads and lowering the number of iterations using the n 
+    keyword (at the expense of accuracy).
 
 ```julia
 # Can also use the British spelling

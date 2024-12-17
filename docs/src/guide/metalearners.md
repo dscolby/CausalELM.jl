@@ -30,13 +30,14 @@ continuous outcomes.
         Kennedy, Edward H. "Towards optimal doubly robust estimation of heterogeneous causal 
         effects." Electronic Journal of Statistics 17, no. 2 (2023): 3008-3049.
 
-# Initialize a Metalearner
+# Step 1: Initialize a Metalearner
 S-learners, T-learners, X-learners, R-learners, and doubly robust estimators all take at 
 least three arguments—covariates, treatment statuses, and outcomes, all of which can be 
-either an array or any struct that implements the Tables.jl interface (e.g. DataFrames). S, 
-T, X, and doubly robust learners support binary treatment variables and binary, continuous, 
-count, or time to event outcomes. The R-learning estimator supports binary, continuous, or 
-count treatment variables and binary, continuous, count, or time to event outcomes.
+either an AbstractArray or any struct that implements the Tables.jl interface (e.g. 
+DataFrames). S, T, X, and doubly robust learners support binary treatment variables and 
+binary, continuous, count, or time to event outcomes. The R-learning estimator supports 
+binary, continuous, or count treatment variables and binary, continuous, count, or time to 
+event outcomes.
 
 !!! note
     Non-binary categorical outcomes are treated as continuous.
@@ -46,8 +47,8 @@ count treatment variables and binary, continuous, count, or time to event outcom
     extreme learning machines to incorporate in the ensemble, the number of features to 
     consider for each extreme learning machine, the activation function to use, the number 
     of observations to bootstrap in each extreme learning machine, and the number of neurons 
-    in each extreme learning machine. These arguments are specified with the `folds`, 
-    `num_machines`, `num_features`, `activation`, `sample_size`, and `num_neurons` keywords.
+    in each extreme learning machine. These arguments are specified with the folds, 
+    num\_machines, num\_features, activation, sample\_size, and num\_neurons keywords.
 
 ```julia
 # Generate data to use
@@ -64,7 +65,7 @@ r_learner = RLearner(X, Y, T)
 dr_learner = DoublyRobustLearner(X, T, Y)
 ```
 
-# Estimate the CATE
+# Step 2: Estimate the CATE
 We can estimate the CATE for all the models by passing them to estimate_causal_effect!.
 ```julia
 estimate_causal_effect!(s_learner)
@@ -74,14 +75,15 @@ estimate_causal_effect!(r_learner)
 estimate_causal_effect!(dr_lwarner)
 ```
 
-# Get a Summary
+# Step 3: Get a Summary
 We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
-    To calculate the p-value and standard error for the treatment effect, you can set the 
-    inference argument to false. However, p-values and standard errors are calculated via 
-    randomization inference, which will take a long time. But can be sped up by launching 
-    Julia with a higher number of threads.
+    To calculate the p-value, standard error, and confidence interval for the treatment 
+    effect, you can set the inference keyword to true. However, these values are calculated 
+    via randomization inference, which will take a long time. This can be greatly sped up by 
+    launching Julia with more threads and lowering the number of iterations using the n 
+    keyword (at the expense of accuracy).
 
 ```julia
 summarize(s_learner)

@@ -112,4 +112,5 @@ CausalELM.clip_if_binary
 CausalELM.@model_config
 CausalELM.@standard_input_data
 CausalELM.generate_folds
+CausalELM.convert_if_table
 ```

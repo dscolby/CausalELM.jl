@@ -34,51 +34,39 @@
 </p>
 
 <p>
-CausalELM enables estimation of causal effects in settings where a randomized control trial 
-or traditional statistical models would be infeasible or unacceptable. It enables estimation 
-of the average treatment effect (ATE)/intent to treat effect (ITE) with interrupted time 
-series analysis, G-computation, and double machine learning; average treatment effect on the 
-treated (ATT) with G-computation; cumulative treatment effect with interrupted time series 
-analysis; and the conditional average treatment effect (CATE) via S-learning, T-learning, 
-X-learning, R-learning, and doubly robust estimation. Underlying all of these estimators are 
-ensembles of extreme learning machines, a simple neural network that uses randomized weights 
-and least squares optimization instead of gradient descent. Once a model has been estimated, 
-CausalELM can summarize the model and conduct sensitivity analysis to validate the 
-plausibility of modeling assumptions. Furthermore, all of this can be done in four lines of 
-code.
+CausalELM provides easy-to-use implementations of modern causal inference methods. While
+CausalELM implements a variety of estimators, they all have one thing in common—the use of 
+machine learning models to flexibly estimate causal effects. This is where the ELM in 
+CausalELM comes from—the machine learning model underlying all the estimators is an extreme 
+learning machine (ELM). ELMs are a simple neural network that use randomized weights and 
+offer a good tradeoff between learning non-linear dependencies and simplicity. Furthermore, 
+CausalELM implements bagged ensembles of ELMs to reduce the variance resulting from 
+randomized weights.
 </p>
 
-<h2>Extreme Learning Machines and Causal Inference</h2>
+<h2>Estimators</h2>
 <p>
-In some cases we would like to know the causal effect of some intervention but we do not 
-have the counterfactual, making conventional methods of statistical analysis infeasible. 
-However, it may still be possible to get an unbiased estimate of the causal effect (ATE, 
-ATE, or ITT) by predicting the counterfactual and comparing it to the observed outcomes. 
-This is the approach CausalELM takes to conduct interrupted time series analysis, 
-G-Computation, double machine learning, and metalearning via S-Learners, T-Learners, 
-X-Learners, R-learners, and doubly robust estimation. In interrupted time series analysis, 
-we want to estimate the effect of some intervention on the outcome of a single unit that we 
-observe during multiple time periods. For example, we might want to know how the 
-announcement of a merger affected the price of Stock A. To do this, we need to know what the 
-price of stock A would have been if the merger had not been announced, which we can predict 
-with machine learning methods. Then, we can compare this predicted counterfactual to the 
-observed price data to estimate the effect of the merger announcement. In another case, we 
-might want to know the effect of medicine X on disease Y but the administration of X was not 
-random and it might have also been administered at mulitiple time periods, which would 
-produce biased estimates. To overcome this, G-computation models the observed data, uses the 
-model to predict the outcomes if all patients recieved the treatment, and compares it to the 
-predictions of the outcomes if none of the patients recieved the treatment. Double machine 
-learning (DML) takes a similar approach but also models the treatment mechanism and uses it 
-to adjust the initial estimates. This approach has three advantages. First, it is more 
-efficient with high dimensional data than conventional methods. Metalearners take a similar 
-approach to estimate the CATE. While all of these models are different, they have one thing 
-in common: how well they perform depends on the underlying model they fit to the data. To 
-that end, CausalELMs use bagged ensembles of extreme learning machines because they are 
-simple yet flexible enough to be universal function approximators with lower varaince than 
-single extreme learning machines.
+CausalELM implements estimators for aggreate e.g. average treatment effect (ATE) and 
+individualized e.g. conditional average treatment effect (CATE) quantities of interest.
 </p>
 
-<h2>CausalELM Features</h2>
+<h3>Estimators for Aggregate Effects</h3>
+<ul>
+    <li>Interrupted Time Series Estimator</li>
+    <li>G-computation</li>
+    <li>Double machine Learning</li>
+</ul>
+
+<h3>Individualized Treatment Effect (CATE) Estimators</h3>
+<ul>
+    <li>S-learner</li>
+    <li>T-learner</li>
+    <li>X-learner</li>
+    <li>R-learner</li>
+    <li>Doubly Robust Estimator</li>
+</ul>
+
+<h2>Features</h2>
 <ul>
   <li>Estimate a causal effect, get a summary, and validate assumptions in just four lines of code</li>
   <li>Bagging improves performance and reduces variance without the need to tune a regularization parameter</li>
@@ -87,25 +75,28 @@ single extreme learning machines.
   <li>Most inference and validation tests do not assume functional or distributional forms</li>
   <li>Implements the latest techniques form statistics, econometrics, and biostatistics</li>
   <li>Works out of the box with arrays or any data structure that implements the Tables.jl interface</li>
+  <li>Works out of the box with AbstractArrays or any data structure that implements the Tables.jl interface</li>
+  <li>Works with CuArrays, ROCArrays, and any other GPU-specific arrays that are AbstractArrays</li>
+  <li>CausalELM is lightweight—its only dependency is Tables.jl</li>
   <li>Codebase is high-quality, well tested, and regularly updated</li>
 </ul>
 
 <h2>What's New?</h2>
 <ul>
-  <li>Now includes doubly robust estimator for CATE estimation</li>
-  <li>All estimators now implement bagging to reduce predictive performance and reduce variance</li>
-  <li>Counterfactual consistency validation simulates more realistic violations of the counterfactual consistency assumption</li>
+  <li>See the JuliaCon 2024 CausalELM demonstration <a href="https://www.youtube.com/watch?v=hh_cyj8feu8&t=26s">here.
+  <li>Includes support for GPU-specific arrays and data structures that implement the Tables.jl API<li>
+  <li>Only performs randomization inference when the inference argument is set to true in summarize methods</li>
+  <li>Summaries support calculating marginal effects and confidence intervals</li>
+  <li>Randomization inference now uses multithreading</li>
+  <li>Refactored code to be easier to extend and understand</li>
   <li>Uses a simple heuristic to choose the number of neurons, which reduces training time and still works well in practice</li>
   <li>Probability clipping for classifier predictions and residuals is no longer necessary due to the bagging procedure</li>
-  <li>CausalELM talk has been accepted to JuliaCon 2024!</li> 
 </ul>
 
 <h2>What's Next?</h2>
 <p>
-Newer versions of CausalELM will hopefully support using GPUs and provide interpretations of 
-the results of calling validate on a model that has been estimated. In addition, some 
-estimators will also support using instrumental variables. However, these priorities could 
-also change depending on feedback recieved at JuliaCon.
+Efforts for the next version of CausalELM will focus on providing interpreteations for the results of callin validate as well
+as fixing any bugs and eliciting feedback.
 </p>
 
 <h2>Disclaimer</h2>

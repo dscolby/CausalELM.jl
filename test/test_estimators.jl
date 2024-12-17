@@ -54,7 +54,7 @@ t_train, t_test = float(t[1:80]), float(t[81:end])
 y_train, y_test = float(y[1:80]), float(y[81:end])
 residual_predictor = DoubleMachineLearning(x, t, y, num_neurons=5)
 residuals = CausalELM.predict_residuals(
-    residual_predictor, x_train, x_test, y_train, y_test, t_train, t_test
+    residual_predictor, x_train, x_test, y_train, y_test, t_train, t_test, 1e-8
 )
 
 @testset "Interrupted Time Series Estimation" begin
@@ -79,9 +79,11 @@ residuals = CausalELM.predict_residuals(
 
     @testset "Interrupted Time Series Estimation" begin
         @test isa(its.causal_effect, Array)
+        @test its.marginal_effect == CausalELM.mean(its.causal_effect)
 
         # Without autocorrelation
         @test isa(its_no_ar.causal_effect, Array)
+        @test its_no_ar.marginal_effect == CausalELM.mean(its_no_ar.causal_effect)
     end
 end
 
@@ -105,7 +107,9 @@ end
 
     @testset "G-Computation Estimation" begin
         @test isa(g_computer.causal_effect, Float64)
+        @test isnan(g_computer.marginal_effect) == false
         @test isa(g_computer_binary_out.causal_effect, Float64)
+        @test isnan(g_computer.marginal_effect) == false
 
         # Check that the estimats for ATE and ATT are different
         @test g_computer.causal_effect !== gcomputer_att.causal_effect
@@ -131,6 +135,7 @@ end
 
     @testset "Double Machine Learning Post-estimation Structure" begin
         @test dm.causal_effect isa Float64
+        @test isnan(dm.marginal_effect) == false
     end
 end
 
