@@ -34,14 +34,14 @@
 </p>
 
 <p>
-CausalELM provides easy-to-use implementations of modern causal inference methods. While
-CausalELM implements a variety of estimators, they all have one thing in common—the use of 
-machine learning models to flexibly estimate causal effects. This is where the ELM in 
-CausalELM comes from—the machine learning model underlying all the estimators is an extreme 
-learning machine (ELM). ELMs are a simple neural network that use randomized weights and 
-offer a good tradeoff between learning non-linear dependencies and simplicity. Furthermore, 
-CausalELM implements bagged ensembles of ELMs to reduce the variance resulting from 
-randomized weights.
+CausalELM provides easy-to-use implementations of modern causal inference methods in a 
+lightweight package. While CausalELM implements a variety of estimators, they all have one 
+thing in common—the use of machine learning models to flexibly estimate causal effects. This 
+is where the ELM in CausalELM comes from—the machine learning model underlying all the 
+estimators is an extreme learning machine (ELM). ELMs are a simple neural network that use 
+randomized weights and offer a good tradeoff between learning non-linear dependencies and 
+simplicity. Furthermore, CausalELM implements bagged ensembles of ELMs to reduce the 
+variance resulting from randomized weights.
 </p>
 
 <h2>Estimators</h2>
