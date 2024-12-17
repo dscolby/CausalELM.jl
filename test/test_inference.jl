@@ -21,7 +21,7 @@ lb2, ub2 = CausalELM.confidence_interval(dm_inference, dm.causal_effect)
 summary2 = summarize(dm, n=100)
 
 # With a continuous treatment variable
-dm_continuous = DoubleMachineLearning(x, t, rand(1:4, 100))
+dm_continuous = DoubleMachineLearning(x, rand(1:4, 100), y)
 estimate_causal_effect!(dm_continuous)
 dm_continuous_inference = CausalELM.generate_null_distribution(dm_continuous, 100)
 p3, stderr3 = CausalELM.p_value_and_std_err(
@@ -36,6 +36,7 @@ x₀, y₀, x₁, y₁ = rand(1:100, 500, 5), randn(500), randn(100, 5), randn(1
 its = InterruptedTimeSeries(x₀, y₀, x₁, y₁)
 estimate_causal_effect!(its)
 summary4 = summarize(its, n=100)
+summary4_mean = summarize(its, mean_effect=true)
 summary4_inference = summarize(its, n=100, inference=true)
 
 # Null distributions for the mean and cummulative changes
@@ -166,6 +167,11 @@ end
 
     # Interrupted Time Series
     for (k, v) in summary4
+        @test !isnothing(v)
+    end
+
+    # Interrupted Time Series with mean effect
+    for (k, v) in summary4_mean
         @test !isnothing(v)
     end
 
