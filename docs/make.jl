@@ -5,7 +5,6 @@ DocMeta.setdocmeta!(CausalELM, :DocTestSetup, :(using CausalELM); recursive=true
 
 makedocs(;
     modules=[CausalELM],
-    warnonly=true,
     authors="Darren Colby <dscolby17@gmail.com> and contributors",
     repo="https://github.com/dscolby/CausalELM.jl/blob/{commit}{path}#{line}",
     sitename="CausalELM",
@@ -34,5 +33,5 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/dscolby/CausalELM.jl",
-    devbranch="main",
+    devbranch="development",
 )

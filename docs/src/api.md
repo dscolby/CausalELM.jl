@@ -52,6 +52,7 @@ CausalELM.moving_average
 CausalELM.doubly_robust_formula!
 CausalELM.stage1!
 CausalELM.stage2!
+CausalELM.weight_trick
 ```
 
 ## Common Methods
@@ -64,6 +65,8 @@ estimate_causal_effect!
 summarize
 CausalELM.generate_null_distribution
 CausalELM.quantities_of_interest
+CausalELM.confidence_interval
+CausalELM.p_value_and_std_err
 ```
 
 ## Model Validation
