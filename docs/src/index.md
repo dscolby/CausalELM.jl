@@ -99,4 +99,4 @@ using Pkg
 Pkg.add("CausalELM")
 ```
 ## More Information
-For a more interactive overview, see our JuliaCon 2024 talk[here](https://www.youtube.com/watch?v=hh_cyj8feu8&t=26s)
+For a more interactive overview, see our JuliaCon 2024 talk [here](https://www.youtube.com/watch?v=hh_cyj8feu8&t=26s)

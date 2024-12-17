@@ -49,7 +49,7 @@ To estimate the causal effect, we call estimate_causal_effect! on the model abov
 estimate_causal_effect!(dml)
 ```
 
-# Get a Summary
+# Step 3: Get a Summary
 We can get a summary of the model by pasing the model to the summarize method.
 
 !!!note
