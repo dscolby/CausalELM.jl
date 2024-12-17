@@ -31,7 +31,6 @@ and binary, continuous, time to event, and count outcome variables.
     neurons to use during estimation. These options are specified with the following keyword 
     arguments: quantity\_of\_interest, activation, temporal, num\_machines, num\_feats, 
     sample\_size, and num\_neurons.
-
 ```julia
 # Create some data with a binary treatment
 X, T, Y =  rand(1000, 5), [rand()<0.4 for i in 1:1000], rand(1000)
@@ -91,7 +90,7 @@ satisfied.
 
 !!! tip
     One can also specify the minimum and maximum probabilities of treatment for the 
-    positivity assumption with the num\_treatments, min, and max keyword arguments.
+    positivity assumption with the `num_treatments`, `min`, and `max` keyword arguments.
 
 !!! danger
     Obtaining correct estimates is dependent on meeting the assumptions for G-computation. 
